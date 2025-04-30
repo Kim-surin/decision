@@ -1,0 +1,17 @@
+version: 0.0
+os: linux
+files:
+#  - source: /target
+  - source: /target/tsftanew-1.0.0.war
+    destination: /tmp/codedeploy-deployment-staging-area
+file_exists_behavior: OVERWRITE
+hooks:
+  ApplicationStop:
+    - location: scripts/stop-tomcat.sh
+      timeout: 300
+  ApplicationStart:
+    - location: scripts/install-tomcat.sh
+      timeout: 100
+  ValidateService:
+    - location: scripts/http-health-check.sh
+      timeout : 120

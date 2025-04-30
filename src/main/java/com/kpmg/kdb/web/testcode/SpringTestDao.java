@@ -1,0 +1,23 @@
+package com.kpmg.kdb.web.testcode;
+
+import java.util.List;
+import java.util.Map;
+
+
+/**
+ * 
+ * @author Damned Cat
+ */
+@SuppressWarnings("rawtypes")
+public interface SpringTestDao {
+	
+	/**
+     * @description : 
+     * @since : 2025.04
+     * @param param
+     * @return
+     */
+    
+	public Map start_TestSql(Map param);
+	
+}

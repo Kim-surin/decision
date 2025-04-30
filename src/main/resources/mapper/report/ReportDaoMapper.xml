@@ -1,0 +1,3198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.report.ReportDao">
+
+	<!-- xml Common Area Start -->
+	<sql id="paging-prefix">
+		SELECT DATA.*
+		FROM (
+		SELECT '' AS ROWFLAG,
+		ROWNUM AS RNUM,
+		COUNT(*) OVER() TOTAL_RECORDS,
+		DATA.*
+		FROM (
+	</sql>
+	<sql id="paging-postfix">
+        <![CDATA[
+                       ) DATA 
+                ) DATA                   
+          WHERE RNUM BETWEEN ((#{page}-1) * #{rows} + 1) and (#{page} * #{rows} )
+        ]]>
+	</sql>
+	<sql id="paging-orderby">
+		<if test="sidx != ''">
+			ORDER BY ${sidx} ${sord}
+		</if>
+	</sql>
+	<!-- xml Common Area End -->
+	
+	
+	
+	<select id="retrieve_R001List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+	      SELECT DAH.STDR_MT
+				,DAH.CUSTOMER_CODE
+				,DAH.SLE_PRIC_DOC
+				,DAH.SLE_PRIC_DOC_PRDLST
+				,DAH.COMPANY_CODE
+				,DAH.DIVISION_CODE
+				,DAH.ITEM_CODE
+				,DAH.CSTMR_ITEM
+				,DAH.PRIC_RQEST_DATE
+				,DAH.JDGMNT_TYPE
+				,DAH.XPORT_AT
+				,DAH.SA_SE
+				,DAH.ITEM_NM
+				,DAH.ITEM_GROUP
+				,DAH.DRWBAK_SE_CODE
+				,DAH.GOODS_AT
+				,DAH.BASS_UNIT
+				,DAH.REAL_PRIC_RQEST_QY
+				,DAH.ACPLC_CRNCY_AMOUNT
+				,DAH.STTEMNT_PC_KRW
+				,DAH.DRWBAK_AMOUNT
+				,DAH.DRWBAK_DDC_AMOUNT
+				,DAH.DRWBAK_TRMMG_AMOUNT
+				,DAH.HS_CODE
+				,DAH.NATION_CODE
+				,DAH.ACPLC_CRNCY
+				,DAH.KRW_CRNCY
+				,DAH.EXECUT_AT
+				,DAH.EXPDECL_MANAGE_NO
+				,DAH.XPORT_SE
+				,DAH.XPORT_STTEMNT_NO
+				,DAH.LNE_NO
+				,DAH.ROW1
+				,DAH.DSPTH_DATE
+				,DAH.TRNSMIS_ID
+				,DAH.REF_GU_ID
+		   FROM DRWBAK_AMOUNT_HDER DAH
+		  WHERE 1=1		
+			
+		<if test="STDR_MT != null and STDR_MT != ''">
+		    AND DAH.STDR_MT >= REPLACE(#{STDR_MT}, '-', '')
+		</if>
+
+		<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'XPORT_STTEMNT_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND DAH.XPORT_STTEMNT_NO = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND DAH.XPORT_STTEMNT_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND DAH.XPORT_STTEMNT_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'SLE_PRIC_DOC'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND DAH.SLE_PRIC_DOC = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND DAH.SLE_PRIC_DOC LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND DAH.SLE_PRIC_DOC LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+				<if test="SEARCH_TYPE == 'CUSTOMER_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND DAH.CUSTOMER_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND DAH.CUSTOMER_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND DAH.CUSTOMER_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="rpt002_getExporterBalanceTax" parameterType="HashMap" resultType="HashMap">
+		SELECT NVL(SM_VENDOR_NAME, VENDOR_NAME) AS VENDOR_NAME
+		      ,A.VENDOR_CODE
+		      ,A.SUM_VALUE AS TOOLTIP_VAL
+		      ,TRUNC(A.SUM_VALUE / B.TOT_VALUE * 100) AS SUM_VALUE
+		  FROM (SELECT VN.VENDOR_NAME AS VENDOR_NAME
+		              ,A.VENDOR_CODE
+		               ,A.VENDOR_NAME AS SM_VENDOR_NAME
+		              ,SUM(A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) AS SUM_VALUE
+		              ,RANK() OVER(ORDER BY SUM(A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) DESC) AS RK
+		          FROM INCME_LOCAL_BNT_SM A
+		          LEFT OUTER JOIN VENDOR VN
+		            ON A.COMPANY_CODE = VN.COMPANY_CODE
+		           AND A.VENDOR_CODE = VN.VENDOR_CODE
+		         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		         <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+		           AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+		         </if>
+		         <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+		         GROUP BY VN.VENDOR_NAME
+		                 ,A.VENDOR_CODE
+		                 ,A.VENDOR_NAME) A
+		 INNER JOIN (SELECT SUM(A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) AS TOT_VALUE
+		                   ,1 AS RK
+		               FROM INCME_LOCAL_BNT_SM A
+		               LEFT OUTER JOIN VENDOR VN
+		                 ON A.COMPANY_CODE = VN.COMPANY_CODE
+		                AND A.VENDOR_CODE = VN.VENDOR_CODE
+		              WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}) B
+		    ON 1 = 1
+		 WHERE A.RK <![CDATA[<]]> 6
+	</select>
+	
+	
+	<select id="rpt002_getExporterBalanceQty" parameterType="HashMap" resultType="HashMap">
+		SELECT NVL(SM_VENDOR_NAME,VENDOR_NAME) AS VENDOR_NAME
+	          ,VENDOR_CODE
+	          ,SUM_VALUE
+	      FROM (SELECT VN.VENDOR_NAME AS VENDOR_NAME
+			          ,A.VENDOR_CODE
+			          ,A.VENDOR_NAME AS SM_VENDOR_NAME
+	                  ,SUM(A.REMNDR_QY) AS SUM_VALUE
+	                  ,RANK() OVER(ORDER BY SUM(A.REMNDR_QY) DESC) AS RK
+	              FROM INCME_LOCAL_BNT_SM A
+	              LEFT OUTER JOIN VENDOR VN
+		            ON A.COMPANY_CODE = VN.COMPANY_CODE
+		           AND A.VENDOR_CODE = VN.VENDOR_CODE	
+		         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		           <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+                 </if>
+                 <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+		         GROUP BY VN.VENDOR_NAME ,A.VENDOR_CODE, A.VENDOR_NAME)
+		 WHERE RK <![CDATA[<]]> 6
+	</select>
+	
+	
+	<select id="rpt002_getItemCodeBalanceTax" parameterType="HashMap" resultType="HashMap">
+		 SELECT ITEM_CODE
+		       ,ITEM_NM
+		       ,SUM_VALUE
+		   FROM (SELECT A.ITEM_CODE
+		               ,A.ITEM_NM
+		               ,ROUND(SUM(A.CSTMS), 0) AS SUM_VALUE
+		               ,RANK() OVER(ORDER BY ROUND(SUM(A.REMNDR_QY), 0) DESC) AS RK
+		           FROM INCME_LOCAL_BNT_SM A
+		           LEFT OUTER JOIN VENDOR VN
+		             ON A.COMPANY_CODE = VN.COMPANY_CODE
+		            AND A.VENDOR_CODE = VN.VENDOR_CODE
+	         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+	           AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+	           <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+               </if>
+               <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+	         GROUP BY A.ITEM_CODE ,A.ITEM_NM)
+		 WHERE RK <![CDATA[<]]> 6
+	</select>
+	
+	
+	<select id="rpt002_getItemCodeBalanceQty" parameterType="HashMap" resultType="HashMap">
+<!-- 
+		SELECT ITEM_CODE
+		      ,ITEM_NM
+		      ,SUM_VALUE
+		  FROM (SELECT A.ITEM_CODE
+		               ,A.ITEM_NM
+		              ,ROUND(SUM(A.REMNDR_QY), 0) AS SUM_VALUE
+		              ,RANK() OVER(ORDER BY ROUND(SUM(A.REMNDR_QY), 0) DESC) AS RK
+		          FROM INCME_LOCAL_BNT_SM A
+		           LEFT OUTER JOIN VENDOR VN
+		             ON A.COMPANY_CODE = VN.COMPANY_CODE
+		            AND A.VENDOR_CODE = VN.VENDOR_CODE
+		         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		         GROUP BY A.ITEM_CODE ,A.ITEM_NM)
+ -->
+ 
+		 SELECT ITEM_CODE
+		      ,ITEM_NM
+		      ,SUM_VALUE AS TOOLTIP_VAL
+		      ,TRUNC(A.SUM_VALUE / B.TOT_VALUE * 100) AS SUM_VALUE
+		  FROM (SELECT A.ITEM_CODE
+		              ,A.ITEM_NM
+		              ,ROUND(SUM(A.REMNDR_QY), 0) AS SUM_VALUE
+		              ,RANK() OVER(ORDER BY ROUND(SUM(A.REMNDR_QY), 0) DESC) AS RK
+		          FROM INCME_LOCAL_BNT_SM A
+		         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+                   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+                   <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+                 </if>
+                 <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+		         GROUP BY A.ITEM_CODE
+		                 ,A.ITEM_NM) A
+		 INNER JOIN (SELECT SUM(A.REMNDR_QY) AS TOT_VALUE
+		               FROM INCME_LOCAL_BNT_SM A
+		              WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		              
+                   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}) B
+		    ON 1 = 1
+		 WHERE RK <![CDATA[<]]> 6
+	</select>
+	
+	
+	<select id="rpt002_getHsCodeBalanceTax" parameterType="HashMap" resultType="HashMap">
+		 SELECT HS_CODE
+		       ,SUM_VALUE
+		   FROM (SELECT A.HS_CODE
+		               ,ROUND(SUM(A.CSTMS), 0) AS SUM_VALUE
+		               ,RANK() OVER(ORDER BY ROUND(SUM(A.REMNDR_QY), 0) DESC) AS RK
+		           FROM INCME_LOCAL_BNT_SM A
+		           LEFT OUTER JOIN VENDOR VN
+		             ON A.COMPANY_CODE = VN.COMPANY_CODE
+		            AND A.VENDOR_CODE = VN.VENDOR_CODE
+	         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+	           AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+	           <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+               </if>
+	           <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+	         GROUP BY A.HS_CODE )
+		 WHERE RK <![CDATA[<]]> 6
+	</select>
+	
+	
+	<select id="rpt002_getHsCodeBalanceQty" parameterType="HashMap" resultType="HashMap">
+	/* hsCode_balanceQty_Barchartdiv :: rpt002_getHsCodeBalanceQty */
+<!-- 
+		SELECT HS_CODE
+		      ,SUM_VALUE
+		  FROM (SELECT A.HS_CODE
+		              ,ROUND(SUM(A.REMNDR_QY), 0) AS SUM_VALUE
+		              ,RANK() OVER(ORDER BY ROUND(SUM(A.REMNDR_QY), 0) DESC) AS RK
+		          FROM INCME_LOCAL_BNT_SM A
+		           LEFT OUTER JOIN VENDOR VN
+		             ON A.COMPANY_CODE = VN.COMPANY_CODE
+		            AND A.VENDOR_CODE = VN.VENDOR_CODE
+		         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+				 GROUP BY A.HS_CODE )
+-->
+		SELECT A.HS_CODE
+		      ,SUM_VALUE AS TOOLTIP_VAL
+		      ,TRUNC(A.SUM_VALUE / B.TOT_VALUE * 100) AS SUM_VALUE
+		  FROM (SELECT A.HS_CODE
+		              ,ROUND(SUM(A.REMNDR_QY), 0) AS SUM_VALUE
+		              ,RANK() OVER(ORDER BY ROUND(SUM(A.REMNDR_QY), 0) DESC) AS RK
+		          FROM INCME_LOCAL_BNT_SM A
+		         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+                   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+                   <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+                 </if>
+                 <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+		         GROUP BY A.HS_CODE) A
+		 INNER JOIN (SELECT SUM(A.REMNDR_QY) AS TOT_VALUE
+		               FROM INCME_LOCAL_BNT_SM A
+		              WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+                   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}) B
+		    ON 1 = 1
+		
+		 WHERE A.RK <![CDATA[<]]> 6
+	</select>
+	
+	
+	
+	<select id="retrieveRpt00201List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT A.IMPDEC_NO
+			      ,VN.VENDOR_NAME
+			      ,A.EFECT_BGNDE
+			      ,SUM((A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT)) AS TOT_TAX
+			      ,ROUND(SUM((A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) / A.QY * A.REMNDR_QY), 0) AS REMND_TAX
+			      ,SUM(A.QY) AS QY
+			      ,SUM(A.REMNDR_QY) AS REMNDR_QY
+			      ,TO_CHAR(ADD_MONTHS(TO_DATE(A.EFECT_BGNDE, 'RRRRMMDD'), 12) - 1, 'RRRRMMDD') AS EXPR_DATE
+			  FROM INCME_LOCAL_BNT_SM A
+		           LEFT OUTER JOIN VENDOR VN
+		             ON A.COMPANY_CODE = VN.COMPANY_CODE
+		            AND A.VENDOR_CODE = VN.VENDOR_CODE
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		       AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		       <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+               </if>
+		       <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+			   AND A.RAWMTRL_SE = '02'   /* 02: 기초납입증명서 */
+			   AND A.REMNDR_QY <![CDATA[>]]> 0
+			 GROUP BY A.IMPDEC_NO,VN.VENDOR_NAME,A.EFECT_BGNDE
+		<include refid="paging-postfix"/>
+	</select>
+	<select id="retrieveRpt00202List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT A.IMPDEC_NO
+			      ,VN.VENDOR_NAME
+			      ,A.EFECT_BGNDE
+			      ,SUM((A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT)) AS TOT_TAX
+			      ,ROUND(SUM((A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) / A.QY * A.REMNDR_QY), 0) AS REMND_TAX
+			      ,SUM(A.QY) AS QY
+			      ,SUM(A.REMNDR_QY) AS REMNDR_QY
+			      ,TO_CHAR(LAST_DAY(ADD_MONTHS(TO_DATE(A.EFECT_BGNDE, 'RRRRMMDD'), 23)), 'RRRRMMDD') AS EXPR_DATE
+			  FROM INCME_LOCAL_BNT_SM A
+	          LEFT OUTER JOIN VENDOR VN
+	            ON A.COMPANY_CODE = VN.COMPANY_CODE
+	           AND A.VENDOR_CODE = VN.VENDOR_CODE
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		       AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			   AND A.RAWMTRL_SE IN ('04','00')  /* 00: 수입신고필증, 04: 분할증명서 */
+			   <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+               </if>
+		       <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+			   AND A.REMNDR_QY <![CDATA[>]]> 0
+			 GROUP BY A.IMPDEC_NO,VN.VENDOR_NAME,A.EFECT_BGNDE
+		<include refid="paging-postfix"/>
+	</select>
+	<select id="retrieveRpt00203List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT A.IMPDEC_NO
+			      ,NVL(B.VENDOR_NAME, C.VENDOR_NAME) VENDOR_NAME
+			      ,A.ITEM_CODE
+			      ,NVL(B.ITEM_NM, C.ITEM_NM) AS ITEM_NM
+			      ,A.HS_CODE
+			      ,A.EFECT_BGNDE
+			      ,CASE WHEN A.RAWMTRL_SE = '02' THEN TO_CHAR(ADD_MONTHS(TO_DATE(A.EFECT_BGNDE, 'RRRRMMDD'), 12)-1, 'RRRRMMDD') 
+                        ELSE  TO_CHAR(LAST_DAY(ADD_MONTHS(TO_DATE(A.EFECT_BGNDE, 'RRRRMMDD'), 23)), 'RRRRMMDD') 
+		            END AS EXPR_DATE
+		          ,A.RAWMTRL_SE
+		          ,CC.CODE_NM AS RAWMTRL_SE_NAME
+			      ,NVL(B.SETLE_AMOUNT, C.PO_AMOUNT) AS PO_AMOUNT
+			      ,(A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) AS TOT_TAX
+			      ,ROUND((A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) / A.QY * A.REMNDR_QY, 0) AS REMND_TAX
+			      ,A.QY
+			      ,A.REMNDR_QY
+<!-- 			      ,CASE
+			           WHEN SH.HS_CODE IS NULL THEN
+			            'N'
+			           ELSE
+			            'Y'
+			       END AS SHORTEN_HSCODE -->
+			  FROM INCME_LOCAL_BNT_SM A
+			  <!-- 
+			  LEFT OUTER JOIN SHORTEN_HSCODE SH
+			    ON A.COMPANY_CODE = SH.COMPANY_CODE
+			   AND SUBSTR(A.EFECT_BGNDE, 1, 4) = SH.APPLY_YEAR
+			   AND A.HS_CODE = SH.HS_CODE
+			    -->
+			  LEFT OUTER JOIN ITEM_MST IM
+			    ON A.COMPANY_CODE = IM.COMPANY_CODE
+			   AND A.ITEM_CODE = IM.ITEM_CODE
+			/* 수입면장 정보 */
+			  LEFT OUTER JOIN (SELECT I.*
+			                         ,B.SETLE_AMOUNT
+			                         ,B.SUPLER_MTLTY_1 AS VENDOR_NAME
+			                     FROM IMPDEC_CERFIN_HDER B
+			                    INNER JOIN IMPDEC_CERFIN_ITEM I
+			                       ON B.COMPANY_CODE = I.COMPANY_CODE
+			                      AND B.DIVISION_CODE = I.DIVISION_CODE
+			                      AND B.IMPDEC_MANAGE_NO = I.IMPDEC_MANAGE_NO) B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.IMPDEC_NO = B.IMPDEC_NO
+			   AND A.LNE_NO = B.LNE_NO
+			   AND A.POUCH_NO = B.POUCH_NO
+			  /* 기초납입 + 분할 증명서 정보  */
+              LEFT OUTER JOIN (SELECT C.*
+		                             , V.VENDOR_NAME
+		                          FROM CCPY_CSTMR_DMSTC C
+		                    LEFT OUTER JOIN VENDOR V
+		                            ON C.COMPANY_CODE = V.COMPANY_CODE
+		                           AND C.VENDOR_CODE = V.VENDOR_CODE) C
+		        ON A.COMPANY_CODE = C.COMPANY_CODE
+		       AND A.DIVISION_CODE = C.DIVISION_CODE
+		       AND A.IMPDEC_NO = C.CTRM_REGIST_NO
+		       AND A.ITEM_CODE = C.ITEM_CODE
+		       AND A.LNE_NO = C.LNE_NO
+		       AND A.POUCH_NO = C.POUCH_NO     
+			  LEFT OUTER JOIN COM_CD CC
+ 	            ON CC.CATEGORY_CD = 'LMC'
+	           AND CC.CODE_CD = A.RAWMTRL_SE
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+				<if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+               </if>
+		       <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+			   AND A.REMNDR_QY > 0
+			   AND A.VENDOR_CODE = #{KEY_VENDOR_CODE}
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveRpt00204List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT A.IMPDEC_NO
+			      ,NVL(B.VENDOR_NAME, C.VENDOR_NAME) AS VENDOR_NAME
+			      ,A.ITEM_CODE
+			      ,NVL(B.ITEM_NM, C.ITEM_NM) AS ITEM_NM
+			      ,A.HS_CODE
+			      ,A.EFECT_BGNDE
+			      ,CASE WHEN A.RAWMTRL_SE = '02' THEN TO_CHAR(ADD_MONTHS(TO_DATE(A.EFECT_BGNDE, 'RRRRMMDD'), 12)-1, 'RRRRMMDD') 
+                  ELSE  TO_CHAR(LAST_DAY(ADD_MONTHS(TO_DATE(A.EFECT_BGNDE, 'RRRRMMDD'), 23)), 'RRRRMMDD') 
+              END AS EXPR_DATE
+            ,A.RAWMTRL_SE
+            ,CC.CODE_NM AS RAWMTRL_SE_NAME
+			      ,NVL(B.CVODV_KRW, C.PO_AMOUNT) AS PO_AMOUNT
+			      ,(A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) AS TOT_TAX
+			      ,ROUND((A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) / A.QY * A.REMNDR_QY, 0) AS REMND_TAX
+			      ,A.QY
+			      ,A.REMNDR_QY
+			      <!-- ,CASE WHEN SH.HS_CODE IS NULL THEN 'N' ELSE 'Y' END AS SHORTEN_HSCODE -->
+			  FROM INCME_LOCAL_BNT_SM A
+			  <!-- 
+			  LEFT OUTER JOIN SHORTEN_HSCODE SH
+			    ON A.COMPANY_CODE = SH.COMPANY_CODE
+			   AND SUBSTR(A.EFECT_BGNDE, 1, 4) = SH.APPLY_YEAR
+			   AND A.HS_CODE = SH.HS_CODE
+			   -->
+			  LEFT OUTER JOIN ITEM_MST IM
+			    ON A.COMPANY_CODE = IM.COMPANY_CODE
+			   AND A.ITEM_CODE = IM.ITEM_CODE
+			/* 수입면장 정보 */
+			  LEFT OUTER JOIN (SELECT I.*
+			                         ,B.SUPLER_MTLTY_1 AS VENDOR_NAME
+			                     FROM IMPDEC_CERFIN_HDER B
+			                    INNER JOIN IMPDEC_CERFIN_ITEM I
+			                       ON B.COMPANY_CODE = I.COMPANY_CODE
+			                      AND B.DIVISION_CODE = I.DIVISION_CODE
+			                      AND B.IMPDEC_MANAGE_NO = I.IMPDEC_MANAGE_NO
+			                     LEFT OUTER JOIN VENDOR V
+			                       ON B.COMPANY_CODE = V.COMPANY_CODE
+			                      AND B.VENDOR_CODE = V.VENDOR_CODE) B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.IMPDEC_NO = B.IMPDEC_NO
+			   AND A.LNE_NO = B.LNE_NO
+               AND A.POUCH_NO = B.POUCH_NO
+			/* 기초납입 + 분할 증명서 정보  */
+			  LEFT OUTER JOIN (SELECT C.*
+			                         ,V.VENDOR_NAME
+			                     FROM CCPY_CSTMR_DMSTC C
+			                     LEFT OUTER JOIN VENDOR V
+			                       ON C.COMPANY_CODE = V.COMPANY_CODE
+			                      AND C.VENDOR_CODE = V.VENDOR_CODE) C
+			    ON A.COMPANY_CODE = C.COMPANY_CODE
+			   AND A.DIVISION_CODE = C.DIVISION_CODE
+			   AND A.IMPDEC_NO = C.CTRM_REGIST_NO
+			   AND A.ITEM_CODE = C.ITEM_CODE
+			   AND A.LNE_NO = C.LNE_NO
+               AND A.POUCH_NO = C.POUCH_NO
+              LEFT OUTER JOIN COM_CD CC
+		          ON CC.CATEGORY_CD = 'LMC'
+		         AND CC.CODE_CD = A.RAWMTRL_SE
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			   AND A.REMNDR_QY > 0
+			   AND A.ITEM_CODE = #{KEY_VENDOR_CODE}
+			   AND NVL(B.ITEM_NM, C.ITEM_NM) = #{KEY_CODE_DETAIL}
+			   <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+               </if>
+		       <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+	
+		<include refid="paging-postfix"/>
+	</select>
+	
+	
+	<select id="retrieveRpt00205List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT A.IMPDEC_NO
+			      ,NVL(B.VENDOR_NAME, C.VENDOR_NAME) AS VENDOR_NAME
+			      ,A.ITEM_CODE
+			      ,NVL(B.ITEM_NM, C.ITEM_NM) AS ITEM_NM
+			      ,A.HS_CODE
+			      ,A.EFECT_BGNDE
+			      ,NVL(B.CVODV_KRW, C.PO_AMOUNT) AS PO_AMOUNT
+			      ,(A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) AS TOT_TAX
+			      ,ROUND((A.CSTMS + A.INTTAX + A.ECX_AMOUNT + A.AGSPT + A.TRANTAX + A.LQTX_AMOUNT) / A.QY * A.REMNDR_QY, 0) AS REMND_TAX
+			      ,A.QY
+		          ,A.RAWMTRL_SE
+		          ,CC.CODE_NM AS RAWMTRL_SE_NAME
+			      ,A.REMNDR_QY
+			      <!-- ,CASE WHEN SH.HS_CODE IS NULL THEN 'N' ELSE 'Y' END AS SHORTEN_HSCODE -->
+			  FROM INCME_LOCAL_BNT_SM A
+			  <!-- 
+			  LEFT OUTER JOIN SHORTEN_HSCODE SH
+			    ON A.COMPANY_CODE = SH.COMPANY_CODE
+			   AND SUBSTR(A.EFECT_BGNDE, 1, 4) = SH.APPLY_YEAR
+			   AND A.HS_CODE = SH.HS_CODE
+			    -->
+			  LEFT OUTER JOIN ITEM_MST IM
+			    ON A.COMPANY_CODE = IM.COMPANY_CODE
+			   AND A.ITEM_CODE = IM.ITEM_CODE
+			/* 수입면장 정보 */
+			  LEFT OUTER JOIN (SELECT I.*
+			                         ,B.SUPLER_MTLTY_1 AS VENDOR_NAME
+			      	             FROM IMPDEC_CERFIN_HDER B
+			                    INNER JOIN IMPDEC_CERFIN_ITEM I
+			                       ON B.COMPANY_CODE = I.COMPANY_CODE
+			                      AND B.DIVISION_CODE = I.DIVISION_CODE
+			                      AND B.IMPDEC_MANAGE_NO = I.IMPDEC_MANAGE_NO
+			                     LEFT OUTER JOIN VENDOR V
+			                       ON B.COMPANY_CODE = V.COMPANY_CODE
+			                      AND B.VENDOR_CODE = V.VENDOR_CODE) B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.IMPDEC_NO = B.IMPDEC_NO
+			   AND A.LNE_NO = B.LNE_NO
+               AND A.POUCH_NO = B.POUCH_NO
+			/* 기초납입 + 분할 증명서 정보  */
+			  LEFT OUTER JOIN (SELECT C.*
+			                         ,V.VENDOR_NAME
+			                     FROM CCPY_CSTMR_DMSTC C
+			                     LEFT OUTER JOIN VENDOR V
+			                       ON C.COMPANY_CODE = V.COMPANY_CODE
+			                      AND C.VENDOR_CODE = V.VENDOR_CODE) C
+			    ON A.COMPANY_CODE = C.COMPANY_CODE
+			   AND A.DIVISION_CODE = C.DIVISION_CODE
+			   AND A.IMPDEC_NO = C.CTRM_REGIST_NO
+			   AND A.ITEM_CODE = C.ITEM_CODE
+			   AND A.LNE_NO = C.LNE_NO
+               AND A.POUCH_NO = C.POUCH_NO
+        LEFT OUTER JOIN COM_CD CC
+		        ON CC.CATEGORY_CD = 'LMC'
+		       AND CC.CODE_CD = A.RAWMTRL_SE   
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			   AND A.REMNDR_QY > 0
+			   AND A.HS_CODE = #{KEY_VENDOR_CODE}
+			  <if test="RAWMTRL_SE != null and RAWMTRL_SE != ''">
+                   AND A.RAWMTRL_SE = #{RAWMTRL_SE}
+               </if>
+		       <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>	
+					<if test="SEARCH_TYPE == 'IMPDEC_NO'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.IMPDEC_NO= #{SEARCH_KEY_WORD}
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.IMPDEC_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				 </if>
+	
+		<include refid="paging-postfix"/>
+	</select>
+	
+	
+	<select id="retrieve_R003List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+	      SELECT RIL.GU_ID_NO
+				,RIL.SEQ
+				,RIL.SUB_SEQ
+				,RIL.EFECT_BGNDE
+				,RIL.ITEM_CODE
+				,RIL.COMPANY_CODE
+				,RIL.STDR_MT
+				,RIL.ITEM_NM
+				,RIL.HS_CODE
+				,RIL.RAWMTRL_SE
+				,RIL.IMPDEC_NO
+				,RIL.LNE_NO
+				,RIL.POUCH_NO
+				,RIL.QY
+				,RIL.CSTMS
+				,RIL.CSTMS_AMOUNT
+				,RIL.CSTMS_AMOUNT_UNIT
+				,RIL.DLIVY_QY
+				,RIL.DLIVY_AMOUNT
+				,RIL.BASS_UNIT
+				,RIL.ACPLC_CRNCY
+				,RIL.INCME_THNG_ID
+		   FROM RAWMTRL_INCME_LOCAL_SM RIL
+		  WHERE 1=1		
+			
+		<if test="STDR_MT != null and STDR_MT != ''">
+		    AND RIL.STDR_MT >= REPLACE(#{STDR_MT}, '-', '')
+		</if>
+
+		<include refid="paging-postfix"/>
+	</select>
+	
+	
+	<select id="retrieve_R004List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+	      SELECT CCD.BASIS_DTA_MANAGE_NO
+				,CCD.LNE_NO
+				,CCD.POUCH_NO
+				,CCD.VENDOR_CODE
+				,CCD.RAWMTRL_SE
+				,CCD.CTRM_REGIST_NO
+				,CCD.ACPT_DATE
+				,CCD.TRNSFR_DATE
+				,CCD.PAPERS_SE
+				,CCD.BASIS_DOC_NO
+				,CCD.ITEM_CODE
+				,CCD.ITEM_NM
+				,CCD.HS_CODE
+				,CCD.QY
+				,CCD.BASS_UNIT
+				,CCD.INCME_TARRATE
+				,CCD.CSTMS
+				,CCD.ECX_AMOUNT
+				,CCD.INTTAX
+				,CCD.AGSPT
+				,CCD.TOT_TAXAMT
+				,CCD.ACPLC_CRNCY
+				,CCD.TRANTAX
+				,CCD.LQTX_AMOUNT
+				FROM CCPY_CSTMR_DMSTC CCD
+		  WHERE 1=1		
+		<if test="ACPT_DATE != null and ACPT_DATE != ''">
+		    AND CCD.ACPT_DATE >= REPLACE(#{ACPT_DATE}, '-', '')
+		</if>
+
+		<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'VENDOR_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND CCD.VENDOR_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND CCD.VENDOR_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND CCD.VENDOR_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND CCD.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND CCD.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND CCD.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+			
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieve_R006List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+		  SELECT CCD.STDR_MT
+				,CCD.REPRSNT_CUSTOMER_CODE
+				,CCD.VENDOR_CODE
+				,CCD.PAPERS_SE
+				,CCD.BASIS_DOC_NO
+				,CCD.ITEM_CODE
+				,CCD.CSTMR_ITEM
+				,CCD.ITEM_NM
+				,CCD.BASS_UNIT
+				,CCD.QY
+				,CCD.CHIT_FRMTRM_DATE
+				,CCD.UNTPC
+				,CCD.ACPLC_CRNCY
+				,CCD.ACPLC_CRNCY_AMOUNT
+				,CCD.CSTMS_AMOUNT
+				FROM CTRM_CSTMR_DMSTC CCD
+	       WHERE 1=1		
+	
+	    <if test="STDR_MT != null and STDR_MT != ''">
+		    AND CCD.STDR_MT >= REPLACE(#{STDR_MT}, '-', '')
+		</if>
+
+		<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'REPRSNT_CUSTOMER_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND CCD.REPRSNT_CUSTOMER_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND CCD.REPRSNT_CUSTOMER_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND CCD.REPRSNT_CUSTOMER_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'CSTMR_ITEM'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND CCD.CSTMR_ITEM = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND CCD.CSTMR_ITEM LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND CCD.CSTMR_ITEM LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+			
+		<include refid="paging-postfix"/>
+	</select>
+	
+	
+	<select id="rpt008_getVendorDrwbak_Rate" parameterType="HashMap" resultType="HashMap">
+		/* Top 5 rpt008_getVendorDrwbak_Rate */
+		SELECT LST.LABEL_VALUE
+		      ,LST.CODE_VALUE
+		      ,LST.TOOLTIP_VAL
+		      ,LST.DATA_VALUE
+		  FROM (SELECT A.LABEL_VALUE
+		              ,A.CODE_VALUE
+		              ,A.DATA_VALUE AS TOOLTIP_VAL
+		              <!-- cheezred : 값이 너무 작아서 임시코드로 대체 해놓음 
+		              ,TRUNC(A.DATA_VALUE / B.TOT_VALUE * 100) AS DATA_VALUE -->
+		              ,DECODE(B.TOT_VALUE,0,0,ROUND(A.DATA_VALUE / B.TOT_VALUE * 10000,2)) AS DATA_VALUE
+		              ,RANK() OVER(ORDER BY A.DATA_VALUE DESC) AS RK
+		          FROM (SELECT A.MANUFAC_NAME AS LABEL_VALUE
+		                      ,A.MANUFAC_NAME AS CODE_VALUE
+		                      ,MAX(A.DRWBAK_AMOUNT) AS DATA_VALUE
+		                  FROM EXPORT_CERT_MST M
+		                  LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+		                    ON M.COMPANY_CODE = B.COMPANY_CODE
+		                   AND M.DIVISION_CODE = B.DIVISION_CODE
+		                   AND M.XPORT_STTEMNT_NO = B.XPORT_STTEMNT_NO
+		                   AND M.LNE_NO = B.LNE_NO
+		                   AND M.POUCH_NO = B.POUCH_NO
+		                   AND M.ITEM_CODE = B.ITEM_CODE
+		                  LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN A
+		                    ON A.PRESENTN_NO = B.PRESENTN_NO
+		                   AND A.COMPANY_CODE = B.COMPANY_CODE
+		                 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                   AND M.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		                   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+								<if test="SEARCH_TYPE == 'ITEM_CODE'">
+									<choose>
+					    				<when test="SEARCH_OPTION == 'EQ'">
+					    					AND M.ITEM_CODE= #{SEARCH_KEY_WORD}
+					    				</when>
+					    				<when test="SEARCH_OPTION == 'SW'">
+					    					AND M.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND M.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>	
+							 </if>
+		                   
+		                   
+		                 GROUP BY A.MANUFAC_NAME) A
+		         INNER JOIN (SELECT SUM(NVL(M.STTEMNT_PC_KRW, 0)) AS TOT_VALUE
+		                      FROM EXPORT_CERT_MST M
+		                      LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+		                        ON M.COMPANY_CODE = B.COMPANY_CODE
+		                       AND M.DIVISION_CODE = B.DIVISION_CODE
+		                       AND M.XPORT_STTEMNT_NO = B.XPORT_STTEMNT_NO
+		                       AND M.LNE_NO = B.LNE_NO
+		                       AND M.POUCH_NO = B.POUCH_NO
+		                       AND M.ITEM_CODE = B.ITEM_CODE
+		                      LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN A
+		                        ON A.PRESENTN_NO = B.PRESENTN_NO
+		                       AND A.COMPANY_CODE = B.COMPANY_CODE
+		                     WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                       AND M.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}) B
+		            ON 1 = 1) LST
+	     WHERE LST.RK <![CDATA[<]]> 6
+	</select>
+	
+	<select id="rpt008_getVendorDrwbakUsedQtyData" parameterType="HashMap" resultType="HashMap">
+		/* Top 5 rpt008_getVendorDrwbakUsedQtyData */
+		SELECT LABEL_VALUE
+		      ,CODE_VALUE
+		      ,DATA_VALUE
+		      ,RK
+		  FROM (SELECT  NVL(A.SUPLER_MTLTY_1,V.VENDOR_NAME) AS LABEL_VALUE
+				       ,A.VENDOR_CODE AS CODE_VALUE
+				       ,DECODE(SUM(L.QY),0,0,ROUND(SUM(L.DLIVY_QY) / SUM(L.QY), 4) * 100) AS DATA_VALUE
+				       ,RANK() OVER(ORDER BY(SUM(L.DLIVY_QY) / SUM(L.QY)) DESC) AS RK
+				  FROM IMPDEC_CERFIN_HDER A
+				 INNER JOIN IMPDEC_CERFIN_ITEM B
+				    ON A.COMPANY_CODE = B.COMPANY_CODE
+				   AND A.DIVISION_CODE = B.DIVISION_CODE
+				   AND A.IMPDEC_NO = B.IMPDEC_NO
+				 INNER JOIN INCME_LOCAL_BNT_SM L
+				    ON B.COMPANY_CODE = L.COMPANY_CODE
+				   AND B.DIVISION_CODE = L.DIVISION_CODE
+				   AND B.IMPDEC_NO = L.IMPDEC_NO
+				   AND B.LNE_NO = L.LNE_NO
+				   AND B.POUCH_NO = L.POUCH_NO
+		    LEFT OUTER JOIN VENDOR V
+				    ON A.COMPANY_CODE = V.COMPANY_CODE
+				   AND A.VENDOR_CODE = V.VENDOR_CODE
+		         WHERE A.VENDOR_CODE IS NOT NULL
+		           AND A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.STTEMNT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		           <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				   		<if test="SEARCH_TYPE == 'ITEM_CODE'">
+							<choose>
+					    		<when test="SEARCH_OPTION == 'EQ'">
+					    		AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+					    		</when>
+					    		<when test="SEARCH_OPTION == 'SW'">
+					    		AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  	</when>
+					    		<otherwise>
+					    		AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    		</otherwise>
+					    	</choose>
+						</if>	
+					</if>
+		         GROUP BY A.VENDOR_CODE
+		                 , NVL(A.SUPLER_MTLTY_1,V.VENDOR_NAME))
+		         WHERE RK <![CDATA[<]]> 6
+	</select>
+	
+	
+	
+	<select id="rpt008_getVendorTaxByDrwBakRate" parameterType="HashMap" resultType="HashMap">
+		/* Top 5 rpt008_getVendorTaxByDrwBakRate */
+		SELECT CODE_VALUE
+		      ,LABEL_VALUE
+		      ,DATA_VALUE
+		  FROM (SELECT Z.VENDOR_CODE AS CODE_VALUE
+		              ,NVL(Z.SUPLER_MTLTY_1,V.VENDOR_NAME) AS LABEL_VALUE
+		              ,Z.TOT_TAX
+		              ,Z.DRWBAK_TAX
+		              ,DECODE(Z.TOT_TAX,0,0, ROUND(Z.DRWBAK_TAX / Z.TOT_TAX, 4) * 100) AS DATA_VALUE
+		              ,RANK() OVER(ORDER BY Z.DRWBAK_TAX / Z.TOT_TAX DESC) AS RK
+		          FROM (SELECT L.COMPANY_CODE
+		                      ,L.VENDOR_CODE
+		                      ,A.SUPLER_MTLTY_1
+		                      ,SUM(NVL(L.CSTMS, 0) + NVL(L.INTTAX, 0) + NVL(L.ECX_AMOUNT, 0) + NVL(L.AGSPT, 0) +
+		                           NVL(L.TRANTAX, 0) + NVL(L.LQTX_AMOUNT, 0)) AS TOT_TAX
+		                      ,SUM(NVL(XC.CSTMS, 0) + NVL(XC.INTTAX, 0) + NVL(XC.ECX_AMOUNT, 0) + NVL(XC.AGSPT, 0) +
+		                           NVL(XC.TRANTAX, 0) + NVL(XC.LQTX_AMOUNT, 0)) AS DRWBAK_TAX
+		                  FROM IMPDEC_CERFIN_HDER A
+		                 INNER JOIN IMPDEC_CERFIN_ITEM B
+		                    ON A.COMPANY_CODE = B.COMPANY_CODE
+		                   AND A.DIVISION_CODE = B.DIVISION_CODE
+		                   AND A.IMPDEC_NO = B.IMPDEC_NO
+		                 INNER JOIN INCME_LOCAL_BNT_SM L
+		                    ON B.COMPANY_CODE = L.COMPANY_CODE
+		                   AND B.DIVISION_CODE = L.DIVISION_CODE
+		                   AND B.IMPDEC_NO = L.IMPDEC_NO
+		                   AND B.LNE_NO = L.LNE_NO
+		                   AND B.POUCH_NO = L.POUCH_NO
+		                  LEFT OUTER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL XC
+		                    ON L.COMPANY_CODE = XC.COMPANY_CODE
+		                   AND L.IMPDEC_NO = XC.IMPDEC_NO
+		                   AND L.LNE_NO = XC.LNE_NO
+		                   AND L.POUCH_NO = XC.POUCH_NO
+		                  LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG XB
+		                    ON XB.COMPANY_CODE = XC.COMPANY_CODE
+		                   AND XB.PRESENTN_NO = XC.PRESENTN_NO
+		                   AND XB.THNG_SEQ = XC.THNG_SEQ
+		                  LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN XA
+		                    ON XB.PRESENTN_NO = XA.PRESENTN_NO
+		                   AND XB.COMPANY_CODE = XA.COMPANY_CODE
+		                 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                   AND A.STTEMNT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		                   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+						   		<if test="SEARCH_TYPE == 'ITEM_CODE'">
+									<choose>
+							    		<when test="SEARCH_OPTION == 'EQ'">
+							    		AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+							    		</when>
+							    		<when test="SEARCH_OPTION == 'SW'">
+							    		AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+									  	</when>
+							    		<otherwise>
+							    		AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							    		</otherwise>
+							    	</choose>
+								</if>	
+							</if>
+		                 GROUP BY L.COMPANY_CODE
+		                         ,L.VENDOR_CODE
+		                         ,A.SUPLER_MTLTY_1) Z
+		    LEFT OUTER JOIN VENDOR V
+		            ON Z.COMPANY_CODE = V.COMPANY_CODE
+		           AND Z.VENDOR_CODE = V.VENDOR_CODE
+		         WHERE DRWBAK_TAX > 0)
+		 WHERE RK <![CDATA[<]]> 6
+		   AND ROWNUM <![CDATA[<=]]> 5
+
+	</select>
+	
+	<select id="rpt008_getItemCodeDrwbak_Rate" parameterType="HashMap" resultType="HashMap">
+		/* Top 5 rpt008_getItemCodeDrwbak_Rate */
+		  SELECT LABEL_VALUE
+	            ,CODE_VALUE
+	            ,DATA_VALUE
+	        FROM (SELECT M.ITEM_NM AS LABEL_VALUE
+	                     ,M.ITEM_CODE AS CODE_VALUE
+	                     ,CASE WHEN SUM(NVL(M.STTEMNT_PC_KRW,0)) = 0 THEN 0 
+	                           ELSE ROUND(SUM(NVL(A.DRWBAK_AMOUNT, 0)) / SUM(NVL(M.STTEMNT_PC_KRW,0)), 4) * 100
+	                       END AS DATA_VALUE
+	                     ,RANK() OVER(ORDER BY (CASE WHEN SUM(NVL(M.STTEMNT_PC_KRW,0)) = 0 THEN 0 
+	                                                 ELSE ROUND(SUM(NVL(A.DRWBAK_AMOUNT, 0)) / SUM(NVL(M.STTEMNT_PC_KRW,0)), 4) * 100
+	                                             END) DESC) AS RK
+	                FROM EXPORT_CERT_MST M
+	                LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+	                  ON M.COMPANY_CODE = B.COMPANY_CODE
+	                 AND M.DIVISION_CODE = B.DIVISION_CODE
+	                 AND M.XPORT_STTEMNT_NO = B.XPORT_STTEMNT_NO
+	                 AND M.LNE_NO = B.LNE_NO
+	                 AND M.POUCH_NO = B.POUCH_NO
+	                 AND M.ITEM_CODE = B.ITEM_CODE
+	                LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN A
+	                      ON A.PRESENTN_NO = B.PRESENTN_NO
+	                     AND A.COMPANY_CODE = B.COMPANY_CODE
+	               WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+	                     AND M.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+	                <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				   		<if test="SEARCH_TYPE == 'ITEM_CODE'">
+							<choose>
+					    		<when test="SEARCH_OPTION == 'EQ'">
+					    		AND M.ITEM_CODE= #{SEARCH_KEY_WORD}
+					    		</when>
+					    		<when test="SEARCH_OPTION == 'SW'">
+					    		AND M.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  	</when>
+					    		<otherwise>
+					    		AND M.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    		</otherwise>
+					    	</choose>
+						</if>	
+					</if>
+	               GROUP BY M.ITEM_NM, M.ITEM_CODE)
+	       WHERE RK <![CDATA[<]]> 6
+	</select>
+	
+	<select id="rpt008_getItemCodeDrwbakUsedQtyData" parameterType="HashMap" resultType="HashMap">
+		/* Top 5 rpt008_getItemCodeDrwbakUsedQtyData */
+		SELECT LST.ITEM_CODE AS CODE_VALUE
+		       ,LST.ITEM_NM AS LABEL_VALUE
+		       ,LST.TOOLTIP_VAL
+		       ,LST.DATA_VALUE
+		  FROM (
+		SELECT A.ITEM_CODE
+		      ,A.ITEM_NM
+		      ,SUM(A.ITEM_QTY) OVER() AS TOT_COUNT
+		      ,TRUNC(SUM(NVL(B.ACCMLT_ORDER_QY, 0))) AS TOOLTIP_VAL
+		      ,CASE WHEN SUM(A.ITEM_QTY) OVER() = 0 THEN 0
+		            ELSE TRUNC(SUM(NVL(B.ACCMLT_ORDER_QY, 0))/SUM(A.ITEM_QTY) OVER() * 100, 2) END AS DATA_VALUE
+		      ,ROW_NUMBER() OVER(ORDER BY SUM(NVL(B.ACCMLT_ORDER_QY, 0)) DESC) AS RK
+		  FROM EXPORT_CERT_MST A
+		  INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+		    ON A.COMPANY_CODE = B.COMPANY_CODE
+		   AND A.DIVISION_CODE = B.DIVISION_CODE
+		   AND A.XPORT_STTEMNT_NO = B.XPORT_STTEMNT_NO
+		   AND A.LNE_NO = B.LNE_NO
+		   AND A.POUCH_NO = B.POUCH_NO
+		   AND A.ITEM_CODE = B.ITEM_CODE
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+						<when test="SEARCH_OPTION == 'EQ'">
+					    AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+					    </when>
+					    <when test="SEARCH_OPTION == 'SW'">
+					    AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+						</when>
+					    <otherwise>
+					    AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    </otherwise>
+					</choose>
+				</if>	
+			</if>
+		 GROUP BY A.ITEM_CODE, A.ITEM_NM,A.ITEM_QTY
+		) LST 
+         WHERE LST.RK <![CDATA[<]]> 6
+	</select>
+	
+	<select id="rpt008_getItemCodeTaxByDrwBakRate" parameterType="HashMap" resultType="HashMap">
+		/* Top 5 rpt008_getItemCodeTaxByDrwBakRate */
+		SELECT CODE_VALUE
+		          ,LABEL_VALUE
+		          ,DATA_VALUE
+		      FROM (SELECT Z.ITEM_CODE AS CODE_VALUE
+		                  ,Z.ITEM_NM AS LABEL_VALUE
+		                  ,Z.TOT_TAX
+		                  ,Z.DRWBAK_TAX
+		                  ,DECODE(Z.TOT_TAX,0,0,ROUND(Z.DRWBAK_TAX / Z.TOT_TAX, 4) * 100) AS DATA_VALUE
+		                  ,RANK() OVER(ORDER BY Z.DRWBAK_TAX / Z.TOT_TAX DESC) AS RK
+		              FROM (SELECT B.ITEM_CODE
+		                          ,B.ITEM_NM
+		                          ,SUM(NVL(L.CSTMS, 0) + NVL(L.INTTAX, 0) + NVL(L.ECX_AMOUNT, 0) + NVL(L.AGSPT, 0) +
+		                               NVL(L.TRANTAX, 0) + NVL(L.LQTX_AMOUNT, 0)) AS TOT_TAX
+		                          ,SUM(NVL(XC.CSTMS, 0) + NVL(XC.INTTAX, 0) + NVL(XC.ECX_AMOUNT, 0) + NVL(XC.AGSPT, 0) +
+		                               NVL(XC.TRANTAX, 0) + NVL(XC.LQTX_AMOUNT, 0)) AS DRWBAK_TAX
+		                      FROM IMPDEC_CERFIN_HDER A
+		                     INNER JOIN IMPDEC_CERFIN_ITEM B
+		                        ON A.COMPANY_CODE = B.COMPANY_CODE
+		                       AND A.DIVISION_CODE = B.DIVISION_CODE
+		                       AND A.IMPDEC_NO = B.IMPDEC_NO
+		                     INNER JOIN INCME_LOCAL_BNT_SM L
+		                        ON B.COMPANY_CODE = L.COMPANY_CODE
+		                       AND B.DIVISION_CODE = L.DIVISION_CODE
+		                       AND B.IMPDEC_NO = L.IMPDEC_NO
+		                       AND B.LNE_NO = L.LNE_NO
+		                       AND B.POUCH_NO = L.POUCH_NO
+		                      LEFT OUTER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL XC
+		                        ON L.COMPANY_CODE = XC.COMPANY_CODE
+		                       AND L.IMPDEC_NO = XC.IMPDEC_NO
+		                       AND L.LNE_NO = XC.LNE_NO
+		                       AND L.POUCH_NO = XC.POUCH_NO
+		                      LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG XB
+		                        ON XB.COMPANY_CODE = XC.COMPANY_CODE
+		                       AND XB.PRESENTN_NO = XC.PRESENTN_NO
+		                       AND XB.THNG_SEQ = XC.THNG_SEQ
+		                      LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN XA
+		                        ON XB.PRESENTN_NO = XA.PRESENTN_NO
+		                       AND XB.COMPANY_CODE = XA.COMPANY_CODE
+		                     WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                       AND A.STTEMNT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			                    <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+									<if test="SEARCH_TYPE == 'ITEM_CODE'">
+										<choose>
+											<when test="SEARCH_OPTION == 'EQ'">
+										    AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+										    </when>
+										    <when test="SEARCH_OPTION == 'SW'">
+										    AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+											</when>
+										    <otherwise>
+										    AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+										    </otherwise>
+										</choose>
+									</if>	
+								</if>
+		                     GROUP BY B.ITEM_CODE,B.ITEM_NM) Z
+		             WHERE DRWBAK_TAX > 0)
+		     WHERE RK <![CDATA[<]]> 6
+	</select>
+	
+	<select id="rpt008_getHsCodeDrwbak_Rate" parameterType="HashMap" resultType="HashMap">
+	    /* Top 5 rpt008_getHsCodeDrwbak_Rate */
+		SELECT LST.LABEL_VALUE
+		      ,LST.CODE_VALUE
+		      ,LST.TOOLTIP_VAL
+		      ,LST.DATA_VALUE
+		  FROM (SELECT M.HS_CODE AS LABEL_VALUE
+		              ,M.HS_CODE AS CODE_VALUE
+		              ,SUM(NVL(M.STTEMNT_PC_KRW, 0)) AS TOOLTIP_VAL
+		              ,DECODE(SUM(NVL(M.STTEMNT_PC_KRW, 0)), 0, 0,ROUND(SUM(DISTINCT NVL(A.DRWBAK_AMOUNT, 0)) / SUM(NVL(M.STTEMNT_PC_KRW, 0)) * 100,2)) AS DATA_VALUE
+		              ,ROW_NUMBER() OVER(ORDER BY SUM(DISTINCT NVL(A.DRWBAK_AMOUNT, 0))) AS RK
+		          FROM EXPORT_CERT_MST M
+		          LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+		            ON M.COMPANY_CODE = B.COMPANY_CODE
+		           AND M.DIVISION_CODE = B.DIVISION_CODE
+		           AND M.XPORT_STTEMNT_NO = B.XPORT_STTEMNT_NO
+		           AND M.LNE_NO = B.LNE_NO
+		           AND M.POUCH_NO = B.POUCH_NO
+		           AND M.ITEM_CODE = B.ITEM_CODE
+		          LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN A
+		            ON A.PRESENTN_NO = B.PRESENTN_NO
+		           AND A.COMPANY_CODE = B.COMPANY_CODE
+		         WHERE M.COMPANY_CODE = #{COMPANY_CODE}
+		           AND M.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		           AND NVL(A.DRWBAK_AMOUNT, 0) <![CDATA[>]]> 0
+			    <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+						    AND M.ITEM_CODE= #{SEARCH_KEY_WORD}
+						    </when>
+						    <when test="SEARCH_OPTION == 'SW'">
+						    AND M.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+						    <otherwise>
+						    AND M.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+						    </otherwise>
+						</choose>
+					</if>	
+				</if>
+		         GROUP BY M.HS_CODE
+		                 ,M.HS_CODE
+		        
+		        ) LST
+           WHERE RK <![CDATA[<]]> 6
+
+  </select>
+  
+  <select id="rpt008_getHsCodeDrwbakUsedQtyData" parameterType="HashMap" resultType="HashMap">
+	/* Top 5 rpt008_getHsCodeDrwbakUsedQtyData */
+    SELECT LABEL_VALUE
+	      ,CODE_VALUE
+	      ,DATA_VALUE
+	  FROM (SELECT B.HS_CODE AS LABEL_VALUE
+	              ,B.HS_CODE AS CODE_VALUE
+	              ,DECODE(SUM(L.QY),0,0,ROUND(SUM(L.DLIVY_QY) / SUM(L.QY), 4) * 100) AS DATA_VALUE
+	              ,RANK() OVER(ORDER BY(SUM(L.DLIVY_QY) / SUM(L.QY)) DESC) AS RK
+	          FROM IMPDEC_CERFIN_HDER A
+	         INNER JOIN IMPDEC_CERFIN_ITEM B
+	            ON A.COMPANY_CODE = B.COMPANY_CODE
+	           AND A.DIVISION_CODE = B.DIVISION_CODE
+	           AND A.IMPDEC_NO = B.IMPDEC_NO
+	         INNER JOIN INCME_LOCAL_BNT_SM L
+	            ON B.COMPANY_CODE = L.COMPANY_CODE
+	           AND B.DIVISION_CODE = L.DIVISION_CODE
+	           AND B.IMPDEC_NO = L.IMPDEC_NO
+	           AND B.LNE_NO = L.LNE_NO
+	           AND B.POUCH_NO = L.POUCH_NO
+	    LEFT OUTER JOIN VENDOR V
+	            ON A.COMPANY_CODE = V.COMPANY_CODE
+	           AND A.VENDOR_CODE = V.VENDOR_CODE
+	         WHERE A.VENDOR_CODE IS NOT NULL
+	           AND A.COMPANY_CODE = #{COMPANY_CODE}
+	           AND A.STTEMNT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		       <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+						    AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+						    </when>
+						    <when test="SEARCH_OPTION == 'SW'">
+						    AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+						    <otherwise>
+						    AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+						    </otherwise>
+						</choose>
+					</if>	
+				</if>
+	         GROUP BY B.HS_CODE ,B.HS_CODE)
+       WHERE RK <![CDATA[<]]> 6
+  </select>
+  
+  <select id="rpt008_getHsCodeTaxByDrwBakRate" parameterType="HashMap" resultType="HashMap">
+  	/* Top 5 rpt008_getHsCodeTaxByDrwBakRate */
+	SELECT CODE_VALUE
+	      ,LABEL_VALUE
+	      ,DATA_VALUE
+	  FROM (SELECT Z.HS_CODE AS CODE_VALUE
+	              ,Z.HS_CODE AS LABEL_VALUE
+	              ,Z.TOT_TAX
+	              ,Z.DRWBAK_TAX
+	              ,DECODE(Z.TOT_TAX,0,0,ROUND(Z.DRWBAK_TAX / Z.TOT_TAX, 4) * 100) AS DATA_VALUE
+	              ,RANK() OVER(ORDER BY Z.DRWBAK_TAX / Z.TOT_TAX DESC) AS RK
+	          FROM (SELECT B.HS_CODE
+	                      ,SUM(NVL(L.CSTMS, 0) + NVL(L.INTTAX, 0) + NVL(L.ECX_AMOUNT, 0) + NVL(L.AGSPT, 0) +
+	                           NVL(L.TRANTAX, 0) + NVL(L.LQTX_AMOUNT, 0)) AS TOT_TAX
+	                      ,SUM(NVL(XC.CSTMS, 0) + NVL(XC.INTTAX, 0) + NVL(XC.ECX_AMOUNT, 0) + NVL(XC.AGSPT, 0) +
+	                           NVL(XC.TRANTAX, 0) + NVL(XC.LQTX_AMOUNT, 0)) AS DRWBAK_TAX
+	                  FROM IMPDEC_CERFIN_HDER A
+	                 INNER JOIN IMPDEC_CERFIN_ITEM B
+	                    ON A.COMPANY_CODE = B.COMPANY_CODE
+	                   AND A.DIVISION_CODE = B.DIVISION_CODE
+	                   AND A.IMPDEC_NO = B.IMPDEC_NO
+	                 INNER JOIN INCME_LOCAL_BNT_SM L
+	                    ON B.COMPANY_CODE = L.COMPANY_CODE
+	                   AND B.DIVISION_CODE = L.DIVISION_CODE
+	                   AND B.IMPDEC_NO = L.IMPDEC_NO
+	                   AND B.LNE_NO = L.LNE_NO
+	                   AND B.POUCH_NO = L.POUCH_NO
+	                  LEFT OUTER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL XC
+	                    ON L.COMPANY_CODE = XC.COMPANY_CODE
+	                   AND L.IMPDEC_NO = XC.IMPDEC_NO
+	                   AND L.LNE_NO = XC.LNE_NO
+	                   AND L.POUCH_NO = XC.POUCH_NO
+	                  LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG XB
+	                    ON XB.COMPANY_CODE = XC.COMPANY_CODE
+	                   AND XB.PRESENTN_NO = XC.PRESENTN_NO
+	                   AND XB.THNG_SEQ = XC.THNG_SEQ
+	                  LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN XA
+	                    ON XB.PRESENTN_NO = XA.PRESENTN_NO
+	                   AND XB.COMPANY_CODE = XA.COMPANY_CODE
+	                 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+	                   AND A.STTEMNT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+	                   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+							<if test="SEARCH_TYPE == 'ITEM_CODE'">
+								<choose>
+									<when test="SEARCH_OPTION == 'EQ'">
+								    AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+								    </when>
+								    <when test="SEARCH_OPTION == 'SW'">
+								    AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+									</when>
+								    <otherwise>
+								    AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+								    </otherwise>
+								</choose>
+							</if>	
+						</if>
+	                 GROUP BY B.HS_CODE) Z
+	         WHERE DRWBAK_TAX > 0)
+     WHERE RK <![CDATA[<]]> 6
+
+  </select>
+  
+  
+  <select id="rpt008_getNationCodeDrwbak_Rate" parameterType="HashMap" resultType="HashMap">
+    /* Top 5 rpt008_getNationCodeDrwbak_Rate */
+	SELECT LABEL_VALUE
+	      ,CODE_VALUE
+	      ,DATA_VALUE
+	  FROM (SELECT M.NATION_CODE AS LABEL_VALUE
+	              ,M.NATION_CODE AS CODE_VALUE
+	              ,CASE
+	                   WHEN SUM(NVL(M.STTEMNT_PC_KRW, 0)) = 0 THEN
+	                    0
+	                   ELSE
+	                    ROUND(SUM(NVL(A.DRWBAK_AMOUNT, 0)) / SUM(NVL(M.STTEMNT_PC_KRW, 0)), 4) * 100
+	               END AS DATA_VALUE
+	              , RANK() OVER(ORDER BY(CASE
+	                   WHEN SUM(NVL(M.STTEMNT_PC_KRW, 0)) = 0 THEN
+	                    0
+	                   ELSE
+	                    ROUND(SUM(NVL(A.DRWBAK_AMOUNT, 0)) / SUM(NVL(M.STTEMNT_PC_KRW, 0)), 4) * 100
+	               END) DESC) AS RK
+	          FROM EXPORT_CERT_MST M
+	          LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+	            ON M.COMPANY_CODE = B.COMPANY_CODE
+	           AND M.DIVISION_CODE = B.DIVISION_CODE
+	           AND M.XPORT_STTEMNT_NO = B.XPORT_STTEMNT_NO
+	           AND M.LNE_NO = B.LNE_NO
+	           AND M.POUCH_NO = B.POUCH_NO
+	           AND M.ITEM_CODE = B.ITEM_CODE
+	          LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN A
+	            ON A.PRESENTN_NO = B.PRESENTN_NO
+	           AND A.COMPANY_CODE = B.COMPANY_CODE
+	         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+	           AND M.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+	            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND M.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND M.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND M.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>
+	         GROUP BY M.NATION_CODE)
+     WHERE RK <![CDATA[<]]> 6
+
+  </select>
+  
+  <select id="rpt008_getNationCodeDrwbakUsedQtyData" parameterType="HashMap" resultType="HashMap">
+	/* Top 5 rpt008_getNationCodeDrwbakUsedQtyData */
+	SELECT LABEL_VALUE
+	      ,CODE_VALUE
+	      ,DATA_VALUE
+	  FROM (SELECT A.OVSEA_SUPLER_NATION_CODE AS LABEL_VALUE
+	              ,A.OVSEA_SUPLER_NATION_CODE AS CODE_VALUE
+	              ,DECODE(SUM(L.QY),0,0,ROUND(SUM(L.DLIVY_QY) / SUM(L.QY), 4) * 100) AS DATA_VALUE
+	              ,RANK() OVER(ORDER BY(SUM(L.DLIVY_QY) / SUM(L.QY)) DESC) AS RK
+	          FROM IMPDEC_CERFIN_HDER A
+	         INNER JOIN IMPDEC_CERFIN_ITEM B
+	            ON A.COMPANY_CODE = B.COMPANY_CODE
+	           AND A.DIVISION_CODE = B.DIVISION_CODE
+	           AND A.IMPDEC_NO = B.IMPDEC_NO
+	         INNER JOIN INCME_LOCAL_BNT_SM L
+	            ON B.COMPANY_CODE = L.COMPANY_CODE
+	           AND B.DIVISION_CODE = L.DIVISION_CODE
+	           AND B.IMPDEC_NO = L.IMPDEC_NO
+	           AND B.LNE_NO = L.LNE_NO
+	           AND B.POUCH_NO = L.POUCH_NO
+	    LEFT OUTER JOIN VENDOR V
+	            ON A.COMPANY_CODE = V.COMPANY_CODE
+	           AND A.VENDOR_CODE = V.VENDOR_CODE
+	         WHERE A.VENDOR_CODE IS NOT NULL
+	           AND A.COMPANY_CODE = #{COMPANY_CODE}
+	           AND A.STTEMNT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+	            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>
+	         GROUP BY A.OVSEA_SUPLER_NATION_CODE)
+	WHERE RK <![CDATA[<]]> 6
+  </select>
+  
+  <select id="rpt008_getNationCodeTaxByDrwBakRate" parameterType="HashMap" resultType="HashMap">
+  	/* Top 5 rpt008_getNationCodeTaxByDrwBakRate */
+	SELECT CODE_VALUE
+	      ,LABEL_VALUE
+	      ,DATA_VALUE
+	  FROM (SELECT Z.OVSEA_SUPLER_NATION_CODE AS CODE_VALUE
+	              ,Z.OVSEA_SUPLER_NATION_CODE AS LABEL_VALUE
+	              ,Z.TOT_TAX
+	              ,Z.DRWBAK_TAX
+	              ,DECODE(Z.TOT_TAX,0,0,ROUND(Z.DRWBAK_TAX / Z.TOT_TAX, 4) * 100) AS DATA_VALUE
+	              ,RANK() OVER(ORDER BY Z.DRWBAK_TAX / Z.TOT_TAX DESC) AS RK
+	          FROM (SELECT A.OVSEA_SUPLER_NATION_CODE
+	                      ,SUM(NVL(L.CSTMS, 0) + NVL(L.INTTAX, 0) + NVL(L.ECX_AMOUNT, 0) + NVL(L.AGSPT, 0) +
+	                           NVL(L.TRANTAX, 0) + NVL(L.LQTX_AMOUNT, 0)) AS TOT_TAX
+	                      ,SUM(NVL(XC.CSTMS, 0) + NVL(XC.INTTAX, 0) + NVL(XC.ECX_AMOUNT, 0) + NVL(XC.AGSPT, 0) +
+	                           NVL(XC.TRANTAX, 0) + NVL(XC.LQTX_AMOUNT, 0)) AS DRWBAK_TAX
+	                  FROM IMPDEC_CERFIN_HDER A
+	                 INNER JOIN IMPDEC_CERFIN_ITEM B
+	                    ON A.COMPANY_CODE = B.COMPANY_CODE
+	                   AND A.DIVISION_CODE = B.DIVISION_CODE
+	                   AND A.IMPDEC_NO = B.IMPDEC_NO
+	                 INNER JOIN INCME_LOCAL_BNT_SM L
+	                    ON B.COMPANY_CODE = L.COMPANY_CODE
+	                   AND B.DIVISION_CODE = L.DIVISION_CODE
+	                   AND B.IMPDEC_NO = L.IMPDEC_NO
+	                   AND B.LNE_NO = L.LNE_NO
+	                   AND B.POUCH_NO = L.POUCH_NO
+	                  LEFT OUTER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL XC
+	                    ON L.COMPANY_CODE = XC.COMPANY_CODE
+	                   AND L.IMPDEC_NO = XC.IMPDEC_NO
+	                   AND L.LNE_NO = XC.LNE_NO
+	                   AND L.POUCH_NO = XC.POUCH_NO
+	                  LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG XB
+	                    ON XB.COMPANY_CODE = XC.COMPANY_CODE
+	                   AND XB.PRESENTN_NO = XC.PRESENTN_NO
+	                   AND XB.THNG_SEQ = XC.THNG_SEQ
+	                  LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN XA
+	                    ON XB.PRESENTN_NO = XA.PRESENTN_NO
+	                   AND XB.COMPANY_CODE = XA.COMPANY_CODE
+	                 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+	                   AND A.STTEMNT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+							<if test="SEARCH_TYPE == 'ITEM_CODE'">
+								<choose>
+									<when test="SEARCH_OPTION == 'EQ'">
+									AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+									</when>
+									<when test="SEARCH_OPTION == 'SW'">
+									AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+									</when>
+									<otherwise>
+									AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+									</otherwise>
+								</choose>
+							</if>	
+						</if>	                   
+	                 GROUP BY A.OVSEA_SUPLER_NATION_CODE) Z
+	         WHERE DRWBAK_TAX > 0)
+     WHERE RK <![CDATA[<]]> 6
+    
+  </select>
+  
+  
+  <select id="rpt008_getCcpyAmountRate" parameterType="HashMap" resultType="HashMap">
+  	/* Top 5 rpt008_getCcpyAmountRate */
+		SELECT '기납증/분증' AS LABEL_VALUE
+		       ,'CCPY' AS CODE_VALUE
+		       , NVL(SUM(B.PO_AMOUNT),0) AS DATA_VALUE
+		  FROM INCME_LOCAL_BNT_SM A 
+		 INNER JOIN CCPY_CSTMR_DMSTC B
+		    ON A.COMPANY_CODE = B.COMPANY_CODE
+		   AND A.DIVISION_CODE = B.DIVISION_CODE
+		   AND A.IMPDEC_NO = B.CTRM_REGIST_NO
+		   AND A.LNE_NO = B.LNE_NO
+		   AND A.POUCH_NO = B.POUCH_NO
+		   AND A.ITEM_CODE = B.ITEM_CODE
+		 WHERE A.RAWMTRL_SE IN ('02','04')
+		   AND A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		   	   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>
+		UNION ALL
+		SELECT '수출금액' AS LABEL_VALUE
+		       ,'EXPT' AS CODE_VALUE
+		       , NVL(SUM(A.STTEMNT_PC_KRW),0)
+		  FROM EXPORT_CERT_MST A 
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+	            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>		   
+  </select>
+  
+  <select id="rpt008_getCcpyQtyRate" parameterType="HashMap" resultType="HashMap">
+  	/* Top 5 rpt008_getCcpyQtyRate */
+		SELECT '기납증/분증' AS LABEL_VALUE
+		       ,'CCPY' AS CODE_VALUE
+		       ,NVL(SUM(A.QY),0) AS DATA_VALUE
+		  FROM INCME_LOCAL_BNT_SM A 
+		 INNER JOIN CCPY_CSTMR_DMSTC B
+		    ON A.COMPANY_CODE = B.COMPANY_CODE
+		   AND A.DIVISION_CODE = B.DIVISION_CODE
+		   AND A.IMPDEC_NO = B.CTRM_REGIST_NO
+		   AND A.LNE_NO = B.LNE_NO
+		   AND A.POUCH_NO = B.POUCH_NO
+		   AND A.ITEM_CODE = B.ITEM_CODE
+		 WHERE A.RAWMTRL_SE IN ('02','04')
+		   AND A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.EFECT_BGNDE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+	            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>		   
+		UNION ALL
+		SELECT '수출금액' AS LABEL_VALUE
+		       ,'EXPT' AS CODE_VALUE
+		       ,NVL(SUM(A.ITEM_QTY),0)
+		  FROM EXPORT_CERT_MST A 
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		   	     <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND A.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>	
+  </select>
+  
+
+
+  <select id="rpt008_getCtrmAmountRate" parameterType="HashMap" resultType="HashMap">
+  	/* Top 5 rpt008_getCtrmAmountRate */
+	SELECT LABEL_VALUE
+	       ,CODE_VALUE
+	       ,CASE WHEN SUM(DATA_VALUE) OVER() = 0 THEN 0 
+               ELSE 
+                    ROUND(TO_NUMBER(DATA_VALUE / SUM(DATA_VALUE) OVER()),5)* 100 
+               END AS DATA_VALUE
+	 FROM (  
+			SELECT '구매확인서' AS LABEL_VALUE
+			      ,'PO' AS CODE_VALUE
+			      ,NVL(SUM(B.AMOUNT),0) AS DATA_VALUE
+			  FROM SUPT_DOC_HDR A
+			 INNER JOIN SUPT_DOC_ITEM B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.SUPT_DOC_CODE = B.SUPT_DOC_CODE
+			 INNER JOIN CUSTOMER_MODEL CM
+			    ON B.COMPANY_CODE = CM.COMPANY_CODE
+			   AND B.DIVISION_CODE = CM.DIVISION_CODE
+			   AND A.CUSTOMER_CODE = CM.CUSTOMER_CODE
+			   AND B.ITEM_CODE = CM.CUSTOMER_ITEM_CODE
+			  LEFT OUTER JOIN CTRM_TRGET_THNG TT
+			    ON A.COMPANY_CODE = TT.COMPANY_CODE
+			   AND A.DIVISION_CODE = TT.DIVISION_CODE
+			   AND CM.ITEM_CODE = TT.ITEM_CODE
+			   AND A.SUPT_DOC_NO = TT.BASIS_DOC_NO
+			  LEFT OUTER JOIN CTRM_THING_RAWMTRL TR
+			    ON A.COMPANY_CODE = TR.COMPANY_CODE
+			   AND A.DIVISION_CODE = TR.DIVISION_CODE
+			   AND CM.ITEM_CODE = TR.RAWMTRL_CODE
+			   AND A.SUPT_DOC_NO = TR.BASIS_DOC_NO
+			 WHERE A.SUPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			   AND HS_CODE10 IS NOT NULL
+			   AND LENGTH(HS_CODE10) = 10
+			   AND A.COMPANY_CODE = #{COMPANY_CODE}
+			   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>	
+			UNION ALL
+			SELECT '기납증/분증' AS LABEL_VALUE
+			      ,'CTRM' AS CODE_VALUE
+			      ,NVL(SUM(TT.STTEMNT_PC_KRW),0) + NVL(SUM(TR.STTEMNT_PC_KRW),0) AS DATA_VALUE
+			  FROM SUPT_DOC_HDR A
+			 INNER JOIN SUPT_DOC_ITEM B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.SUPT_DOC_CODE = B.SUPT_DOC_CODE
+			 INNER JOIN CUSTOMER_MODEL CM
+			    ON B.COMPANY_CODE = CM.COMPANY_CODE
+			   AND B.DIVISION_CODE = CM.DIVISION_CODE
+			   AND A.CUSTOMER_CODE = CM.CUSTOMER_CODE
+			   AND B.ITEM_CODE = CM.CUSTOMER_ITEM_CODE
+			  LEFT OUTER JOIN CTRM_TRGET_THNG TT
+			    ON A.COMPANY_CODE = TT.COMPANY_CODE
+			   AND A.DIVISION_CODE = TT.DIVISION_CODE
+			   AND CM.ITEM_CODE = TT.ITEM_CODE
+			   AND A.SUPT_DOC_NO = TT.BASIS_DOC_NO
+			  LEFT OUTER JOIN CTRM_THING_RAWMTRL TR
+			    ON A.COMPANY_CODE = TR.COMPANY_CODE
+			   AND A.DIVISION_CODE = TR.DIVISION_CODE
+			   AND CM.ITEM_CODE = TR.RAWMTRL_CODE
+			   AND A.SUPT_DOC_NO = TR.BASIS_DOC_NO
+			 WHERE A.SUPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			   AND HS_CODE10 IS NOT NULL
+			   AND LENGTH(HS_CODE10) = 10
+			   AND A.COMPANY_CODE = #{COMPANY_CODE}
+			    <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>	
+		   )
+  </select>
+  
+  <select id="rpt008_getCtrmQtyRate" parameterType="HashMap" resultType="HashMap">
+  	/* Top 5 rpt008_getCtrmQtyRate */
+	SELECT LABEL_VALUE
+	       ,CODE_VALUE
+	       ,CASE WHEN SUM(DATA_VALUE) OVER() = 0 THEN 0
+                 ELSE ROUND(TO_NUMBER(DATA_VALUE / SUM(DATA_VALUE) OVER()),5)* 100 
+             END AS DATA_VALUE
+	 FROM (  
+			SELECT '구매확인서' AS LABEL_VALUE
+			      ,'PO' AS CODE_VALUE
+			      ,NVL(SUM(B.QY),0) AS DATA_VALUE
+			  FROM SUPT_DOC_HDR A
+			 INNER JOIN SUPT_DOC_ITEM B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.SUPT_DOC_CODE = B.SUPT_DOC_CODE
+			 INNER JOIN CUSTOMER_MODEL CM
+			    ON B.COMPANY_CODE = CM.COMPANY_CODE
+			   AND B.DIVISION_CODE = CM.DIVISION_CODE
+			   AND A.CUSTOMER_CODE = CM.CUSTOMER_CODE
+			   AND B.ITEM_CODE = CM.CUSTOMER_ITEM_CODE
+			  LEFT OUTER JOIN CTRM_TRGET_THNG TT
+			    ON A.COMPANY_CODE = TT.COMPANY_CODE
+			   AND A.DIVISION_CODE = TT.DIVISION_CODE
+			   AND CM.ITEM_CODE = TT.ITEM_CODE
+			   AND A.SUPT_DOC_NO = TT.BASIS_DOC_NO
+			  LEFT OUTER JOIN CTRM_THING_RAWMTRL TR
+			    ON A.COMPANY_CODE = TR.COMPANY_CODE
+			   AND A.DIVISION_CODE = TR.DIVISION_CODE
+			   AND CM.ITEM_CODE = TR.RAWMTRL_CODE
+			   AND A.SUPT_DOC_NO = TR.BASIS_DOC_NO
+			 WHERE A.SUPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			   AND HS_CODE10 IS NOT NULL
+			   AND LENGTH(HS_CODE10) = 10
+			   AND A.COMPANY_CODE = #{COMPANY_CODE}
+			   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>	
+			UNION ALL
+			SELECT '기납증/분증' AS LABEL_VALUE
+			      ,'CTRM' AS CODE_VALUE
+			      ,NVL(SUM(TT.ACCMLT_ORDER_QY),0) + NVL(SUM(TR.USGQTY),0) AS DATA_VALUE
+			  FROM SUPT_DOC_HDR A
+			 INNER JOIN SUPT_DOC_ITEM B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.SUPT_DOC_CODE = B.SUPT_DOC_CODE
+			 INNER JOIN CUSTOMER_MODEL CM
+			    ON B.COMPANY_CODE = CM.COMPANY_CODE
+			   AND B.DIVISION_CODE = CM.DIVISION_CODE
+			   AND A.CUSTOMER_CODE = CM.CUSTOMER_CODE
+			   AND B.ITEM_CODE = CM.CUSTOMER_ITEM_CODE
+			  LEFT OUTER JOIN CTRM_TRGET_THNG TT
+			    ON A.COMPANY_CODE = TT.COMPANY_CODE
+			   AND A.DIVISION_CODE = TT.DIVISION_CODE
+			   AND CM.ITEM_CODE = TT.ITEM_CODE
+			   AND A.SUPT_DOC_NO = TT.BASIS_DOC_NO
+			  LEFT OUTER JOIN CTRM_THING_RAWMTRL TR
+			    ON A.COMPANY_CODE = TR.COMPANY_CODE
+			   AND A.DIVISION_CODE = TR.DIVISION_CODE
+			   AND CM.ITEM_CODE = TR.RAWMTRL_CODE
+			   AND A.SUPT_DOC_NO = TR.BASIS_DOC_NO
+			 WHERE A.SUPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			   AND HS_CODE10 IS NOT NULL
+			   AND LENGTH(HS_CODE10) = 10
+			   AND A.COMPANY_CODE = #{COMPANY_CODE}
+			   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>				   
+		   )
+  </select>
+  
+  <select id="retrieveRpt00801List" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT B.XPORT_STTEMNT_NO AS STTEMNT_NO
+			       ,A.MANUFAC_NAME
+			       ,A.COMPANY_CODE
+			       ,B.ITEM_CODE
+			       ,B.ITEM_NM
+			       ,A.HS_CODE
+			       ,B.STTEMNT_PC_KRW
+			       ,B.ACCMLT_ORDER_QY
+			       ,TRUNC(SUM(NVL(D.CSTMS,0) + NVL(D.INTTAX,0) + NVL(D.ECX_AMOUNT,0) + NVL(D.AGSPT,0) + NVL(D.TRANTAX,0) + NVL(D.LQTX_AMOUNT,0)),-1) AS TOT_TAX
+			       ,TRUNC(SUM(C.DRWBAK_AMOUNT),-1) AS DRWBAK_AMOUNT
+			       ,SUM(C.USGQTY) AS USGQTY
+			       ,M.NATION_CODE
+			  FROM DRWBAK_REQSTDOC_CMMN A
+			 INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+			    ON A.PRESENTN_NO = B.PRESENTN_NO
+			   AND A.COMPANY_CODE = B.COMPANY_CODE
+			 INNER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL C
+			    ON B.COMPANY_CODE = C.COMPANY_CODE
+			   AND B.PRESENTN_NO = C.PRESENTN_NO
+			   AND B.THNG_SEQ = C.THNG_SEQ
+			 INNER JOIN EXPORT_CERT_MST M
+               ON M.COMPANY_CODE = B.COMPANY_CODE
+              AND M.DIVISION_CODE = B.DIVISION_CODE
+              AND M.XPORT_STTEMNT_NO = B.XPORT_STTEMNT_NO
+              AND M.LNE_NO = B.LNE_NO
+              AND M.POUCH_NO = B.POUCH_NO
+              AND M.ITEM_CODE = B.ITEM_CODE  
+			  
+			 <!-- INNER JOIN IMPDEC_CERFIN_ITEM D -->
+			 INNER JOIN INCME_LOCAL_BNT_SM D
+			    ON D.COMPANY_CODE = C.COMPANY_CODE
+			   AND D.IMPDEC_NO = C.IMPDEC_NO
+			   AND D.LNE_NO = C.LNE_NO
+			   AND D.POUCH_NO = C.POUCH_NO
+			   AND D.ITEM_CODE = C.RAWMTRL_CODE
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			 <if test="TAB_SEARCH_TYPE == 'VENDOR_PIE_01'">
+			   AND M.MANUFAC_NAME = #{DETAIL_CODE}
+			 </if>
+			 <if test="TAB_SEARCH_TYPE == 'ITEM_PIE_01'">
+			   AND M.ITEM_CODE = #{DETAIL_CODE}
+			 </if>
+			 <if test="TAB_SEARCH_TYPE == 'HSCODE_PIE_01'">
+			   AND A.HS_CODE = #{DETAIL_CODE}
+			 </if>
+			 <if test="TAB_SEARCH_TYPE == 'NATION_PIE_01'">
+			   AND M.NATION_CODE = #{DETAIL_CODE}
+			 </if>	
+				<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND M.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND M.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND M.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>	 		 
+			  AND M.DSPTH_DATE  BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			 <!--
+			   AND A.DRWBAK_COMP_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			  
+			   AND A.CREATE_DATE BETWEEN TO_DATE(#{SEARCH_FROM_DATE}, 'RRRRMMDD') AND TO_DATE(#{SEARCH_TO_DATE}, 'RRRRMMDD')
+			 -->  
+			 GROUP BY B.XPORT_STTEMNT_NO
+			       ,A.MANUFAC_NAME
+			       ,A.COMPANY_CODE
+			       ,B.ITEM_CODE
+			       ,B.ITEM_NM
+			       ,A.HS_CODE
+			       ,B.STTEMNT_PC_KRW
+			       ,B.ACCMLT_ORDER_QY
+			       ,M.NATION_CODE
+						
+		<include refid="paging-postfix"/>
+	</select>
+	
+	 
+  <select id="retrieveRpt0080XList_IMPDEC" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			    SELECT A.IMPDEC_MANAGE_NO AS STTEMNT_NO
+			         , NVL(A.SUPLER_MTLTY_1,V.VENDOR_NAME) AS MANUFAC_NAME
+			         , A.COMPANY_CODE
+			         , B.ITEM_CODE
+			         , B.ITEM_NM
+			         , B.HS_CODE
+			         , B.CVODV_KRW AS STTEMNT_PC_KRW
+			         , A.OVSEA_SUPLER_NATION_CODE AS NATION_CODE
+			         , TRUNC(SUM(NVL(L.CSTMS, 0) + NVL(L.INTTAX, 0) + NVL(L.ECX_AMOUNT, 0) + NVL(L.AGSPT, 0) + NVL(L.TRANTAX, 0) + NVL(L.LQTX_AMOUNT, 0)),-1) AS TOT_TAX
+			         , TRUNC(SUM(NVL(XC.CSTMS, 0) + NVL(XC.INTTAX, 0) + NVL(XC.ECX_AMOUNT, 0) + NVL(XC.AGSPT, 0) +  NVL(XC.TRANTAX, 0) + NVL(XC.LQTX_AMOUNT, 0)),-1)  AS DRWBAK_AMOUNT
+                     /*
+                     , B.QY AS ACCMLT_ORDER_QY
+			         , TRUNC(SUM(CASE WHEN B.BASS_UNIT = XC.BASS_UNIT THEN XC.USGQTY
+                           	          ELSE (CASE WHEN B.BASS_UNIT = 'KG' THEN XC.USGQTY / 1000
+                                	             WHEN B.BASS_UNIT = 'LB' THEN XC.USGQTY / 0.453592 / 1000
+                                    	         WHEN B.BASS_UNIT = 'DR' THEN XC.USGQTY / 1000 / 30
+                                      	         WHEN B.BASS_UNIT = 'GR' THEN XC.USGQTY / 0.064799
+                                      	         WHEN B.BASS_UNIT = 'MT' THEN XC.USGQTY / 1000 / 1000
+                                      	         ELSE B.QY END)
+                                       END),2) AS USGQTY
+                     */
+                     , TRUNC(SUM(NVL(L.QY,0))) AS ACCMLT_ORDER_QY
+                     , TRUNC(SUM(NVL(L.DLIVY_QY,0))) AS USGQTY                  
+			      FROM IMPDEC_CERFIN_HDER A 
+			     INNER JOIN IMPDEC_CERFIN_ITEM B
+			        ON A.COMPANY_CODE = B.COMPANY_CODE
+			       AND A.DIVISION_CODE = B.DIVISION_CODE
+			       AND A.IMPDEC_NO = B.IMPDEC_NO
+			     INNER JOIN INCME_LOCAL_BNT_SM L
+			        ON B.COMPANY_CODE = L.COMPANY_CODE
+			       AND B.DIVISION_CODE = L.DIVISION_CODE
+			       AND B.IMPDEC_NO = L.IMPDEC_NO
+			       AND B.LNE_NO = L.LNE_NO
+			       AND B.POUCH_NO = L.POUCH_NO   
+			LEFT OUTER JOIN VENDOR V
+			        ON A.COMPANY_CODE = V.COMPANY_CODE
+			       AND A.VENDOR_CODE = V.VENDOR_CODE   
+			LEFT OUTER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL XC
+			        ON L.COMPANY_CODE = XC.COMPANY_CODE
+			       AND L.IMPDEC_NO = XC.IMPDEC_NO
+			       AND L.LNE_NO = XC.LNE_NO
+			       AND L.POUCH_NO = XC.POUCH_NO
+			LEFT OUTER JOIN DRWBAK_REQSTDOC_TRGET_THNG XB
+			        ON XB.COMPANY_CODE = XC.COMPANY_CODE
+			       AND XB.PRESENTN_NO = XC.PRESENTN_NO
+			       AND XB.THNG_SEQ = XC.THNG_SEQ
+			LEFT OUTER JOIN DRWBAK_REQSTDOC_CMMN XA
+			        ON XB.PRESENTN_NO = XA.PRESENTN_NO
+			       AND XB.COMPANY_CODE = XA.COMPANY_CODE   
+			     WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			 <if test="TAB_SEARCH_TYPE == 'VENDOR'">
+			   AND A.VENDOR_CODE  = #{DETAIL_CODE}
+			 </if>
+			 <if test="TAB_SEARCH_TYPE == 'ITEM'">
+			   AND B.ITEM_CODE= #{DETAIL_CODE}
+			 </if>
+			 <if test="TAB_SEARCH_TYPE == 'HSCODE'">
+			   AND B.HS_CODE = #{DETAIL_CODE}
+			 </if>
+			 <if test="TAB_SEARCH_TYPE == 'NATION'">
+			   AND A.OVSEA_SUPLER_NATION_CODE = #{DETAIL_CODE}
+			 </if>	
+				<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+							<when test="SEARCH_OPTION == 'EQ'">
+							AND B.ITEM_CODE= #{SEARCH_KEY_WORD}
+							</when>
+							<when test="SEARCH_OPTION == 'SW'">
+							AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							</when>
+							<otherwise>
+							AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+							</otherwise>
+						</choose>
+					</if>	
+				</if>	 		 
+			  AND A.STTEMNT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			 GROUP BY A.IMPDEC_MANAGE_NO
+			       ,NVL(A.SUPLER_MTLTY_1,V.VENDOR_NAME)
+			       ,A.COMPANY_CODE
+			       ,B.ITEM_CODE
+			       ,B.ITEM_NM
+			       ,B.HS_CODE
+			       ,B.CVODV_KRW
+			       ,B.QY
+			       ,A.OVSEA_SUPLER_NATION_CODE
+						
+		<include refid="paging-postfix"/>
+	</select>
+	
+
+
+  <select id="retrieve_R010ImportList" parameterType="HashMap" resultType="HashMap">
+  		<include refid="paging-prefix"/>
+		SELECT '수입' AS SEARCH_GUBUN 
+		     , IMPDEC_MANAGE_NO  AS MANAGE_NO
+		     , LNE_NO
+		     , POUCH_NO
+		     , ACPT_DATE 
+		     , HS_CODE
+		     , ITEM_CODE
+		     , ITEM_NM
+		     , QY || '(' || BASS_UNIT || ')' AS ITEM_QTY
+		     , CVODV_KRW AS AMOUNT
+		  FROM IMPDEC_CERFIN_ITEM I 
+		 WHERE I.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		   AND I.COMPANY_CODE = #{COMPANY_CODE}
+		   AND EXISTS (SELECT 1 
+		                 FROM  (SELECT ICI.IMPDEC_MANAGE_NO 
+		                             , ICI.LNE_NO
+		                             , ICI.POUCH_NO
+		                          FROM IMPDEC_CERFIN_ITEM ICI
+		                         WHERE ICI.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		                      GROUP BY ICI.IMPDEC_MANAGE_NO
+		                             , ICI.LNE_NO
+		                             , ICI.POUCH_NO
+		                        HAVING COUNT(*) <![CDATA[ >= ]]>  2) T
+		               WHERE T.IMPDEC_MANAGE_NO = I.IMPDEC_MANAGE_NO
+		                 AND T.LNE_NO = I.LNE_NO
+		                 AND T.POUCH_NO = I.POUCH_NO)
+		   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND I.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND I.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND I.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+				<if test="SEARCH_TYPE_NO == 'IMPDEC_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION_NO == 'EQ'">
+	    					AND I.IMPDEC_MANAGE_NO = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION_NO == 'SW'">
+	    					AND I.IMPDEC_MANAGE_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND I.IMPDEC_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+		ORDER BY IMPDEC_MANAGE_NO, LNE_NO, POUCH_NO
+		<include refid="paging-postfix"/>
+  </select>
+  
+  <select id="retrieve_R010ExportList" parameterType="HashMap" resultType="HashMap">
+  		<include refid="paging-prefix"/>
+		SELECT '수출' AS SEARCH_GUBUN 
+		     , EXPDECL_MANAGE_NO AS MANAGE_NO
+		     , LNE_NO
+		     , POUCH_NO 
+		     , DSPTH_DATE AS ACPT_DATE
+		     , HS_CODE
+		     , ITEM_CODE
+		     , ITEM_NM
+		     , ITEM_QTY || '(' || SLE_UNIT || ')' AS ITEM_QTY
+		     , STTEMNT_PC_KRW AS AMOUNT
+		  FROM EXPORT_CERT_MST I 
+		 WHERE I.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		   AND I.COMPANY_CODE = #{COMPANY_CODE}
+		   AND EXISTS (SELECT 1 
+		                 FROM  (SELECT ICI.EXPDECL_MANAGE_NO 
+		                             , ICI.LNE_NO
+		                             , ICI.POUCH_NO
+		                          FROM EXPORT_CERT_MST ICI
+		                         WHERE ICI.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+		                      GROUP BY ICI.EXPDECL_MANAGE_NO
+		                             , ICI.LNE_NO
+		                             , ICI.POUCH_NO
+		                        HAVING COUNT(*) <![CDATA[ >= ]]>  2) T
+		               WHERE T.EXPDECL_MANAGE_NO = I.EXPDECL_MANAGE_NO
+		                 AND T.LNE_NO = I.LNE_NO
+		                 AND T.POUCH_NO = I.POUCH_NO)
+		   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND I.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND I.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND I.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+				<if test="SEARCH_TYPE_NO == 'IMPDEC_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION_NO == 'EQ'">
+	    					AND I.EXPDECL_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+	    				</when>
+	    				<when test="SEARCH_OPTION_NO == 'SW'">
+	    					AND I.EXPDECL_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND I.EXPDECL_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO} || '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+		ORDER BY EXPDECL_MANAGE_NO, LNE_NO, POUCH_NO
+		<include refid="paging-postfix"/>
+  </select>
+
+
+  <select id="retrieve_R011List" parameterType="HashMap" resultType="HashMap">
+ 		<include refid="paging-prefix"/>  
+	    SELECT '수입' AS GUBUN 
+	         , IMPDEC_MANAGE_NO  
+	         , ACPT_DATE 
+	         , HS_CODE
+	         , ITEM_CODE
+	         , ITEM_NM  AS ITEM_NAME
+	         , UNIT_PRICE AS ITEM_PRICE
+	         , QY || '(' || BASS_UNIT || ')' AS ITEM_QTY
+	         , CVODV_KRW AS ITEM_AMOUNT                           
+	      FROM IMPDEC_CERFIN_ITEM I 
+	     WHERE 1=1
+	       AND I.COMPANY_CODE = #{COMPANY_CODE}
+	       AND I.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND  #{SEARCH_TO_DATE}
+	        <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND I.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND I.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND I.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND I.ITEM_NM = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND I.ITEM_NM LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND I.ITEM_NM LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+				<if test="SEARCH_TYPE_NO == 'IMPDEC_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION_NO == 'EQ'">
+	    					AND I.IMPDEC_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+	    				</when>
+	    				<when test="SEARCH_OPTION_NO == 'SW'">
+	    					AND I.IMPDEC_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND I.IMPDEC_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO} || '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			<choose>
+	    		<when test="ACTIVE_TAB == 'tab01'">
+	    		ORDER BY ITEM_CODE, HS_CODE, IMPDEC_MANAGE_NO
+	    		</when>
+	    		<when test="ACTIVE_TAB == 'tab02'">
+	    		ORDER BY ITEM_CODE, ITEM_NAME, IMPDEC_MANAGE_NO
+			  	</when>
+	    		<when test="ACTIVE_TAB == 'tab03'">
+	    		ORDER BY ITEM_CODE, UNIT_PRICE DESC
+			  	</when>
+	    		<otherwise>
+	    		ORDER BY IMPDEC_MANAGE_NO, ACPT_DATE, ITEM_CODE
+	    		</otherwise>
+	    	</choose>
+		<include refid="paging-postfix"/>	                  
+  </select>
+
+  <select id="retrieve_diffHsCodeList" parameterType="HashMap" resultType="HashMap">
+ 		<include refid="paging-prefix"/>  
+ 		SELECT T.*
+ 		  FROM (
+		 		SELECT B.*
+		 		     , MAX(RANK) OVER (PARTITION BY ITEM_CODE) MAX_RANK 
+		 		  FROM (
+				 		SELECT A.*
+				 		     , RANK() OVER(PARTITION BY ITEM_CODE ORDER BY A.HS_CODE_CNT DESC)  AS RANK
+				 		  FROM 
+							   (SELECT '수입' AS GUBUN 
+							         , IMPDEC_MANAGE_NO  
+							         , ACPT_DATE 
+							         , HS_CODE
+							         , ITEM_CODE
+							         , ITEM_NM AS ITEM_NAME
+							         , UNIT_PRICE AS ITEM_PRICE
+							         , QY || '(' || BASS_UNIT || ')' AS ITEM_QTY
+							         , CVODV_KRW AS ITEM_AMOUNT                   
+							         , COUNT(HS_CODE) OVER(PARTITION BY ITEM_CODE, HS_CODE) AS HS_CODE_CNT                                  
+							      FROM IMPDEC_CERFIN_ITEM I 
+							     WHERE 1=1
+							       AND I.COMPANY_CODE = #{COMPANY_CODE}
+							       AND I.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+							       AND EXISTS (SELECT 1
+							                     FROM (SELECT ITEM_CODE
+							                                , COUNT(DISTINCT HS_CODE)
+							                             FROM IMPDEC_CERFIN_ITEM C
+							                            WHERE 1=1
+							                              AND C.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+							                         GROUP BY ITEM_CODE
+							                           HAVING COUNT(DISTINCT HS_CODE) >= 2 
+							                          ) T
+							                    WHERE T.ITEM_CODE = I.ITEM_CODE
+							                  )
+							    ) A
+						 )	B  
+				) T
+		  WHERE (T.RANK  <![CDATA[ <> ]]> 1  OR (T.RANK=1 AND T.MAX_RANK = 1 )) 
+		  <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND T.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND T.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND T.ITEM_NAME = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND T.ITEM_NAME LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.ITEM_NAME LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+				<if test="SEARCH_TYPE_NO == 'IMPDEC_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION_NO == 'EQ'">
+	    					AND T.IMPDEC_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+	    				</when>
+	    				<when test="SEARCH_OPTION_NO == 'SW'">
+	    					AND T.IMPDEC_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.IMPDEC_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO} || '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+	   ORDER BY ITEM_CODE, RANK
+		<include refid="paging-postfix"/>	                  
+  </select>
+
+  <select id="retrieve_diffItemNmList" parameterType="HashMap" resultType="HashMap">
+	    <include refid="paging-prefix"/>
+	    SELECT T.*
+	      FROM (
+			 		SELECT B.*
+			 			 , MAX(RANK) OVER (PARTITION BY ITEM_CODE) MAX_RANK 
+			 		  FROM (
+					 		SELECT A.*
+					 		     , RANK() OVER(PARTITION BY ITEM_CODE ORDER BY A.ITEM_NM_CNT DESC)  AS RANK
+					 		  FROM 	    
+								   (
+								    SELECT '수입' AS GUBUN 
+								         , IMPDEC_MANAGE_NO  
+								         , ACPT_DATE 
+								         , HS_CODE
+								         , ITEM_CODE
+								         , ITEM_NM AS ITEM_NAME
+								         , UNIT_PRICE AS ITEM_PRICE
+								         , QY || '(' || BASS_UNIT || ')' AS ITEM_QTY
+								         , CVODV_KRW AS ITEM_AMOUNT
+								         , COUNT(ITEM_NM) OVER(PARTITION BY ITEM_CODE, ITEM_NM) AS ITEM_NM_CNT                   
+								         , COUNT(DISTINCT ITEM_NM) OVER(PARTITION BY ITEM_CODE, HS_CODE) AS ITEM_NM_DUPCNT                                                 
+								      FROM IMPDEC_CERFIN_ITEM I 
+								     WHERE 1=1
+								       AND I.COMPANY_CODE = #{COMPANY_CODE}
+								       AND I.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND  #{SEARCH_TO_DATE}
+								       AND EXISTS (SELECT 1
+								                     FROM (SELECT ITEM_CODE
+								                                , COUNT(DISTINCT ITEM_NM)
+								                             FROM IMPDEC_CERFIN_ITEM C
+								                            WHERE 1=1
+								                              AND C.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+								                         GROUP BY ITEM_CODE
+								                           HAVING COUNT(DISTINCT ITEM_NM) >= 2 
+								                          ) T
+								                    WHERE T.ITEM_CODE = I.ITEM_CODE
+								                  )  
+								    ) A
+							 )	B  
+			   ) T
+		  WHERE (T.RANK  <![CDATA[ <> ]]> 1  OR (T.RANK=1 AND T.MAX_RANK = 1 )) 
+		  <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND T.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND T.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND T.ITEM_NAME = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND T.ITEM_NAME LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.ITEM_NAME LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+				<if test="SEARCH_TYPE_NO == 'IMPDEC_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION_NO == 'EQ'">
+	    					AND T.IMPDEC_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+	    				</when>
+	    				<when test="SEARCH_OPTION_NO == 'SW'">
+	    					AND T.IMPDEC_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.IMPDEC_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO} || '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+	   ORDER BY ITEM_CODE, RANK
+		<include refid="paging-postfix"/>  
+  </select>
+
+
+  <select id="retrieve_diffPriceList" parameterType="HashMap" resultType="HashMap">
+	    <include refid="paging-prefix"/>
+	    SELECT A.* 
+	      FROM (
+			      SELECT '수입' AS GUBUN 
+			           , IMPDEC_MANAGE_NO  
+			           , ACPT_DATE 
+			           , HS_CODE
+			           , ITEM_CODE
+			           , ITEM_NM  AS ITEM_NAME
+			           , UNIT_PRICE AS ITEM_PRICE
+			           , QY || '(' || BASS_UNIT || ')' AS ITEM_QTY
+			           , CVODV_KRW AS ITEM_AMOUNT
+			      --     , MEDIAN(UNIT_PRICE) OVER(PARTITION BY ITEM_CODE) AS MID           -- 중위값                         
+			        FROM IMPDEC_CERFIN_ITEM I 
+			       WHERE 1=1
+			         AND I.COMPANY_CODE = #{COMPANY_CODE}
+			         AND I.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND  #{SEARCH_TO_DATE}
+			         AND I.UNIT_PRICE <![CDATA[<>]]> 0
+			         AND EXISTS (SELECT 1
+			                       FROM (SELECT ITEM_CODE  
+			                                  , MAX(UNIT_PRICE) AS MAX_PRICE
+			                                  , MIN(UNIT_PRICE) AS MIN_PRICE
+			                               FROM IMPDEC_CERFIN_ITEM C
+			                              WHERE 1=1
+			                                AND C.ACPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND  #{SEARCH_TO_DATE}
+			                                AND UNIT_PRICE <![CDATA[<>]]> 0
+			                           GROUP BY ITEM_CODE
+			                             HAVING (MAX(UNIT_PRICE) / MIN(UNIT_PRICE)) <![CDATA[ >= ]]> #{PRICE_DIFF_RANGE}
+			                            ) T
+			                      WHERE T.ITEM_CODE = I.ITEM_CODE 
+			                    )
+			     ) A 
+	    	WHERE 1=1
+	    	--  AND (ITEM_PRICE  <![CDATA[ > ]]> MID * 1.1 OR ITEM_PRICE  <![CDATA[ < ]]> MID * 0.9)	       <!-- +/- 10%까지 무시 -->
+	    	<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND A.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND A.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND A.ITEM_NAME = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND A.ITEM_NAME LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND A.ITEM_NAME LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+				<if test="SEARCH_TYPE_NO == 'IMPDEC_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION_NO == 'EQ'">
+	    					AND A.IMPDEC_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+	    				</when>
+	    				<when test="SEARCH_OPTION_NO == 'SW'">
+	    					AND A.IMPDEC_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND A.IMPDEC_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO} || '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+	     ORDER BY ITEM_CODE, ITEM_NAME, ITEM_PRICE DESC
+		<include refid="paging-postfix"/>	                    
+  </select>
+  
+
+  <select id="retrieve_R012List" parameterType="HashMap" resultType="HashMap">
+	    <include refid="paging-prefix"/>
+		
+		SELECT '수출' AS GUBUN
+		     , E.EXPDECL_MANAGE_NO
+		     , E.LNE_NO
+		     , E.POUCH_NO
+		     , E.MANUFAC_NAME
+		     , E.RQST_PRSN_CODE
+		     , C.CODE_NM AS RQST_PRSN_NAME
+		     , E.DSPTH_DATE
+		     , E.HS_CODE
+		     , E.ITEM_CODE
+		     , E.ITEM_NM 
+		     , E.ITEM_QTY || '(' || E.SLE_UNIT || ')' AS ITEM_QTY
+		     , E.STTEMNT_PC_KRW AS ITEM_AMOUNT
+		     ,(SELECT SUM(DRWBAK_AMOUNT) 
+		         FROM DRWBAK_REQSTDOC_TRGET_THNG A
+		            , DRWBAK_REQSTDOC_INCME_RAWMTRL B
+		        WHERE A.COMPANY_CODE = B.COMPANY_CODE
+		          AND A.PRESENTN_NO = B.PRESENTN_NO
+		          AND A.THNG_SEQ = B.THNG_SEQ
+		          AND A.XPORT_STTEMNT_NO = E.EXPDECL_MANAGE_NO
+		          AND A.ITEM_CODE = E.ITEM_CODE) AS DRWBACK_AMOUNT
+		  FROM EXPORT_CERT_MST E
+	     INNER JOIN COM_CD C
+            ON E.RQST_PRSN_CODE = C.CODE_CD
+           AND C.CATEGORY_CD ='RQST'	  
+		 WHERE E.COMPANY_CODE = #{COMPANY_CODE}
+		   AND E.XPORT_SE IN ('11','17','31')	     
+		   AND E.RQST_PRSN_CODE = '2'
+           AND E.MANUFAC_NAME  <![CDATA[ <> ]]> '(주)아모레퍼시픽'  
+		   AND E.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}     
+		   AND E.RQST_PRSN_CODE LIKE #{RQST_PRSN_CODE} || '%'   
+		   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND E.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND E.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND E.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>    
+			<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+				<if test="SEARCH_TYPE_NO == 'EXPDECL_MANAGE_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION_NO == 'EQ'">
+	    					AND E.EXPDECL_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+	    				</when>
+	    				<when test="SEARCH_OPTION_NO == 'SW'">
+	    					AND E.EXPDECL_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND E.EXPDECL_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			<if test="SEARCH_KEY_WORD_MAKER != null and SEARCH_KEY_WORD_MAKER != ''">
+				<if test="SEARCH_TYPE_MAKER == 'MANUFAC_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION_MAKER == 'EQ'">
+	    					AND E.MANUFAC_NAME = #{SEARCH_KEY_WORD_MAKER}
+	    				</when>
+	    				<when test="SEARCH_OPTION_MAKER == 'SW'">
+	    					AND E.MANUFAC_NAME LIKE #{SEARCH_KEY_WORD_MAKER}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND E.MANUFAC_NAME LIKE '%'||#{SEARCH_KEY_WORD_MAKER}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+		ORDER BY E.EXPDECL_MANAGE_NO, E.LNE_NO, E.POUCH_NO
+		<include refid="paging-postfix"/>	                    
+  </select>
+
+  
+  <select id="retrieveErrorByExportAmountRatePieChart" parameterType="HashMap" resultType="HashMap">
+  		SELECT BL.LABEL_VALUE
+    		 , BL.LABEL_NAME 
+          	 , NVL(VA.DATA_VALUE, 0) AS DATA_VALUE
+          	 , DECODE((SUM(VA.DATA_VALUE) OVER()), 0 , 0, NVL(ROUND(VA.DATA_VALUE / (SUM(VA.DATA_VALUE) OVER()) * 100,2),0)) AS RATE_VALUE
+      	  FROM CHART_LABEL BL
+    LEFT OUTER JOIN ( SELECT 1 AS LABEL_SEQ
+                           , SUM(E.STTEMNT_PC_KRW) AS DATA_VALUE
+                        FROM EXPORT_CERT_MST E
+                       WHERE E.COMPANY_CODE = #{COMPANY_CODE}
+                         AND E.XPORT_SE IN ('11','17','31')
+                         AND (E.RQST_PRSN_CODE <![CDATA[ <> ]]> '2'
+                         OR (E.RQST_PRSN_CODE = '2' AND E.MANUFAC_NAME    =   '(주)아모레퍼시픽'))
+                         AND E.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}     
+                         AND E.RQST_PRSN_CODE LIKE #{RQST_PRSN_CODE} || '%'   
+                           <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+								<if test="SEARCH_TYPE == 'ITEM_CODE'">
+									<choose>
+					    				<when test="SEARCH_OPTION == 'EQ'">
+					    					AND E.ITEM_CODE = #{SEARCH_KEY_WORD}
+					    				</when>
+					    				<when test="SEARCH_OPTION == 'SW'">
+					    					AND E.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+							<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+								<if test="SEARCH_TYPE_NO == 'EXPDECL_MANAGE_NO'">
+									<choose>
+					    				<when test="SEARCH_OPTION_NO == 'EQ'">
+					    					AND E.EXPDECL_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+					    				</when>
+					    				<when test="SEARCH_OPTION_NO == 'SW'">
+					    					AND E.EXPDECL_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.EXPDECL_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+							<if test="SEARCH_KEY_WORD_MAKER != null and SEARCH_KEY_WORD_MAKER != ''">
+								<if test="SEARCH_TYPE_MAKER == 'MANUFAC_NAME'">
+									<choose>
+					    				<when test="SEARCH_OPTION_MAKER == 'EQ'">
+					    					AND E.MANUFAC_NAME = #{SEARCH_KEY_WORD_MAKER}
+					    				</when>
+					    				<when test="SEARCH_OPTION_MAKER == 'SW'">
+					    					AND E.MANUFAC_NAME LIKE #{SEARCH_KEY_WORD_MAKER}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.MANUFAC_NAME LIKE '%'||#{SEARCH_KEY_WORD_MAKER}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+                       UNION ALL
+                      SELECT 2 AS LEBEL
+                           , SUM(STTEMNT_PC_KRW) AS DATA_VALUE
+                        FROM EXPORT_CERT_MST E
+                       WHERE E.COMPANY_CODE = #{COMPANY_CODE}
+                         AND E.XPORT_SE IN ('11','17','31')	       
+                         AND E.RQST_PRSN_CODE = '2'
+                         AND E.MANUFAC_NAME  <![CDATA[ <> ]]> '(주)아모레퍼시픽'
+                         AND E.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+                         AND E.RQST_PRSN_CODE LIKE #{RQST_PRSN_CODE} || '%'    
+                            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+								<if test="SEARCH_TYPE == 'ITEM_CODE'">
+									<choose>
+					    				<when test="SEARCH_OPTION == 'EQ'">
+					    					AND E.ITEM_CODE = #{SEARCH_KEY_WORD}
+					    				</when>
+					    				<when test="SEARCH_OPTION == 'SW'">
+					    					AND E.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+							<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+								<if test="SEARCH_TYPE_NO == 'EXPDECL_MANAGE_NO'">
+									<choose>
+					    				<when test="SEARCH_OPTION_NO == 'EQ'">
+					    					AND E.EXPDECL_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+					    				</when>
+					    				<when test="SEARCH_OPTION_NO == 'SW'">
+					    					AND E.EXPDECL_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.EXPDECL_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+							<if test="SEARCH_KEY_WORD_MAKER != null and SEARCH_KEY_WORD_MAKER != ''">
+								<if test="SEARCH_TYPE_MAKER == 'MANUFAC_NAME'">
+									<choose>
+					    				<when test="SEARCH_OPTION_MAKER == 'EQ'">
+					    					AND E.MANUFAC_NAME = #{SEARCH_KEY_WORD_MAKER}
+					    				</when>
+					    				<when test="SEARCH_OPTION_MAKER == 'SW'">
+					    					AND E.MANUFAC_NAME LIKE #{SEARCH_KEY_WORD_MAKER}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.MANUFAC_NAME LIKE '%'||#{SEARCH_KEY_WORD_MAKER}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+                     ) VA
+             ON BL.LABEL_SEQ = VA.LABEL_SEQ
+          WHERE LABEL_ID = #{LABEL_ID}
+	</select>
+  
+  
+  
+  <select id="retrieveErrorByExportQtyRatePieChart" parameterType="HashMap" resultType="HashMap">
+  		SELECT BL.LABEL_VALUE
+    		 , BL.LABEL_NAME 
+          	 , NVL(VA.DATA_VALUE, 0) AS DATA_VALUE
+          	 ,  DECODE((SUM(VA.DATA_VALUE) OVER()), 0 , 0, NVL(ROUND(VA.DATA_VALUE / (SUM(VA.DATA_VALUE) OVER()) * 100,2),0)) AS RATE_VALUE
+      	  FROM CHART_LABEL BL
+    LEFT OUTER JOIN ( SELECT 1 AS LABEL_SEQ
+                           , COUNT(DISTINCT E.EXPDECL_MANAGE_NO) AS DATA_VALUE
+                        FROM EXPORT_CERT_MST E
+                       WHERE E.COMPANY_CODE = #{COMPANY_CODE}
+                         AND E.XPORT_SE IN ('11','17','31')
+                         AND (E.RQST_PRSN_CODE <![CDATA[ <> ]]> '2'
+                         OR (E.RQST_PRSN_CODE = '2' AND E.MANUFAC_NAME    =   '(주)아모레퍼시픽'))
+                         AND E.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}     
+                         AND E.RQST_PRSN_CODE LIKE #{RQST_PRSN_CODE} || '%'   
+                           <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+								<if test="SEARCH_TYPE == 'ITEM_CODE'">
+									<choose>
+					    				<when test="SEARCH_OPTION == 'EQ'">
+					    					AND E.ITEM_CODE = #{SEARCH_KEY_WORD}
+					    				</when>
+					    				<when test="SEARCH_OPTION == 'SW'">
+					    					AND E.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+							<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+								<if test="SEARCH_TYPE_NO == 'EXPDECL_MANAGE_NO'">
+									<choose>
+					    				<when test="SEARCH_OPTION_NO == 'EQ'">
+					    					AND E.EXPDECL_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+					    				</when>
+					    				<when test="SEARCH_OPTION_NO == 'SW'">
+					    					AND E.EXPDECL_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.EXPDECL_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+							<if test="SEARCH_KEY_WORD_MAKER != null and SEARCH_KEY_WORD_MAKER != ''">
+								<if test="SEARCH_TYPE_MAKER == 'MANUFAC_NAME'">
+									<choose>
+					    				<when test="SEARCH_OPTION_MAKER == 'EQ'">
+					    					AND E.MANUFAC_NAME = #{SEARCH_KEY_WORD_MAKER}
+					    				</when>
+					    				<when test="SEARCH_OPTION_MAKER == 'SW'">
+					    					AND E.MANUFAC_NAME LIKE #{SEARCH_KEY_WORD_MAKER}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.MANUFAC_NAME LIKE '%'||#{SEARCH_KEY_WORD_MAKER}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+                       UNION ALL
+                      SELECT 2 AS LEBEL
+                           , COUNT(DISTINCT E.EXPDECL_MANAGE_NO) AS DATA_VALUE
+                        FROM EXPORT_CERT_MST E
+                       WHERE E.COMPANY_CODE = #{COMPANY_CODE}
+                         AND E.XPORT_SE IN ('11','17','31')	       
+                         AND E.RQST_PRSN_CODE = '2'
+                         AND E.MANUFAC_NAME  <![CDATA[ <> ]]> '(주)아모레퍼시픽'
+                         AND E.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+                         AND E.RQST_PRSN_CODE LIKE #{RQST_PRSN_CODE} || '%'    
+                            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+								<if test="SEARCH_TYPE == 'ITEM_CODE'">
+									<choose>
+					    				<when test="SEARCH_OPTION == 'EQ'">
+					    					AND E.ITEM_CODE = #{SEARCH_KEY_WORD}
+					    				</when>
+					    				<when test="SEARCH_OPTION == 'SW'">
+					    					AND E.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+							<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+								<if test="SEARCH_TYPE_NO == 'EXPDECL_MANAGE_NO'">
+									<choose>
+					    				<when test="SEARCH_OPTION_NO == 'EQ'">
+					    					AND E.EXPDECL_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+					    				</when>
+					    				<when test="SEARCH_OPTION_NO == 'SW'">
+					    					AND E.EXPDECL_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.EXPDECL_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+							<if test="SEARCH_KEY_WORD_MAKER != null and SEARCH_KEY_WORD_MAKER != ''">
+								<if test="SEARCH_TYPE_MAKER == 'MANUFAC_NAME'">
+									<choose>
+					    				<when test="SEARCH_OPTION_MAKER == 'EQ'">
+					    					AND E.MANUFAC_NAME = #{SEARCH_KEY_WORD_MAKER}
+					    				</when>
+					    				<when test="SEARCH_OPTION_MAKER == 'SW'">
+					    					AND E.MANUFAC_NAME LIKE #{SEARCH_KEY_WORD_MAKER}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.MANUFAC_NAME LIKE '%'||#{SEARCH_KEY_WORD_MAKER}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+                     ) VA
+             ON BL.LABEL_SEQ = VA.LABEL_SEQ
+          WHERE LABEL_ID = #{LABEL_ID}
+	</select>
+  
+  
+  
+  
+  <select id="retrieveErrorByDrwbAmountRatePieChart" parameterType="HashMap" resultType="HashMap">
+  		SELECT BL.LABEL_VALUE
+    		 , BL.LABEL_NAME 
+          	 , NVL(VA.DATA_VALUE, 0) AS DATA_VALUE
+          	 , DECODE((SUM(VA.DATA_VALUE) OVER()), 0 , 0, NVL(ROUND(VA.DATA_VALUE / (SUM(VA.DATA_VALUE) OVER()) * 100,2),0)) AS RATE_VALUE
+      	  FROM CHART_LABEL BL
+    LEFT OUTER JOIN ( SELECT 1 AS LABEL_SEQ
+                           , SUM((SELECT SUM(DRWBAK_AMOUNT) 
+                              	    FROM DRWBAK_REQSTDOC_TRGET_THNG A
+                                  	   , DRWBAK_REQSTDOC_INCME_RAWMTRL B
+                              	   WHERE A.COMPANY_CODE = B.COMPANY_CODE
+                                	 AND A.PRESENTN_NO = B.PRESENTN_NO
+                                	 AND A.THNG_SEQ = B.THNG_SEQ
+                                	 AND A.XPORT_STTEMNT_NO = E.EXPDECL_MANAGE_NO
+                                	 AND A.ITEM_CODE = E.ITEM_CODE)) AS DATA_VALUE
+                        FROM EXPORT_CERT_MST E
+                       WHERE E.COMPANY_CODE = #{COMPANY_CODE}
+                         AND E.XPORT_SE IN ('11','17','31')
+                         AND (E.RQST_PRSN_CODE <![CDATA[ <> ]]> '2'
+                         OR (E.RQST_PRSN_CODE = '2' AND E.MANUFAC_NAME    =   '(주)아모레퍼시픽'))
+                         AND E.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}     
+                         AND E.RQST_PRSN_CODE LIKE #{RQST_PRSN_CODE} || '%'   
+                           <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+								<if test="SEARCH_TYPE == 'ITEM_CODE'">
+									<choose>
+					    				<when test="SEARCH_OPTION == 'EQ'">
+					    					AND E.ITEM_CODE = #{SEARCH_KEY_WORD}
+					    				</when>
+					    				<when test="SEARCH_OPTION == 'SW'">
+					    					AND E.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+							<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+								<if test="SEARCH_TYPE_NO == 'EXPDECL_MANAGE_NO'">
+									<choose>
+					    				<when test="SEARCH_OPTION_NO == 'EQ'">
+					    					AND E.EXPDECL_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+					    				</when>
+					    				<when test="SEARCH_OPTION_NO == 'SW'">
+					    					AND E.EXPDECL_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.EXPDECL_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+							<if test="SEARCH_KEY_WORD_MAKER != null and SEARCH_KEY_WORD_MAKER != ''">
+								<if test="SEARCH_TYPE_MAKER == 'MANUFAC_NAME'">
+									<choose>
+					    				<when test="SEARCH_OPTION_MAKER == 'EQ'">
+					    					AND E.MANUFAC_NAME = #{SEARCH_KEY_WORD_MAKER}
+					    				</when>
+					    				<when test="SEARCH_OPTION_MAKER == 'SW'">
+					    					AND E.MANUFAC_NAME LIKE #{SEARCH_KEY_WORD_MAKER}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.MANUFAC_NAME LIKE '%'||#{SEARCH_KEY_WORD_MAKER}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+                       UNION ALL
+                      SELECT 2 AS LEBEL
+                           , SUM((SELECT SUM(DRWBAK_AMOUNT) 
+                                    FROM DRWBAK_REQSTDOC_TRGET_THNG A
+                                       , DRWBAK_REQSTDOC_INCME_RAWMTRL B
+                              	   WHERE A.COMPANY_CODE = B.COMPANY_CODE
+                                	 AND A.PRESENTN_NO = B.PRESENTN_NO
+                                	 AND A.THNG_SEQ = B.THNG_SEQ
+                                	 AND A.XPORT_STTEMNT_NO = E.EXPDECL_MANAGE_NO
+                                	 AND A.ITEM_CODE = E.ITEM_CODE)) AS DATA_VALUE
+                        FROM EXPORT_CERT_MST E
+                       WHERE E.COMPANY_CODE = #{COMPANY_CODE}
+                         AND E.XPORT_SE IN ('11','17','31')	       
+                         AND E.RQST_PRSN_CODE = '2'
+                         AND E.MANUFAC_NAME  <![CDATA[ <> ]]> '(주)아모레퍼시픽'
+                         AND E.DSPTH_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+                         AND E.RQST_PRSN_CODE LIKE #{RQST_PRSN_CODE} || '%'    
+                            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+								<if test="SEARCH_TYPE == 'ITEM_CODE'">
+									<choose>
+					    				<when test="SEARCH_OPTION == 'EQ'">
+					    					AND E.ITEM_CODE = #{SEARCH_KEY_WORD}
+					    				</when>
+					    				<when test="SEARCH_OPTION == 'SW'">
+					    					AND E.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+							<if test="SEARCH_KEY_WORD_NO != null and SEARCH_KEY_WORD_NO != ''">
+								<if test="SEARCH_TYPE_NO == 'EXPDECL_MANAGE_NO'">
+									<choose>
+					    				<when test="SEARCH_OPTION_NO == 'EQ'">
+					    					AND E.EXPDECL_MANAGE_NO = #{SEARCH_KEY_WORD_NO}
+					    				</when>
+					    				<when test="SEARCH_OPTION_NO == 'SW'">
+					    					AND E.EXPDECL_MANAGE_NO LIKE #{SEARCH_KEY_WORD_NO}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.EXPDECL_MANAGE_NO LIKE '%'||#{SEARCH_KEY_WORD_NO}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>
+							<if test="SEARCH_KEY_WORD_MAKER != null and SEARCH_KEY_WORD_MAKER != ''">
+								<if test="SEARCH_TYPE_MAKER == 'MANUFAC_NAME'">
+									<choose>
+					    				<when test="SEARCH_OPTION_MAKER == 'EQ'">
+					    					AND E.MANUFAC_NAME = #{SEARCH_KEY_WORD_MAKER}
+					    				</when>
+					    				<when test="SEARCH_OPTION_MAKER == 'SW'">
+					    					AND E.MANUFAC_NAME LIKE #{SEARCH_KEY_WORD_MAKER}|| '%'
+							  			</when>
+					    				<otherwise>
+					    					AND E.MANUFAC_NAME LIKE '%'||#{SEARCH_KEY_WORD_MAKER}|| '%'
+					    				</otherwise>
+					    			</choose>
+								</if>
+							</if>    
+                     ) VA
+             ON BL.LABEL_SEQ = VA.LABEL_SEQ
+          WHERE LABEL_ID = #{LABEL_ID}
+	</select>
+	
+	
+	<select id="retrieve_R013List" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+		SELECT COMPANY_CODE
+         	 , DIVISION_CODE
+         	 , PRODUCT_CODE
+         	 , PRODUCT_NAME 
+             , BOM_VERSION
+         	 , CASE WHEN NEW_CHANGE_FLAG_NAME IS NULL THEN '' ELSE 'V' END  AS NEW_CHANGE_FLAG
+         	 , CASE WHEN DELETE_CHANGE_FLAG_NAME IS NULL THEN '' ELSE 'V' END  AS DELETE_CHANGE_FLAG
+         	 , CASE WHEN QTY_CHANGE_FLAG_NAME IS NULL THEN '' ELSE 'V' END  AS QTY_CHANGE_FLAG
+         	 , CASE WHEN UNIT_CHANGE_FLAG_NAME IS NULL THEN '' ELSE 'V' END  AS UNIT_CHANGE_FLAG
+		  FROM (SELECT T1.COMPANY_CODE
+				     , T1.DIVISION_CODE
+				     , T1.PRODUCT_CODE
+				     , P.ITEM_NAME AS PRODUCT_NAME
+				     , T1.CURR_USE_BOM_VERSION AS BOM_VERSION
+				     , MAX(NEW_CHANGE_FLAG_NAME) AS NEW_CHANGE_FLAG_NAME
+         			 , MAX(DELETE_CHANGE_FLAG_NAME) AS DELETE_CHANGE_FLAG_NAME         
+         			 , MAX(QTY_CHANGE_FLAG_NAME) AS QTY_CHANGE_FLAG_NAME
+         		     , MAX(UNIT_CHANGE_FLAG_NAME) AS UNIT_CHANGE_FLAG_NAME
+				  FROM TABLE(FN_GET_DIFF_BOM(#{COMPANY_CODE}, #{DIVISION_CODE}, #{SEARCH_YYYY}, #{SEARCH_QUARTER}, #{SEARCH_KEY_WORD_PRODUCT_CODE}, #{SEARCH_KEY_WORD_ITEM_CODE})) T1
+				  LEFT OUTER JOIN ITEM_MST P
+				    ON T1.PRODUCT_CODE = P.ITEM_CODE
+				   AND T1.COMPANY_CODE = P.COMPANY_CODE
+				  LEFT OUTER JOIN ITEM_MST CI
+				    ON T1.CURR_ITEM_CODE = CI.ITEM_CODE
+				   AND T1.COMPANY_CODE = CI.COMPANY_CODE
+				  LEFT OUTER JOIN ITEM_MST PI
+				    ON T1.PAST_ITEM_CODE = PI.ITEM_CODE
+				   AND T1.COMPANY_CODE = PI.COMPANY_CODE
+				 WHERE T1.COMPANY_CODE = #{COMPANY_CODE}
+				   AND T1.DIVISION_CODE = #{DIVISION_CODE}
+				GROUP BY T1.COMPANY_CODE
+		             , T1.DIVISION_CODE
+		             , T1.PRODUCT_CODE
+		             , P.ITEM_NAME 
+		             , T1.CURR_USE_BOM_VERSION			   
+			    ) P   
+			 WHERE 1=1
+			<if test="SEARCH_NEWITEM_YN != null and SEARCH_NEWITEM_YN != ''">
+				<choose>
+					<when test='SEARCH_NEWITEM_YN == "Y"'>
+					AND NEW_CHANGE_FLAG_NAME IS NOT NULL
+					</when>
+					<otherwise>
+					AND NEW_CHANGE_FLAG_NAME IS NULL
+					</otherwise>
+				</choose>
+			</if>
+	    <include refid="paging-postfix"/>	   	
+	 </select>
+	 
+	 <select id="retrieve_R013DetailList" parameterType="HashMap" resultType="HashMap">
+	 	<include refid="paging-prefix"/>
+			SELECT T1.COMPANY_CODE
+			     , T1.DIVISION_CODE
+			     , T1.PRODUCT_CODE
+                 , T1.CURR_ITEM_CODE
+                 , CI.ITEM_NAME AS CURR_ITEM_NMAE
+                 , T1.CURR_INPUT_QTY
+                 , T1.CURR_INPUT_BASS_UNIT
+			     , T1.CURR_USE_BOM_VERSION AS CURR_BOM_VERSION
+                 , T1.PAST_ITEM_CODE
+                 , PI.ITEM_NAME AS PAST_ITEM_NMAE
+                 , T1.PAST_INPUT_QTY
+                 , T1.PAST_INPUT_BASS_UNIT
+                 , T1.PAST_USE_BOM_VERSION AS PAST_BOM_VERSION
+                 , CASE WHEN T1.NEW_CHANGE_FLAG_NAME IS NULL THEN '' ELSE 'V' END  AS NEW_CHANGE_FLAG
+                 , CASE WHEN T1.DELETE_CHANGE_FLAG_NAME IS NULL THEN '' ELSE 'V' END  AS DELETE_CHANGE_FLAG
+                 , CASE WHEN T1.QTY_CHANGE_FLAG_NAME IS NULL THEN '' ELSE 'V' END  AS QTY_CHANGE_FLAG
+                 , CASE WHEN T1.UNIT_CHANGE_FLAG_NAME IS NULL THEN '' ELSE 'V' END  AS UNIT_CHANGE_FLAG
+			  FROM TABLE(FN_GET_DIFF_BOM(#{COMPANY_CODE}, #{DIVISION_CODE}, #{SEARCH_YYYY}, #{SEARCH_QUARTER}, #{GRID_PRODUCT_CODE}, '')) T1
+			  LEFT OUTER JOIN ITEM_MST CI
+			    ON T1.CURR_ITEM_CODE = CI.ITEM_CODE
+			   AND T1.COMPANY_CODE = CI.COMPANY_CODE
+			  LEFT OUTER JOIN ITEM_MST PI
+			    ON T1.PAST_ITEM_CODE = PI.ITEM_CODE
+			   AND T1.COMPANY_CODE = PI.COMPANY_CODE
+			 WHERE T1.COMPANY_CODE = #{COMPANY_CODE}
+			   AND T1.DIVISION_CODE = #{DIVISION_CODE}
+			   AND T1.CURR_USE_BOM_VERSION = #{GRID_BOM_VERSION}
+			   <if test="SEARCH_KEY_WORD_ITEM_CODE != null and SEARCH_KEY_WORD_ITEM_CODE != ''">
+			   AND (T1.CURR_ITEM_CODE LIKE #{SEARCH_KEY_WORD_ITEM_CODE} || '%'
+			     OR T1.PAST_ITEM_CODE LIKE #{SEARCH_KEY_WORD_ITEM_CODE} || '%')
+			   </if>
+			   <if test="SEARCH_NEWITEM_YN != null and SEARCH_NEWITEM_YN != ''">
+					<choose>
+						<when test='SEARCH_NEWITEM_YN == "Y"'>
+						AND T1.NEW_CHANGE_FLAG_NAME IS NOT NULL
+						</when>
+						<otherwise>
+						AND T1.NEW_CHANGE_FLAG_NAME IS NULL
+						</otherwise>
+					</choose>
+			    </if>
+			   
+	 	<include refid="paging-postfix"/>	   
+	 </select>
+	
+  
+
+</mapper>

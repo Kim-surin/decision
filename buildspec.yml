@@ -1,0 +1,38 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+  pre_build:
+    commands:
+      - export LC_ALL="en_US.utf8"
+      - echo Pre Build started on `date`
+      - printenv
+  build:
+    commands:
+      - echo Build started on `date`
+      - export LANG=ko_KR.utf8
+      # 설정파일 변경
+      - cp -vf src/main/resources/application-$PROFILE.properties src/main/resources/application.properties
+      - cp -vf src/main/resources/config/appFileAndJasper-$PROFILE.properties src/main/resources/config/application.properties
+      - cp -vf src/main/resources/config/appBatchJob-$PROFILE.properties src/main/resources/config/appBatchJob.properties
+      - rm src/main/resources/application-*.properties
+      - rm src/main/resources/config/appFileAndJasper-*.properties
+      - rm src/main/resources/config/appBatchJob-*.properties
+      # maven 빌드
+      - echo =====================Build start
+      - mvn clean
+      - mvn package -f pom.xml
+      - echo =====================Build end
+  post_build:
+    commands:
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - target/ap-drwb-1.0.0.war
+    - scripts/**/*
+    - appspec.yml
+  discard-paths: no
+cache:
+  paths:
+    - '/root/.m2/**/*'

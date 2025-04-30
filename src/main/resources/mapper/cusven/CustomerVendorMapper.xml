@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.cusven.CustomerVendorDao">
+
+<!-- XML Common Area Start -->
+	<sql id="paging-prefix">
+		SELECT DATA.*
+		FROM (
+		SELECT '' AS ROWFLAG,
+		ROWNUM AS RNUM,
+		COUNT(*) OVER() TOTAL_RECORDS,
+		DATA.*
+		FROM (
+	</sql>
+	<sql id="paging-postfix">
+        <![CDATA[
+                       ) DATA 
+                ) DATA                   
+          WHERE RNUM BETWEEN ((#{page}-1) * #{rows} + 1) and (#{page} * #{rows} )
+        ]]>
+	</sql>
+	<sql id="paging-orderby">
+		<if test="sidx != ''">
+			ORDER BY ${sidx} ${sord}
+		</if>
+	</sql>
+<!-- XML Common Area End -->
+
+	<select id="retrieveCV004Grid" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT DISTINCT A.COMPANY_CODE
+			       ,A.DIVISION_CODE
+			       ,A.REGIST_RCEPT_NO
+			       ,A.SUBMIT_NO
+			       ,A.RECV_DOC_TYPE
+			       ,CASE WHEN A.RECV_DOC_TYPE = '9' THEN '원본'
+			             WHEN A.RECV_DOC_TYPE = '1' THEN '취하'
+			             WHEN A.RECV_DOC_TYPE = '35' THEN '재전송(정정)'
+			        END AS RECV_DOC_TYPE_NAME
+			       ,A.CHIT_FRMTRM_DATE
+			       ,A.FROM_COMPANY_NAME
+			       ,A.FROM_ECTMRK
+			       ,A.TOT_TAX
+			       ,A.HS_CODE
+			       ,A.ISSUE_TYPE
+			       ,CASE WHEN A.ISSUE_TYPE = '02' THEN '기납증'
+			             WHEN A.ISSUE_TYPE = '04' THEN '분증'
+			         END ISSUE_TYPE_NAME
+			       ,A.STTEMNT_PC_KRW
+			       ,A.ACCMLT_ORDER_QY
+			       ,A.BASS_UNIT
+			  FROM AN_CTRM_CMMN A
+			 <if test="ISSUE_TYPE == '04'">
+			 INNER JOIN AN_CTRM_THING_RAWMTRL B
+			 </if>
+			 <if test="ISSUE_TYPE == '02'">
+			 INNER JOIN AN_CTRM_TRGET_THNG B
+			 </if>
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+			   AND A.SUBMIT_NO = B.SUBMIT_NO
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.CHIT_FRMTRM_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			   AND A.ISSUE_TYPE = #{ISSUE_TYPE}
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'REGIST_RCEPT_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND A.REGIST_RCEPT_NO = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND DAH.REGIST_RCEPT_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND A.REGIST_RCEPT_NO LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+				<if test="SEARCH_TYPE == 'RAWMTRL_CODE' and SEARCH_KEY_WORD == '02'" >
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND B.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND B.ITEM_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'RAWMTRL_CODE' and SEARCH_KEY_WORD == '04'" >
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND B.RAWMTRL_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND B.RAWMTRL_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND B.RAWMTRL_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND B.ITEM_NM = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND B.ITEM_NM LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND B.ITEM_NM LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+		<include refid="paging-postfix"/>		   
+	</select>
+	
+	<select id="retrieveCV004GridDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT A.COMPANY_CODE,
+		       A.DIVISION_CODE,
+		       A.REGIST_RCEPT_NO,
+		       A.SUBMIT_NO,
+		       A.RECV_DOC_TYPE,
+		       CASE
+		         WHEN A.RECV_DOC_TYPE = '9' THEN
+		          '원본'
+		         WHEN A.RECV_DOC_TYPE = '1' THEN
+		          '취하'
+		         WHEN A.RECV_DOC_TYPE = '35' THEN
+		          '재전송(정정)'
+		       END AS RECV_DOC_TYPE_NAME,
+		       A.CHIT_FRMTRM_DATE,
+		       A.FROM_COMPANY_NAME,
+		       A.FROM_ECTMRK,
+		       A.TOT_TAX,
+		       A.HS_CODE,
+		       A.ISSUE_TYPE,
+		       CASE
+		         WHEN A.ISSUE_TYPE = '02' THEN
+		          '기납증'
+		         WHEN A.ISSUE_TYPE = '04' THEN
+		          '분증'
+		       END ISSUE_TYPE_NAME,
+		       A.STTEMNT_PC_KRW,
+		       A.ACCMLT_ORDER_QY,
+		       A.BASS_UNIT
+		  FROM AN_CTRM_CMMN A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}
+		   AND A.ISSUE_TYPE = #{ISSUE_TYPE}
+	</select>
+
+	<select id="retrieveCV004GridDetailList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			<if test="ISSUE_TYPE == '04'">
+				SELECT A.SEQ
+				       ,A.IMPDEC_NO
+				       ,A.LNE_NO
+				       ,A.POUCH_NO
+				       ,A.RAWMTRL_CODE AS ITEM_CODE
+				       ,A.ITEM_NM
+				       ,A.USGQTY AS QTY
+				       ,A.BASS_UNIT
+				       ,A.STTEMNT_PC_KRW
+				       ,A.CSTMS
+				       ,A.BASIS_DOC_NO
+				  FROM AN_CTRM_THING_RAWMTRL A
+				 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+				   AND A.DIVISION_CODE = #{DIVISION_CODE}
+				   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+				   AND A.SUBMIT_NO = #{SUBMIT_NO}
+			</if>
+			
+			<if test="ISSUE_TYPE == '02'">
+				SELECT A.SEQ
+				       ,NULL AS IMPDEC_NO
+				       ,NULL AS LNE_NO
+				       ,NULL AS POUCH_NO
+				       ,A.ITEM_CODE
+				       ,A.ITEM_NM
+				       ,A.USGQTY AS QTY
+				       ,A.BASS_UNIT
+				       ,A.STTEMNT_PC_KRW
+				       ,A.CSTMS
+				       ,A.BASIS_DOC_NO
+				  FROM AN_CTRM_TRGET_THNG A
+				 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+				   AND A.DIVISION_CODE = #{DIVISION_CODE}
+				   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+				   AND A.SUBMIT_NO = #{SUBMIT_NO}
+			</if>
+		<include refid="paging-postfix"/>		   
+	</select>
+	
+	
+	<select id="retrieve_CV001List" parameterType="HashMap" resultType="HashMap">
+        <include refid="paging-prefix"/>
+			SELECT DISTINCT 
+			       A.SUPT_DOC_CODE
+			       ,A.DIVISION_CODE
+			       ,P.DIVISION_NAME
+			       ,A.SUPT_DOC_NO
+			       ,A.SUPT_DATE
+			       ,A.CUSTOMER_CODE
+			       ,CU.ATTRIBUTE01
+			       ,A.SUPT_DOC_SE
+			       ,COM_CD.CODE_NM
+			       ,SUMR.ITEM_CNT
+			       ,SUMR.SUM_QY
+			       ,SUMR.SUM_AMOUNT
+			       ,A.ACCEPTOR_NM
+			       ,A.ACCEPTOR_ADDR
+			       ,A.ACCEPTOR_BIZ_NO
+			       ,A.PRODUCER_NM
+			       ,A.PRODUCER_ADDR
+			       ,A.PRODUCER_BIZ_NO
+			  FROM SUPT_DOC_HDR A
+			 INNER JOIN SUPT_DOC_ITEM B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.SUPT_DOC_CODE = B.SUPT_DOC_CODE
+			 INNER JOIN (SELECT A.SUPT_DOC_CODE
+			                   ,A.COMPANY_CODE
+			                   ,A.DIVISION_CODE
+			                   ,COUNT(1) AS ITEM_CNT
+			                   ,SUM(B.QY) AS SUM_QY
+			                   ,SUM(B.AMOUNT) AS SUM_AMOUNT
+			              FROM SUPT_DOC_HDR A
+			             INNER JOIN SUPT_DOC_ITEM B
+			                ON A.COMPANY_CODE = B.COMPANY_CODE
+			               AND A.DIVISION_CODE = B.DIVISION_CODE
+			               AND A.SUPT_DOC_CODE = B.SUPT_DOC_CODE
+			             WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			             GROUP BY A.SUPT_DOC_CODE,A.COMPANY_CODE,A.DIVISION_CODE) SUMR
+			    ON A.COMPANY_CODE = SUMR.COMPANY_CODE
+			   AND A.DIVISION_CODE = SUMR.DIVISION_CODE
+			   AND A.SUPT_DOC_CODE = SUMR.SUPT_DOC_CODE
+			 INNER JOIN CUSTOMER_MODEL CM
+			    ON B.COMPANY_CODE = CM.COMPANY_CODE
+			   AND B.DIVISION_CODE = CM.DIVISION_CODE
+			   AND A.CUSTOMER_CODE = CM.CUSTOMER_CODE
+			   AND B.ITEM_CODE = CM.CUSTOMER_ITEM_CODE
+			 INNER JOIN CUSTOMER CU
+			    ON A.COMPANY_CODE = CU.COMPANY_CODE
+			   AND A.CUSTOMER_CODE = CU.CUSTOMER_CODE 
+			 INNER JOIN PLANT P
+			    ON A.COMPANY_CODE = P.COMPANY_CODE
+			   AND A.DIVISION_CODE = P.DIVISION_CODE
+			  LEFT OUTER JOIN COM_CD COM_CD 
+			    ON A.SUPT_DOC_SE = COM_CD.CODE_CD
+			   AND COM_CD.CATEGORY_CD = 'SUDT' /*고객사 근거서류 구분*/
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.USE_YN = 'Y'
+			   AND B.USE_YN = 'Y'
+			   AND A.SUPT_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+            <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+                <if test="SEARCH_TYPE == 'SEARCH_TYPE_O1'">
+                AND CU.CUSTOMER_CODE = #{SEARCH_KEY_WORD}
+                </if>
+                <if test="SEARCH_TYPE == 'SEARCH_TYPE_O2'">
+                AND B.ITEM_CODE = #{SEARCH_KEY_WORD}
+                </if>
+            </if>			   
+          ORDER BY A.SUPT_DOC_NO, A.SUPT_DATE, A.CUSTOMER_CODE DESC
+        <include refid="paging-postfix"/>          
+    </select>
+    
+    <select id="retrieve_CV00101_List" parameterType="HashMap" resultType="HashMap">
+        <include refid="paging-prefix"/>
+			SELECT B.SUPT_DOC_CODE
+			      ,B.COMPANY_CODE
+			      ,B.DIVISION_CODE
+			      ,B.SUPT_DOC_ITEM_SEQ
+			      ,B.ITEM_CODE
+			      ,B.ITEM_NM
+			      ,B.QY
+			      ,B.UNIT_PRICE
+			      ,B.BASS_UNIT
+			      ,B.AMOUNT
+			      ,B.HS_CODE10
+			      ,B.USE_YN
+			      ,TO_CHAR(B.CREATE_DATE, 'RRRRMMDD') AS CREATE_DATE
+			      ,B.CREATE_BY
+			      ,TO_CHAR(B.UPDATE_DATE, 'RRRRMMDD') AS UPDATE_DATE 
+			      ,B.UPDATE_BY
+			  FROM SUPT_DOC_HDR A
+			 INNER JOIN SUPT_DOC_ITEM B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.SUPT_DOC_CODE = B.SUPT_DOC_CODE
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.DIVISION_CODE = #{P_DIVISION_CODE}
+			   AND A.SUPT_DOC_NO = #{P_SUPT_DOC_NO}
+			   AND A.SUPT_DOC_CODE = #{P_SUPT_DOC_CODE}
+        <include refid="paging-postfix"/>          
+    </select>
+    
+    <select id="retrieve_CV006List" parameterType="HashMap" resultType="HashMap">
+        <include refid="paging-prefix"/>
+			SELECT A.COMPANY_CODE
+			       ,A.DIVISION_CODE
+			       ,A.PRESENTN_NO
+			       ,A.SUBMIT_NO
+			       ,TO_CHAR(TO_DATE(A.DRWBAK_REQ_DATE, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') AS DRWBAK_REQ_DATE
+			       
+			       ,A.REGIST_RCEPT_NO
+			       ,A.HS_CODE
+			       ,B.XPORT_STTEMNT_NO
+			       ,B.LNE_NO
+			       ,B.POUCH_NO
+			       ,B.DSPTH_DATE
+			       ,B.ITEM_CODE
+			       ,B.ITEM_NM
+			       ,B.ACCMLT_ORDER_QY
+			       ,B.BASS_UNIT
+			       ,B.STTEMNT_PC_KRW
+			       ,B.KRW_CRNCY
+			       ,NVL(C.EXECUT_STATUS, 'XX') AS EXECUT_STATUS
+			       ,CASE WHEN C.BOM_PRESENTN_NO IS NULL THEN 'N' ELSE 'Y' END AS DOC_WRITE_YN
+			       ,C.BOM_PRESENTN_NO
+			       ,C.REQ_DOC_NO
+			       ,C.REQ_DOC_LINE_NO
+			       , C.REGIST_RCEPT_NO AS BOM_REGIST_RCEPT_NO
+             		, C.SUBMIT_NO AS BOM_SUBMIT_NO
+			  FROM DRWBAK_REQSTDOC_CMMN A
+			 INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.PRESENTN_NO = B.PRESENTN_NO
+			  LEFT OUTER JOIN BOM_SUBMIT_MST C
+			    ON A.COMPANY_CODE = C.COMPANY_CODE
+			   AND A.DIVISION_CODE = C.DIVISION_CODE
+			   AND A.PRESENTN_NO = C.DRWB_PRESENTN_NO
+			   AND B.XPORT_STTEMNT_NO = C.XPORT_STTEMNT_NO
+			   AND B.LNE_NO = C.LNE_NO
+			   AND B.POUCH_NO = C.POUCH_NO			   
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.DIVISION_CODE = #{DIVISION_CODE}
+			   AND A.EXECUT_AT = 'Y'
+			   AND A.EXECUT_STATUS = '60'
+			   AND A.REGIST_RCEPT_NO IS NOT NULL
+               AND A.DRWBAK_MONTH BETWEEN REPLACE(#{DRWBAK_MONTH_FROM}, '-', '') AND REPLACE(#{DRWBAK_MONTH_TO}, '-', '')
+			<if test="SEARCH_COMP_FROM_DATE != null and SEARCH_COMP_FROM_DATE != ''">
+    			<if test="SEARCH_COMP_TO_DATE != null and SEARCH_COMP_TO_DATE != ''">
+        		AND SUBSTR(A.DRWBAK_REQ_DATE,1,8) BETWEEN #{SEARCH_COMP_FROM_DATE} AND #{SEARCH_COMP_TO_DATE}
+    			</if>
+			</if>
+			<if test="REGIST_RCEPT_NO != null and REGIST_RCEPT_NO != ''">
+				AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+			</if>
+			<if test="XPORT_STTEMNT_NO != null and XPORT_STTEMNT_NO != ''">
+				AND B.XPORT_STTEMNT_NO = #{XPORT_STTEMNT_NO}
+			</if>
+			<if test="SUBMIT_NO != null and SUBMIT_NO != ''">
+				AND A.SUBMIT_NO = #{SUBMIT_NO}
+			</if>
+			<if test="EXECUT_STATUS != null and EXECUT_STATUS != ''">
+				AND C.EXECUT_STATUS = #{EXECUT_STATUS}
+			</if>
+
+        <include refid="paging-postfix"/>
+    </select>
+    
+    
+        <select id="retrieve_CV007List" parameterType="HashMap" resultType="HashMap">
+        <include refid="paging-prefix"/>
+			SELECT A.COMPANY_CODE
+			       ,A.DIVISION_CODE
+			       ,A.PRESENTN_NO
+			       ,A.SUBMIT_NO
+			       ,A.CHIT_FRMTRM_DATE
+			       ,A.REGIST_RCEPT_NO
+			       ,A.HS_CODE
+			       ,B.ITEM_CODE
+			       ,B.ITEM_NM
+			       ,B.SEQ
+			       ,B.BASIS_DOC_NO
+			       ,B.SUPT_DOC_ITEM_SEQ
+			       ,B.ACCMLT_ORDER_QY
+			       ,B.BASS_UNIT
+			       ,B.STTEMNT_PC_KRW
+			       ,B.KRW_CRNCY
+			       ,CASE WHEN B.SUPT_DOC_SE = '1' THEN '구매확인서'
+			             WHEN B.SUPT_DOC_SE = '2' THEN '매매계약서'
+			             WHEN B.SUPT_DOC_SE = '3' THEN '물품거래확인서'
+			         END AS SUPT_DOC_SE_NAME
+			       ,NVL(C.EXECUT_STATUS, 'XX') AS EXECUT_STATUS
+			       ,CASE WHEN C.BOM_PRESENTN_NO IS NULL THEN 'N' ELSE 'Y' END AS DOC_WRITE_YN
+			       ,C.BOM_PRESENTN_NO
+			       ,C.REQ_DOC_NO
+			       ,C.REQ_DOC_LINE_NO
+			       , C.REGIST_RCEPT_NO AS BOM_REGIST_RCEPT_NO
+             		, C.SUBMIT_NO AS BOM_SUBMIT_NO
+			  FROM CTRM_CMMN A
+			 INNER JOIN CTRM_TRGET_THNG B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.PRESENTN_NO = B.PRESENTN_NO
+			  LEFT OUTER JOIN BOM_SUBMIT_MST C
+			    ON A.COMPANY_CODE = C.COMPANY_CODE
+			   AND A.DIVISION_CODE = C.DIVISION_CODE
+			   AND A.PRESENTN_NO = C.CTRM_PRESENTN_NO
+			   AND B.SEQ = C.CTRM_SEQ
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.DIVISION_CODE = #{DIVISION_CODE}
+			   AND A.EXECUT_AT = 'Y'
+			   AND A.EXECUT_STATUS = '50'
+			   AND A.REGIST_RCEPT_NO IS NOT NULL
+			   AND A.CHIT_FRMTRM_DATE BETWEEN REPLACE(#{DRWBAK_MONTH_FROM}, '-', '')||'01' AND REPLACE(#{DRWBAK_MONTH_TO}, '-', '')||'31'
+			<if test="SEARCH_COMP_FROM_DATE != null and SEARCH_COMP_FROM_DATE != ''">
+    			<if test="SEARCH_COMP_TO_DATE != null and SEARCH_COMP_TO_DATE != ''">
+        		AND SUBSTR(A.DRWBAK_REQ_DATE,1,8) BETWEEN #{SEARCH_COMP_FROM_DATE} AND #{SEARCH_COMP_TO_DATE}
+    			</if>
+			</if>
+			<if test="REGIST_RCEPT_NO != null and REGIST_RCEPT_NO != ''">
+				AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+			</if>
+			<if test="BASIS_DOC_NO != null and BASIS_DOC_NO != ''">
+				AND B.XPORT_STTEMNT_NO = #{XPORT_STTEMNT_NO}
+			</if>
+			<if test="SUBMIT_NO != null and SUBMIT_NO != ''">
+				AND A.SUBMIT_NO = #{SUBMIT_NO}
+			</if>
+			<if test="EXECUT_STATUS != null and EXECUT_STATUS != ''">
+				AND C.EXECUT_STATUS = #{EXECUT_STATUS}
+			</if>
+
+        <include refid="paging-postfix"/>
+    </select>
+</mapper>
+ 
+ 

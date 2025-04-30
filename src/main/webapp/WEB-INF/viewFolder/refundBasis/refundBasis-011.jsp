@@ -1,0 +1,144 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ taglib prefix="form"   uri="http://www.springframework.org/tags/form"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+</head>
+<body>
+<div id="content">
+	<section id="widget-grid" class="">
+		<form:form id="RB011-search-form" class="s4-form" novalidate="novalidate" action="/refundBasis-011" method="post">
+			<input type="hidden" id="headers" name="headers"/>
+			<input type="hidden" id="filename" name="filename"/>
+			<input type="hidden" id="sheetname" name="sheetname"/>
+			<div class="row-extends row">
+				<div class="col-xs-12 col-sm-11 col-md-11 col-lg-11">
+					<div class="table-responsive">
+						<table class="table table-bordered">
+							<colgroup>
+								<col style="width: 80px;" />
+								<col style="width: 20%;" />
+								<col style="width: 80px;" />
+								<col style="width: " />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th><spring:message code='생산일자' /></th>
+									<td>
+										<input type="text" id="CAL_SEARCH_FROM_DATE"  name="CAL_SEARCH_FROM_DATE" style="width:120px" class="inputText has-month-picker" searchfnc="RB011.retrieve_gridData"/>
+										<span class="fromTo-Dash">~</span>
+										<input type="text" id="CAL_SEARCH_TO_DATE"  name="CAL_SEARCH_TO_DATE" style="width:120px" class="inputText has-month-picker" searchfnc="RB011.retrieve_gridData"/>
+									</td>
+									<th><spring:message code='common.title.searchCondition' /></th>
+									<td>
+										<select class="form-control searchSelect" id="SEARCH_TYPE" name="SEARCH_TYPE" style="width:110px"></select>
+										<select class="form-control searchSelect" id="SEARCH_OPTION" name="SEARCH_OPTION" style="width:110px"></select>
+										<input type="text" id="SEARCH_KEY_WORD" name="SEARCH_KEY_WORD" class="inputText" searchfnc="RB011.retrieve_gridData"/>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>				
+				</div>
+				<div class="col-xs-12 col-sm-1 col-md-1 col-lg-1">
+					<div class="input-group-btn">
+						<button class="btn btn-default btn-primary btn-custom-search search-row-1" type="button" onclick="javascript:RB011.retrieve_gridData();">
+							<i class="fa fa-search"></i> <spring:message code='TXT.ENG_SEARCH' />
+						</button>
+					</div>
+				</div>
+			
+			</div>
+		</form:form>
+		
+		<div class="row">
+			<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+				<div id="div_oTui_RB011_grid_01" name="div_oTui_RB011_grid_01" class="tuigrid-resizable">
+					<div id="oTui_RB011_grid_01" data-minus-height="240"></div>
+					<div id="oTui_RB011_grid_01_paging"></div>
+				</div>
+			</div>
+		</div>
+
+	
+	</section>
+
+</div>
+
+<script>
+
+	var RB011 = new function(){
+		
+		// Page Object Initialize
+		this.initialize_Object = function() {
+			
+			var fromDay = KpackageOBJ.date.getCurrMonth() + "01";
+			var toDay = KpackageOBJ.date.getCurrDay();
+			
+			KpackageOBJ.calendar.create("RB011-search-form", "CAL_SEARCH_FROM_DATE");
+			KpackageOBJ.calendar.setValue("RB011-search-form","CAL_SEARCH_FROM_DATE", fromDay);
+			
+			KpackageOBJ.calendar.create("RB011-search-form", "CAL_SEARCH_TO_DATE");
+			KpackageOBJ.calendar.setValue("RB011-search-form","CAL_SEARCH_TO_DATE", toDay);	
+				
+	
+			/*Search Type Select Box Create */
+			arrayItem = [{value:"ITEM_CODE", name:"<spring:message code='자재코드'/>"}];
+			
+			KpackageOBJ.selectbox.create("RB011-search-form", "SEARCH_TYPE", "", null, "value", "name", arrayItem);
+			
+			/*Search Type Select Box Create */
+			arrayItem = [{value:"CC", name:"<spring:message code='common.txt.contains'/>"}
+			            ,{value:"EQ", name:"<spring:message code='common.txt.equalTo'/>"}
+						,{value:"SW", name:"<spring:message code='common.txt.startsWithIs'/>"}];
+			
+			KpackageOBJ.selectbox.create("RB011-search-form", "SEARCH_OPTION", "", null, "value", "name", arrayItem);
+			
+		}
+		
+		this.initialize_TuiGrid = function(){
+			 
+			 var colArrayInfo = [
+				 {"header" :'회사코드'			,name:'COMPANY_CODE'		,width:80,align:'center'			,hidden:false},
+				 {"header" :'플랜트'			,name:'DIVISION_CODE'		,width:80,align:'center'			,hidden:false},
+				 {"header" :'자재번호'			,name:'ITEM_CODE'			,width:180,align:'left'			,hidden:false},
+				 {"header" :'자재내역'			,name:'ITEM_NAME'			,width:250,align:'left'			,hidden:false},
+				 {"header" :'생산일자'			,name:'PRDCTN_DATE'			,width:100,align:'center'			,hidden:false  ,formatter:KpackageOBJ.tuiGrid.dateFormatter},
+				 {"header" :'완성일자'			,name:'CMPLT_DATE'			,width:100,align:'center'			,hidden:false  ,formatter:KpackageOBJ.tuiGrid.dateFormatter},
+				 {"header" :'출하일자'			,name:'SHIPMNT_DATE'		,width:100,align:'center'			,hidden:false  ,formatter:KpackageOBJ.tuiGrid.dateFormatter},
+				 {"header" :'HKMC'			,name:'HKMC_SE'				,width:80,align:'center'			,hidden:false},
+				 {"header" :'완성차생산공장코드'	,name:'PROD_DIVISION_CODE'	,width:120,align:'center'			,hidden:false}
+			    ];
+			 
+			 KpackageOBJ.tuiGrid.create("oTui_RB011_grid_01", "/refundBasis/retrieveRB011Grid", colArrayInfo, 'number', null);
+
+		}
+		 
+		this.retrieve_gridData = function() {
+			
+			var param = { "CAL_SEARCH_FROM_DATE" : KpackageOBJ.object.getFormValue("RB011-search-form", "CAL_SEARCH_FROM_DATE")
+					 	 ,"CAL_SEARCH_TO_DATE" : KpackageOBJ.object.getFormValue("RB011-search-form","CAL_SEARCH_TO_DATE")
+					 	 ,"SEARCH_TYPE" : KpackageOBJ.object.getFormValue("RB011-search-form","SEARCH_TYPE")
+					 	 ,"SEARCH_KEY_WORD" : KpackageOBJ.object.getFormValue("RB011-search-form", "SEARCH_KEY_WORD")
+			         	 ,"SEARCH_OPTION" : KpackageOBJ.object.getFormValue("RB011-search-form","SEARCH_OPTION")
+						};
+			
+			KpackageOBJ.tuiGrid.retrieve("oTui_RB011_grid_01", "/refundBasis/retrieveRB011Grid", param);
+		}
+		
+	} 
+	
+	$(document).ready(function() {
+		
+		pageSetUp();				// 위젯 기능을 사용하기 위해 필수로 호출 합니다.
+		RB011.initialize_Object(); 		// 화면에서 사용하는 Selelect Box, Calendar 등을 생성합니다.
+		RB011.initialize_TuiGrid();		 
+	});
+
+</script>
+</body>
+</html>

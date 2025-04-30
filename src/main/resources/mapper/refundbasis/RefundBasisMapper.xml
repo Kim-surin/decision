@@ -1,0 +1,1865 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.refundbasis.RefundBasisDao">
+
+	<!-- xml Common Area Start -->
+	<sql id="paging-prefix">
+		SELECT DATA.*
+		FROM (
+		SELECT '' AS ROWFLAG,
+		ROWNUM AS RNUM,
+		COUNT(*) OVER() TOTAL_RECORDS,
+		DATA.*
+		FROM (
+	</sql>
+	<sql id="paging-postfix">
+        <![CDATA[
+                       ) DATA 
+                ) DATA                   
+          WHERE RNUM BETWEEN ((#{page}-1) * #{rows} + 1) and (#{page} * #{rows} )
+        ]]>
+	</sql>
+	<sql id="paging-orderby">
+		<if test="sidx != ''">
+			ORDER BY ${sidx} ${sord}
+		</if>
+	</sql>
+	<!-- xml Common Area End -->
+
+	 <select id="retrieveRB002Grid" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT
+			       IMPDEC_NO
+			      ,ACPT_DATE
+			      ,SUM(QY) AS QY
+			      ,SUM(REMNDR_QY) AS REMNDR_QY
+			      ,ROUND(SUM(CVODV_KRW)) AS CVODV_KRW
+			      ,ROUND(SUM(CVODV_USD)) AS CVODV_USD
+			      ,ROUND(SUM(TOT_TAXAMT)) AS TOT_TAXAMT
+			      ,FLOOR(SUM((CASE WHEN NVL(REMNDR_QY, 0) = 0 THEN 0 ELSE 
+		                        CASE WHEN REMNDR_QY = QY THEN (NVL(CSTMS, 0) + NVL(INTTAX, 0) + NVL(ECX_AMOUNT, 0) + NVL(AGSPT, 0) + NVL(TRANTAX, 0) + NVL(LQTX_AMOUNT, 0))
+		                               ELSE (NVL(CSTMS, 0) + NVL(INTTAX, 0) + NVL(ECX_AMOUNT, 0) + NVL(AGSPT, 0) + NVL(TRANTAX, 0) + NVL(LQTX_AMOUNT, 0)) /  NVL(QY, 0) *  NVL(REMNDR_QY, 0)
+		                         END 
+		                   END))) AS REMNDR_TAX
+			      ,MAX(CASE
+			                   WHEN REMNDR_QY IS NULL OR REMNDR_QY = QY THEN
+			                    '미사용'
+			                   WHEN REMNDR_QY = 0 THEN
+			                    '모두사용'
+			                   ELSE
+			                    '일부'
+			               END) AS USE_YN
+			      ,MAX(LAST_USE_YYYYMMDD) AS LAST_USE_YYYYMMDD
+			      ,IMPDEC_MANAGE_NO
+			      ,TRUNC(SUM(DLIVY_QY), 2) AS DLIVY_QY
+			      ,FLOOR(SUM((CASE WHEN NVL(DLIVY_QY, 0) = 0 THEN 0 ELSE (NVL(CSTMS, 0) + NVL(INTTAX, 0) + NVL(ECX_AMOUNT, 0) + NVL(AGSPT, 0) + NVL(TRANTAX, 0) + NVL(LQTX_AMOUNT, 0)) / QY * NVL(DLIVY_QY, 0) END))) AS USE_TAX
+			  FROM (SELECT A.IMPDEC_NO
+			              ,A.ACPT_DATE
+			              ,B.LNE_NO
+			              ,B.POUCH_NO
+			              ,B.QY
+			              ,B.CSTMS
+			              ,B.INTTAX
+			              ,B.ECX_AMOUNT
+			              ,B.AGSPT
+			              ,B.TRANTAX
+			              ,B.LQTX_AMOUNT
+			              , NVL((CASE WHEN C.IMP_BASS_UNIT = C.BASS_UNIT THEN C.REMNDR_QY
+                                  	  ELSE (CASE WHEN C.IMP_BASS_UNIT = 'KG' THEN TRUNC(C.REMNDR_QY / 1000 ,2)
+                                    	   	     WHEN C.IMP_BASS_UNIT = 'LB' THEN TRUNC(C.REMNDR_QY / 0.453592 / 1000,2)
+                                           	     WHEN C.IMP_BASS_UNIT = 'DR' THEN TRUNC(C.REMNDR_QY / 1000 / 30,2)
+                                                 WHEN C.IMP_BASS_UNIT = 'GR' THEN TRUNC(C.REMNDR_QY / 0.064799,2)
+                                                 WHEN C.IMP_BASS_UNIT = 'MT' THEN TRUNC(C.REMNDR_QY / 1000 / 1000,2)
+                                                 ELSE B.QY END)
+                                   				 END), B.QY) AS REMNDR_QY
+                        
+                          ,   NVL((CASE WHEN C.IMP_BASS_UNIT = C.BASS_UNIT THEN C.DLIVY_QY
+                                        ELSE (CASE WHEN C.IMP_BASS_UNIT = 'KG' THEN TRUNC(C.DLIVY_QY / 1000,2)
+                                                 WHEN C.IMP_BASS_UNIT = 'LB' THEN TRUNC(C.DLIVY_QY / 0.453592 / 1000,2)
+                                                 WHEN C.IMP_BASS_UNIT = 'DR' THEN TRUNC(C.DLIVY_QY / 1000 / 30,2)
+                                                   WHEN C.IMP_BASS_UNIT = 'GR' THEN TRUNC(C.DLIVY_QY / 0.064799,2)
+                                                   WHEN C.IMP_BASS_UNIT = 'MT' THEN TRUNC(C.DLIVY_QY / 1000 / 1000,2)
+                                                   ELSE 0 END)
+                                             END), 0) AS DLIVY_QY               				 
+			              ,NVL(A.CVODV_KRW, 0) AS CVODV_KRW
+			              ,NVL(A.CVODV_USD, 0) AS CVODV_USD
+			              
+			              ,NVL(B.CSTMS, 0) + NVL(B.INTTAX, 0) + NVL(B.ECX_AMOUNT, 0) + NVL(B.AGSPT, 0) + NVL(B.TRANTAX, 0) + NVL(B.LQTX_AMOUNT, 0) AS TOT_TAXAMT
+			              ,C.LAST_USE_YYYYMMDD
+						  ,A.IMPDEC_MANAGE_NO
+					 FROM IMPDEC_CERFIN_HDER A
+			         INNER JOIN IMPDEC_CERFIN_ITEM B
+			            ON A.COMPANY_CODE = B.COMPANY_CODE
+			           AND A.DIVISION_CODE = B.DIVISION_CODE
+			           AND A.IMPDEC_NO = B.IMPDEC_NO
+			          LEFT OUTER JOIN INCME_LOCAL_BNT_SM C
+			            ON A.COMPANY_CODE = C.COMPANY_CODE
+			           AND A.DIVISION_CODE = C.DIVISION_CODE
+			           AND A.IMPDEC_NO = C.IMPDEC_NO
+			           AND B.LNE_NO = C.LNE_NO
+			           AND B.POUCH_NO = C.POUCH_NO
+			           AND B.ITEM_CODE = C.ITEM_CODE
+			           AND B.COMPANY_CODE = C.COMPANY_CODE
+			           AND B.DIVISION_CODE = C.DIVISION_CODE
+			         WHERE 1=1 
+			           AND A.COMPANY_CODE = #{COMPANY_CODE} 
+						<if test="CAL_SEARCH_FROM_DATE != null and CAL_SEARCH_FROM_DATE != ''">
+						  AND A.ACPT_DATE >= REPLACE(#{CAL_SEARCH_FROM_DATE}, '-', '')
+						</if>
+						<if test="CAL_SEARCH_TO_DATE != null and CAL_SEARCH_TO_DATE != ''">
+						  <![CDATA[ AND A.ACPT_DATE <= REPLACE(#{CAL_SEARCH_TO_DATE}, '-', '') ]]>
+						</if>
+						<if test="HS_CODE != null and HS_CODE != ''">
+						  <![CDATA[ AND B.HS_CODE LIKE #{HS_CODE}||'%' ]]>
+						</if>
+						
+						<if test="INCME_DELNG_SE != null and INCME_DELNG_SE != ''">
+						  <![CDATA[ AND A.INCME_DELNG_SE = #{INCME_DELNG_SE} ]]>
+						</if>
+						
+						<if test="INCME_TYPE != null and INCME_TYPE != ''">
+						  <![CDATA[ AND A.INCME_TYPE = #{INCME_TYPE} ]]>
+						</if>
+						
+						<if test="BL_NO != null and BL_NO != ''">
+						  <![CDATA[ AND B.BL_NO LIKE #{BL_NO}||'%' ]]>
+						</if>
+						
+						<if test="LC_NO != null and LC_NO != ''">
+						  <![CDATA[ AND B.LC_NO LIKE #{LC_NO}||'%' ]]>
+						</if>
+						
+						<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+							<if test="SEARCH_TYPE == 'IMPDEC_MANAGE_NO'">
+								<choose>
+				    				<when test="SEARCH_OPTION == 'EQ'">
+				    					AND A.IMPDEC_NO = #{SEARCH_KEY_WORD}
+				    				</when>
+				    				<when test="SEARCH_OPTION == 'SW'">
+				    					AND A.IMPDEC_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+						  			</when>
+				    				<otherwise>
+				    					AND A.IMPDEC_NO LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+				    				</otherwise>
+				    			</choose>
+							</if>
+							<if test="SEARCH_TYPE == 'ITEM_CODE'">
+								<choose>
+				    				<when test="SEARCH_OPTION == 'EQ'">
+				    					AND B.ITEM_CODE = #{SEARCH_KEY_WORD}
+				    				</when>
+				    				<when test="SEARCH_OPTION == 'SW'">
+				    					AND B.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+						  			</when>
+				    				<otherwise>
+				    					AND B.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+				    				</otherwise>
+				    			</choose>
+							
+							</if>
+							<if test="SEARCH_TYPE == 'ITEM_NM'">
+								<choose>
+				    				<when test="SEARCH_OPTION == 'EQ'">
+				    					AND B.ITEM_NM = #{SEARCH_KEY_WORD}
+				    				</when>
+				    				<when test="SEARCH_OPTION == 'SW'">
+				    					AND B.ITEM_NM LIKE #{SEARCH_KEY_WORD}|| '%'
+						  			</when>
+				    				<otherwise>
+				    					AND B.ITEM_NM LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+				    				</otherwise>
+				    			</choose>
+							</if>
+						</if>
+			        )
+			 GROUP BY IMPDEC_NO,ACPT_DATE,IMPDEC_MANAGE_NO
+			
+			
+
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveImpDetail" parameterType="HashMap" resultType="HashMap">
+
+		SELECT IMPDEC_NO
+		      ,ACPT_DATE
+		      ,LQTX_AMOUNT
+		      ,ECX_AMOUNT
+		      ,SUM(CSTMS) AS CSTMS
+		      ,SUM(QY) AS QY
+		      ,SUM(REMNDR_QY) AS REMNDR_QY
+		      ,SUM(CVODV_KRW) AS CVODV_KRW
+		      ,SUM(CVODV_USD) AS CVODV_USD
+		      ,TOT_TAXAMT
+		      ,SUM(REMNDR_TAX) AS REMNDR_TAX
+	          ,MAX(USE_YN) AS USE_YN
+	          ,MAX(LAST_USE_YYYYMMDD) AS LAST_USE_YYYYMMDD
+	          ,MAX(LC_NO) AS LC_NO
+		      ,MASTER_BL_NO
+		      ,INCME_DELNG_SE
+              ,INCME_TYPE
+              ,XPORT_NATION_CODE
+		  FROM (SELECT A.IMPDEC_NO
+		              ,A.ACPT_DATE
+		              ,B.LNE_NO
+		              ,B.POUCH_NO
+		              ,B.QY
+		              ,A.LQTX_AMOUNT
+		              ,A.ECX_AMOUNT
+		              ,NVL(C.REMNDR_QY, B.QY) AS REMNDR_QY
+		              ,NVL(A.CVODV_KRW, 0) AS CVODV_KRW
+		              ,NVL(A.CVODV_USD, 0) AS CVODV_USD
+		              ,A.TOT_TAXAMT
+		              ,NVL(B.CSTMS, 0) AS CSTMS
+		              ,NVL(C.REMNDR_QY, B.QY) * (NVL(B.CSTMS, 0) + NVL(B.INTTAX, 0) + NVL(B.ECX_AMOUNT, 0) + NVL(B.AGSPT, 0) +
+		                                         NVL(B.TRANTAX, 0) + NVL(B.LQTX_AMOUNT, 0)) AS REMNDR_TAX
+		              ,CASE
+		                   WHEN C.REMNDR_QY IS NULL THEN
+		                    '미사용'
+		                   WHEN C.REMNDR_QY = 0 THEN
+		                    '모두사용'
+		                   ELSE
+		                    '일부'
+		               END AS USE_YN
+		              ,C.LAST_USE_YYYYMMDD
+		              ,A.LC_NO
+		              ,A.MASTER_BL_NO
+		              ,A.INCME_DELNG_SE
+                      ,A.INCME_TYPE
+                      ,A.XPORT_NATION_CODE
+		          FROM IMPDEC_CERFIN_HDER A
+		         INNER JOIN IMPDEC_CERFIN_ITEM B
+		            ON A.COMPANY_CODE = B.COMPANY_CODE
+		           AND A.DIVISION_CODE = B.DIVISION_CODE
+		           AND A.IMPDEC_NO = B.IMPDEC_NO
+		          LEFT OUTER JOIN INCME_LOCAL_BNT_SM C
+		            ON A.COMPANY_CODE = C.COMPANY_CODE
+		           AND A.DIVISION_CODE = C.DIVISION_CODE
+		           AND A.IMPDEC_NO = C.IMPDEC_NO
+		           AND B.LNE_NO = C.LNE_NO
+		           AND B.POUCH_NO = C.POUCH_NO
+		           AND B.ITEM_CODE = C.ITEM_CODE
+		           AND B.COMPANY_CODE = C.COMPANY_CODE
+		           AND B.DIVISION_CODE = C.DIVISION_CODE
+		         WHERE A.IMPDEC_MANAGE_NO = #{IMPDEC_MANAGE_NO}
+		           AND A.COMPANY_CODE = #{COMPANY_CODE})
+		 GROUP BY IMPDEC_NO
+             ,ACPT_DATE
+             ,LQTX_AMOUNT
+             ,ECX_AMOUNT
+             ,TOT_TAXAMT
+             ,MASTER_BL_NO
+             ,INCME_DELNG_SE
+             ,INCME_TYPE
+             ,XPORT_NATION_CODE
+	</select>
+	<select id="retrieveImpDetail_LneList" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT IMPDEC_MANAGE_NO
+			      ,IMPDEC_NO
+			      ,LNE_NO
+			      ,HS_CODE
+			      ,LMTT_REGLTN
+			      ,SUM(CVODV_KRW) AS CVODV_KRW
+			      ,SUM(QY) AS QY
+			      ,SUM(DLIVY_QY) AS DLIVY_QY
+			      ,SUM(TOT_TAX) AS TOT_TAX
+			      ,MAX(LAST_USE_YYYYMMDD) AS LAST_USE_YYYYMMDD
+			      ,SUM(REMNDR_QY) AS REMNDR_QY
+	              ,SUM(USE_TAX) AS USE_TAX
+	              ,SUM(REMNDR_TAX) AS REMNDR_TAX
+			  FROM (SELECT A.IMPDEC_MANAGE_NO
+			              ,A.IMPDEC_NO
+			              ,A.LNE_NO
+			              ,A.HS_CODE
+			              ,CASE
+			                   WHEN B.EFECT_BGNDE IS NULL THEN
+			                    'N'
+			                   ELSE
+			                    CASE
+			                        WHEN A.ACPT_DATE BETWEEN B.EFECT_BGNDE AND B.EFECT_ENDDE THEN
+			                         'Y'
+			                        ELSE
+			                         'N'
+			                    END
+			               END AS LMTT_REGLTN
+			              ,NVL(A.CVODV_KRW, 0) AS CVODV_KRW
+			              ,NVL(A.QY, 0) AS QY
+		                  ,CASE
+			                  WHEN A.BASS_UNIT = C.BASS_UNIT THEN
+			                    NVL(C.DLIVY_QY, 0)
+			                  ELSE
+			                   (CASE
+			                     WHEN A.BASS_UNIT = 'KG' THEN NVL(C.DLIVY_QY, 0) / 1000
+			                     WHEN A.BASS_UNIT = 'LB' THEN NVL(C.DLIVY_QY, 0) / 0.453592 / 1000
+			                     WHEN A.BASS_UNIT = 'DR' THEN NVL(C.DLIVY_QY, 0) / 1000 / 30
+			                     WHEN A.BASS_UNIT = 'GR' THEN NVL(C.DLIVY_QY, 0) / 0.064799
+			                     WHEN A.BASS_UNIT = 'MT' THEN NVL(C.DLIVY_QY, 0) / 1000 / 1000
+			                     ELSE NVL(C.DLIVY_QY, 0)
+			                   END)
+			                END AS DLIVY_QY   
+
+			              ,NVL(A.CSTMS, 0) + NVL(A.INTTAX, 0) + NVL(A.ECX_AMOUNT, 0) + NVL(A.AGSPT, 0) + NVL(A.TRANTAX, 0) +
+			               NVL(A.LQTX_AMOUNT, 0) AS TOT_TAX
+			              ,C.LAST_USE_YYYYMMDD
+	                      ,CASE
+			                  WHEN A.BASS_UNIT = C.BASS_UNIT THEN
+			                    NVL(C.REMNDR_QY, 0)
+			                  ELSE
+			                   (CASE
+			                     WHEN A.BASS_UNIT = 'KG' THEN NVL(C.REMNDR_QY, 0) / 1000
+			                     WHEN A.BASS_UNIT = 'LB' THEN NVL(C.REMNDR_QY, 0) / 0.453592 / 1000
+			                     WHEN A.BASS_UNIT = 'DR' THEN NVL(C.REMNDR_QY, 0) / 1000 / 30
+			                     WHEN A.BASS_UNIT = 'GR' THEN NVL(C.REMNDR_QY, 0) / 0.064799
+			                     WHEN A.BASS_UNIT = 'MT' THEN NVL(C.REMNDR_QY, 0) / 1000 / 1000
+			                     ELSE NVL(C.REMNDR_QY, 0)
+			                   END)
+			                END AS REMNDR_QY   
+	                      ,FLOOR((NVL(A.CSTMS, 0) + NVL(A.INTTAX, 0) + NVL(A.ECX_AMOUNT, 0) + NVL(A.AGSPT, 0) + NVL(A.TRANTAX, 0) + NVL(A.LQTX_AMOUNT, 0)) / A.QY * NVL(C.DLIVY_QY, 0)) AS USE_TAX
+	                  	  ,FLOOR((NVL(A.CSTMS, 0) + NVL(A.INTTAX, 0) + NVL(A.ECX_AMOUNT, 0) + NVL(A.AGSPT, 0) + NVL(A.TRANTAX, 0) + NVL(A.LQTX_AMOUNT, 0)) / A.QY * NVL(C.REMNDR_QY, A.QY)) AS REMNDR_TAX
+			          FROM IMPDEC_CERFIN_ITEM A
+			          LEFT OUTER JOIN INCME_LOCAL_BNT_SM C
+			            ON A.COMPANY_CODE = C.COMPANY_CODE
+			           AND A.DIVISION_CODE = C.DIVISION_CODE
+			           AND A.IMPDEC_NO = C.IMPDEC_NO
+			           AND A.LNE_NO = C.LNE_NO
+			           AND A.POUCH_NO = C.POUCH_NO
+			           AND A.ITEM_CODE = C.ITEM_CODE
+			           AND A.COMPANY_CODE = C.COMPANY_CODE
+			           AND A.DIVISION_CODE = C.DIVISION_CODE
+			          LEFT OUTER JOIN DRWBAK_LMTT_REGLTN B
+			            ON A.COMPANY_CODE = B.COMPANY_CODE
+			           AND A.HS_CODE = B.HS_CODE
+			           AND B.DRWBAK_LMTT_REGLTN = '1' -- 단축고시정보
+			         WHERE A.IMPDEC_MANAGE_NO = #{IMPDEC_MANAGE_NO}
+			           AND A.COMPANY_CODE = #{COMPANY_CODE})
+			 GROUP BY IMPDEC_MANAGE_NO
+			         ,IMPDEC_NO
+			         ,LNE_NO
+			         ,HS_CODE
+			         ,LMTT_REGLTN
+		<include refid="paging-postfix"/>
+	</select>
+	
+	
+	<select id="retrieveImpDetail_PouchList" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT A.IMPDEC_MANAGE_NO
+			      ,A.IMPDEC_NO
+			      ,A.LNE_NO
+			      ,A.POUCH_NO
+			      ,A.ITEM_CODE
+			      ,A.ITEM_NM
+			      ,FLOOR(NVL(A.CSTMS, 0) + NVL(A.INTTAX, 0) + NVL(A.ECX_AMOUNT, 0) + NVL(A.AGSPT, 0) + NVL(A.TRANTAX, 0) + NVL(A.LQTX_AMOUNT, 0)) AS TOT_TAX
+	              ,FLOOR((NVL(A.CSTMS, 0) + NVL(A.INTTAX, 0) + NVL(A.ECX_AMOUNT, 0) + NVL(A.AGSPT, 0) + NVL(A.TRANTAX, 0) + NVL(A.LQTX_AMOUNT, 0)) / A.QY * NVL(C.DLIVY_QY, 0)) AS USE_TAX
+	              ,FLOOR((NVL(A.CSTMS, 0) + NVL(A.INTTAX, 0) + NVL(A.ECX_AMOUNT, 0) + NVL(A.AGSPT, 0) + NVL(A.TRANTAX, 0) + NVL(A.LQTX_AMOUNT, 0)) / A.QY * NVL(C.REMNDR_QY, A.QY)) AS REMNDR_TAX
+	              ,A.QY
+	              ,A.BASS_UNIT
+	              ,CASE
+	                  WHEN A.BASS_UNIT = C.BASS_UNIT THEN
+	                    NVL(C.REMNDR_QY, 0)
+	                  ELSE
+	                   (CASE
+	                     WHEN A.BASS_UNIT = 'KG' THEN NVL(C.REMNDR_QY, 0) / 1000
+	                     WHEN A.BASS_UNIT = 'LB' THEN NVL(C.REMNDR_QY, 0) / 0.453592 / 1000
+	                     WHEN A.BASS_UNIT = 'DR' THEN NVL(C.REMNDR_QY, 0) / 1000 / 30
+	                     WHEN A.BASS_UNIT = 'GR' THEN NVL(C.REMNDR_QY, 0) / 0.064799
+	                     WHEN A.BASS_UNIT = 'MT' THEN NVL(C.REMNDR_QY, 0) / 1000 / 1000
+	                     ELSE NVL(C.REMNDR_QY, 0)
+	                   END)
+	                END AS REMNDR_QY  
+	              ,CASE
+	                  WHEN A.BASS_UNIT = C.BASS_UNIT THEN
+	                    NVL(C.DLIVY_QY, 0)
+	                  ELSE
+	                   (CASE
+	                     WHEN A.BASS_UNIT = 'KG' THEN NVL(C.DLIVY_QY, 0) / 1000
+	                     WHEN A.BASS_UNIT = 'LB' THEN NVL(C.DLIVY_QY, 0) / 0.453592 / 1000
+	                     WHEN A.BASS_UNIT = 'DR' THEN NVL(C.DLIVY_QY, 0) / 1000 / 30
+	                     WHEN A.BASS_UNIT = 'GR' THEN NVL(C.DLIVY_QY, 0) / 0.064799
+	                     WHEN A.BASS_UNIT = 'MT' THEN NVL(C.DLIVY_QY, 0) / 1000 / 1000
+	                     ELSE NVL(C.DLIVY_QY, 0)
+	                   END)
+	                END AS DLIVY_QY
+	              ,A.CVODV_KRW
+	              ,A.CVODV_USD
+			  FROM IMPDEC_CERFIN_ITEM A
+			  LEFT OUTER JOIN INCME_LOCAL_BNT_SM C
+			    ON A.COMPANY_CODE = C.COMPANY_CODE
+			   AND A.DIVISION_CODE = C.DIVISION_CODE
+			   AND A.IMPDEC_NO = C.IMPDEC_NO
+			   AND A.LNE_NO = C.LNE_NO
+			   AND A.POUCH_NO = C.POUCH_NO
+			   AND A.ITEM_CODE = C.ITEM_CODE
+			   AND A.COMPANY_CODE = C.COMPANY_CODE
+			   AND A.DIVISION_CODE = C.DIVISION_CODE
+			 WHERE A.IMPDEC_MANAGE_NO = #{IMPDEC_MANAGE_NO}
+			   AND A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.LNE_NO = #{LNE_NO}
+			
+
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveRB009Grid" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT T.COMPANY_CODE
+			      ,T.DIVISION_CODE
+			      ,T.EXPDECL_MANAGE_NO
+			      ,T.MANUFAC_NAME
+			      ,T.EXPORTER_NAME
+			      ,T.ONBOARD_DATE
+			      ,T.XPORT_STTEMNT_NO
+			      ,T.XPORT_SE
+			      ,T.DSPTH_DATE
+			      ,MAX(T.ITEM_CODE) AS ITEM_CODE
+			      ,MAX(T.ITEM_NM) AS ITEM_NM
+			      ,T.FRMLC_REPR
+			      ,SUM(T.STTEMNT_PC_KRW) AS STTEMNT_PC_KRW
+			      ,SUM(T.STTEMNT_PC_FGCRY) AS STTEMNT_PC_FGCRY
+			      ,SUM(T.ITEM_QTY) AS ITEM_QTY
+			      ,T.CRNCY
+			      ,T.NATION_CODE
+			      ,T.DELY_CND
+			      ,T.EHGT
+			      ,T.HS_CODE
+			      ,T.SLE_UNIT
+			      ,T.ACPLC_CRNCY
+			      ,T.INV_NO
+			      ,T.XPORT_TYPE
+			  FROM EXPORT_CERT_MST T
+			 WHERE T.COMPANY_CODE = #{COMPANY_CODE}
+			   AND T.HS_CODE IS NOT NULL
+			 	
+			<if test="CAL_SEARCH_FROM_DATE != null and CAL_SEARCH_FROM_DATE != ''">
+			  AND T.DSPTH_DATE >= REPLACE(#{CAL_SEARCH_FROM_DATE}, '-', '')
+			</if>
+			<if test="CAL_SEARCH_TO_DATE != null and CAL_SEARCH_TO_DATE != ''">
+			  <![CDATA[ AND T.DSPTH_DATE <= REPLACE(#{CAL_SEARCH_TO_DATE}, '-', '') ]]>
+			</if>
+			
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'XPORT_STTEMNT_NO'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND T.XPORT_STTEMNT_NO = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND T.XPORT_STTEMNT_NO LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.XPORT_STTEMNT_NO LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND T.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND T.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND T.ITEM_NM = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND T.ITEM_NM LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND T.ITEM_NM LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+			GROUP BY T.COMPANY_CODE
+			      ,T.DIVISION_CODE
+			      ,T.EXPDECL_MANAGE_NO
+			      ,T.MANUFAC_NAME
+			      ,T.EXPORTER_NAME
+			      ,T.ONBOARD_DATE
+			      ,T.XPORT_STTEMNT_NO
+			      ,T.XPORT_SE
+			      ,T.DSPTH_DATE
+			      ,T.FRMLC_REPR
+			      ,T.CRNCY
+			      ,T.NATION_CODE
+			      ,T.DELY_CND
+			      ,T.EHGT
+			      ,T.HS_CODE
+			      ,T.SLE_UNIT
+			      ,T.ACPLC_CRNCY
+			      ,T.INV_NO
+			      ,T.XPORT_TYPE				
+
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveExpDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT T.COMPANY_CODE
+		      ,T.DIVISION_CODE
+		      ,T.EXPDECL_MANAGE_NO
+		      ,T.XPORT_STTEMNT_NO
+		      ,T.MANUFAC_NAME
+		      ,T.EXPORTER_NAME
+		      ,T.ONBOARD_DATE
+		      ,T.NATION_CODE
+		      ,T.INV_NO
+		      ,SUM(T.ITEM_QTY) AS ITEM_QTY
+		  FROM EXPORT_CERT_MST T
+		 WHERE T.COMPANY_CODE = #{COMPANY_CODE}
+		   AND T.HS_CODE IS NOT NULL
+		   AND T.EXPDECL_MANAGE_NO = #{EXPDECL_MANAGE_NO}
+		   <if test="INV_NO != null and INV_NO != ''">
+		   AND T.INV_NO = #{INV_NO}
+		   </if>
+		   
+		GROUP BY T.COMPANY_CODE
+		      ,T.DIVISION_CODE
+		      ,T.EXPDECL_MANAGE_NO
+		      ,T.XPORT_STTEMNT_NO
+		      ,T.MANUFAC_NAME
+		      ,T.EXPORTER_NAME
+		      ,T.ONBOARD_DATE
+		      ,T.NATION_CODE
+		      ,T.INV_NO
+	</select>
+	<select id="retrieveExpDetail_Lne" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT T.COMPANY_CODE
+			      ,T.DIVISION_CODE
+			      ,T.EXPDECL_MANAGE_NO
+			      ,T.LNE_NO
+			      ,T.POUCH_NO
+			      ,T.HS_CODE
+			      ,T.STTEMNT_PC_KRW
+			      ,T.ITEM_QTY
+			      ,T.ITEM_CODE
+                  ,T.ITEM_NM
+                  ,T.XPORT_SE
+                  ,T.INV_NO
+			  FROM EXPORT_CERT_MST T
+			 WHERE T.COMPANY_CODE = #{COMPANY_CODE}
+			   AND T.HS_CODE IS NOT NULL
+			   AND T.EXPDECL_MANAGE_NO = #{EXPDECL_MANAGE_NO}
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveRB010Grid" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT DRM.COMPANY_CODE,
+			       DRM.STDR_MT,
+			       DRM.DIVISION_CODE,
+			       DRM.ITEM_CODE,
+			       DRM.INPT_DIVISION_CODE,
+			       DRM.BOM_PRDLST,
+			       DRM.BYPRD_ATRB_GROUP,
+			       DRM.WRHOUSNG_QY,
+			       DRM.ACPLC_CRNCY_AMOUNT,
+			       DRM.UNIT_BYPRD_AMOUNT,
+			       DRM.DDC_RATE_PRDCTN,
+			       DRM.BASS_UNIT,
+			       DRM.QY,
+			       DRM.ACPLC_CRNCY,
+			       DRM.INDVDLZ_INPT_AMOUNT
+			FROM DDC_RATE_MANAGE DRM
+			WHERE DRM.COMPANY_CODE = #{COMPANY_CODE} 
+			
+			<if test="CAL_SEARCH_FROM_DATE != null and CAL_SEARCH_FROM_DATE != ''">
+			  AND DRM.STDR_MT >= REPLACE(#{CAL_SEARCH_FROM_DATE}, '-', '')
+			</if>
+			<if test="CAL_SEARCH_TO_DATE != null and CAL_SEARCH_TO_DATE != ''">
+			  <![CDATA[ AND DRM.STDR_MT <= REPLACE(#{CAL_SEARCH_TO_DATE}, '-', '') ]]>
+			</if>
+			
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND DRM.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND DRM.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND DRM.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveRB011Grid" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT PDR.COMPANY_CODE,
+			       PDR.DIVISION_CODE,
+			       PDR.ITEM_CODE,
+			       PDR.ITEM_NAME,
+			       PDR.PRDCTN_DATE,
+			       PDR.CMPLT_DATE,
+			       PDR.SHIPMNT_DATE,
+			       PDR.HKMC_SE,
+			       PDR.PROD_DIVISION_CODE
+			FROM PRDCTN_DATE_TRACE PDR
+			WHERE PDR.COMPANY_CODE = #{COMPANY_CODE} 
+			
+			<if test="CAL_SEARCH_FROM_DATE != null and CAL_SEARCH_FROM_DATE != ''">
+			  AND PDR.PRDCTN_DATE >= REPLACE(#{CAL_SEARCH_FROM_DATE}, '-', '')
+			</if>
+			<if test="CAL_SEARCH_TO_DATE != null and CAL_SEARCH_TO_DATE != ''">
+			  <![CDATA[ AND PDR.PRDCTN_DATE <= REPLACE(#{CAL_SEARCH_TO_DATE}, '-', '') ]]>
+			</if>
+			
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND PDR.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND PDR.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND PDR.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveRB012Grid" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT ILBS.EFECT_BGNDE,
+			       ILBS.IMPDEC_NO,
+			       ILBS.LNE_NO,
+			       ILBS.POUCH_NO,
+			       ILBS.ITEM_CODE,
+			       ILBS.HS_CODE,
+			       ILBS.COMPANY_CODE,
+			       ILBS.STDR_MT,
+			       ILBS.ACPT_DATE,
+			       ILBS.TRNSFR_DATE,
+			       ILBS.QY,
+			       ILBS.BASS_UNIT,
+			       ILBS.INCME_TARRATE,
+			       ILBS.CSTMS,
+			       ILBS.CSTMS_AMOUNT,
+			       ILBS.CSTMS_AMOUNT_UNIT,
+			       ILBS.AMOUNT_CRNCY,
+			       ILBS.DLIVY_QY,
+			       ILBS.REMNDR_QY,
+			       ILBS.RAWMTRL_SE,
+			       ILBS.BKRECKN_MT,
+			       ILBS.VENDOR_CODE
+			FROM INCME_LOCAL_BNT_SM ILBS
+			WHERE ILBS.COMPANY_CODE = #{COMPANY_CODE} 
+			
+			<if test="CAL_SEARCH_FROM_DATE != null and CAL_SEARCH_FROM_DATE != ''">
+			  AND ILBS.STDR_MT >= REPLACE(#{CAL_SEARCH_FROM_DATE}, '-', '')
+			</if>
+			<if test="CAL_SEARCH_TO_DATE != null and CAL_SEARCH_TO_DATE != ''">
+			  <![CDATA[ AND ILBS.STDR_MT <= REPLACE(#{CAL_SEARCH_TO_DATE}, '-', '') ]]>
+			</if>
+			
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND ILBS.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND ILBS.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND ILBS.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveRB013Grid" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT FIV.COMPANY_CODE,
+			       FIV.YEAR,
+			       FIV.EFECT_BGNDE,
+			       FIV.EFECT_ENDDE,
+			       FIV.ITEM_CODE,
+			       FIV.INCME_TARRATE,
+			       FIV.HS_CODE,
+			       FIV.ITEM_NM,
+			       FIV.QY,
+			       FIV.BASS_UNIT,
+			       FIV.PURCHS_RATE
+			FROM FYER_INCME_VOLM FIV
+			WHERE FIV.COMPANY_CODE = #{COMPANY_CODE} 
+			
+			<if test="CAL_SEARCH_YYYY != null and CAL_SEARCH_YYYY != ''">
+			  AND FIV.YEAR = #{CAL_SEARCH_YYYY}
+			</if>
+			
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND FIV.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND FIV.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND FIV.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+
+		<include refid="paging-postfix"/>
+	</select>
+		
+	<select id="selectPoList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+		   SELECT PL.COMPANY_CODE
+				, PL.DIVISION_CODE
+				, PL.WAREHOUSING_NO
+				, PL.SEQ
+				, PL.WAREHOUSING_YEAR
+				, PL.WAREHOUSING_DATE
+				, CASE WHEN PL.WAREHOUSING_TYPE = 'IMP' THEN '수입' ELSE '내수' END AS WAREHOUSING_TYPE
+				, PL.ORDER_NO
+				, PL.ORDER_SEQ
+				, PL.VENDOR_CODE
+				, PL.MAKER_NAME
+				, PL.ITEM_CODE
+				, PL.ITEM_NAME
+				, PL.LAN
+				, PL.POUCH
+				, PL.PERMIT_DATE
+				, PL.CLEARLANCE_NO
+				, PL.CSTMS
+				, PL.CSTMS_RATE
+				, PL.ORIGIN_NATION
+				, PL.AMOUNT_FOREIGN
+				, PL.UNIT_PRICE_FOREIGN
+				, PL.EXCHANGE_DATE
+				, PL.EXCHANGE_RATE
+				, PL.BL_NO
+				, PL.BL_QUANTITY
+				, PL.WAREHOUSING_QTY
+				, PL.WAREHOUSING_AMOUNT
+				, PL.CURRENCY
+				, PL.ASSETS_TYPE
+				, PL.UNIT
+				, PL.UNIT_PRICE
+				, TO_CHAR(PL.CREATE_DATE, 'YYYY-MM-DD') AS CREATE_DATE
+				, TO_CHAR(PL.UPDATE_DATE, 'YYYY-MM-DD') AS UPDATE_DATE  
+			  FROM PO_LEDGER PL
+			 WHERE 1=1 
+			   AND  PL.COMPANY_CODE = #{COMPANY_CODE}
+			<if test="WAREHOUSING_DATE != null and WAREHOUSING_DATE != ''">
+			  AND PL.WAREHOUSING_DATE LIKE REPLACE(#{WAREHOUSING_DATE}, '-', '') || '%'
+			</if>		
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'VENDOR_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND PL.VENDOR_CODE = #{SEARCH_KEY_WORD}
+			  
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND PL.VENDOR_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND PL.VENDOR_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND PL.ITEM_CODE = #{SEARCH_KEY_WORD}
+			  
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND PL.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND PL.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+		  <include refid="paging-postfix"/>
+	</select>
+	
+	<select id="selectSalesList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT A.SALES_NO,
+			       B.SALES_SEQ,
+			       A.EXPORT_FLAG,
+			       CASE WHEN A.EXPORT_FLAG = 'D' THEN '내수'
+                        ELSE '수출'
+                    END AS EXPORT_FLAG_NAME,
+			       A.CUSTOMER_CODE,       
+			       A.INVOICE_DATE,       
+			       B.PRODUCT_CODE,
+			       B.PRODUCT_UNIT,
+			       B.AMOUNT,
+			       B.AMOUNT_FOREIGN,
+			       B.CURRENCY,
+			       B.PRODUCT_ASSETS_TYPE,
+			       A.ARRIVAL_NATION,
+			       A.ARRIVAL_PORT_NAME,
+			       A.BL_NO,
+			       A.DELIVERY_CUSTOMER_CODE,
+			       A.INCOTERMS,
+			       A.INVOICE_NO,
+			       A.PACKING_COUNT,
+			       A.PACKING_MARK,
+			       A.SHIPPING_DATE,
+			       A.VEHICLE_NAME,
+			       C.CUSTOMER_NAME,
+			       I.ITEM_NAME,
+			       A.PAY_NO,
+			       A.SALES_DOC_NO,
+			       A.TAX_INVOICE_NO,
+			       A.TAX_INVOICE_DATE
+			  FROM SALES_MST A
+			 INNER JOIN SALES_DTL B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.DIVISION_CODE = B.DIVISION_CODE
+			   AND A.SALES_NO = B.SALES_NO
+			  LEFT OUTER JOIN CUSTOMER C
+			    ON A.COMPANY_CODE = C.COMPANY_CODE
+			   AND A.CUSTOMER_CODE = C.CUSTOMER_CODE
+			  LEFT OUTER JOIN ITEM_MST I
+			    ON B.COMPANY_CODE = I.COMPANY_CODE
+			   AND B.PRODUCT_CODE = I.ITEM_CODE
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			<if test="PRIC_RQEST_DATE != null and PRIC_RQEST_DATE != ''">
+			  AND A.INVOICE_DATE LIKE REPLACE(#{PRIC_RQEST_DATE}, '-', '') || '%'
+			</if>		
+			<if test="SEARCH_EXPORT_FLAG != null and SEARCH_EXPORT_FLAG != ''">
+			  AND A.EXPORT_FLAG  = (CASE WHEN 'DOM' = #{SEARCH_EXPORT_FLAG} THEN 'D' ELSE 'E' END)
+			</if>		  
+			<if test="SEARCH_CUSTOMER_TEXT != null and SEARCH_CUSTOMER_TEXT != ''">
+				<choose>
+	    			<when test="SEARCH_CUSTOMER_TYPE == 'NAME'">
+	    				   AND C.CUSTOMER_NAME LIKE #{SEARCH_CUSTOMER_TEXT}||'%'
+	    			</when>
+	    			<otherwise>
+	    					AND A.CUSTOMER_CODE = #{SEARCH_CUSTOMER_TEXT}
+	    			</otherwise>
+	    		</choose>
+			</if>
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND B.PRODUCT_CODE = #{SEARCH_KEY_WORD}
+			  
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND B.PRODUCT_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND B.PRODUCT_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ITEM_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND I.ITEM_NAME = #{SEARCH_KEY_WORD}
+			  
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND I.ITEM_NAME LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND I.ITEM_NAME LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+			</if>
+		  <include refid="paging-postfix"/>
+	</select>
+	
+	<select id="selectMaterialList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT A.COMPANY_CODE,
+			       A.YYYYMM,
+			       A.DIVISION_CODE,
+			       A.ITEM_CODE,
+			       A.ITEM_NAME,
+			       A.BR_GROUP,
+			       A.BR_CODE,
+			       A.ASSETS_TYPE,
+			       A.P_CLASS,
+			       A.F_CENTER,
+			       A.CURRENCY,
+			       A.UNIT,
+			       A.INITIAL_QTY,
+			       A.INITIAL_AMOUNT,
+			       A.INITIAL_PRICE,
+			       A.INPUT_QTY,
+			       A.INPUT_AMOUNT,
+			       A.INPUT_PRICE,
+			       A.PROD_INPUT_QTY,
+			       A.PROD_INPUT_AMOUNT,
+			       A.PROD_INPUT_PRICE,
+			       A.TRANS_INPUT_QTY,
+			       A.TRANS_INPUT_AMOUNT,
+			       A.TRANS_INPUT_PRICE,
+			       A.SALES_RETURN_QTY,
+			       A.SALES_RETURN_AMOUNT,
+			       A.SALES_RETURN_PRICE,
+			       A.OTHER_RETURN_QTY,
+			       A.OTHER_RETURN_AMOUNT,
+			       A.OTHER_RETURN_PRICE,
+			       A.ETC_INPUT_QTY,
+			       A.ETC_INPUT_AMOUNT,
+			       A.ETC_INPUT_PRICE,
+			       A.SALES_ISSUE_QTY,
+			       A.SALES_ISSUE_AMOUNT,
+			       A.SALES_ISSUE_PRICE,
+			       A.OTHER_ISSUE_QTY,
+			       A.OTHER_ISSUE_AMOUNT,
+			       A.OTHER_ISSUE_PRICE,
+			       A.PROD_ISSUE_QTY,
+			       A.PROD_ISSUE_AMOUNT,
+			       A.PROD_ISSUE_PRICE,
+			       A.STOCK_ISSUE_QTY,
+			       A.STOCK_ISSUE_AMOUNT,
+			       A.STOCK_ISSUE_PRICE,
+			       A.ETC_ISSUE_QTY,
+			       A.ETC_ISSUE_AMOUNT,
+			       A.ETC_ISSUE_PRICE,
+			       A.COST_DISC,
+			       A.MATERIAL_ADJ,
+			       A.INVENTORY_QTY,
+			       A.INVENTORY_AMOUNT,
+			       A.INVENTORY_PRICE
+			  FROM MATERIAL_INV_BAL A
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			<if test="STDR_MT != null and STDR_MT != ''">
+			  AND A.YYYYMM LIKE REPLACE(#{STDR_MT}, '-', '') || '%'
+			</if>			  
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'ITEM_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND A.ITEM_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND A.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+		  <include refid="paging-postfix"/>
+	</select>
+	
+	
+	<select id="retrieveBomList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT DISTINCT  
+			       A.COMPANY_CODE,
+			       A.DIVISION_CODE,
+			       A.BOM_VERSION,
+			       A.PRODUCT_CODE,
+			       B.ITEM_NAME AS PRODUCT_NAME,
+			       B.HS_CODE AS HS_CODE10,
+			       B.UNIT,
+			       A.BYPRD_OCCRRNC_AT,
+			       A.USE_YN
+			  FROM RESULT_BOM_AP A
+			 INNER JOIN ITEM_MST B
+			    ON A.COMPANY_CODE = B.COMPANY_CODE
+			   AND A.PRODUCT_CODE = B.ITEM_CODE
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND SUBSTR(A.BOM_VERSION, 1,6) BETWEEN REPLACE(#{STDR_MT}, '-','') AND REPLACE(#{EDDR_MT}, '-','')
+			   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE = #{SEARCH_KEY_WORD}
+				  
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				</if>
+			   <if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'PRODUCT_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.PRODUCT_CODE = #{SEARCH_KEY_WORD}
+				  
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.PRODUCT_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.PRODUCT_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				</if>
+				ORDER BY A.PRODUCT_CODE, A.BOM_VERSION DESC
+		<include refid="paging-postfix"/>
+		
+	</select>
+	
+	<select id="selectItemList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT A.ITEM_CODE
+			      ,I.ITEM_NAME
+			      ,I.ASSETS_TYPE
+			      ,NVL(A.HS_CODE10, I.HS_CODE) AS HS_CODE10
+			      ,A.INPUT_QTY
+			      ,A.INPUT_BASS_UNIT
+			      ,A.BYPRD_OCCRRNC_AT
+			      ,TO_CHAR(A.CREATE_DATE, 'RRRRMMDD') AS CREATE_DATE
+			  FROM RESULT_BOM_AP A
+			  LEFT OUTER JOIN ITEM_MST I
+			      ON A.COMPANY_CODE = I.COMPANY_CODE
+			     AND A.ITEM_CODE = I.ITEM_CODE
+			   WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			     AND A.DIVISION_CODE = #{DIVISION_CODE}
+			     AND A.PRODUCT_CODE = #{PRODUCT_CODE}
+			     AND A.BOM_VERSION = #{BOM_VERSION}			
+		<include refid="paging-postfix"/>
+	</select>
+	
+	
+	<!-- 간이정액환급 정보 -->
+	<select id="retrieveRefundBasis_014" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT COMPANY_CODE, 
+			       START_DATE, 
+			       END_DATE, 
+			       HS_CODE10, 
+			       HS_DESC, 
+			       PRICE
+			  FROM LF_REFUND_MST LRM
+			 WHERE LRM.COMPANY_CODE = #{COMPANY_CODE}
+			   AND #{APPLY_DATE} BETWEEN LRM.START_DATE AND LRM.END_DATE
+			<if test="HS_CODE10 != null and HS_CODE10 != ''">
+			   AND LRM.HS_CODE10 = #{HS_CODE10}
+			</if>
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'PRICE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND LRM.PRICE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND LRM.PRICE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND LRM.PRICE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'HS_DESC'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND LRM.HS_DESC = #{SEARCH_KEY_WORD}
+			  
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND LRM.HS_DESC LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND LRM.HS_DESC LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+			   
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<!-- 간이정액환급 정보 입력/수정 -->
+	<update id="mergeRefundBasis_014" parameterType="HashMap">
+	
+	</update>
+	
+	<!-- 간이정액환급 정보 삭제 -->
+	<update id="deleteRefundBasis_014" parameterType="HashMap">
+	
+	</update>    
+	
+	<!-- 단축고시 정보 -->
+	<select id="retrieveRefundBasis_015" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT 
+			       SH.APPLY_YEAR,
+			       SH.HS_SEQ,
+			       SH.HSCODE10,
+			       SH.HS_DESC,
+			       SH.REMARK,
+			       SH.PRE_HS_SEQ,
+			       SH.PRE_HSCODE10
+			  FROM SHORTEN_HSCODE SH
+			 WHERE SH.COMPANY_CODE = #{COMPANY_CODE}
+			   AND SH.APPLY_YEAR = #{APPLY_YEAR}
+			 <if test="FROM_HSCODE10 != null and FROM_HSCODE10 != '' and TO_HSCODE10 != null and TO_HSCODE10 != ''">
+			   AND SH.HSCODE10 BETWEEN #{FROM_HSCODE10} AND #{TO_HSCODE10}
+			 </if>
+			 <if test="HS_DESC != null and HS_DESC != ''">
+			   AND SH.HS_DESC LIKE #{HS_DESC}||'%'
+			 </if>
+		<include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieve_RB015_YearCodeList" parameterType="HashMap" resultType="HashMap">
+		SELECT APPLY_YEAR||' 년도' AS NAME
+		       , APPLY_YEAR AS CODE
+		  FROM SHORTEN_HSCODE
+		 WHERE COMPANY_CODE = #{COMPANY_CODE}
+		 GROUP BY APPLY_YEAR
+		 ORDER BY APPLY_YEAR DESC
+	</select>
+	
+	
+	<!-- 단축고시 정보 입력/수정 -->
+	<update id="mergeRefundBasis_015" parameterType="HashMap">
+	
+	</update>
+	
+	<!-- 단축고시 정보 삭제 -->
+	<update id="deleteRefundBasis_015" parameterType="HashMap">
+	
+	</update>  
+	
+	
+	<!-- 거래처관리 -->
+	<select id="retrieveRefundBasis_016" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+
+			<choose>
+				<when test="SEARCH_TYPE == 'VV'">
+					SELECT '공급업체' AS DATA_TYPE,
+					       V.VENDOR_CODE AS VC_CODE,
+					       V.NATION_CODE AS VC_NATION,
+					       V.VENDOR_NAME AS VC_NAME,
+					       V.VENDOR_NAME_ENG AS VC_ENG_NAME,
+					       V.BUSINESS_NO,
+					       V.OFFICER_NAME,
+					       V.OFFICER_NAME_ENG,
+					       V.ADDRESS,
+					       V.ADDRESS_ENG,
+					       V.FAX_NO,
+					       V.TEL_NO,
+					       V.CUSTOM_UNQ_CODE,
+					       V.DELETE_YN
+					  FROM VENDOR V
+					 WHERE COMPANY_CODE = #{COMPANY_CODE}
+					 <if test="VENDOR_NAME != null and VENDOR_NAME != ''">
+					   AND V.VENDOR_NAME LIKE #{VENDOR_NAME}||'%'
+					 </if>			   
+					 <if test="BUSINESS_NO != null and BIZRNO != ''">
+					   AND V.BIZRNO = #{BIZRNO}
+					 </if>  
+	  			</when>
+	  			<when test="SEARCH_TYPE == 'CC'">
+					 SELECT '고객사' AS DATA_TYPE
+					        ,C.CUSTOMER_CODE AS VC_CODE
+					        ,C.NATION_CODE   AS VC_NATION
+					        ,C.CUSTOMER_NAME AS VC_NAME
+					        ,C.CUSTOMER_NAME_ENG AS VC_ENG_NAME
+					        ,C.BUSINESS_NO
+					        ,C.OFFICER_NAME
+					        ,C.OFFICER_NAME_ENG
+					        ,C.ADDRESS
+					        ,C.ADDRESS_ENG
+					        ,C.FAX_NO
+					        ,C.TEL_NO
+					        ,ECTMRK AS CUSTOM_UNQ_CODE
+					        ,C.DELETE_YN
+					   FROM CUSTOMER C
+					  WHERE C.COMPANY_CODE = '1100'
+					 <if test="VENDOR_NAME != null and VENDOR_NAME != ''">
+					   AND C.CUSTOMER_NAME LIKE #{VENDOR_NAME}||'%'
+					 </if>			   
+					 <if test="BIZRNO != null and BIZRNO != ''">
+					   AND C.BUSINESS_NO = #{BIZRNO}
+					 </if>  
+	  			</when>
+	  			<otherwise>
+					SELECT '공급업체' AS DATA_TYPE,
+					       V.VENDOR_CODE AS VC_CODE,
+					       V.NATION_CODE AS VC_NATION,
+					       V.VENDOR_NAME AS VC_NAME,
+					       V.VENDOR_NAME_ENG AS VC_ENG_NAME,
+					       V.BUSINESS_NO,
+					       V.OFFICER_NAME,
+					       V.OFFICER_NAME_ENG,
+					       V.ADDRESS,
+					       V.ADDRESS_ENG,
+					       V.FAX_NO,
+					       V.TEL_NO,
+					       V.CUSTOM_UNQ_CODE,
+					       V.DELETE_YN
+					  FROM VENDOR V
+					 WHERE COMPANY_CODE = #{COMPANY_CODE}
+					 <if test="VENDOR_NAME != null and VENDOR_NAME != ''">
+					   AND V.VENDOR_NAME LIKE #{VENDOR_NAME}||'%'
+					 </if>			   
+					 <if test="BIZRNO != null and BIZRNO != ''">
+					   AND V.BUSINESS_NO = #{BIZRNO}
+					 </if>  
+					UNION ALL
+					 SELECT '고객사' AS DATA_TYPE
+					        ,C.CUSTOMER_CODE AS VC_CODE
+					        ,C.NATION_CODE   AS VC_NATION
+					        ,C.CUSTOMER_NAME AS VC_NAME
+					        ,C.CUSTOMER_NAME_ENG AS VC_ENG_NAME
+					        ,C.BUSINESS_NO
+					        ,C.OFFICER_NAME
+					        ,C.OFFICER_NAME_ENG
+					        ,C.ADDRESS
+					        ,C.ADDRESS_ENG
+					        ,C.FAX_NO
+					        ,C.TEL_NO
+					        ,ECTMRK AS CUSTOM_UNQ_CODE
+					        ,C.DELETE_YN
+					   FROM CUSTOMER C
+					  WHERE C.COMPANY_CODE = '1100'
+					 <if test="VENDOR_NAME != null and VENDOR_NAME != ''">
+					   AND C.CUSTOMER_NAME LIKE #{VENDOR_NAME}||'%'
+					 </if>			   
+					 <if test="BIZRNO != null and BIZRNO != ''">
+					   AND C.BUSINESS_NO = #{BIZRNO}
+					 </if>  
+	  			</otherwise>
+	  		</choose>
+  
+
+		<include refid="paging-postfix"/>
+	</select>
+	
+
+	<select id="retrievePreDataCheckForImport" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN COUNT(1) = 0 THEN 'Y' 
+		            WHEN SUM(A.QY) = SUM(A.REMNDR_QY) THEN 'Y' 
+		            ELSE 'N' 
+		        END AS CHECK_VALUE
+		  FROM INCME_LOCAL_BNT_SM A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.EFECT_BGNDE LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+	
+	</select>
+	
+	<select id="retrievePreDataCheckForExport" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN COUNT(1) = 0 THEN 'Y'
+		            WHEN SUM(A.ITEM_QTY) = SUM(A.ABLE_ITEM_QTY) THEN 'Y'
+		            ELSE 'N' 
+		        END AS CHECK_VALUE
+		  FROM EXPORT_CERT_MST A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DSPTH_DATE LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+	</select>
+	
+ 	<delete id="deleteExcelUploadTemp" parameterType="HashMap">
+ 		DELETE FROM EXCEL_UPLOAD_TEMP A 
+ 		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+ 		   AND A.USER_ID = #{USER_ID}
+	</delete>
+	
+	<insert id="insertTempImportExcelData" parameterType="HashMap">
+		INSERT INTO EXCEL_UPLOAD_TEMP
+		  (COMPANY_CODE, USER_ID, ERROR_YN, ERROR_MESSAGE, ATTR00, ATTR01, ATTR02, ATTR03, ATTR04, ATTR05, ATTR06, ATTR07, ATTR08, ATTR09, ATTR10
+		  , ATTR11, ATTR12, ATTR13, ATTR14, ATTR15, ATTR16, ATTR17, ATTR18, ATTR19, ATTR20, ATTR21, ATTR22, ATTR23, ATTR24, ATTR25, ATTR26, ATTR27, ATTR28, ATTR29, ATTR30
+		  , ATTR31, ATTR32, ATTR33, ATTR34, ATTR35, ATTR36, ATTR37, ATTR38, ATTR39, ATTR40, ATTR41, ATTR42, ATTR43, ATTR44, ATTR45, ATTR46, ATTR47, ATTR48, ATTR49, ATTR50
+		  , ATTR51, ATTR52, ATTR53, ATTR54, ATTR55, ATTR56, ATTR57, ATTR58, ATTR59, ATTR60, ATTR61, ATTR62, ATTR63, ATTR64, ATTR65, ATTR66, ATTR67, ATTR68, ATTR69, ATTR70, CREATE_DATE)
+		VALUES
+		  (#{COMPANY_CODE}, #{USER_ID}, 'N', NULL, #{ATTR00}, #{ATTR01}, #{ATTR02}, #{ATTR03}, #{ATTR04}, #{ATTR05}, #{ATTR06}, #{ATTR07}, #{ATTR08}, #{ATTR09}, #{ATTR10}
+		  , #{ATTR11}, #{ATTR12}, #{ATTR13}, #{ATTR14}, #{ATTR15}, #{ATTR16}, #{ATTR17}, #{ATTR18}, #{ATTR19}, #{ATTR20}, #{ATTR21}, #{ATTR22}, #{ATTR23}, #{ATTR24}, #{ATTR25}, #{ATTR26}, #{ATTR27}, #{ATTR28}, #{ATTR29}, #{ATTR30}
+		  , #{ATTR31}, #{ATTR32}, #{ATTR33}, #{ATTR34}, #{ATTR35}, #{ATTR36}, #{ATTR37}, #{ATTR38}, #{ATTR39}, #{ATTR40}, #{ATTR41}, #{ATTR42}, #{ATTR43}, #{ATTR44}, #{ATTR45}, #{ATTR46}, #{ATTR47}, #{ATTR48}, #{ATTR49}, #{ATTR50}
+		  , #{ATTR51}, #{ATTR52}, #{ATTR53}, #{ATTR54}, #{ATTR55}, #{ATTR56}, #{ATTR57}, #{ATTR58}, #{ATTR59}, #{ATTR60}, #{ATTR61}, #{ATTR62}, #{ATTR63}, #{ATTR64}, #{ATTR65}, #{ATTR66}, #{ATTR67}, #{ATTR68}, #{ATTR69}, #{ATTR70}, SYSDATE)
+	</insert>
+	
+	
+	<select id="retrieveExcelWorkMonthFor_Import" parameterType="HashMap" resultType="HashMap">
+		SELECT DISTINCT SUBSTR(A.ATTR01, 1, 6) AS TARGET_MONTH
+		  FROM EXCEL_UPLOAD_TEMP A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.USER_ID = #{USER_ID}  
+	</select>
+	
+	
+	<select id="retrieveExcelWorkMonthFor_Export" parameterType="HashMap" resultType="HashMap">
+		SELECT DISTINCT SUBSTR(A.ATTR29, 1, 6)  AS TARGET_MONTH
+		  FROM EXCEL_UPLOAD_TEMP A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.USER_ID = #{USER_ID}	
+	</select>
+	
+	
+	<update id="updateUploadDataCheck_ImpAnotherMonth" parameterType="HashMap">
+		UPDATE EXCEL_UPLOAD_TEMP A
+		   SET A.ERROR_YN = 'Y'
+		       ,A.ERROR_MESSAGE = '날짜 오류'
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.USER_ID = #{USER_ID}
+		   AND (
+		   	    REPLACE(#{WORK_MONTH}, '-','') IS NOT NULL
+		        AND A.ATTR01 NOT LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+		        )	
+	</update>
+	
+	<update id="updateUploadDataCheck_ExpAnotherMonth" parameterType="HashMap">
+		UPDATE EXCEL_UPLOAD_TEMP A
+		   SET A.ERROR_YN = 'Y'
+		       ,A.ERROR_MESSAGE = '날짜 오류'
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.USER_ID = #{USER_ID}
+		   AND (
+		   		REPLACE(#{WORK_MONTH}, '-','') IS NOT NULL
+		        AND A.ATTR29 NOT LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+		       )	
+	</update>
+		<update id="updateImportEmptyItemCode" parameterType="HashMap">
+		UPDATE EXCEL_UPLOAD_TEMP X
+		   SET X.ERROR_YN = 'Y'
+		       ,X.ERROR_MESSAGE = '자재코드 누락'
+		WHERE X.ATTR50 IS NULL
+		  AND X.COMPANY_CODE = #{COMPANY_CODE}
+		  AND X.USER_ID = #{USER_ID}
+	
+	</update>
+
+	<update id="updateExportEmptyItemCode" parameterType="HashMap">
+		UPDATE EXCEL_UPLOAD_TEMP X
+		   SET X.ERROR_YN = 'Y'
+		       ,X.ERROR_MESSAGE = '자재코드 누락'
+		WHERE X.ATTR00 IS NULL
+		  AND X.COMPANY_CODE = #{COMPANY_CODE}
+		  AND X.USER_ID = #{USER_ID}
+	
+	</update>
+	
+	
+	<update id="updateUploadDataCheck_ImpDupData" parameterType="HashMap">
+		UPDATE EXCEL_UPLOAD_TEMP X
+		   SET X.ERROR_YN = 'Y'
+		       ,X.ERROR_MESSAGE = '중복된 데이터'
+		WHERE (X.ATTR00, X.ATTR31, X.ATTR49) IN ( SELECT A.ATTR00, A.ATTR31, A.ATTR49
+		                                            FROM (SELECT A.ATTR00, A.ATTR31, A.ATTR49, COUNT(1) AS CTN
+		                                                    FROM EXCEL_UPLOAD_TEMP A
+		                                                   WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                                                     AND A.USER_ID = #{USER_ID}
+		                                                   GROUP BY A.ATTR00, A.ATTR31, A.ATTR49
+		                                                  ) A
+		                                            WHERE A.CTN > 1
+		                                            )
+		  AND X.COMPANY_CODE = #{COMPANY_CODE}
+		  AND X.USER_ID = #{USER_ID}
+		  AND X.ATTR01 LIKE REPLACE(#{WORK_MONTH}, '-','') || '%'
+	
+	</update>
+	
+	<update id="updateUploadDataCheck_ExpDupData" parameterType="HashMap">
+		UPDATE EXCEL_UPLOAD_TEMP X
+		   SET X.ERROR_YN = 'Y'
+		       ,X.ERROR_MESSAGE = '중복된 데이터'
+		WHERE (X.ATTR01, X.ATTR02, X.ATTR03) IN ( SELECT A.ATTR01, A.ATTR02, A.ATTR03
+		                                            FROM (SELECT A.ATTR01, A.ATTR02, A.ATTR03, COUNT(1) AS CTN
+		                                                    FROM EXCEL_UPLOAD_TEMP A
+		                                                   WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                                                     AND A.USER_ID = #{USER_ID}
+		                                                   GROUP BY A.ATTR01, A.ATTR02, A.ATTR03
+		                                                  ) A
+		                                            WHERE A.CTN > 1
+		                                            )
+		  AND X.COMPANY_CODE = #{COMPANY_CODE}
+		  AND X.USER_ID = #{USER_ID}
+		  AND X.ATTR29 LIKE REPLACE(#{WORK_MONTH}, '-','') || '%'
+	</update>
+
+	<delete id="deleteImportPreHderData" parameterType="HashMap">
+		DELETE FROM IMPDEC_CERFIN_HDER A WHERE A.COMPANY_CODE = #{COMPANY_CODE} AND A.ACPT_DATE LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+	</delete>
+	
+	<delete id="deleteImportPreItemData" parameterType="HashMap">
+		DELETE FROM IMPDEC_CERFIN_ITEM A WHERE A.COMPANY_CODE = #{COMPANY_CODE} AND A.ACPT_DATE LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+	</delete>
+	
+	<delete id="deleteIncmeLocalBntSmPreData" parameterType="HashMap">
+		DELETE FROM INCME_LOCAL_BNT_SM A WHERE A.COMPANY_CODE = #{COMPANY_CODE} AND A.EFECT_BGNDE LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+	</delete>
+	
+	
+	<insert id="createImportHderData" parameterType="HashMap">
+		INSERT INTO IMPDEC_CERFIN_HDER
+		       (COMPANY_CODE,DIVISION_CODE,IMPDEC_MANAGE_NO,STTEMNT_SE,IMPDEC_NO,STTEMNT_DATE,CSMHSE_CODE,CSMHSE_KWA,ETRYPT_DATE,HOUSE_BL_NO,CMST,
+		        MASTER_BL_SEQ_NO,HOUSE_BL_SEQ_NO,INCME_DATE,TYPCOLE,CSTBRKR,APLCNT_MTLTY,IMPR_MTLTY,IMPR_CMMRC_REGIST_NO,IMPR_SE,TAXPYER_ECTMRK,
+		        TAXPYER_BIZRNO,TAXPYER_MTLTY,TAXPYER_ADRES_1,TAXPYER_ADRES_2,TAXPYER_RPRSNTV_NM,CMMRC_AGENCY_MTLTY,CMMRC_AGENCY_SMBOL,SUPLER_MTLTY_1,
+		        SUPLER_MTLTY_2,OVSEA_SUPLER_NATION_CODE,OVSEA_SUPLER_SMBOL,ENTRPAN,INCME_STTEMNT_SE,INCME_DELNG_SE,INCME_TYPE,CERTORG_ENNC,PC_DCLRT_ENNC,
+		        TOT_WT,WT_UNIT,TOT_FRMLC_REPR,FRMLC_TYPE,ARVL_PRT,TRNSPRT_MN,TRNSPRT_CNTNR,XPORT_NATION_CODE,SHIP_NM,SHIP_NLTY,MASTER_BL_NO,TRANSPRT_INSTT,
+		        INCME_PLACE_SMBOL,SHED_PLACE,DELY_CND,SETLE_AMOUNT_CRNCY,SETLE_AMOUNT,SETLE_MTH,CVODV_USD,AMOUNT_CRNCY_USD,CVODV_KRW,AMOUNT_CRNCY_KRW,EHGT,
+		        CYCHG,IRNCF,ADDI_AMOUNT,DDC_AMOUNT,CSTMS,SLX,TRANTAX,LQTX_AMOUNT,ECX_AMOUNT,AGSPT,VAT,STTEMNT_DELAY_ADTX,TOT_TAXAMT,PAY_NTIC_NO,VAT_TAXT_STDTAX,
+		        VAT_TAXXPT_STDTAX,CUSOFCR_NM,CUSOFCR_CODE,RCEPT_DATE,RCEPT_TM,ACPT_DATE,TOT_LNE_CO,BL_MANAGE_NO,VAT_PROCESS_AT,PAY_MTD,EDI_RECPTN_STATUS,
+		        FEE,FEE_CRNCY,RYALTY,RYALTY_CRNCY,XPORT_STTEMNT_NO,STTS_AT,ENTR_FEE,ENTR_FEE_CRNCY,ITEM_DOC_NO,ITEM_DOC_YEAR,SMTM_CREAT,LC_NO,VENDOR_CODE)
+		SELECT DISTINCT A.COMPANY_CODE AS COMPANY_CODE
+		       ,A.COMPANY_CODE AS DIVISION_CODE
+		       ,ATTR00 AS IMPDEC_MANAGE_NO
+		       ,ATTR14 AS STTEMNT_SE
+		       ,ATTR00 AS IMPDEC_NO
+		       ,ATTR01 AS STTEMNT_DATE
+		       ,ATTR02 AS CSMHSE_CODE
+		       ,ATTR03 AS CSMHSE_KWA
+		       ,NULL AS ETRPT_DATE
+		       ,NULL AS HOUSE_BL_NO
+		       ,NULL AS CMST  -- 적하목록 관리번호(MRN 번호)
+		       ,NULL AS MASTER_BL_SEQ_NO  --   MSN(MASTER B/L SEQUENTIAL --)
+		       ,NULL AS HOUSE_BL_SEQ_NO -- HSN(HOUSE B/L SEQUENTIAL --)
+		       ,NULL AS INCME_DATE  --    반입일
+		       ,NULL AS --징수형태
+		       ,NULL AS CSTBRKR --(5)    관세사 코드
+		       ,ATTR03 AS APLCNT_MTLT  --(200)    신고자 상호
+		       ,ATTR03 AS IMPR_MTLT  --(200)    수입자 상호
+		       ,NULL AS IMPR_CMMRC_REGIST_NO  --(10)     수입자 무역업등록번호
+		       ,'A' AS IMPR_SE --(1)    수입자 구분
+		       ,C.ECTMRK AS TAXPER_ECTMRK  --(25)     납세자 통관고유부호
+		       ,ATTR09 AS TAXPER_BIZRNO  --(13)     납세자 사업자번호
+		       ,ATTR07 AS TAXPER_MTLT --(200)    납세자상호
+		       ,C.ADRES AS TAXPER_ADRES_1 --(200)    납세자 주소1
+		       ,NULL AS TAXPER_ADRES_2 --(200)    납세자 주소2
+		       ,ATTR08 AS TAXPER_RPRSNTV_NM  --(200)    납세자 대표자명
+		       ,NULL AS CMMRC_AGENC_MTLT  --(200)    무역대리점 상호
+		       ,NULL AS CMMRC_AGENC_SMBOL  --(7)    무역대리점 부호
+		       ,ATTR10 AS SUPLER_MTLT_1  --(200)    공급자상호1
+		       ,ATTR10 AS SUPLER_MTLT_2  --(200)    공급자상호2
+		       ,ATTR12 AS OVSEA_SUPLER_NATION_CODE  --(3)    해외공급자 국적
+		       ,ATTR11 AS OVSEA_SUPLER_SMBOL  --(20)     해외공급자 부호
+		       ,NULL AS ENTRPAN --(1)    통관계획
+		       ,ATTR13 AS INCME_STTEMNT_SE  --(1)    수입신고구분
+		       ,ATTR14 AS INCME_DELNG_SE  --(2)    수입거래구분(IMP_DLNG_TPCD)
+		       ,ATTR15 AS INCME_TPE  --(2)    수입종류구분(IMP_KCD)
+		       ,NULL AS CERTORG_ENNC  --(1)    원산지증명서 유무
+		       ,NULL AS PC_DCLRT_ENNC --(1)    가격신고서 유무
+		       ,ATTR16 AS TOT_WT  --(15,3)     총중량
+		       ,ATTR40 AS WT_UNIT --(3)    중량단위
+		       ,ATTR17 AS TOT_FRMLC_REPR  --(6)    총포장갯수
+		       ,ATTR18 AS FRMLC_TPE  --(2)    포장 종류
+		       ,NULL AS ARVL_PRT  --(5)    도착항
+		       ,NULL AS TRNSPRT_MN  --(2)    운송수단
+		       ,NULL AS TRNSPRT_CNTNR --(3)    운송용기
+		       ,ATTR19 AS XPORT_NATION_CODE --(3)    적출국
+		       ,NULL AS SHIP_NM --(35)     선기명
+		       ,NULL AS SHIP_NLT --(3)    선기국적
+		       ,ATTR04 AS MASTER_BL_NO  --(20)     B/L 번호(MASTER)
+		       ,NULL AS TRANSPRT_INSTT  --(4)    운수기관부호
+		       ,NULL AS INCME_PLACE_SMBOL --(8)    검사/반입장소 부호
+		       ,NULL AS SHED_PLACE  --(10)     장치장장소
+		       ,ATTR21 AS DEL_CND  --(3)    인도 조건(파트 1)
+		       ,ATTR22 AS SETLE_AMOUNT_CRNC  --(5)    결제금액 통화
+		       ,ATTR27 AS SETLE_AMOUNT  --(17,2)     결제금액
+		       ,ATTR26 AS SETLE_MTH --(2)    결제방법
+		       ,ATTR38 AS CVODV_USD --(17,2)     과세가격(USD)
+		       ,NULL AS AMOUNT_CRNC_USD  --(5)    금액통화(USD)
+		       ,ATTR38 AS CVODV_KRW --(17,2)     과세가격(KRW)
+		       ,NULL AS AMOUNT_CRNC_KRW  --(5)    금액통화(KRW)
+		       ,ATTR23 AS EHGT  --(9,5)    환율
+		       ,NULL AS CCHG --(17,2)     운임
+		       ,NULL AS IRNCF --(17,2)     보험료
+		       ,NULL AS ADDI_AMOUNT --(17,2)     가산금액
+		       ,NULL AS DDC_AMOUNT  --(17,2)     공제금액
+		       ,ATTR47 AS CSTMS --(17,2)     관세
+		       ,NULL AS SLX --(17,2)     개별소비세
+		       ,NULL AS TRANTAX --(17,2)     교통세
+		       ,NULL AS LQTX_AMOUNT --(17,2)     주세
+		       ,NULL AS ECX_AMOUNT  --(17,2)     교육세
+		       ,NULL AS AGSPT --(17,2)     농특세
+		       ,NULL AS VAT --(17,2)     부가세
+		       ,NULL AS STTEMNT_DELA_ADTX  --(17,2)     신고지연가산세
+		       ,ATTR30 AS TOT_TAXAMT  --(17,2)     총세액
+		       ,NULL AS PA_NTIC_NO --(19)     납부고지번호
+		       ,NULL AS VAT_TAXT_STDTAX --(17,2)     부가세 과세과표
+		       ,NULL AS VAT_TAXXPT_STDTAX --(17,2)     부가세 면세과표
+		       ,NULL AS CUSOFCR_NM  --(12)     세관담당자 이름
+		       ,NULL AS CUSOFCR_CODE  --(6)    세관담당자 코드
+		       ,NULL AS RCEPT_DATE  --(8)    접수일자
+		       ,NULL AS RCEPT_TM  --(6)    접수시각
+		       ,ATTR01 AS ACPT_DATE --(8)    수리일자
+		       ,ATTR20 AS TOT_LNE_CO  --(3)    총란수
+		       ,NULL AS BL_MANAGE_NO  --(30)     B/L 관리번호
+		       ,NULL AS VAT_PROCESS_AT  --(1)    부가세 가지급 처리 여부
+		       ,NULL AS PA_MTD --(8)    납부만기일
+		       ,NULL AS EDI_RECPTN_STATUS --(1)    EDI 수신상태(수신전용)
+		       ,NULL AS FEE --(17,2)     커미션
+		       ,NULL AS FEE_CRNC --(5)    커미션 통화
+		       ,NULL AS RALT  --(17,2)     로열티
+		       ,NULL AS RALT_CRNC  --(5)    로열티 통화
+		       ,NULL AS XPORT_STTEMNT_NO  --(15)     수출신고번호
+		       ,NULL AS STTS_AT --(1)    전략물자 여부
+		       ,NULL AS ENTR_FEE  --(17)     통관수수료
+		       ,NULL AS ENTR_FEE_CRNC  --(5)    통관수수료 통화
+		       ,NULL AS ITEM_DOC_NO --(10)     자재문서번호
+		       ,NULL AS ITEM_DOC_EAR --(4)    자재 전표 연도
+		       ,NULL AS SMTM_CREAT  --(1)    동시생성
+		       ,NULL AS LC_NO --(20)     L/C 번호
+		       ,ATTR11 AS VENDOR_CODE --(30)     공급사코드
+		  FROM EXCEL_UPLOAD_TEMP A
+		 INNER JOIN COMPANY C
+		    ON A.COMPANY_CODE = C.COMPANY_CODE
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.USER_ID = 	#{USER_ID}
+		   AND A.ATTR01 LIKE #{WORK_MONTH} || '%'
+	</insert>
+	
+	
+	<insert id="createImportItemData" parameterType="HashMap">
+		INSERT INTO IMPDEC_CERFIN_ITEM
+		       (COMPANY_CODE, DIVISION_CODE, IMPDEC_MANAGE_NO, LNE_NO, POUCH_NO, ITEM_CODE, INVC_NO, INVC_SEQ, ITEM_NM, HS_CODE, IMPDEC_NO, ACPT_DATE, 
+		        CVODV_USD, AMOUNT_CRNCY_USD, CVODV_KRW, AMOUNT_CRNCY_KRW, QY, BASS_UNIT, INCME_TARRATE, CSTMS, INTTAX, ECX_AMOUNT, AGSPT, 
+		        BL_NO, LC_NO, ORIGIN_NATION_CODE, INCME_STTEMNT_SE, INCME_TYPE, INCME_DELNG_SE, IMPR_SE, PURCHS_DOC_NO, PURCHS_DOC_PRDLST, VENDOR_CODE, ACPLC_CRNCY, 
+		        TRANTAX, LQTX_AMOUNT, UNIT_PRICE)
+		SELECT A.COMPANY_CODE  --(30)      회사 코드
+		       ,A.COMPANY_CODE AS DIVISION_CODE --(30)      플랜트
+		       ,ATTR00 AS IMPDEC_MANAGE_NO  --(30)      수입신고 관리번호
+		       ,ATTR31 AS  LNE_NO  --(3)     란(3)
+		       ,ATTR49 AS  POUCH_NO  --(4)     행(4)
+		       ,ATTR50 AS  ITEM_CODE --(40)      자재 번호
+		       ,NULL AS  INVC_NO --(60)  인보이스 NO.
+		       ,NULL AS  INVC_SEQ  --(3) 순번
+		       ,NVL(ATTR52,ATTR51) AS  ITEM_NM --(1000)  자재내역
+		       ,ATTR32 AS  HS_CODE --(17)  HS CODE ( 원재료 LEVEL )
+		       ,ATTR00 AS  IMPDEC_NO --(14)  수입신고(면장)번호
+		       ,ATTR01 AS  ACPT_DATE --(8) 수리일자
+		       ,ATTR38 AS  CVODV_USD --(17,2)  과세가격(USD)
+		       ,'USD' AS  AMOUNT_CRNCY_USD  --(5) 금액통화(USD)
+		       ,ATTR37 AS  CVODV_KRW --(17,2)  과세가격(KRW)
+		       ,'KRW' AS  AMOUNT_CRNCY_KRW  --(5) 금액통화(KRW)
+		       ,ATTR56 AS  QY  --(13,3)  수량
+		       ,ATTR57 AS  BASS_UNIT --(3) 기본 단위
+		       ,ATTR46 AS  INCME_TARRATE --(10)  관세율(수입)
+		       ,ATTR47 AS  CSTMS --(17,2)  관세
+		       ,NULL AS  INTTAX  --(17,2)  개별소비세액
+		       ,NULL AS  ECX_AMOUNT  --(17,2)  교육세
+		       ,NULL AS  AGSPT --(17,2)  농특세
+		       ,ATTR06 AS  BL_NO --(50)  B/L NO.
+		       ,NULL AS  LC_NO --(20)  L/C NO.
+		       ,ATTR12 AS  ORIGIN_NATION_CODE  --(3) 원산지 국가
+		       ,ATTR13 AS  INCME_STTEMNT_SE  --(1) 수입신고구분
+		       ,ATTR14 AS  INCME_TYPE  --(2) 수입종류구분
+		       ,ATTR15 AS  INCME_DELNG_SE  --(2) 수입거래구분
+		       ,NULL AS  IMPR_SE --(1) 수입자 구분
+		       ,NULL AS  PURCHS_DOC_NO --(10)  구매 문서 번호
+		       ,NULL AS  PURCHS_DOC_PRDLST --(5) 구매 문서 품목 번호
+		       ,ATTR11 AS  VENDOR_CODE --(30)  공급업체 또는 채권자의 계정 번호
+		       ,NULL AS  ACPLC_CRNCY --(5) 통화 키
+		       ,NULL AS  TRANTAX --(17,2)0 교통세
+		       ,NULL AS  LQTX_AMOUNT --(17,2)0 주세
+		       ,ATTR58 AS  UNIT_PRICE  --(17,2)0 단가
+		  FROM EXCEL_UPLOAD_TEMP A
+		 INNER JOIN COMPANY C
+		    ON A.COMPANY_CODE = C.COMPANY_CODE
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.USER_ID = #{USER_ID}
+		   AND A.ATTR01 LIKE #{WORK_MONTH} || '%'
+	</insert>
+	
+
+	<insert id="createIncmeLocalBntSmData" parameterType="HashMap">	
+		INSERT INTO  INCME_LOCAL_BNT_SM
+		SELECT DISTINCT A.COMPANY_CODE
+		       ,A.DIVISION_CODE
+		       ,A.IMPDEC_MANAGE_NO
+		       ,B.LNE_NO
+		       ,B.POUCH_NO
+		       ,A.ACPT_DATE
+		       ,TRIM(B.ITEM_CODE)
+		       ,B.HS_CODE
+		       ,SUBSTR(A.ACPT_DATE, 1,6)
+		       ,A.ACPT_DATE
+		       ,NULL
+		       ,CASE /* 1드럼(DR) = 30KG/1 LB = 0.453592 KG/1MT = 1000KG/1M =100CM/1GR = 0.064799 G*/
+		             WHEN B.BASS_UNIT = 'KG' THEN B.QY * 1000                   
+		             WHEN B.BASS_UNIT = 'LB' THEN B.QY * 0.453592 * 1000
+		             WHEN B.BASS_UNIT = 'DR' THEN B.QY * 1000 * 30
+		             WHEN B.BASS_UNIT = 'GR' THEN B.QY * 0.064799
+		             WHEN B.BASS_UNIT = 'MT' THEN B.QY * 1000 * 1000
+		             ELSE B.QY
+		         END AS QY
+		        ,CASE WHEN B.BASS_UNIT IN ('KG','LB','DR','GR','MT') THEN 'G'
+		             ELSE B.BASS_UNIT
+		         END AS BASS_UNIT
+		       ,B.INCME_TARRATE
+		       ,B.CSTMS
+		       ,B.CSTMS/(CASE WHEN B.BASS_UNIT = 'KG' THEN B.QY * 1000
+		                       WHEN B.BASS_UNIT = 'LB' THEN B.QY * 0.453592 * 1000
+		                       WHEN B.BASS_UNIT = 'DR' THEN B.QY * 1000 * 30
+		                       WHEN B.BASS_UNIT = 'GR' THEN B.QY * 0.064799
+		                       WHEN B.BASS_UNIT = 'MT' THEN B.QY * 1000 * 1000
+		                       ELSE B.QY
+		                   END) AS CSTMS_AMOUNT
+		       ,1 AS CSTMS_AMOUNT_UNIT
+		       ,'KRW' AS AMOUNT_CRNCY
+		       ,0 AS DLIVY_QY
+		       ,CASE WHEN B.BASS_UNIT = 'KG' THEN B.QY * 1000
+		             WHEN B.BASS_UNIT = 'LB' THEN B.QY * 0.453592 * 1000
+		             WHEN B.BASS_UNIT = 'DR' THEN B.QY * 1000 * 30
+		             WHEN B.BASS_UNIT = 'GR' THEN B.QY * 0.064799
+		             WHEN B.BASS_UNIT = 'MT' THEN B.QY * 1000 * 1000
+		             ELSE B.QY
+		         END AS REMNDR_QY -- 최초에는 원래 수량 
+		       ,'00' AS RAWMTRL_SE
+		       ,NULL AS BKRECKN_MT
+		       ,'Y' AS DCSN_ENNC
+		       ,NULL AS LAST_USE_YYYYMMDD
+		       ,0 AS INTTAX
+		       ,0 AS ECX_AMOUNT
+		       ,0 AS AGSPT
+		       ,0 AS TRANTAX
+		       ,0 AS LQTX_AMOUNT
+		       ,A.OVSEA_SUPLER_NATION_CODE
+		       ,A.OVSEA_SUPLER_SMBOL AS VENDOR_CODE
+		       ,B.ITEM_NM
+		       ,A.SUPLER_MTLTY_1 AS VENDOR_NAME
+		       ,B.BASS_UNIT
+		  FROM IMPDEC_CERFIN_HDER A
+		 INNER JOIN  IMPDEC_CERFIN_ITEM B
+		   ON A.COMPANY_CODE = B.COMPANY_CODE
+		  AND A.DIVISION_CODE = B.DIVISION_CODE
+		  AND A.IMPDEC_MANAGE_NO = B.IMPDEC_MANAGE_NO
+		WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		 AND B.QY <![CDATA[>]]> 0
+		 AND B.CSTMS <![CDATA[>]]> 0
+		 AND A.ACPT_DATE IS NOT NULL
+		 AND A.ACPT_DATE LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+	</insert>
+	
+	
+	<delete id="deleteExportPreData" parameterType="HashMap">
+		DELETE FROM EXPORT_CERT_MST A WHERE A.COMPANY_CODE = #{COMPANY_CODE} AND A.DSPTH_DATE LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+	</delete>
+	
+	<insert id="createExporteData" parameterType="HashMap">
+		INSERT INTO EXPORT_CERT_MST
+		       (COMPANY_CODE, DIVISION_CODE, EXPDECL_MANAGE_NO, MANUFAC_NAME, EXPORTER_NAME, ONBOARD_DATE, LNE_NO, POUCH_NO, XPORT_STTEMNT_NO, XPORT_SE,
+		        DSPTH_DATE, ITEM_CODE, ITEM_NM, FRMLC_REPR, STTEMNT_PC_KRW, STTEMNT_PC_FGCRY, CRNCY, NATION_CODE, DELY_CND, EHGT, HS_CODE, SLE_UNIT, TOT_WT, 
+		        REAL_WT, WT_UNIT, UNTPC, ACPLC_CRNCY, INV_NO, ITEM_QTY, XPORT_TYPE, VENDOR_CODE, ABLE_ITEM_QTY, USED_ITEM_QTY, CUST_NAME, 
+		        EXPORTER_TYPE, EXPORT_AGENT, CSMHSE_CODE, DEST_NATION_CODE, FRMLC_UNIT, RQST_PRSN_CODE, ABLE_CTRM_QTY)
+		 SELECT A.COMPANY_CODE  -- 회사 코드
+		        ,A.COMPANY_CODE AS DIVISION_CODE -- 플랜트
+		        ,ATTR01 AS EXPDECL_MANAGE_NO--(14) 수출신고 관리번호
+		        ,ATTR08 AS MANUFAC_NAME--(200) 제조자
+		        ,ATTR04 AS EXPORTER_NAME--(200) 수출자
+		        ,NULL AS ONBOARD_DATE--(8) 선적일자
+		        ,ATTR02 AS LNE_NO--(4) 란번호(4)
+		        ,ATTR03 AS POUCH_NO--(4) 행(4)
+		        ,ATTR01 AS XPORT_STTEMNT_NO--(15) 수출신고번호
+		        ,ATTR13 AS XPORT_SE--(2) 수출거래구분
+		        ,ATTR29 AS DSPTH_DATE--(8) 신고(통보)일자
+		        ,ATTR00 AS ITEM_CODE--(40) 자재 번호
+		        ,NVL(ATTR47,ATTR46) AS ITEM_NM--(200) 자재내역
+		        ,ATTR20 AS FRMLC_REPR--(6) 포장갯수
+		        ,ATTR22 AS STTEMNT_PC_KRW--(15,2) 신고가격-원화
+		        ,ATTR23 AS STTEMNT_PC_FGCRY--(15,2) 신고가격(외화)
+		        ,ATTR25 AS CRNCY--(5) 미화통화
+		        ,ATTR45 AS NATION_CODE--(3) 국가 키
+		        ,ATTR39 AS DELY_CND--(3) 인도 조건(파트 1)
+		        ,ATTR28 AS EHGT--(9,5) 가격결정에 사용하는 환율
+		        ,ATTR31 AS HS_CODE--(17) HS CODE
+		        ,ATTR57 AS SLE_UNIT--(3) 판매 단위
+		        ,ATTR18 AS TOT_WT--(13,3) 총 중량
+		        ,ATTR41 AS REAL_WT--(13,3) 순 중량
+		        ,ATTR42 AS WT_UNIT--(3) 중량 단위
+		        ,ATTR58 AS UNTPC--(11,2) 단가
+		        ,ATTR25 AS ACPLC_CRNCY--(5) 통화 키
+		        ,ATTR34 AS INV_NO--(30) INVOICE NO
+		        ,ATTR56 AS ITEM_QTY--(13,3) 수출제품수량
+		        ,CASE WHEN ATTR13 = '11' THEN '01'
+		              WHEN ATTR13 IN ('17','31') THEN '21'
+		              ELSE NULL
+		          END  AS XPORT_TYPE--(5) 수출형태 ( CATEGORY : ET )
+		        ,ATTR10 AS VENDOR_CODE--(30) 공급사코드
+		        ,ATTR56 AS ABLE_ITEM_QTY--(13,3) 신청가능 수출제품수량
+		        ,NULL AS USED_ITEM_QTY--(13,3)사용된 신청가능 수출제품수량
+		        ,ATTR09 AS CUST_NAME--(200) 해외거래처명
+		        ,ATTR06 AS EXPORTER_TYPE--(2) 수출자 구분
+		        ,ATTR04 AS EXPORT_AGENT--(200) 수출대행자
+		        ,ATTR11 AS CSMHSE_CODE--(3) 신청세관코드
+		        ,NULL AS DEST_NATION_CODE--(2) 목적국 코드
+		        ,ATTR44 AS FRMLC_UNIT--(3) 포장갯수 단위
+		        ,ATTR17 AS RQST_PRSN_CODE--(2) 환급신청인
+		        ,ATTR56 AS ABLE_CTRM_QTY--(29,3) 신청가능 기납증 수량
+		  FROM EXCEL_UPLOAD_TEMP A
+		 INNER JOIN COMPANY C
+		    ON A.COMPANY_CODE = C.COMPANY_CODE
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.USER_ID = #{USER_ID}
+		   AND (
+		   		REPLACE(#{WORK_MONTH}, '-','') IS NOT NULL
+		        AND A.ATTR29 LIKE REPLACE(#{WORK_MONTH}, '-','')||'%'
+		       )	
+	</insert>
+	
+	<insert id="createExporteDataToBom" parameterType="HashMap">
+
+		MERGE INTO RESULT_BOM_AP T
+				 USING ( 
+		             SELECT DISTINCT A.COMPANY_CODE
+		                    ,A.DIVISION_CODE
+		                    ,'19000101' AS BOM_VERSION
+		                    ,A.ITEM_CODE AS PRODUCT_CODE
+		                    ,1 AS INPUT_QTY
+		                    ,'0000000000' AS HS_CODE
+		                    ,'EA' AS INPUT_BASS_UNIT
+		                    ,'N' AS BYPRD_OCCRRNC_AT
+		                    ,'Y' AS USE_YN
+		               FROM EXPORT_CERT_MST A
+		              WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		               AND A.DSPTH_DATE LIKE #{WORK_MONTH} || '%'
+		            )P
+		   ON (T.COMPANY_CODE = P.COMPANY_CODE AND T.DIVISION_CODE = P.DIVISION_CODE AND T.PRODUCT_CODE = P.PRODUCT_CODE)
+		 WHEN NOT MATCHED THEN
+		   INSERT (COMPANY_CODE, 
+		           DIVISION_CODE, 
+		           BOM_VERSION, 
+		           PRODUCT_CODE, 
+		           ITEM_CODE, 
+		           INPUT_QTY, 
+		           HS_CODE10, 
+		           INPUT_BASS_UNIT, 
+		           BYPRD_OCCRRNC_AT, 
+		           USE_YN)
+		    VALUES (P.COMPANY_CODE, 
+		            P.DIVISION_CODE, 
+		            P.BOM_VERSION, 
+		            P.PRODUCT_CODE, 
+		            P.PRODUCT_CODE, 
+		            P.INPUT_QTY, 
+		            P.HS_CODE, 
+		            P.INPUT_BASS_UNIT, 
+		            P.BYPRD_OCCRRNC_AT, 
+		            P.USE_YN)
+	
+	</insert>
+	
+	
+	<select id="retrievSalesLedgerList" parameterType="HashMap" resultType="HashMap">
+    	<include refid="paging-prefix"/>
+			SELECT A.COMPANY_CODE,
+			       A.DIVISION_CODE,
+			       A.SALES_LEDGER_NO,
+			       A.SALES_LEDGER_YEAR,
+			       A.SALES_LEDGER_SEQ,
+			       A.SALES_DATE,
+			       A.ITEM_MOVE_TYPE,
+			       A.ASSETS_TYPE,
+			       A.ITEM_CODE,
+			       A.ITEM_NAME,
+			       A.HS_CODE,
+			       A.CUSTOMER_CODE,
+			       A.QUANTITY,
+			       A.UNIT,
+			       A.AMOUNT			       
+			  FROM SALES_LEDGER A
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.DIVISION_CODE = #{DIVISION_CODE}
+			   AND A.SALES_DATE BETWEEN #{SEARCH_FROM_DATE} AND #{SEARCH_TO_DATE}
+			    <if test="SEARCH_SALES_LEDGER_NO != null and SEARCH_SALES_LEDGER_NO != ''">
+			    	AND A.SALES_LEDGER_NO = #{SEARCH_SALES_LEDGER_NO}
+			    </if>
+				<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+					<if test="SEARCH_TYPE == 'ITEM_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_CODE = #{SEARCH_KEY_WORD}
+				  
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+					<if test="SEARCH_TYPE == 'ITEM_NAME'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.ITEM_NAME = #{SEARCH_KEY_WORD}
+				  
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.ITEM_NAME LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.ITEM_NAME LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+					<if test="SEARCH_TYPE == 'HS_CODE'">
+						<choose>
+		    				<when test="SEARCH_OPTION == 'EQ'">
+		    					AND A.HS_CODE = #{SEARCH_KEY_WORD}
+				  
+		    				</when>
+		    				<when test="SEARCH_OPTION == 'SW'">
+		    					AND A.HS_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+				  			</when>
+		    				<otherwise>
+		    					AND A.HS_CODE LIKE '%'|| #{SEARCH_KEY_WORD}|| '%'
+		    				</otherwise>
+		    			</choose>
+					</if>
+				</if>
+		<include refid="paging-postfix"/>
+	</select>
+	
+	
+	
+	<select id="excelUpload_ErrorList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+			SELECT COMPANY_CODE,USER_ID,ERROR_YN,ERROR_MESSAGE,
+					ATTR00,ATTR01,ATTR02,ATTR03,ATTR04,ATTR05,ATTR06,ATTR07,ATTR08,ATTR09,ATTR10,ATTR11,ATTR12,ATTR13,ATTR14,ATTR15,ATTR16,ATTR17,ATTR18,ATTR19,ATTR20,
+					ATTR21,ATTR22,ATTR23,ATTR24,ATTR25,ATTR26,ATTR27,ATTR28,ATTR29,ATTR30,ATTR31,ATTR32,ATTR33,ATTR34,ATTR35,ATTR36,ATTR37,ATTR38,ATTR39,ATTR40,ATTR41,
+					ATTR42,ATTR43,ATTR44,ATTR45,ATTR46,ATTR47,ATTR48,ATTR49,ATTR50,ATTR51,ATTR52,ATTR53,ATTR54,ATTR55,ATTR56,ATTR57,ATTR58,ATTR59,ATTR60,ATTR61,ATTR62,
+					ATTR63,ATTR64,ATTR65,ATTR66,ATTR67,ATTR68,ATTR69,ATTR70
+			  FROM EXCEL_UPLOAD_TEMP
+			 WHERE COMPANY_CODE = #{COMPANY_CODE}
+			   AND USER_ID = #{USER_ID}			
+		<include refid="paging-postfix"/>
+	</select>	
+	
+
+	
+</mapper>
+ 

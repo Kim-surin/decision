@@ -1,0 +1,925 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" columnWidth="527" leftMargin="34" rightMargin="34" topMargin="28" bottomMargin="56" uuid="691837f1-ae42-48f2-89c9-e7584fa9ecaf">
+	<property name="ireport.zoom" value="1.464100000000038"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.background.image" value="C:\Users\heejaewoo\Desktop\가산금액 지급신청서 (002)_페이지_1.png"/>
+	<property name="ireport.background.image.properties" value="false,true,0.25,0,0,0,0,0,0"/>
+	<style name="table">
+		<box>
+			<pen lineWidth="0.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table 2_CH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<bottomPen lineWidth="0.34" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<subDataset name="New Dataset 1" uuid="7bd57bec-4672-44b1-ad6e-c6047d42cb72">
+		<field name="field1" class="java.lang.String"/>
+		<field name="field2" class="java.lang.String"/>
+		<field name="field3" class="java.lang.String"/>
+		<field name="field4" class="java.lang.String"/>
+		<field name="field5" class="java.lang.String"/>
+		<field name="field6" class="java.lang.String"/>
+		<field name="field7" class="java.lang.String"/>
+		<field name="field8" class="java.lang.String"/>
+		<field name="field9" class="java.lang.String"/>
+		<field name="field10" class="java.lang.String"/>
+		<field name="field11" class="java.lang.String"/>
+		<field name="field12" class="java.lang.String"/>
+		<field name="field13" class="java.lang.String"/>
+	</subDataset>
+	<subDataset name="New Dataset 2" uuid="46c5a1af-1ac2-4ff3-becd-615ea40c31d5">
+		<field name="field1" class="java.lang.String"/>
+		<field name="field2" class="java.lang.String"/>
+		<field name="field3" class="java.lang.String"/>
+	</subDataset>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="326" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="307" height="11" uuid="0742cbad-7807-47af-9a4d-750cf6a9b7a8"/>
+				<textElement>
+					<font fontName="돋움" size="8"/>
+				</textElement>
+				<text><![CDATA[■ 수출용원재료에 대한 관세 등 환급사무처리에 관한 고시 [별지 제1호서식]]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="28" width="527" height="19" uuid="11dd60c6-9312-4f98-8114-1a57cb3097d1"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="HY견고딕" size="16" isBold="false"/>
+				</textElement>
+				<text><![CDATA[환급대상수출물품 반입(적재) 확인(신청)서]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="427" y="55" width="100" height="20" uuid="160561ce-a62f-4300-9c3c-1de98897fce3"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font fontName="굴림"/>
+				</textElement>
+				<text><![CDATA[※  처리기간 : 즉시]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="75" width="538" height="12" uuid="7109a3c7-7e2b-4c2d-b132-ef08514a61ae"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="굴림"/>
+				</textElement>
+				<text><![CDATA[======================================================================================]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="87" width="65" height="12" uuid="dad2d201-58ff-4e58-9a45-1c7784f73276"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[1. ※접수번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="65" y="87" width="100" height="12" uuid="661b1e8d-71c6-4ba2-947d-fcf70c23e604"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="215" y="87" width="65" height="12" uuid="75bcb8ff-3b9d-4df7-830a-25f8b8aa80d8"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[2. ※접수일자 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="280" y="87" width="66" height="12" uuid="37071fc6-1866-4a13-8a6b-d39a5b697f81"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="360" y="87" width="84" height="12" uuid="4f899518-634d-4339-808a-ce85dc6d928f"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[3. ※적재허가일자 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="444" y="87" width="66" height="12" uuid="ccc04224-3d0e-467c-afa5-ef589b96696f"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="99" width="68" height="12" uuid="43eb726a-ecde-4768-80c0-5243aacd0fc9"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[4. 신청서 구분 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="68" y="99" width="100" height="12" uuid="e59c9a13-8c70-4398-9f13-32edd566ca9e"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="215" y="99" width="57" height="12" uuid="62dc743b-228b-4ced-9a6c-4f1bd0c63c3a"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[5. 제출번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="272" y="99" width="85" height="12" uuid="e22bf5ea-dfa4-44e5-9fa3-ff146a78507d"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="360" y="99" width="51" height="12" uuid="8b00c630-dbbc-4ace-834b-c0e7af347ea5"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[6. 세관-과 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="411" y="99" width="66" height="12" uuid="1c1432aa-a84c-4051-b747-fd696f03bddc"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="109" width="538" height="12" uuid="2249579b-d2e8-470b-ac9d-19cbe60583d0"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="굴림"/>
+				</textElement>
+				<text><![CDATA[======================================================================================]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="121" width="81" height="12" uuid="35a868c6-525b-4033-a4b6-7ce99b44222b"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[7. 신청(적재)일자 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="81" y="121" width="100" height="12" uuid="734ada27-a2ae-4553-8c7e-a2aa7d64496e"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="131" width="538" height="12" uuid="cfea5123-f216-4373-bb9a-aa37528acf80"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="굴림"/>
+				</textElement>
+				<text><![CDATA[--------------------------------------------------------------------------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="143" width="81" height="12" uuid="ec2a0db5-9b7d-458d-96bb-8f2594336112"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[8. 공급(신청)자    : ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="82" y="143" width="23" height="12" uuid="148fa2cb-061c-4788-b8c8-356e9d87d6d9"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[주소]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="105" y="143" width="231" height="12" uuid="ffc2c9ab-e9a1-46c2-b359-0723b5693264"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="340" y="143" width="24" height="12" uuid="2c141fbe-db95-4fea-8342-4edd130ac825"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[상호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="364" y="143" width="163" height="12" uuid="23c6d2c5-0777-468f-a773-037904ae2ec6"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="82" y="155" width="31" height="12" uuid="fae28653-27b1-4a87-9ea2-d58a90e6f60f"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[대표자]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="113" y="155" width="223" height="12" uuid="e1bda184-7cc9-4096-bff8-41bced4608a2"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="340" y="155" width="71" height="12" uuid="e996dc70-e8c0-4ee7-a6d8-07232ecdcf6a"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[사업자등록번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="411" y="155" width="116" height="12" uuid="fc332a72-6031-4ae7-939c-7ecfbff9a9f3"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="82" y="167" width="57" height="12" uuid="757c72d1-915c-4902-97a9-1323f54dae2f"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[통관고유부호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="139" y="167" width="150" height="12" uuid="ad468768-99cc-450d-91b6-7b6bd1c4a847"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="291" y="167" width="120" height="12" uuid="90bac52c-9e40-4030-9b00-a5dc3d92e44a"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[공급대행자(사업자등록번호)]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="411" y="167" width="116" height="12" uuid="ea372125-5614-4864-a7ac-92ee2201723c"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="179" width="81" height="12" uuid="cf1a7d92-579b-43a8-b1fb-84fb24aa21cf"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[9. 제조자            :]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="82" y="179" width="23" height="12" uuid="6211f08e-fc57-45e8-a1cc-4b0993058440"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[주소]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="105" y="179" width="231" height="12" uuid="b73fc59b-c958-4fa5-a79b-8f0677372ef1"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="340" y="179" width="24" height="12" uuid="e4289aa0-c1f4-4501-af9a-21fa5761d019"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[상호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="364" y="179" width="163" height="12" uuid="3e68aa1c-c9d5-4a7d-80b2-eb4126eb7de1"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="82" y="191" width="31" height="12" uuid="d34bd161-b14f-420d-bc25-91321fea3bf2"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[대표자]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="113" y="191" width="223" height="12" uuid="217d3cd5-a6c3-4579-b2e6-71de8941ac91"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="340" y="191" width="71" height="12" uuid="6182b6b7-3cec-4392-bae6-953ae18c598e"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[사업자등록번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="411" y="191" width="116" height="12" uuid="34e43640-ea75-4b39-97d6-193e1cd1d2de"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="82" y="203" width="57" height="12" uuid="bac4f428-de21-4348-ab42-c4714f54bffa"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[통관고유부호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="139" y="203" width="197" height="12" uuid="760dfdfb-8bfc-4716-b6c2-54a75cb5f1db"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="215" width="81" height="12" uuid="298ba860-d573-47cf-98c9-cebbde6b20dc"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[10. 양수자/선기명:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="82" y="215" width="52" height="12" uuid="5b89322f-6a59-482b-aae7-05e6c1021941"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[주소/본선명]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="134" y="215" width="202" height="12" uuid="5ae55a9f-4b52-4e0b-ae7f-3faf69cc7f59"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="340" y="215" width="24" height="12" uuid="72893068-b720-4127-a1dd-c1827a09c064"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[상호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="364" y="215" width="163" height="12" uuid="1d4baa3a-4d87-42b8-979f-3025d4b2cb39"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="82" y="227" width="31" height="12" uuid="472ee308-9afa-4947-9033-1846b9874e5c"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[대표자]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="113" y="227" width="223" height="12" uuid="c677da30-ce3f-44ee-b9de-dde82d7c73a3"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="340" y="227" width="71" height="12" uuid="64d73872-e7ee-4e83-ace2-621d81254215"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[사업자등록번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="411" y="227" width="116" height="12" uuid="327a4e46-b381-4b7c-88d8-741b7f4940fa"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="255" width="230" height="12" uuid="6ffa3ef2-e954-4e0b-afff-fcbf89be8208"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[11. 반입장소/작업선(작업선선박번호) or 운송차량번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="230" y="255" width="81" height="12" uuid="d2970dc2-7ceb-4a87-b12d-7e499d95cb2f"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="267" width="65" height="12" uuid="021fcf90-9eb2-4672-8dc5-7df27b021495"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[12. 선박호출]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="266" y="267" width="85" height="12" uuid="e35e3bf8-fc57-4d0d-8ca2-4acb1c79b7b5"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[13. 입항보고 MRN : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="351" y="267" width="176" height="12" uuid="81059d48-0379-4f43-8c54-133c0fd2e9cc"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="279" width="92" height="12" uuid="a807ce99-e110-40dc-b88d-fb15ab429bba"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[14. 구분부호          :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="92" y="279" width="123" height="12" uuid="b9d72468-e68a-4b5a-ba3e-bd259997c32e"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="266" y="279" width="70" height="12" uuid="0c8b16c0-e2cb-4126-a6ee-99e8e71b539f"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[15. 환급신청인 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="338" y="279" width="24" height="12" uuid="f2bfbffd-984e-4c91-9ec7-01fc11b91d82"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="291" width="92" height="12" uuid="f243dea1-ddfc-41b6-ad98-57b2e1dbfa19"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[16. 총포장갯수       :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="92" y="291" width="123" height="12" uuid="f872dfa9-5ccc-4166-b50e-6e3782c4d26a"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="266" y="291" width="52" height="12" uuid="e5990737-a9a1-4c53-9d44-74738988f928"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[17. 총란수 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="318" y="291" width="24" height="12" uuid="cf53b97f-3097-4751-9edd-579ac242d8cb"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="360" y="291" width="75" height="12" uuid="d367cc78-eec2-4263-aff9-7000fb92f3e6"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[18. 총중량(KG) : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="435" y="291" width="92" height="12" uuid="3213268e-816d-4f08-87f7-8c8f4b90bcc0"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="303" width="92" height="12" uuid="0b696159-3891-40c3-8946-629d83a61e80"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[19. 공급금액합계    :]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="92" y="303" width="123" height="12" uuid="42a9d13e-8250-463b-886a-dc99052493ad"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="313" width="538" height="12" uuid="4add86f6-045b-45b4-86d6-767624d09277"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="굴림"/>
+				</textElement>
+				<text><![CDATA[--------------------------------------------------------------------------------------]]></text>
+			</staticText>
+		</band>
+	</title>
+	<detail>
+		<band height="82" splitType="Stretch">
+			<componentElement>
+				<reportElement key="table1" style="table" x="0" y="0" width="527" height="80" uuid="3a11ef81-6ee4-4959-a5a6-69f5d6676dcb"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="New Dataset 1" uuid="39d03c6f-04fc-4fda-b8fa-1e570a82a59b">
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource(2)]]></dataSourceExpression>
+					</datasetRun>
+					<jr:column width="527" uuid="bbabf7cb-0f80-43c0-bb62-29120df7d7c6">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+						<jr:columnHeader style="table_CH" height="39" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="45" height="39" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[20. 란번호]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="45" y="0" width="136" height="19" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Bottom">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[21. 품명 및 규격]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="45" y="19" width="136" height="20" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[22. (물품식별번호)]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="181" y="0" width="69" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[23. 품목번호]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="250" y="0" width="85" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[24. 수량/단위]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="335" y="0" width="85" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[25. 순중량(kg)]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="420" y="0" width="107" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[26. 공급금액(FOB\)]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="181" y="13" width="69" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[27. 포장갯수]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="250" y="13" width="59" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[28. 포장종류]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="309" y="13" width="111" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[29. 근거서류 종류/번호]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="420" y="13" width="107" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[30. 구매주문서 번호]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="181" y="26" width="69" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[31. 반입일자]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="250" y="26" width="277" height="13" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[32. 원상태근거번호(수입신고번호 or 분할증명서번호)]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="46" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="45" height="45" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field1}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="45" y="0" width="136" height="45" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field2}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="181" y="0" width="69" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field3}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="250" y="0" width="85" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field4}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="335" y="0" width="85" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field5}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="420" y="0" width="107" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field6}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="181" y="15" width="69" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field7}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="250" y="15" width="59" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field8}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="309" y="15" width="111" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field9}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="420" y="15" width="107" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field10}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="181" y="30" width="69" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field11}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="250" y="30" width="277" height="15" uuid="7e3997a2-b81a-4497-a4ec-19191a83d0e0"/>
+								<textElement textAlignment="Center" verticalAlignment="Top">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field12}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+		</band>
+		<band height="47">
+			<componentElement>
+				<reportElement key="table2" style="table" x="0" y="10" width="527" height="35" uuid="98063133-7218-4369-aab8-ef7b513dbdb5"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="New Dataset 2" uuid="58244907-40ac-42ae-a824-cc81dec5e8eb">
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource(1)]]></dataSourceExpression>
+					</datasetRun>
+					<jr:column width="162" uuid="1b510270-aba7-48f7-9530-f1cc123df428">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+						<jr:columnHeader style="table 2_CH" height="20" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="162" height="20" uuid="9919c601-dd8a-431b-804e-35014109e694"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[38. 적재승선자 성명]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="15" rowSpan="1">
+							<textField>
+								<reportElement x="15" y="0" width="147" height="15" uuid="692330bd-82f6-42c0-8a7e-644689761ecd"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field1}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="90" uuid="43fba530-1b42-42b9-a54d-ce3538888138">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+						<jr:columnHeader style="table 2_CH" height="20" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="90" height="20" uuid="88ee5df7-e192-427d-9c7b-d04586099c15"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[생년월일]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="15" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="90" height="15" uuid="6c83a3e9-7c78-4921-bf85-2fe64e13e66a"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field2}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="275" uuid="8377bda7-9fb4-4d5b-9bbb-af75a496ffa5">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+						<jr:columnHeader style="table 2_CH" height="20" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="275" height="20" uuid="373d4f8b-a59b-4f40-bd76-037a0c41cbc3"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<text><![CDATA[주소]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+						<jr:detailCell style="table_TD" height="15" rowSpan="1">
+							<textField>
+								<reportElement x="0" y="0" width="275" height="15" uuid="addfaceb-c1d6-488b-8681-eaa57dae6392"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="굴림" size="9"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field3}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<staticText>
+				<reportElement x="0" y="-2" width="538" height="12" uuid="0118c90a-bf66-4862-9114-00c7a60a8cd6"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="굴림"/>
+				</textElement>
+				<text><![CDATA[--------------------------------------------------------------------------------------]]></text>
+			</staticText>
+		</band>
+		<band height="74">
+			<staticText>
+				<reportElement x="0" y="-2" width="538" height="12" uuid="e32a4d33-6be2-499c-be9e-d0489c995092"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="굴림"/>
+				</textElement>
+				<text><![CDATA[--------------------------------------------------------------------------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="3" y="10" width="65" height="12" uuid="46359b99-86a6-4a05-9565-7ffe1be1113a"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[33. 세관기재란]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="19" y="22" width="237" height="25" uuid="d1ca6cbd-1303-408f-b00e-bb62731feea2"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="391" y="10" width="60" height="12" uuid="4ecc8375-b55a-4833-af48-a3bda0f2656c"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[34. ※심사자 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="451" y="10" width="76" height="12" uuid="0ee52825-a885-461f-af95-6a68a650e2d8"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="391" y="22" width="70" height="12" uuid="111d47b4-35db-44dc-b0dc-d7501c03790a"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[35. ※확인일자 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="461" y="22" width="66" height="12" uuid="a27f21cc-d149-4cac-a657-eb1c50e2e285"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="47" width="96" height="12" uuid="724ae622-93ea-4ee2-85a4-27b4f08caa00"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[36. 물품 검사(확인)자 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="97" y="47" width="118" height="12" uuid="5356f436-5ba4-4b33-b043-1ae999e41800"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="391" y="47" width="50" height="12" uuid="0b213f6f-eb6c-42a4-a032-da25ceafec4a"/>
+				<textElement>
+					<font fontName="굴림" size="9"/>
+				</textElement>
+				<text><![CDATA[37. 확인인 : ]]></text>
+			</staticText>
+			<image>
+				<reportElement x="441" y="47" width="86" height="27" uuid="c4b89758-d7c5-4ba6-80f4-4cbbbfca75bf"/>
+			</image>
+		</band>
+	</detail>
+	<noData>
+		<band height="21">
+			<staticText>
+				<reportElement x="0" y="0" width="486" height="20" uuid="40caaf65-b96b-438b-ad45-5211062659ba"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="12"/>
+				</textElement>
+				<text><![CDATA[출력할 데이터가 없습니다.(No Data)]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

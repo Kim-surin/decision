@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" columnWidth="486" leftMargin="56" rightMargin="53" topMargin="56" bottomMargin="56" uuid="691837f1-ae42-48f2-89c9-e7584fa9ecaf">
+	<property name="ireport.zoom" value="1.2100000000000255"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="ireport.background.image" value="C:\Users\heejaewoo\Desktop\가산금액 지급신청서 (002)_페이지_1.png"/>
+	<property name="ireport.background.image.properties" value="false,true,0.25,0,0,0,0,0,0"/>
+	<style name="table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#B2B2B2">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH_L" mode="Opaque" backcolor="#B2B2B2">
+		<box>
+			<topPen lineWidth="0.5"/>
+			<leftPen lineWidth="0.0"/>
+			<bottomPen lineWidth="0.5"/>
+			<rightPen lineWidth="0.5"/>
+		</box>
+	</style>
+	<style name="table_CH_R" mode="Opaque" backcolor="#B2B2B2">
+		<box>
+			<topPen lineWidth="0.5"/>
+			<leftPen lineWidth="0.5"/>
+			<bottomPen lineWidth="0.5"/>
+			<rightPen lineWidth="0.0"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.0"/>
+			<leftPen lineWidth="0.34"/>
+			<bottomPen lineWidth="0.0"/>
+			<rightPen lineWidth="0.34"/>
+		</box>
+	</style>
+	<style name="table_TD_L" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.0"/>
+			<leftPen lineWidth="0.0"/>
+			<bottomPen lineWidth="0.0"/>
+			<rightPen lineWidth="0.34"/>
+		</box>
+	</style>
+	<style name="table_TD_R" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.0"/>
+			<leftPen lineWidth="0.34"/>
+			<bottomPen lineWidth="0.0"/>
+			<rightPen lineWidth="0.0"/>
+		</box>
+	</style>
+	<subDataset name="New Dataset 1" uuid="7bd57bec-4672-44b1-ad6e-c6047d42cb72"/>
+	<parameter name="P_COMPANY_CODE" class="java.lang.String"/>
+	<parameter name="P_OVER_DRWBAK_PRESENTN_NO" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[SELECT A.REGIST_RCEPT_NO
+      ,A.RCEPT_DATE
+      ,A.RCEPT_COMPANY_NAME
+      ,A.RCEPT_RPRSNTV_NM
+      ,A.ECTMRK
+      ,A.ADDRESS
+      ,A.OVER_DRWBAK_REASON
+      ,A.CSMHSE_NM
+      ,A.BIZRNO
+  FROM OVER_DRWBAK_VOL_DECL_HDR A
+ WHERE A.COMPANY_CODE = $P{P_COMPANY_CODE}
+   AND A.OVER_DRWBAK_PRESENTN_NO = $P{P_OVER_DRWBAK_PRESENTN_NO}]]>
+	</queryString>
+	<field name="REGIST_RCEPT_NO" class="java.lang.String"/>
+	<field name="RCEPT_DATE" class="java.lang.String"/>
+	<field name="RCEPT_COMPANY_NAME" class="java.lang.String"/>
+	<field name="RCEPT_RPRSNTV_NM" class="java.lang.String"/>
+	<field name="ECTMRK" class="java.lang.String"/>
+	<field name="ADDRESS" class="java.lang.String"/>
+	<field name="OVER_DRWBAK_REASON" class="java.lang.String"/>
+	<field name="CSMHSE_NM" class="java.lang.String"/>
+	<field name="BIZRNO" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="195" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="307" height="11" uuid="0742cbad-7807-47af-9a4d-750cf6a9b7a8"/>
+				<textElement>
+					<font fontName="돋움" size="8" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[■ 수출용원재료에 대한 관세 등 환급사무처리에 관한 고시 [별지 제14호서식]]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="28" width="486" height="19" uuid="11dd60c6-9312-4f98-8114-1a57cb3097d1"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="HY견고딕" size="16" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[과다환급금 자진신고서]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="65" y="123" width="209" height="34" uuid="7e4e1e20-a389-4d07-b8f8-a9512ec76006"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["통관고유부호" + $F{ECTMRK}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="157" width="421" height="34" uuid="ddca282f-31f7-407d-b3b5-6b6b8b3e6c60"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["도로명주소" + $F{ADDRESS}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="0" y="68" width="320" height="18" backcolor="#D6D6D6" uuid="06454dd5-9df9-474b-96f5-c19cf34e9f0f"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{RCEPT_DATE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="274" y="123" width="212" height="34" uuid="c0806a81-cf5b-41d4-a669-5b85c06768b8"/>
+				<box>
+					<pen lineWidth="0.34"/>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["사업자등록번호" + $F{BIZRNO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="89" width="65" height="102" backcolor="#B2B2B2" uuid="5f514ada-6610-441f-b351-c159b6e84501"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[신청인]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="57" width="320" height="12" backcolor="#D6D6D6" uuid="a2c7c3a8-a7f4-47e7-bb72-7828885502c7"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[접수일자]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="274" y="89" width="212" height="34" uuid="88eadfac-5d75-4637-85fa-c79f7c1056e4"/>
+				<box>
+					<pen lineWidth="0.34"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["대표자" + $F{RCEPT_RPRSNTV_NM}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="320" y="57" width="166" height="12" backcolor="#D6D6D6" uuid="2cbbc34f-7477-4232-93d8-babd0566fc09"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9" isBold="false" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[처리기간 15일]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="65" y="89" width="209" height="34" uuid="2084791b-24c9-4344-aa78-fd97af162cda"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["상호" + $F{RCEPT_COMPANY_NAME}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<detail>
+		<band height="83" splitType="Stretch">
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="486" height="29" backcolor="#B2B2B2" uuid="ae3552f2-c517-47e7-abc2-c7a6704bc028"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[과다환급과 관련된 환급신청 등의 내역]]></text>
+			</staticText>
+			<componentElement>
+				<reportElement key="table" style="table" x="0" y="28" width="486" height="52" uuid="832e752c-5ed4-4faa-8aa6-7617e98f3c37"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="New Dataset 1" uuid="c8fb1b3f-947a-42c5-8fb5-2a7f8c600aef">
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource(1)]]></dataSourceExpression>
+					</datasetRun>
+					<jr:column width="80" uuid="19ca4d26-23c7-43ce-ba0e-485642b77e87">
+						<jr:columnHeader style="table_CH_L" height="29" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="80" height="29" uuid="7ceb727e-ec4e-47cf-af93-0a7f1f13c260"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[환급신청번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD_L" height="23" rowSpan="1"/>
+					</jr:column>
+					<jr:column width="80" uuid="d1193ebc-72a2-4ba4-940c-355a1a97cb54">
+						<jr:columnHeader style="table_CH" height="29" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="80" height="29" uuid="affc22f7-660b-4b0c-bab6-56082ba97b90"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[환급결정일자]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="23" rowSpan="1"/>
+					</jr:column>
+					<jr:column width="80" uuid="988f60f4-3c26-4fcf-bbad-f6930f7c3650">
+						<jr:columnHeader style="table_CH" height="29" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="80" height="29" uuid="64bfc1c9-a4e7-4d71-8e4b-65749bb1e0e4"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[환급결정액]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="23" rowSpan="1"/>
+					</jr:column>
+					<jr:column width="80" uuid="08a07773-0c63-4424-9afc-e4b80e8934ac">
+						<jr:columnHeader style="table_CH" height="29" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="80" height="29" uuid="4ef66c78-204a-4185-ae06-c5758e193f3c"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[정당환급액]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="23" rowSpan="1"/>
+					</jr:column>
+					<jr:column width="80" uuid="502a5c85-b988-4ec3-8681-599ebe32f88e">
+						<jr:columnHeader style="table_CH" height="29" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="80" height="29" uuid="4ad6205e-415c-4dd7-95e9-a9442afb3ac8"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[과다환급액]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="23" rowSpan="1"/>
+					</jr:column>
+					<jr:column width="80" uuid="d8ccb337-25ad-4b8c-b10d-96ff015ec2e0">
+						<jr:columnHeader style="table_CH_R" height="29" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="80" height="29" uuid="9ee5f923-c6b2-483d-a1c4-991c2f4092d1"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[비고]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD_R" height="23" rowSpan="1"/>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<line>
+				<reportElement x="0" y="80" width="486" height="1" uuid="6f8f3f0f-7ce5-49d0-93b0-d1c5163a2f73"/>
+			</line>
+		</band>
+		<band height="317">
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="5" width="241" height="15" backcolor="#FFFFFF" uuid="90af90bd-f907-4ea2-a4c2-9048902b83a2"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[과다환급 받은 사유]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="241" y="5" width="245" height="25" uuid="95a7ab24-ce49-4914-956e-a71d7a63a4b4"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[과다환급액 계산내역
+(환급신청건별로 작성하여 별도 첨부)]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="19" width="241" height="94" uuid="9062b406-0f70-497f-92e7-80d6f8bb802d"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{OVER_DRWBAK_REASON}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="242" width="486" height="1" uuid="f5728fc0-5ca9-42cb-a065-c19b95d6459c"/>
+			</line>
+			<staticText>
+				<reportElement x="324" y="299" width="158" height="15" uuid="f7b5cde0-c263-48a8-a008-a21d299c9250"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[210㎜×297㎜[일반용지 60g/㎡]]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="280" y="188" width="117" height="20" uuid="740995bd-13df-4c17-9c29-b83b68c89fe9"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{RCEPT_RPRSNTV_NM}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="239" y="188" width="38" height="20" uuid="6ab2c634-16ef-46e8-a540-3565f9dd293f"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[신고인]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="49" y="249" width="122" height="50" uuid="c74ebf0e-c961-4d29-981f-05e4b18bf162"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[수입신고필증등 과다환급과
+관련된 서류]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="249" width="49" height="50" uuid="056ed913-18fc-4ce8-9e55-f77e00659950"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[첨부서류]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="411" y="249" width="75" height="50" backcolor="#D6D6D6" uuid="bc09246c-1813-4a8b-9a82-b75cbb381cb4"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[과장]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="261" y="249" width="75" height="50" backcolor="#D6D6D6" uuid="df5bb4bb-a9c0-4e9c-af8a-5618a4ccacb2"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[담당]]></text>
+			</staticText>
+			<image onErrorType="Blank">
+				<reportElement x="397" y="188" width="89" height="50" uuid="87a6ea9a-da70-4ac4-9dc9-25713163d4e4"/>
+			</image>
+			<textField>
+				<reportElement x="379" y="168" width="107" height="20" uuid="f1bfc4e9-c6e7-4a28-ba2c-df834d843bd1"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{RCEPT_DATE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="336" y="249" width="75" height="50" backcolor="#D6D6D6" uuid="a2f76437-1af7-458c-acec-452800e5947d"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="9" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[주무]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="9" y="216" width="44" height="20" uuid="6958a71c-9a35-405e-8006-ef2ab4e873f9"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="돋움" size="13" isBold="true" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CSMHSE_NM}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="9" y="130" width="473" height="32" uuid="820f9060-f2fe-4d9d-a368-c470c113595b"/>
+				<textElement textAlignment="Justified">
+					<font fontName="돋움" size="10" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[    「수출용원재료에 대한 관세 등 환급에 관한 특례법 시행령」 제31조제1항 및 「수출용원재료에
+대한 관세 등 환급사무처리에 관한 고시」 제25조에 따라 과다환급 받은 사실을 신고합니다.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="108" y="216" width="55" height="20" uuid="f4a35af8-87c0-457b-8835-d59e1ccb918e"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="돋움" size="10" isBold="false" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[귀하]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="53" y="216" width="55" height="20" uuid="cfa34acb-3964-452f-b957-fd2a60b4f8a3"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="돋움" size="13" isBold="true" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[세 관 장]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<noData>
+		<band height="21">
+			<staticText>
+				<reportElement x="0" y="0" width="486" height="20" uuid="40caaf65-b96b-438b-ad45-5211062659ba"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="12" pdfFontName="/config/fonts/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[출력할 데이터가 없습니다.(No Data)]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

@@ -1,0 +1,556 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.batch.InterfaceDao">
+    
+	
+	<select id="retrieveBatchCompanyList" parameterType="HashMap" resultType="HashMap">
+		SELECT * FROM COMPANY A
+	</select>
+	
+	<select id="retrieveCount_TargetTable" parameterType="HashMap" resultType="int">
+		SELECT COUNT(1) AS IF_COUNT
+		  FROM ${TARGET_TABLE_NAME} A
+		 WHERE TO_CHAR(A.CREATE_DATE, 'YYYYMMDD') BETWEEN TO_CHAR(ADD_MONTHS(SYSDATE ,-4), 'YYYYMM') AND TO_CHAR(ADD_MONTHS(SYSDATE ,-3), 'YYYYMM')
+		   AND A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.IF_YN = 'N'
+	</select>
+	
+	<update id="updateIfDone_InterfaceData" parameterType="HashMap">
+		UPDATE ${TARGET_TABLE_NAME} A
+		  SET A.IF_YN = 'Y'
+		 WHERE TO_CHAR(A.CREATE_DATE, 'YYYYMMDD') BETWEEN TO_CHAR(ADD_MONTHS(SYSDATE ,-4), 'YYYYMM') AND TO_CHAR(ADD_MONTHS(SYSDATE ,-3), 'YYYYMM')
+		   AND A.COMPANY_CODE = #{COMPANY_CODE}
+	</update>
+	
+	<delete id="delete_InfTable" parameterType="HashMap">
+		DELETE FROM ${TARGET_TABLE_NAME}
+	</delete>
+	
+	
+	<update id="merge_Material_inv_val" parameterType="HashMap">
+		MERGE INTO MATERIAL_INV_BAL T
+              USING ( SELECT A.COMPANY_CODE,
+                             A.YYYYMM,
+                             A.COMPANY_CODE AS DIVISION_CODE,
+                             A.ITEM_CODE,
+                             A.ITEM_NAME,
+                             A.BR_GROUP,
+                             A.BR_CODE,
+                             A.ASSETS_TYPE,
+                             A.P_CLASS,
+                             A.F_CENTER,
+                             A.CURRENCY,
+                             A.UNIT,
+                             A.INITIAL_QTY,
+                             A.INITIAL_AMOUNT,
+                             A.INITIAL_PRICE,
+                             A.INPUT_QTY,
+                             A.INPUT_AMOUNT,
+                             A.INPUT_PRICE,
+                             A.PROD_INPUT_QTY,
+                             A.PROD_INPUT_AMOUNT,
+                             A.PROD_INPUT_PRICE,
+                             A.TRANS_INPUT_QTY,
+                             A.TRANS_INPUT_AMOUNT,
+                             A.TRANS_INPUT_PRICE,
+                             A.SALES_RETURN_QTY,
+                             A.SALES_RETURN_AMOUNT,
+                             A.SALES_RETURN_PRICE,
+                             A.OTHER_RETURN_QTY,
+                             A.OTHER_RETURN_AMOUNT,
+                             A.OTHER_RETURN_PRICE,
+                             A.ETC_INPUT_QTY,
+                             A.ETC_INPUT_AMOUNT,
+                             A.ETC_INPUT_PRICE,
+                             A.SALES_ISSUE_QTY,
+                             A.SALES_ISSUE_AMOUNT,
+                             A.SALES_ISSUE_PRICE,
+                             A.OTHER_ISSUE_QTY,
+                             A.OTHER_ISSUE_AMOUNT,
+                             A.OTHER_ISSUE_PRICE,
+                             A.PROD_ISSUE_QTY,
+                             A.PROD_ISSUE_AMOUNT,
+                             A.PROD_ISSUE_PRICE,
+                             A.STOCK_ISSUE_QTY,
+                             A.STOCK_ISSUE_AMOUNT,
+                             A.STOCK_ISSUE_PRICE,
+                             A.ETC_ISSUE_QTY,
+                             A.ETC_ISSUE_AMOUNT,
+                             A.ETC_ISSUE_PRICE,
+                             A.COST_DISC,
+                             A.MATERIAL_ADJ,
+                             A.INVENTORY_QTY,
+                             A.INVENTORY_AMOUNT,
+                             A.INVENTORY_PRICE
+                        FROM MATERIAL_INV_BAL_INF A
+                       WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+                         AND A.YYYYMM BETWEEN TO_CHAR(ADD_MONTHS(SYSDATE ,-4), 'YYYYMM') AND TO_CHAR(ADD_MONTHS(SYSDATE ,-3), 'YYYYMM')
+                         AND A.IF_YN = 'N'
+                       ) P
+                 ON (P.COMPANY_CODE = T.COMPANY_CODE
+                AND  P.DIVISION_CODE = T.DIVISION_CODE
+                AND  P.YYYYMM = T.YYYYMM
+                AND  P.ITEM_CODE = T.ITEM_CODE)
+          WHEN MATCHED THEN
+              UPDATE
+                  SET T.ITEM_NAME             = P.ITEM_NAME
+                     ,T.BR_GROUP               = P.BR_GROUP          
+                     ,T.BR_CODE                = P.BR_CODE           
+                     ,T.ASSETS_TYPE            = P.ASSETS_TYPE       
+                     ,T.P_CLASS                = P.P_CLASS           
+                     ,T.F_CENTER               = P.F_CENTER          
+                     ,T.CURRENCY               = P.CURRENCY          
+                     ,T.UNIT                   = P.UNIT              
+                     ,T.INITIAL_QTY            = P.INITIAL_QTY       
+                     ,T.INITIAL_AMOUNT         = P.INITIAL_AMOUNT    
+                     ,T.INITIAL_PRICE          = P.INITIAL_PRICE     
+                     ,T.INPUT_QTY              = P.INPUT_QTY         
+                     ,T.INPUT_AMOUNT           = P.INPUT_AMOUNT      
+                     ,T.INPUT_PRICE            = P.INPUT_PRICE       
+                     ,T.PROD_INPUT_QTY         = P.PROD_INPUT_QTY    
+                     ,T.PROD_INPUT_AMOUNT      = P.PROD_INPUT_AMOUNT 
+                     ,T.PROD_INPUT_PRICE       = P.PROD_INPUT_PRICE  
+                     ,T.TRANS_INPUT_QTY        = P.TRANS_INPUT_QTY   
+                     ,T.TRANS_INPUT_AMOUNT     = P.TRANS_INPUT_AMOUNT
+                     ,T.TRANS_INPUT_PRICE      = P.TRANS_INPUT_PRICE 
+                     ,T.SALES_RETURN_QTY       = P.SALES_RETURN_QTY  
+                     ,T.SALES_RETURN_AMOUNT    = P.SALES_RETURN_AMOUNT
+                     ,T.SALES_RETURN_PRICE     = P.SALES_RETURN_PRICE
+                     ,T.OTHER_RETURN_QTY       = P.OTHER_RETURN_QTY  
+                     ,T.OTHER_RETURN_AMOUNT    = P.OTHER_RETURN_AMOUNT
+                     ,T.OTHER_RETURN_PRICE     = P.OTHER_RETURN_PRICE
+                     ,T.ETC_INPUT_QTY          = P.ETC_INPUT_QTY     
+                     ,T.ETC_INPUT_AMOUNT       = P.ETC_INPUT_AMOUNT  
+                     ,T.ETC_INPUT_PRICE        = P.ETC_INPUT_PRICE   
+                     ,T.SALES_ISSUE_QTY        = P.SALES_ISSUE_QTY   
+                     ,T.SALES_ISSUE_AMOUNT     = P.SALES_ISSUE_AMOUNT
+                     ,T.SALES_ISSUE_PRICE      = P.SALES_ISSUE_PRICE 
+                     ,T.OTHER_ISSUE_QTY        = P.OTHER_ISSUE_QTY   
+                     ,T.OTHER_ISSUE_AMOUNT     = P.OTHER_ISSUE_AMOUNT
+                     ,T.OTHER_ISSUE_PRICE      = P.OTHER_ISSUE_PRICE 
+                     ,T.PROD_ISSUE_QTY         = P.PROD_ISSUE_QTY    
+                     ,T.PROD_ISSUE_AMOUNT      = P.PROD_ISSUE_AMOUNT 
+                     ,T.PROD_ISSUE_PRICE       = P.PROD_ISSUE_PRICE  
+                     ,T.STOCK_ISSUE_QTY        = P.STOCK_ISSUE_QTY   
+                     ,T.STOCK_ISSUE_AMOUNT     = P.STOCK_ISSUE_AMOUNT
+                     ,T.STOCK_ISSUE_PRICE      = P.STOCK_ISSUE_PRICE 
+                     ,T.ETC_ISSUE_QTY          = P.ETC_ISSUE_QTY     
+                     ,T.ETC_ISSUE_AMOUNT       = P.ETC_ISSUE_AMOUNT  
+                     ,T.ETC_ISSUE_PRICE        = P.ETC_ISSUE_PRICE   
+                     ,T.COST_DISC              = P.COST_DISC         
+                     ,T.MATERIAL_ADJ           = P.MATERIAL_ADJ      
+                     ,T.INVENTORY_QTY          = P.INVENTORY_QTY     
+                     ,T.INVENTORY_AMOUNT       = P.INVENTORY_AMOUNT  
+                     ,T.INVENTORY_PRICE        = P.INVENTORY_PRICE    
+                     ,T.UPDATE_BY              = 'I/F'
+                     ,T.UPDATE_DATE            = 'SYSDATE'
+          WHEN NOT MATCHED THEN
+              INSERT (
+                      COMPANY_CODE,YYYYMM,DIVISION_CODE,ITEM_CODE,ITEM_NAME,BR_GROUP,BR_CODE,ASSETS_TYPE,P_CLASS,
+                      F_CENTER,CURRENCY,UNIT,INITIAL_QTY,INITIAL_AMOUNT,INITIAL_PRICE,INPUT_QTY,INPUT_AMOUNT,INPUT_PRICE,
+                      PROD_INPUT_QTY,PROD_INPUT_AMOUNT,PROD_INPUT_PRICE,TRANS_INPUT_QTY,TRANS_INPUT_AMOUNT,TRANS_INPUT_PRICE,
+                      SALES_RETURN_QTY,SALES_RETURN_AMOUNT,SALES_RETURN_PRICE,OTHER_RETURN_QTY,OTHER_RETURN_AMOUNT,OTHER_RETURN_PRICE,
+                      ETC_INPUT_QTY,ETC_INPUT_AMOUNT,ETC_INPUT_PRICE,SALES_ISSUE_QTY,SALES_ISSUE_AMOUNT,SALES_ISSUE_PRICE,OTHER_ISSUE_QTY,
+                      OTHER_ISSUE_AMOUNT,OTHER_ISSUE_PRICE,PROD_ISSUE_QTY,PROD_ISSUE_AMOUNT,PROD_ISSUE_PRICE,STOCK_ISSUE_QTY,STOCK_ISSUE_AMOUNT,
+                      STOCK_ISSUE_PRICE,ETC_ISSUE_QTY,ETC_ISSUE_AMOUNT,ETC_ISSUE_PRICE,COST_DISC,MATERIAL_ADJ,INVENTORY_QTY,INVENTORY_AMOUNT,
+                      INVENTORY_PRICE
+                      )
+              VALUES (P.COMPANY_CODE,P.YYYYMM,P.DIVISION_CODE,P.ITEM_CODE,P.ITEM_NAME,P.BR_GROUP,P.BR_CODE,P.ASSETS_TYPE,P.P_CLASS,
+                      P.F_CENTER,P.CURRENCY,P.UNIT,P.INITIAL_QTY,P.INITIAL_AMOUNT,P.INITIAL_PRICE,P.INPUT_QTY,P.INPUT_AMOUNT,P.INPUT_PRICE,
+                      P.PROD_INPUT_QTY,P.PROD_INPUT_AMOUNT,P.PROD_INPUT_PRICE,P.TRANS_INPUT_QTY,P.TRANS_INPUT_AMOUNT,P.TRANS_INPUT_PRICE,
+                      P.SALES_RETURN_QTY,P.SALES_RETURN_AMOUNT,P.SALES_RETURN_PRICE,P.OTHER_RETURN_QTY,P.OTHER_RETURN_AMOUNT,P.OTHER_RETURN_PRICE,
+                      P.ETC_INPUT_QTY,P.ETC_INPUT_AMOUNT,P.ETC_INPUT_PRICE,P.SALES_ISSUE_QTY,P.SALES_ISSUE_AMOUNT,P.SALES_ISSUE_PRICE,P.OTHER_ISSUE_QTY,
+                      P.OTHER_ISSUE_AMOUNT,P.OTHER_ISSUE_PRICE,P.PROD_ISSUE_QTY,P.PROD_ISSUE_AMOUNT,P.PROD_ISSUE_PRICE,P.STOCK_ISSUE_QTY,P.STOCK_ISSUE_AMOUNT,
+                      P.STOCK_ISSUE_PRICE,P.ETC_ISSUE_QTY,P.ETC_ISSUE_AMOUNT,P.ETC_ISSUE_PRICE,P.COST_DISC,P.MATERIAL_ADJ,P.INVENTORY_QTY,P.INVENTORY_AMOUNT
+                      ,P.INVENTORY_PRICE)
+	</update>
+	
+	
+	<update id="merge_Sales_Mst" parameterType="HashMap">
+		MERGE INTO SALES_MST T
+		    USING ( SELECT DISTINCT A.COMPANY_CODE,
+					                A.DIVISION_CODE,
+					                A.SALES_NO,
+					                A.ARRIVAL_NATION,
+					                A.ARRIVAL_PORT_NAME,
+					                A.BL_NO,
+					                A.COUNT_UNIT,
+					                A.CUSTOMER_CODE,
+					                A.DELETE_YN,
+					                A.DELIVERY_CUSTOMER_CODE,
+					                A.DEPARTMENT_CODE,
+					                A.DEPARTURE_PORT_NAME,
+					                A.EXPORT_DECLARE_DATE,
+					                A.EXPORT_DECLARE_NO,
+					                A.EXPORT_FLAG,
+					                A.INCOTERMS,
+					                A.INVOICE_DATE,
+					                A.INVOICE_NO,
+					                A.PACKING_COUNT,
+					                A.PACKING_MARK,
+					                A.SHIPPING_DATE,
+					                A.TOTAL_WEIGHT,
+					                A.VEHICLE_NAME
+		              FROM SALES_MST_INF A
+					 INNER JOIN SALES_DTL_INF B
+					    ON A.COMPANY_CODE = B.COMPANY_CODE
+					   AND A.DIVISION_CODE = B.DIVISION_CODE
+					   AND A.SALES_NO = B.SALES_NO
+					 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		               AND A.INVOICE_DATE BETWEEN TO_CHAR(ADD_MONTHS(SYSDATE ,-4), 'YYYYMMDD') AND TO_CHAR(ADD_MONTHS(SYSDATE ,-3), 'YYYYMMDD')
+		               AND A.IF_YN = 'N' ) P
+					 ON (T.COMPANY_CODE = P.COMPANY_CODE
+		            AND T.DIVISION_CODE = P.DIVISION_CODE
+		            AND T.SALES_NO = P.SALES_NO)
+		   WHEN MATCHED THEN
+		       UPDATE 
+		          SET T.ARRIVAL_NATION  = P.ARRIVAL_NATION,
+		              T.ARRIVAL_PORT_NAME = P.ARRIVAL_PORT_NAME,
+		              T.BL_NO = P.BL_NO,
+		              T.COUNT_UNIT  = P.COUNT_UNIT,
+		              T.CUSTOMER_CODE = P.CUSTOMER_CODE,
+		              T.DELETE_YN = P.DELETE_YN,
+		              T.DELIVERY_CUSTOMER_CODE  = P.DELIVERY_CUSTOMER_CODE,
+		              T.DEPARTMENT_CODE = P.DEPARTMENT_CODE,
+		              T.DEPARTURE_PORT_NAME = P.DEPARTURE_PORT_NAME,
+		              T.EXPORT_DECLARE_DATE = P.EXPORT_DECLARE_DATE,
+		              T.EXPORT_DECLARE_NO = P.EXPORT_DECLARE_NO,
+		              T.EXPORT_FLAG = P.EXPORT_FLAG,
+		              T.INCOTERMS = P.INCOTERMS,
+		              T.INVOICE_DATE  = P.INVOICE_DATE,
+		              T.INVOICE_NO  = P.INVOICE_NO,
+		              T.PACKING_COUNT = P.PACKING_COUNT,
+		              T.PACKING_MARK  = P.PACKING_MARK,
+		              T.SHIPPING_DATE = P.SHIPPING_DATE,
+		              T.TOTAL_WEIGHT  = P.TOTAL_WEIGHT,
+		              T.VEHICLE_NAME  = P.VEHICLE_NAME
+		
+		   WHEN NOT MATCHED THEN
+		       INSERT (COMPANY_CODE, DIVISION_CODE, SALES_NO, ARRIVAL_NATION, ARRIVAL_PORT_NAME, BL_NO, COUNT_UNIT, 
+		                CUSTOMER_CODE, DELETE_YN, DELIVERY_CUSTOMER_CODE, DEPARTMENT_CODE, DEPARTURE_PORT_NAME, EXPORT_DECLARE_DATE, 
+		                EXPORT_DECLARE_NO, EXPORT_FLAG, INCOTERMS, INVOICE_DATE, INVOICE_NO, PACKING_COUNT, PACKING_MARK, 
+		                SHIPPING_DATE, TOTAL_WEIGHT, VEHICLE_NAME)
+		       VALUES (P.COMPANY_CODE, P.DIVISION_CODE, P.SALES_NO, P.ARRIVAL_NATION,P.ARRIVAL_PORT_NAME,P.BL_NO,P.COUNT_UNIT
+		               ,P.CUSTOMER_CODE,P.DELETE_YN,P.DELIVERY_CUSTOMER_CODE,P.DEPARTMENT_CODE,P.DEPARTURE_PORT_NAME,P.EXPORT_DECLARE_DATE
+		               ,P.EXPORT_DECLARE_NO,P.EXPORT_FLAG,P.INCOTERMS,P.INVOICE_DATE,P.INVOICE_NO,P.PACKING_COUNT,P.PACKING_MARK
+		               ,P.SHIPPING_DATE,P.TOTAL_WEIGHT,P.VEHICLE_NAME)
+	</update>
+	
+	
+	<update id="merge_Sales_Dtl" parameterType="HashMap">
+		MERGE INTO SALES_DTL T
+		    USING ( SELECT DISTINCT B.COMPANY_CODE,
+					                B.DIVISION_CODE,
+					                B.SALES_NO,
+					                B.SALES_SEQ,
+					                B.AMOUNT,
+					                B.AMOUNT_FOREIGN,
+					                B.CURRENCY,
+					                B.EXCHANGE_DATE,
+					                B.EXCHANGE_RATE,
+					                B.GROSS_WEIGHT,
+					                B.NET_WEIGHT,
+					                B.PROD_DIVISION_CODE,
+					                B.PRODUCT_ASSETS_TYPE,
+					                B.PRODUCT_CODE,
+					                B.PRODUCT_UNIT,
+					                B.QUANTITY,
+					                B.UNIT_PRICE,
+					                B.WEIGHT_UNIT,
+					                B.LAN,
+					                B.POUCH,
+					                B.EXPORT_TYPE
+		              FROM SALES_MST_INF A
+					 INNER JOIN SALES_DTL_INF B
+					    ON A.COMPANY_CODE = B.COMPANY_CODE
+					   AND A.DIVISION_CODE = B.DIVISION_CODE
+					   AND A.SALES_NO = B.SALES_NO
+					 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		               AND A.INVOICE_DATE BETWEEN TO_CHAR(ADD_MONTHS(SYSDATE ,-4), 'YYYYMMDD') AND TO_CHAR(ADD_MONTHS(SYSDATE ,-3), 'YYYYMMDD')
+		               AND A.IF_YN = 'N' ) P
+					 ON (T.COMPANY_CODE = P.COMPANY_CODE
+		            AND T.DIVISION_CODE = P.DIVISION_CODE
+		            AND T.SALES_NO = P.SALES_NO
+		            AND T.SALES_SEQ = P.SALES_SEQ)
+		   WHEN MATCHED THEN
+		       UPDATE 
+		          SET T.AMOUNT  = P.AMOUNT,
+		              T.AMOUNT_FOREIGN  = P.AMOUNT_FOREIGN,
+		              T.CURRENCY  = P.CURRENCY,
+		              T.EXCHANGE_DATE = P.EXCHANGE_DATE,
+		              T.EXCHANGE_RATE = P.EXCHANGE_RATE,
+		              T.GROSS_WEIGHT  = P.GROSS_WEIGHT,
+		              T.NET_WEIGHT  = P.NET_WEIGHT,
+		              T.PROD_DIVISION_CODE  = P.PROD_DIVISION_CODE,
+		              T.PRODUCT_ASSETS_TYPE = P.PRODUCT_ASSETS_TYPE,
+		              T.PRODUCT_CODE  = P.PRODUCT_CODE,
+		              T.PRODUCT_UNIT  = P.PRODUCT_UNIT,
+		              T.QUANTITY  = P.QUANTITY,
+		              T.UNIT_PRICE  = P.UNIT_PRICE,
+		              T.WEIGHT_UNIT = P.WEIGHT_UNIT,
+		              T.LAN = P.LAN,
+		              T.POUCH = P.POUCH,
+		              T.EXPORT_TYPE = P.EXPORT_TYPE
+		
+		
+		   WHEN NOT MATCHED THEN
+		       INSERT (COMPANY_CODE, DIVISION_CODE, SALES_NO, SALES_SEQ, AMOUNT, AMOUNT_FOREIGN, CURRENCY, EXCHANGE_DATE, 
+		               EXCHANGE_RATE, GROSS_WEIGHT, NET_WEIGHT, PROD_DIVISION_CODE, PRODUCT_ASSETS_TYPE, PRODUCT_CODE, 
+		               PRODUCT_UNIT, QUANTITY, UNIT_PRICE, WEIGHT_UNIT, LAN, POUCH, EXPORT_TYPE)
+		       VALUES (P.COMPANY_CODE,P.DIVISION_CODE,P.SALES_NO,P.SALES_SEQ,P.AMOUNT,P.AMOUNT_FOREIGN,P.CURRENCY,P.EXCHANGE_DATE,
+		               P.EXCHANGE_RATE,P.GROSS_WEIGHT,P.NET_WEIGHT,P.PROD_DIVISION_CODE,P.PRODUCT_ASSETS_TYPE,P.PRODUCT_CODE,
+		               P.PRODUCT_UNIT,P.QUANTITY,P.UNIT_PRICE,P.WEIGHT_UNIT,P.LAN,P.POUCH,P.EXPORT_TYPE)
+	</update>
+	
+	
+	<update id="merge_Customer" parameterType="HashMap">
+		MERGE INTO CUSTOMER T
+		    USING ( SELECT COMPANY_CODE, CUSTOMER_CODE, CUSTOMER_NAME, CUSTOMER_NAME_ENG, OFFICER_NAME, OFFICER_NAME_ENG, NATION_CODE, ADDRESS, ADDRESS_ENG, BUSINESS_NO, TEL_NO, ZIP_CODE, FAX_NO, DELETE_YN, IF_YN, CREATE_DATE
+		              FROM CUSTOMER_INF A
+		             WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		               AND TO_CHAR(A.CREATE_DATE, 'YYYYMMDD') BETWEEN TO_CHAR(ADD_MONTHS(SYSDATE ,-4), 'YYYYMMDD') AND TO_CHAR(ADD_MONTHS(SYSDATE ,-3), 'YYYYMMDD')
+		               AND A.IF_YN = 'N' ) P
+		       ON (T.COMPANY_CODE = P.COMPANY_CODE AND T.CUSTOMER_CODE = P.CUSTOMER_CODE)
+		   WHEN MATCHED THEN
+		       UPDATE 
+		          SET T.CUSTOMER_NAME      = P.CUSTOMER_NAME,
+					  T.CUSTOMER_NAME_ENG  = P.CUSTOMER_NAME_ENG,
+					  T.OFFICER_NAME       = P.OFFICER_NAME,
+					  T.OFFICER_NAME_ENG   = P.OFFICER_NAME_ENG,
+					  T.NATION_CODE        = P.NATION_CODE,
+					  T.ADDRESS            = P.ADDRESS,
+					  T.ADDRESS_ENG        = P.ADDRESS_ENG,
+					  T.BUSINESS_NO        = P.BUSINESS_NO,
+					  T.TEL_NO             = P.TEL_NO,
+					  T.ZIP_CODE           = P.ZIP_CODE,
+					  T.FAX_NO             = P.FAX_NO,
+					  T.DELETE_YN          = P.DELETE_YN
+		   WHEN NOT MATCHED THEN
+		       INSERT 
+		       		(COMPANY_CODE, CUSTOMER_CODE, CUSTOMER_NAME, CUSTOMER_NAME_ENG, OFFICER_NAME, OFFICER_NAME_ENG, NATION_CODE, ADDRESS, ADDRESS_ENG, BUSINESS_NO, TEL_NO, ZIP_CODE, FAX_NO, DELETE_YN)
+               VALUES
+               		(P.COMPANY_CODE, P.CUSTOMER_CODE, P.CUSTOMER_NAME, P.CUSTOMER_NAME_ENG, P.OFFICER_NAME, P.OFFICER_NAME_ENG, P.NATION_CODE, P.ADDRESS, P.ADDRESS_ENG, P.BUSINESS_NO, P.TEL_NO, P.ZIP_CODE, P.FAX_NO, P.DELETE_YN)
+
+	</update>
+	
+	
+	<update id="merge_Result_Bom_Ap" parameterType="HashMap">
+		MERGE INTO RESULT_BOM_AP T
+		    USING ( SELECT DISTINCT COMPANY_CODE, BOM_VERSION, PRODUCT_CODE, COMPANY_CODE AS DIVISION_CODE, ITEM_CODE, ITEM_TEXT, CMMRC_CODE_NO, FROM_DIVISION_CODE, REQ_QTY, REQ_QTY_UNIT
+		              FROM RESULT_BOM_AP_INF A
+		             WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		               AND A.BOM_VERSION BETWEEN TO_CHAR(ADD_MONTHS(SYSDATE ,-4), 'YYYYMMDD') AND TO_CHAR(ADD_MONTHS(SYSDATE ,-3), 'YYYYMMDD')
+		               AND A.IF_YN = 'N' ) P
+		    	   ON (T.COMPANY_CODE = P.COMPANY_CODE
+		    	  AND T.DIVISION_CODE = P.DIVISION_CODE
+		          AND T.BOM_VERSION = P.BOM_VERSION
+                  AND T.PRODUCT_CODE = P.PRODUCT_CODE
+                  AND T.ITEM_CODE = P.ITEM_CODE)
+		   WHEN MATCHED THEN
+		       UPDATE 
+		          SET T.ITEM_NAME         = P.ITEM_TEXT
+					  ,T.INPUT_QTY        = P.REQ_QTY
+					  ,T.HS_CODE10        = P.CMMRC_CODE_NO
+					  ,T.INPUT_BASS_UNIT  = P.REQ_QTY_UNIT
+
+		   WHEN NOT MATCHED THEN
+		       INSERT 
+		       		(COMPANY_CODE,DIVISION_CODE,BOM_VERSION,PRODUCT_CODE,ITEM_CODE,ITEM_NAME,INPUT_QTY,HS_CODE10,INPUT_BASS_UNIT)
+               VALUES
+               		(P.COMPANY_CODE, P.DIVISION_CODE, P.BOM_VERSION, P.PRODUCT_CODE, P.ITEM_CODE, P.ITEM_TEXT, P.REQ_QTY, P.CMMRC_CODE_NO, P.REQ_QTY_UNIT)
+
+	</update>
+	
+	<insert id="insert_ItemMstInf" parameterType="HashMap">
+		INSERT INTO ITEM_MST_INF
+		  (COMPANY_CODE, ITEM_CODE, ITEM_NAME, ITEM_NAME_ENG, PRODUCT_CODE, SPEC, ASSETS_TYPE, HS_CODE, UNIT, WEIGHT)
+		VALUES
+		  (#{COMPANY_CODE}, #{ITEM_CODE}, #{ITEM_NAME}, #{ITEM_NAME_ENG}, #{PRODUCT_CODE}, #{SPEC}, #{ASSETS_TYPE}, TRIM(#{HS_CODE}), #{UNIT}, #{WEIGHT})
+	</insert>
+	
+	<update id="merge_ItemMst" parameterType="HashMap">
+		MERGE INTO ITEM_MST T
+		    USING ( SELECT COMPANY_CODE, ITEM_CODE, ITEM_NAME, ITEM_NAME_ENG, PRODUCT_CODE, SPEC, ASSETS_TYPE, HS_CODE, UNIT, WEIGHT
+		              FROM ITEM_MST_INF A
+		             WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           ) P
+	    	   ON (T.COMPANY_CODE = P.COMPANY_CODE
+	          AND T.ITEM_CODE = P.ITEM_CODE)
+		   WHEN MATCHED THEN
+		       UPDATE 
+		          SET T.ITEM_NAME     = P.ITEM_NAME, 
+					  T.ITEM_NAME_ENG = P.ITEM_NAME_ENG, 
+					  T.PRODUCT_CODE  = P.PRODUCT_CODE, 
+					  T.SPEC          = P.SPEC, 
+					  T.ASSETS_TYPE   = P.ASSETS_TYPE, 
+					  T.HS_CODE       = P.HS_CODE, 
+					  T.UNIT          = P.UNIT, 
+					  T.WEIGHT        = P.WEIGHT
+
+		   WHEN NOT MATCHED THEN
+		       INSERT (COMPANY_CODE, ITEM_CODE, ITEM_NAME, ITEM_NAME_ENG, PRODUCT_CODE, SPEC, ASSETS_TYPE, HS_CODE, UNIT, WEIGHT)
+		       VALUES (P.COMPANY_CODE, P.ITEM_CODE, P.ITEM_NAME, P.ITEM_NAME_ENG, P.PRODUCT_CODE, P.SPEC, P.ASSETS_TYPE, P.HS_CODE, P.UNIT, P.WEIGHT)
+	</update>
+	
+	<insert id="insert_VendorInf" parameterType="HashMap">
+		INSERT INTO VENDOR_INF
+		  (COMPANY_CODE, VENDOR_CODE, NATION_CODE, VENDOR_NAME, VENDOR_NAME_ENG, VENDOR_EMAIL, BUSINESS_NO, OFFICER_NAME, OFFICER_NAME_ENG, ADDRESS, ADDRESS_ENG, FAX_NO, TEL_NO, ZIP_CODE, CUSTOM_UNQ_CODE, DELETE_YN)
+		VALUES
+		  (#{COMPANY_CODE}, #{VENDOR_CODE},  #{NATION_CODE},  #{VENDOR_NAME},  #{VENDOR_NAME_ENG},  #{VENDOR_EMAIL},  #{BUSINESS_NO},  #{OFFICER_NAME},  #{OFFICER_NAME_ENG},  #{ADDRESS},  #{ADDRESS_ENG},  #{FAX_NO},  #{TEL_NO},  #{ZIP_CODE},  #{CUSTOM_UNQ_CODE}, #{DELETE_YN})
+	</insert>
+	
+	<update id="merge_Vendor" parameterType="HashMap">
+		MERGE INTO VENDOR T
+		    USING ( SELECT COMPANY_CODE, VENDOR_CODE, NATION_CODE, VENDOR_NAME, VENDOR_NAME_ENG, VENDOR_EMAIL, BUSINESS_NO, OFFICER_NAME, OFFICER_NAME_ENG, ADDRESS, ADDRESS_ENG, FAX_NO, TEL_NO, ZIP_CODE, CUSTOM_UNQ_CODE, DELETE_YN
+		              FROM VENDOR_INF A
+		             WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           ) P
+	    	   ON (T.COMPANY_CODE = P.COMPANY_CODE
+	          AND T.VENDOR_CODE = P.VENDOR_CODE)
+		   WHEN MATCHED THEN
+		       UPDATE 
+		          SET T.NATION_CODE      = P.NATION_CODE, 
+		              T.VENDOR_NAME      = P.VENDOR_NAME, 
+		              T.VENDOR_NAME_ENG  = P.VENDOR_NAME_ENG, 
+		              T.VENDOR_EMAIL     = P.VENDOR_EMAIL, 
+		              T.BUSINESS_NO      = P.BUSINESS_NO, 
+		              T.OFFICER_NAME     = P.OFFICER_NAME, 
+		              T.OFFICER_NAME_ENG = P.OFFICER_NAME_ENG, 
+		              T.ADDRESS          = P.ADDRESS, 
+		              T.ADDRESS_ENG,     = P.ADDRESS_ENG, 
+		              T.FAX_NO           = P.FAX_NO, 
+		              T.TEL_NO           = P.TEL_NO, 
+		              T.ZIP_CODE         = P.ZIP_CODE, 
+		              T.CUSTOM_UNQ_CODE  = P.CUSTOM_UNQ_CODE, 
+		              T.DELETE_YN        = P.DELETE_YN
+
+		   WHEN NOT MATCHED THEN
+		       INSERT (COMPANY_CODE, VENDOR_CODE, NATION_CODE, VENDOR_NAME, VENDOR_NAME_ENG, VENDOR_EMAIL, BUSINESS_NO, OFFICER_NAME
+		               , OFFICER_NAME_ENG, ADDRESS, ADDRESS_ENG, FAX_NO, TEL_NO, ZIP_CODE, CUSTOM_UNQ_CODE, DELETE_YN)
+		       VALUES (P.COMPANY_CODE, P.VENDOR_CODE, P.NATION_CODE, P.VENDOR_NAME, P.VENDOR_NAME_ENG, P.VENDOR_EMAIL, P.BUSINESS_NO, P.OFFICER_NAME
+		               , P.OFFICER_NAME_ENG, P.ADDRESS, P.ADDRESS_ENG, P.FAX_NO, P.TEL_NO, P.ZIP_CODE, P.CUSTOM_UNQ_CODE, P.DELETE_YN)
+	</update>
+	
+	
+	<insert id="insert_PoledgerInf" parameterType="HashMap">
+		INSERT INTO PO_LEDGER_INF
+  			(COMPANY_CODE, DIVISION_CODE, WAREHOUSING_NO, WAREHOUSING_YEAR, SEQ, WAREHOUSING_DATE, WAREHOUSING_TYPE, ORDER_NO, ORDER_SEQ
+  			, VENDOR_CODE, MAKER_NAME, ITEM_CODE, ITEM_NAME, LAN, POUCH, PERMIT_DATE, CLEARLANCE_NO, CSTMS, CSTMS_RATE, ORIGIN_NATION, AMOUNT_FOREIGN
+  			, UNIT_PRICE_FOREIGN, EXCHANGE_DATE, EXCHANGE_RATE, BL_NO, BL_QUANTITY, WAREHOUSING_QTY, WAREHOUSING_AMOUNT, CURRENCY, ASSETS_TYPE, UNIT, UNIT_PRICE)
+		VALUES
+		  (#{COMPANY_CODE}, #{DIVISION_CODE}, #{WAREHOUSING_NO}, #{WAREHOUSING_YEAR}, #{SEQ}, #{WAREHOUSING_DATE}, #{WAREHOUSING_TYPE}, #{ORDER_NO}, #{ORDER_SEQ}
+		  , #{VENDOR_CODE}, #{MAKER_NAME}, #{ITEM_CODE}, #{ITEM_NAME}, #{LAN}, #{POUCH}, #{PERMIT_DATE}, #{CLEARLANCE_NO}, #{CSTMS}, #{CSTMS_RATE}, #{ORIGIN_NATION}, #{AMOUNT_FOREIGN}
+		  , #{UNIT_PRICE_FOREIGN}, #{EXCHANGE_DATE}, #{EXCHANGE_RATE}, #{BL_NO}, #{BL_QUANTITY}, #{WAREHOUSING_QTY}, #{WAREHOUSING_AMOUNT}, #{CURRENCY}, #{ASSETS_TYPE}, #{UNIT}, #{UNIT_PRICE})
+	</insert>
+	
+	<update id="merge_Poledger" parameterType="HashMap">
+		MERGE INTO PO_LEDGER T
+		    USING ( SELECT COMPANY_CODE, COMPANY_CODE AS DIVISION_CODE, WAREHOUSING_NO, WAREHOUSING_YEAR, SEQ, WAREHOUSING_DATE, WAREHOUSING_TYPE, ORDER_NO, ORDER_SEQ
+				  			, VENDOR_CODE, MAKER_NAME, ITEM_CODE, ITEM_NAME, LAN, POUCH, PERMIT_DATE, CLEARLANCE_NO, CSTMS, CSTMS_RATE, ORIGIN_NATION, AMOUNT_FOREIGN
+				  			, UNIT_PRICE_FOREIGN, EXCHANGE_DATE, EXCHANGE_RATE, BL_NO, BL_QUANTITY, WAREHOUSING_QTY, WAREHOUSING_AMOUNT, CURRENCY, ASSETS_TYPE, UNIT, UNIT_PRICE
+		              FROM PO_LEDGER_INF A
+		             WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           ) P
+	    	   ON (T.COMPANY_CODE = P.COMPANY_CODE
+	          AND T.DIVISION_CODE = P.WAREHOUSING_NO
+	          AND T.WAREHOUSING_NO = P.DIVISION_CODE
+	          AND T.SEQ = P.SEQ)
+		   WHEN MATCHED THEN
+		       UPDATE 
+		          SET	T.WAREHOUSING_YEAR = P.WAREHOUSING_YEAR,
+						T.WAREHOUSING_DATE = P.WAREHOUSING_DATE,
+						T.WAREHOUSING_TYPE = P.WAREHOUSING_TYPE,
+						T.ORDER_NO = P.ORDER_NO,
+						T.ORDER_SEQ = P.ORDER_SEQ,
+						T.VENDOR_CODE = P.VENDOR_CODE,
+						T.MAKER_NAME = P.MAKER_NAME,
+						T.ITEM_CODE = P.ITEM_CODE,
+						T.ITEM_NAME = P.ITEM_NAME,
+						T.LAN = P.LAN,
+						T.POUCH = P.POUCH,
+						T.PERMIT_DATE = P.PERMIT_DATE,
+						T.CLEARLANCE_NO = P.CLEARLANCE_NO,
+						T.CSTMS = P.CSTMS,
+						T.CSTMS_RATE = P.CSTMS_RATE,
+						T.ORIGIN_NATION = P.ORIGIN_NATION,
+						T.AMOUNT_FOREIGN = P.AMOUNT_FOREIGN,
+						T.UNIT_PRICE_FOREIGN = P.UNIT_PRICE_FOREIGN,
+						T.EXCHANGE_DATE = P.EXCHANGE_DATE,
+						T.EXCHANGE_RATE = P.EXCHANGE_RATE,
+						T.BL_NO = P.BL_NO,
+						T.BL_QUANTITY = P.BL_QUANTITY,
+						T.WAREHOUSING_QTY = P.WAREHOUSING_QTY,
+						T.WAREHOUSING_AMOUNT = P.WAREHOUSING_AMOUNT,
+						T.CURRENCY = P.CURRENCY,
+						T.ASSETS_TYPE = P.ASSETS_TYPE,
+						T.UNIT = P.UNIT,
+						T.UNIT_PRICE = P.UNIT_PRICE
+
+		   WHEN NOT MATCHED THEN
+		       INSERT (COMPANY_CODE, DIVISION_CODE, WAREHOUSING_NO, WAREHOUSING_YEAR, SEQ, WAREHOUSING_DATE, WAREHOUSING_TYPE, ORDER_NO, ORDER_SEQ
+			  			, VENDOR_CODE, MAKER_NAME, ITEM_CODE, ITEM_NAME, LAN, POUCH, PERMIT_DATE, CLEARLANCE_NO, CSTMS, CSTMS_RATE, ORIGIN_NATION, AMOUNT_FOREIGN
+			  			, UNIT_PRICE_FOREIGN, EXCHANGE_DATE, EXCHANGE_RATE, BL_NO, BL_QUANTITY, WAREHOUSING_QTY, WAREHOUSING_AMOUNT, CURRENCY, ASSETS_TYPE, UNIT, UNIT_PRICE)
+		       VALUES (P.COMPANY_CODE, P.DIVISION_CODE, P.WAREHOUSING_NO, P.WAREHOUSING_YEAR, P.SEQ, P.WAREHOUSING_DATE, P.WAREHOUSING_TYPE, P.ORDER_NO, P.ORDER_SEQ
+					    , P.VENDOR_CODE, P.MAKER_NAME, P.ITEM_CODE, P.ITEM_NAME, P.LAN, P.POUCH, P.PERMIT_DATE, P.CLEARLANCE_NO, P.CSTMS, P.CSTMS_RATE, P.ORIGIN_NATION, P.AMOUNT_FOREIGN
+					    , P.UNIT_PRICE_FOREIGN, P.EXCHANGE_DATE, P.EXCHANGE_RATE, P.BL_NO, P.BL_QUANTITY, P.WAREHOUSING_QTY, P.WAREHOUSING_AMOUNT, P.CURRENCY, P.ASSETS_TYPE, P.UNIT, P.UNIT_PRICE)
+	</update>
+	
+	
+	<insert id="insert_SalesledgerInf" parameterType="HashMap">
+		INSERT INTO SALES_LEDGER_INF
+		  (COMPANY_CODE, DIVISION_CODE, SALES_LEDGER_NO, SALES_LEDGER_YEAR, SALES_LEDGER_SEQ, SALES_DATE, ITEM_MOVE_TYPE, ASSETS_TYPE, ITEM_CODE, ITEM_NAME, HS_CODE, CUSTOMER_CODE, QUANTITY, UNIT, AMOUNT, PROD_ID)
+		VALUES
+		  (#{COMPANY_CODE}, #{DIVISION_CODE}, #{SALES_LEDGER_NO}, #{SALES_LEDGER_YEAR}, #{SALES_LEDGER_SEQ}, #{SALES_DATE}, #{ITEM_MOVE_TYPE}, #{ASSETS_TYPE}, #{ITEM_CODE}, #{ITEM_NAME}, #{HS_CODE}, #{CUSTOMER_CODE}, #{QUANTITY}, #{UNIT}, #{AMOUNT}, #{PROD_ID})
+
+	</insert>
+	
+	<update id="merge_Salesledger" parameterType="HashMap">
+		MERGE INTO SALES_LEDGER T
+		    USING ( SELECT COMPANY_CODE, 
+		                    DIVISION_CODE, 
+		                    SALES_LEDGER_NO, 
+		                    SALES_LEDGER_YEAR, 
+		                    SALES_LEDGER_SEQ, 
+		                    SALES_DATE, 
+		                    ITEM_MOVE_TYPE, 
+		                    ASSETS_TYPE, 
+		                    ITEM_CODE, 
+		                    ITEM_NAME, 
+		                    HS_CODE, 
+		                    CUSTOMER_CODE, 
+		                    QUANTITY, 
+		                    UNIT, 
+		                    AMOUNT, 
+		                    PROD_ID
+		              FROM SALES_LEDGER_INF A
+		             WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           ) P
+		       ON (T.COMPANY_CODE = P.COMPANY_CODE
+		        AND T.DIVISION_CODE = P.DIVISION_CODE
+		        AND T.SALES_LEDGER_NO = P.SALES_LEDGER_NO
+		        AND T.SALES_LEDGER_YEAR = P.SALES_LEDGER_YEAR
+		        AND T.SALES_LEDGER_SEQ = P.SALES_LEDGER_SEQ )
+		   WHEN MATCHED THEN
+		       UPDATE 
+		          SET T.SALES_DATE = P.SALES_DATE
+		              ,T.ITEM_MOVE_TYPE = P.ITEM_MOVE_TYPE
+		              ,T.ASSETS_TYPE = P.ASSETS_TYPE
+		              ,T.ITEM_CODE = P.ITEM_CODE
+		              ,T.ITEM_NAME = P.ITEM_NAME
+		              ,T.HS_CODE = P.HS_CODE
+		              ,T.CUSTOMER_CODE = P.CUSTOMER_CODE
+		              ,T.QUANTITY = P.QUANTITY
+		              ,T.UNIT = P.UNIT
+		              ,T.AMOUNT = P.AMOUNT
+		              ,T.PROD_ID = P.PROD_ID
+		   WHEN NOT MATCHED THEN
+		       INSERT (COMPANY_CODE, DIVISION_CODE, SALES_LEDGER_NO, SALES_LEDGER_YEAR, SALES_LEDGER_SEQ, SALES_DATE, ITEM_MOVE_TYPE, ASSETS_TYPE
+		               , ITEM_CODE, ITEM_NAME, HS_CODE, CUSTOMER_CODE, QUANTITY, UNIT, AMOUNT, PROD_ID, CREATE_DATE, REMNDR_QY)
+		       VALUES (P.COMPANY_CODE, P.DIVISION_CODE, P.SALES_LEDGER_NO, P.SALES_LEDGER_YEAR, P.SALES_LEDGER_SEQ, P.SALES_DATE, P.ITEM_MOVE_TYPE, P.ASSETS_TYPE
+		               , P.ITEM_CODE, P.ITEM_NAME, P.HS_CODE, P.CUSTOMER_CODE, P.QUANTITY, P.UNIT, P.AMOUNT, P.PROD_ID, SYSDATE, P.QUANTITY)
+	</update>
+</mapper>
+ 
+ 
+ 

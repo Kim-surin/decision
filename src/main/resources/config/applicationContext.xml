@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+	    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+
+	<mvc:resources location="/WEB-INF/viewResources/" mapping="/rcs/**" />
+
+
+	<mvc:interceptors>
+		
+		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="/login**" />
+			<mvc:exclude-mapping path="/login*" />
+			<mvc:exclude-mapping path="/loginform**" />
+			<mvc:exclude-mapping path="/loginFail**" />
+			<mvc:exclude-mapping path="/loginFailTimeout**" />
+			
+			
+			<mvc:exclude-mapping path="/rcs/**" />
+			<mvc:exclude-mapping path="/*.ico" />
+			<mvc:exclude-mapping path="/*error" />
+			<mvc:exclude-mapping path="/common/retrieveUserCheck" />
+			
+			
+			<bean class="com.kpmg.kdb.web.session.BaseInterceptor" />
+		</mvc:interceptor>
+		
+		<bean id="localeChangeInterceptor"
+			class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+			<property name="paramName" value="convertLocale" />
+		</bean>
+	</mvc:interceptors>
+	
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" >
+		<property name="maxUploadSize" value="30000000" />
+	</bean>
+
+	<bean id="downloadViewResolver" class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order">
+			<value>0</value>
+		</property>
+	</bean>
+	<bean id="etcFileDownload" class="com.kpmg.kdb.web.service.FileDownloadView"/>
+
+	<bean id="localeResolver"
+		class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
+		<property name="defaultLocale" value="ko" />
+	</bean>
+	
+	
+	<!-- E N D : Resolvers  -->
+
+
+	<!-- Start : Converters -->
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+					<property name="supportedMediaTypes">
+						<list>
+							<value>text/html;charset=UTF-8</value>
+							<value>application/json;charset=UTF-8</value>
+						</list>
+					</property>
+				</bean>
+			</list>
+		</property>
+	</bean>
+	<!-- End   : Converters -->
+	<!-- Multi Language Message -->
+	<bean id="messageSource" class="com.kpmg.kdb.core.extendz.IscReloadableResourceBundleMessageSource">
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="basenames">
+			<list>
+				<value>classpath:/messages/messages</value>
+				<value>classpath:/messages/buttons</value>
+				<value>classpath:/messages/labels</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean
+		class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="order" value="2" />
+		<property name="defaultErrorView" value="/common/error500" />
+	</bean>
+	
+	
+		<!-- Quartz Job 생성 -->
+	<bean id="interfaceBatchBean" class="com.kpmg.kdb.web.batch.InterfaceCronJobService" />
+	<bean id="interfaceJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<!-- 동작할 자바 클래스 bean -->
+		<property name="targetObject" ref="interfaceBatchBean"/>
+		<!-- 동작할 자바 클래스 bean의 특정 메소드  -->
+		<property name="targetMethod" value="interfaceBatchJob"/>
+		<!--중복실행 안되도록 설정 -->
+		<property name="concurrent" value="false"/>
+	</bean>
+	
+	
+		<!-- Quartz 트리거 생성 -->
+	<bean id="interfaceCronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="interfaceJob"/>
+		<!-- 매일 새벽 2시 1분에 시작   :: -->
+		<!-- ss mi HH DD MM  :: -->
+		<property name="cronExpression" value="00 1 02 * * ?"/>
+	</bean>
+	
+	<!-- Quartz Scheduler 생성 -->
+	<bean id="interfaceScheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="interfaceCronTrigger" />
+			</list>
+
+		</property>
+	</bean>
+	
+	<bean id="mailSender" class = "org.springframework.mail.javamail.JavaMailSenderImpl">
+      <property name="host" value="spamsys.amorepacific.com" />
+      <property name="port" value="25" />
+      <!-- <property name="username" value="" />
+      <property name="password" value="" /> -->
+      <property name="javaMailProperties">
+         <props>
+               <prop key="mail.transport.protocol">smtp</prop>
+               <prop key="mail.smtp.auth">false</prop>
+               <prop key="mail.smtp.starttls.enable">true</prop>
+               <prop key="mail.debug">true</prop>
+         </props>
+      </property>
+ 
+   </bean>
+</beans>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.print.PrintReportDao">
+
+	<!-- xml Common Area Start -->
+	<sql id="paging-prefix">
+		SELECT DATA.*
+		FROM (
+		SELECT '' AS ROWFLAG,
+		ROWNUM AS RNUM,
+		COUNT(*) OVER() TOTAL_RECORDS,
+		DATA.*
+		FROM (
+	</sql>
+	<sql id="paging-postfix">
+        <![CDATA[
+                       ) DATA 
+                ) DATA                   
+          WHERE RNUM BETWEEN ((#{page}-1) * #{rows} + 1) and (#{page} * #{rows} )
+        ]]>
+	</sql>
+	<sql id="paging-orderby">
+		<if test="sidx != ''">
+			ORDER BY ${sidx} ${sord}
+		</if>
+	</sql>
+	<!-- xml Common Area End -->
+	
+	<select id="retrievePrintDocumentInformation" parameterType="HashMap" resultType="HashMap">
+		SELECT A.FORM_SEQ,
+		       A.FORM_ID,
+		       A.FORM_NAME,
+		       A.FORM_FILE_NAME,
+		       A.START_DATE,
+		       A.END_DATE,
+		       A.FORM_INDEX
+		  FROM PRINT_FORMS_MST A
+		 WHERE A.FORM_ID = #{P_FORM_ID}
+		   AND REPLACE(#{P_FORM_YYYYMMDD}, '-','') BETWEEN A.START_DATE AND A.END_DATE
+ 	</select>
+	
+</mapper>

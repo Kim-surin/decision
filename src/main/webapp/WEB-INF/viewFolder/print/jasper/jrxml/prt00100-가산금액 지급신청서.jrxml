@@ -1,0 +1,1248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="595" pageHeight="842" columnWidth="486" leftMargin="56" rightMargin="53" topMargin="56" bottomMargin="56" uuid="691837f1-ae42-48f2-89c9-e7584fa9ecaf">
+	<property name="ireport.zoom" value="1.771561000000036"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="902"/>
+	<property name="ireport.background.image" value="C:\Users\heejaewoo\Desktop\가산금액 지급신청서 (002)_페이지_1.png"/>
+	<property name="ireport.background.image.properties" value="false,true,0.25,0,0,0,0,0,0"/>
+	<style name="table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#B2B2B2">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<subDataset name="New Dataset 1" uuid="7bd57bec-4672-44b1-ad6e-c6047d42cb72"/>
+	<subDataset name="New Dataset 2" uuid="46c5a1af-1ac2-4ff3-becd-615ea40c31d5"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="249" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="307" height="11" uuid="0742cbad-7807-47af-9a4d-750cf6a9b7a8"/>
+				<textElement>
+					<font fontName="돋움" size="8"/>
+				</textElement>
+				<text><![CDATA[■ 수출용원재료에 대한 관세 등 환급사무처리에 관한 고시 [별지 제5호의2서식]]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="28" width="486" height="19" uuid="11dd60c6-9312-4f98-8114-1a57cb3097d1"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="HY견고딕" size="16"/>
+				</textElement>
+				<text><![CDATA[가산금액 지급신청서 (갑)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="57" width="77" height="17" backcolor="#D6D6D6" uuid="d1246bfc-cb5b-4d20-abca-2b345eeae64e"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[제출번호]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="77" y="57" width="107" height="17" backcolor="#D6D6D6" uuid="927bc84c-6ae3-4852-96cc-8dad6db9e944"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[신청관세사]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="184" y="57" width="174" height="17" backcolor="#D6D6D6" uuid="11b00d37-c652-48f9-a54d-ff59bd3229e4"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[접수번호]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="358" y="57" width="57" height="18" backcolor="#D6D6D6" uuid="a2c7c3a8-a7f4-47e7-bb72-7828885502c7"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[접수일자]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="415" y="57" width="71" height="18" backcolor="#D6D6D6" uuid="2cbbc34f-7477-4232-93d8-babd0566fc09"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[처리기간 3일]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="74" width="77" height="28" uuid="44aa95a2-9a71-4833-bc11-a24d5953e9df"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="77" y="74" width="107" height="28" uuid="bc08d715-bda2-4460-9be9-2d7ee8082322"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="184" y="74" width="56" height="28" uuid="833e7bb3-c99b-402b-a0a6-952cb8bc98ac"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["세관부호 " + $F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="240" y="74" width="40" height="28" uuid="62385307-053c-46d7-89ce-d419bdb81897"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["연도 " + $F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="280" y="74" width="78" height="28" backcolor="#D6D6D6" uuid="df9a89fb-dfeb-4f71-9cf5-1074829077ca"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA["일련번호 " + $F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="358" y="74" width="57" height="28" backcolor="#D6D6D6" uuid="06454dd5-9df9-474b-96f5-c19cf34e9f0f"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="415" y="74" width="71" height="28" backcolor="#D6D6D6" uuid="bc5aaeb2-b79f-4805-8ab2-2c7435e5ea4f"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="108" width="65" height="75" backcolor="#B2B2B2" uuid="5f514ada-6610-441f-b351-c159b6e84501"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[신청인]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="65" y="108" width="209" height="25" uuid="2084791b-24c9-4344-aa78-fd97af162cda"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["상호" + $F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="274" y="108" width="212" height="25" uuid="88eadfac-5d75-4637-85fa-c79f7c1056e4"/>
+				<box>
+					<pen lineWidth="0.34"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["대표자" + $F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="133" width="209" height="25" uuid="7e4e1e20-a389-4d07-b8f8-a9512ec76006"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["통관고유부호" + $F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="274" y="133" width="212" height="25" uuid="c0806a81-cf5b-41d4-a669-5b85c06768b8"/>
+				<box>
+					<pen lineWidth="0.34"/>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["사업자등록번호" + $F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="158" width="421" height="25" uuid="ddca282f-31f7-407d-b3b5-6b6b8b3e6c60"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["도로명주소" + $F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="189" width="486" height="18" backcolor="#B2B2B2" uuid="e77e3cda-1823-4438-8201-408ccfec0a3f"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[지급신청 가산금액 합계]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="207" width="68" height="18" backcolor="#B2B2B2" uuid="ad0338c9-725d-46fb-9764-accd7f19dc2d"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[관세가산금]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="68" y="207" width="68" height="18" backcolor="#B2B2B2" uuid="24ae4af4-ba3a-4281-82e9-28f955f3ffda"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[개소세가산금]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="136" y="207" width="68" height="18" backcolor="#B2B2B2" uuid="77b93712-24b7-4e04-904a-92b2e8003ede"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[교통세가산금]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="204" y="207" width="68" height="18" backcolor="#B2B2B2" uuid="a10507bc-6b2d-4ec8-949e-2ea1d1285d74"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[교육세가산금]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="272" y="207" width="68" height="18" backcolor="#B2B2B2" uuid="43823d36-6898-4184-84dc-050ebf3280f9"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[주세가산금]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="340" y="207" width="68" height="18" backcolor="#B2B2B2" uuid="66498b1b-c6b6-4565-a220-452d2ba33c00"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[농특세가산금]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="408" y="207" width="78" height="18" backcolor="#B2B2B2" uuid="f9726fe0-40a2-474e-a927-70ccfb984421"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[합계]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="225" width="68" height="18" uuid="de27fda9-46c9-4d07-87e4-b2693af83c5b"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.0"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="68" y="225" width="68" height="18" uuid="fd44aa41-dde8-4400-9c1c-0c18b6e50110"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="136" y="225" width="68" height="18" uuid="5025546f-f7da-42c1-820f-87215067cf2c"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="204" y="225" width="68" height="18" uuid="0f32ad07-eb9b-46e5-9319-6dfe68bfcb01"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="272" y="225" width="68" height="18" uuid="3bdfb724-bc72-4f3c-8ddd-5e0160d04243"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="340" y="225" width="68" height="18" uuid="e0bedb4b-c9b7-47a8-bc24-3a6437c5d47a"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="408" y="225" width="78" height="18" uuid="ceb57c35-ad15-418f-8d18-5d29f92d95a3"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<detail>
+		<band height="113" splitType="Stretch">
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="486" height="29" backcolor="#B2B2B2" uuid="ae3552f2-c517-47e7-abc2-c7a6704bc028"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="11"/>
+				</textElement>
+				<text><![CDATA[가산금액 지급신청 상세 내역]]></text>
+			</staticText>
+			<componentElement>
+				<reportElement key="table1" style="table" x="0" y="29" width="486" height="80" uuid="3a11ef81-6ee4-4959-a5a6-69f5d6676dcb"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="New Dataset 1" uuid="39d03c6f-04fc-4fda-b8fa-1e570a82a59b">
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource(2)]]></dataSourceExpression>
+					</datasetRun>
+					<jr:column width="33" uuid="bbabf7cb-0f80-43c0-bb62-29120df7d7c6">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="2"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="2"/>
+						<jr:columnHeader style="table_CH" height="54" rowSpan="2">
+							<staticText>
+								<reportElement x="0" y="0" width="33" height="54" uuid="ad9f277d-2872-468d-8d42-2270e280fd0d"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[행
+번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="2"/>
+						<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+					</jr:column>
+					<jr:column width="46" uuid="07d61975-5ec9-4d84-a0c7-4b2916af5d27">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="2"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="2"/>
+						<jr:columnHeader style="table_CH" height="54" rowSpan="2">
+							<staticText>
+								<reportElement x="0" y="0" width="46" height="54" uuid="8170ea5b-ba2e-4e8e-a769-d62cb7be26d6"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[최초환급
+접수번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="2"/>
+						<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+					</jr:column>
+					<jr:columnGroup width="230" uuid="d9433ea9-b30e-4ff9-93de-9c2f63dc4ada">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+						<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="230" height="27" uuid="fc85d6e0-689e-4821-80b7-1516aa64c3b9"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[추징내역]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+						<jr:column width="62" uuid="48dd7b14-d390-4241-bc43-fb77505796f4">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="62" height="27" uuid="9536f7fd-e76e-487c-82b1-b7b68bc6bff8"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[개별 납부
+고지서번호]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="26" uuid="d1b363d4-3073-4413-ab79-ec14f3c0137f">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="26" height="27" uuid="348af0d2-bed4-4ecb-9dd1-a6a0764c7866"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[납부
+일자]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="14" uuid="4174b82d-6952-4131-aed4-7adaf42ccb69">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="14" height="27" uuid="274e21c4-f363-45e7-9929-1c7c091f0942"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[세
+목]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="70" uuid="629dd4cd-0a3b-4f9f-93ab-1da59ef1f88b">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="70" height="27" uuid="cecf6ca7-002d-4213-a6c2-9484d9831267"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[과다환급금(a)]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="58" uuid="096052f5-6b79-4fb6-9a52-a40c7d48941b">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="58" height="27" uuid="646adcf4-7d1d-443b-90a2-a02afa5bf2e3"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[가산금(b)]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+					</jr:columnGroup>
+					<jr:columnGroup width="113" uuid="28096f03-0399-4122-a565-edcecab172a9">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+						<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="113" height="27" uuid="652ff7d2-7e15-432c-bbc0-0ae66de599e2"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[추가환급내역]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+						<jr:column width="45" uuid="2e715ba0-ec21-4cc2-a770-2b278beb9d68">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="45" height="27" uuid="c187236f-e3ed-43f5-946d-80573b087332"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[환급
+접수번호
+ㅈ]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="68" uuid="abfaf113-d2e6-4b4a-b5fc-2020ee3c9612">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="68" height="27" uuid="95626e86-2465-4be2-950f-5de04337f17f"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[추가환급금(c)]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+					</jr:columnGroup>
+					<jr:column width="59" uuid="17ee934d-9654-4c99-9ba3-a7773119c35a">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="2"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="2"/>
+						<jr:columnHeader style="table_CH" height="54" rowSpan="2">
+							<staticText>
+								<reportElement x="0" y="0" width="59" height="54" uuid="779f0734-5be5-4141-9cd6-95e26d467911"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움" size="10"/>
+								</textElement>
+								<text><![CDATA[지급신청
+가산금액
+(b×c/a)
+]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="2"/>
+						<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+		</band>
+		<band height="269">
+			<staticText>
+				<reportElement x="0" y="-2" width="486" height="20" uuid="c19b05f2-4de7-4e91-b60e-d71bf8118b25"/>
+				<box>
+					<bottomPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[※ 지급신청 건이 추가로 있을 경우]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="254" y="-2" width="43" height="20" uuid="63d25474-4586-4c19-a1ec-8a6e821299bc"/>
+				<box>
+					<bottomPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[지에 기재]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="144" y="-2" width="128" height="20" uuid="ac91d392-2b70-4944-bce7-457c1782be99"/>
+				<box>
+					<bottomPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[가산금액 지급신청서 (을)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="24" width="65" height="50" backcolor="#B2B2B2" uuid="90af90bd-f907-4ea2-a4c2-9048902b83a2"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<text><![CDATA[지급은행]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="65" y="24" width="209" height="25" uuid="9062b406-0f70-497f-92e7-80d6f8bb802d"/>
+				<box>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["은행명" + $F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="220" y="24" width="54" height="23" uuid="95a7ab24-ce49-4914-956e-a71d7a63a4b4"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font fontName="돋움"/>
+				</textElement>
+				<text><![CDATA[본(지점)]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="274" y="24" width="212" height="25" uuid="d43ab68c-2de5-41fb-a927-4ef0d8f14d17"/>
+				<box>
+					<pen lineWidth="0.34"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["코드번호" + $F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="65" y="49" width="421" height="25" uuid="cc0eba64-069f-41e2-8dd1-922315f19ece"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA["온라인구좌번호" + $F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="84" width="486" height="32" uuid="820f9060-f2fe-4d9d-a368-c470c113595b"/>
+				<textElement textAlignment="Justified">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<text><![CDATA[「수출용원재료에 대한 관세 등 환급에 관한 특례법」 제21조제6항에 따라 같은 법 제14조제1항 제3
+호에 따른 환급금에 해당하는 가산금액을 지급신청합니다.]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="379" y="116" width="107" height="20" uuid="f1bfc4e9-c6e7-4a28-ba2c-df834d843bd1"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}.substring( 0, 4 ) + "년 " + $F{field}.substring( 4, 6 ) + "월 " + $F{field}.substring( 6, 8 ) + "일"]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="239" y="136" width="38" height="20" uuid="6ab2c634-16ef-46e8-a540-3565f9dd293f"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움"/>
+				</textElement>
+				<text><![CDATA[신청인]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="280" y="136" width="117" height="20" uuid="740995bd-13df-4c17-9c29-b83b68c89fe9"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<image onErrorType="Blank">
+				<reportElement x="397" y="136" width="89" height="50" uuid="87a6ea9a-da70-4ac4-9dc9-25713163d4e4"/>
+			</image>
+			<staticText>
+				<reportElement x="108" y="164" width="55" height="20" uuid="f4a35af8-87c0-457b-8835-d59e1ccb918e"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="돋움" size="10" isBold="false"/>
+				</textElement>
+				<text><![CDATA[귀하]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="53" y="164" width="55" height="20" uuid="cfa34acb-3964-452f-b957-fd2a60b4f8a3"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="돋움" size="13" isBold="true"/>
+				</textElement>
+				<text><![CDATA[세 관 장]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="9" y="164" width="44" height="20" uuid="6958a71c-9a35-405e-8006-ef2ab4e873f9"/>
+				<textElement verticalAlignment="Bottom">
+					<font fontName="돋움" size="13" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="190" width="486" height="1" uuid="f5728fc0-5ca9-42cb-a065-c19b95d6459c"/>
+			</line>
+			<staticText>
+				<reportElement x="0" y="197" width="53" height="50" uuid="056ed913-18fc-4ce8-9e55-f77e00659950"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[첨부서류]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="53" y="197" width="167" height="50" uuid="c74ebf0e-c961-4d29-981f-05e4b18bf162"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[※ 세관장이 제출요구하는 경우에 한함
+  1. 과다환급 추징세액내역서
+  2. 추가환급신청서(사본)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="261" y="197" width="75" height="50" backcolor="#D6D6D6" uuid="df5bb4bb-a9c0-4e9c-af8a-5618a4ccacb2"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="9"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[담당]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="336" y="197" width="75" height="50" backcolor="#D6D6D6" uuid="a2f76437-1af7-458c-acec-452800e5947d"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="9"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[주무]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="411" y="197" width="75" height="50" backcolor="#D6D6D6" uuid="bc09246c-1813-4a8b-9a82-b75cbb381cb4"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Top">
+					<font fontName="돋움" size="9"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[과장]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="324" y="247" width="158" height="15" uuid="f7b5cde0-c263-48a8-a008-a21d299c9250"/>
+				<textElement textAlignment="Right" verticalAlignment="Bottom">
+					<font fontName="돋움" size="9"/>
+					<paragraph lineSpacing="Proportional" lineSpacingSize="1.2"/>
+				</textElement>
+				<text><![CDATA[210㎜×297㎜[일반용지 60g/㎡]]]></text>
+			</staticText>
+		</band>
+		<band height="248">
+			<staticText>
+				<reportElement x="0" y="0" width="307" height="11" uuid="e3ba8fe1-0009-426b-b287-63df03fb15d5"/>
+				<textElement>
+					<font fontName="돋움" size="8"/>
+				</textElement>
+				<text><![CDATA[■ 수출용원재료에 대한 관세 등 환급사무처리에 관한 고시 [별지 제5호의2서식]]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="22" width="486" height="19" uuid="ff2de7fa-fb3e-4808-9535-0dab69c64aa6"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="HY견고딕" size="10"/>
+				</textElement>
+				<text><![CDATA[가산금액 지급신청서 (을)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="280" y="52" width="206" height="15" backcolor="#D6D6D6" uuid="2f1ca738-8bf9-4f6c-860e-893c0a2e4b2b"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[접수번호]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="280" y="67" width="84" height="18" backcolor="#FFFFFF" uuid="4d1d5865-ad9a-4781-8ef2-481577eacfe9"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[세관부호]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="364" y="67" width="36" height="18" backcolor="#FFFFFF" uuid="ce17485b-3bab-425c-b1ee-927f639880b7"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[연도]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="400" y="67" width="86" height="18" backcolor="#D6D6D6" uuid="e64a3f8a-3144-4459-9ab1-7f25aa70d016"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.0"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<text><![CDATA[일련번호]]></text>
+			</staticText>
+			<textField>
+				<reportElement mode="Transparent" x="280" y="84" width="84" height="28" backcolor="#FFFFFF" uuid="bb74c4d9-593a-416d-ba6a-26eb3670bb67"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Transparent" x="364" y="84" width="36" height="28" backcolor="#FFFFFF" uuid="f6973674-170f-4ea6-977b-9ae9021f093e"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement mode="Opaque" x="400" y="84" width="86" height="28" backcolor="#D6D6D6" uuid="3c65e4f4-5962-47ef-a6bf-06635e7f8b6f"/>
+				<box>
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{field}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="117" width="486" height="29" backcolor="#B2B2B2" uuid="baa9f4ec-a624-4011-84f2-fa6cdc44686a"/>
+				<box leftPadding="0">
+					<topPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="10"/>
+				</textElement>
+				<text><![CDATA[가산금액 지급신청 상세 내역]]></text>
+			</staticText>
+			<componentElement>
+				<reportElement key="table2" style="table" x="0" y="146" width="486" height="80" uuid="98063133-7218-4369-aab8-ef7b513dbdb5"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="New Dataset 2" uuid="58244907-40ac-42ae-a824-cc81dec5e8eb">
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource(1)]]></dataSourceExpression>
+					</datasetRun>
+					<jr:column width="33" uuid="1b510270-aba7-48f7-9530-f1cc123df428">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="2"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="2"/>
+						<jr:columnHeader style="table_CH" height="54" rowSpan="2">
+							<staticText>
+								<reportElement x="0" y="0" width="33" height="54" uuid="9919c601-dd8a-431b-804e-35014109e694"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[행
+번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="2"/>
+						<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+					</jr:column>
+					<jr:column width="46" uuid="796508d3-4ca8-43d4-92eb-bbf548400a06">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="2"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="2"/>
+						<jr:columnHeader style="table_CH" height="54" rowSpan="2">
+							<staticText>
+								<reportElement x="0" y="0" width="46" height="54" uuid="8ee8f67c-e267-49ca-afc5-0edd909c697b"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[최초환급
+접수번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="2"/>
+						<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+					</jr:column>
+					<jr:columnGroup width="230" uuid="5f96a423-5f73-4df4-8fb9-52faf07ed688">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+						<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="230" height="27" uuid="196f2a0d-c014-4937-be56-eba35e22a43b"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[추징내역]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+						<jr:column width="62" uuid="acba6126-1b9c-426e-aafe-cf080f4a0150">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="62" height="27" uuid="bbd30d5f-e28b-4b01-af11-ea95de46c38f"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[개별 납부
+고지서번호]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="26" uuid="f297b398-da5c-46f0-8b59-46a9a84d3b15">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="26" height="27" uuid="abfc402f-2307-4070-8627-709063fbd2af"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[납부
+일자]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="14" uuid="5168aa31-de0d-4802-933e-76402e4b6a80">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="14" height="27" uuid="79df5229-6229-4ba5-b864-cde831f09eac"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[세
+목]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="70" uuid="7d638b8b-b385-40b6-9b21-a2bd2a364835">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="70" height="27" uuid="092d8507-d887-413a-ba11-016ff77d18af"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[과다환급금(a)]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="58" uuid="54158dfc-748d-4e9e-a5dc-65adef35259b">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="58" height="27" uuid="0ee7d628-d81a-4da8-b51c-353504ab622d"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[가산금(b)]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+					</jr:columnGroup>
+					<jr:columnGroup width="113" uuid="9b82e10b-7ee4-497e-93b0-2ca7472c29f6">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+						<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="113" height="27" uuid="b1a788e7-e36c-4dd9-b247-d04155095823"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[추가환급내역]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+						<jr:column width="45" uuid="abb9b486-b3b4-44a3-ab04-29931e6a9438">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="45" height="27" uuid="54420648-0d86-49c9-82a1-c25223d5d91f"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[환급
+접수번호
+ㅈ]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+						<jr:column width="68" uuid="43fba530-1b42-42b9-a54d-ce3538888138">
+							<jr:tableHeader style="table_TH" height="0" rowSpan="1"/>
+							<jr:tableFooter style="table_TH" height="0" rowSpan="1"/>
+							<jr:columnHeader style="table_CH" height="27" rowSpan="1">
+								<staticText>
+									<reportElement x="0" y="0" width="68" height="27" uuid="88ee5df7-e192-427d-9c7b-d04586099c15"/>
+									<textElement textAlignment="Center" verticalAlignment="Middle">
+										<font fontName="돋움"/>
+									</textElement>
+									<text><![CDATA[추가환급금(c)]]></text>
+								</staticText>
+							</jr:columnHeader>
+							<jr:columnFooter style="table_CH" height="0" rowSpan="1"/>
+							<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+						</jr:column>
+					</jr:columnGroup>
+					<jr:column width="59" uuid="8377bda7-9fb4-4d5b-9bbb-af75a496ffa5">
+						<jr:tableHeader style="table_TH" height="0" rowSpan="2"/>
+						<jr:tableFooter style="table_TH" height="0" rowSpan="2"/>
+						<jr:columnHeader style="table_CH" height="54" rowSpan="2">
+							<staticText>
+								<reportElement x="0" y="0" width="59" height="54" uuid="373d4f8b-a59b-4f40-bd76-037a0c41cbc3"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="돋움"/>
+								</textElement>
+								<text><![CDATA[지급신청
+가산금액
+(b×c/a)
+]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:columnFooter style="table_CH" height="0" rowSpan="2"/>
+						<jr:detailCell style="table_TD" height="25" rowSpan="1"/>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<staticText>
+				<reportElement x="0" y="231" width="486" height="15" uuid="ddea10de-7226-4275-9ac8-1524ec6beef5"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="돋움"/>
+				</textElement>
+				<text><![CDATA[※ 세목 : 1.관세, 2.개별소비세, 3.교통․에너지․환경세, 4.교육세, 5.주세, 6.농특세]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<noData>
+		<band height="21">
+			<staticText>
+				<reportElement x="0" y="0" width="486" height="20" uuid="40caaf65-b96b-438b-ad45-5211062659ba"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="돋움" size="12"/>
+				</textElement>
+				<text><![CDATA[출력할 데이터가 없습니다.(No Data)]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

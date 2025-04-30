@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 60초마다 설정 파일의 변경을 확인 하여 변경시 갱신 -->
+<configuration scan="true" scanPeriod="60 seconds">
+
+    <!-- pattern -->
+    <property name="LOG_PATTERN" value="%-5level %d{yy-MM-dd HH:mm:ss}  [%logger:%line] - %msg%n"/>
+    <!-- <property name="LOG_PATTERN" value="%-5level %d{yy-MM-dd HH:mm:ss}[%thread] [%logger{0}:%line] - %msg%n"/> -->
+
+    <!-- Console Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+    
+    <logger level="OFF" appender-ref="CONSOLE" name="jdbc.sqltiming"/>
+    <logger level="OFF" appender-ref="CONSOLE" name="jdbc.audit"/>
+    <logger level="OFF" appender-ref="CONSOLE" name="jdbc.resultset"/>
+    <logger level="OFF" appender-ref="CONSOLE" name="com.zaxxer.hikari.pool.PoolBase"/>
+    <logger level="OFF" appender-ref="CONSOLE" name="com.zaxxer.hikari.pool.HikariPool"/>
+    <logger level="OFF" appender-ref="CONSOLE" name="com.zaxxer.hikari.HikariDataSource"/>
+    <logger name="org.springframework.jndi.JndiPropertySource" level="OFF"/>
+    <logger name="org.mybatis.spring.SqlSessionUtils" level="OFF"/>
+    <logger name="org.springframework.jdbc.datasource.DataSourceUtils" level="OFF"/>
+    
+    <logger name="com.zaxxer.hikari" level="OFF" />
+	<logger name="com.zaxxer.hikari.HikariConfig" level="OFF"/>
+	<logger name="jdbc.connection" level="OFF"/>
+
+    <logger level="ERROR" appender-ref="CONSOLE" name="org.quartz.core.QuartzSchedulerThread"/>
+    <logger level="OFF"   appender-ref="CONSOLE" name="org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener"/>
+    <logger level="OFF"   appender-ref="CONSOLE" name="org.springframework.context.annotation.ClassPathBeanDefinitionScanner"/>
+    <logger level="OFF"   appender-ref="CONSOLE" name="org.springframework.beans.factory.support.DefaultListableBeanFactory"/>
+
+    <!-- Context Binding hide -->
+    <logger name="org.springframework.jndi.JndiTemplate" level="OFF"/>
+    <logger name="org.springframework.jndi.JndiLocatorDelegate" level="OFF"/>
+    
+    <!-- SECURITY.WEB -->
+    <logger name="org.springframework.security.web.FilterChainProxy" level="OFF"/>
+    <logger name="org.springframework.web.servlet.DispatcherServlet" level="OFF"/>
+    <logger name="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping" level="OFF"/>
+    <logger name="org.springframework.security.web.context.HttpSessionSecurityContextRepository" level="OFF"/>
+    <logger name="org.springframework.jndi.JndiTemplate" level="OFF"/>
+    <logger name="org.springframework.security.web.context.HttpSessionSecurityContextRepository" level="OFF"/>
+	<logger name="org.springframework.security.web.context.SecurityContextPersistenceFilter" level="OFF"/>
+	<logger name="org.springframework.security.web.authentication.AnonymousAuthenticationFilter" level="OFF"/>
+	<logger name="org.springframework.security.web.access.intercept.FilterSecurityInterceptor" level="OFF"/>
+    
+    <!-- root레벨 설정 -->
+    <root level="debug">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- 특정패키지 로깅레벨 설정 -->
+    <logger name="org.apache.ibatis" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+</configuration>

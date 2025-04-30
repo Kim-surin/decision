@@ -1,0 +1,30 @@
+# Systemd unit file for tomcat
+[Unit]
+Description=Apache Tomcat Web Application Container
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=tomcat
+Group=was
+
+Environment=LANG=ko_KR.UTF-8
+Environment=JAVA_HOME=/usr/lib/jvm/jre
+Environment=CATALINA_PID=/data/was/tomcat9/drwb/logs/tomcat.pid
+Environment=CATALINA_HOME=/data/was/tomcat9
+Environment=CATALINA_BASE=/data/was/tomcat9/drwb
+Environment="CATALINA_OPTS=-Dspring.profiles.active=dev \
+-Dspring.jpa.hibernate.ddl-auto=update \
+-Dfile.encoding=UTF-8 \
+-Djava.net.preferIPv4Stack=true \
+-Dspring.jpa.properties.hibernate.show_sql=true \
+-Dlogging.level.org.hibernate.type.descriptor.sql=info \
+-Drecycle.initData.core=false \
+-Dcom.amazonaws.sdk.disableEc2Metadata=false \
+-Dobj_name=drwb"
+
+ExecStart=/data/was/tomcat9/bin/catalina.sh start
+ExecStop=/data/was/tomcat9/bin/catalina.sh stop -force
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.home.HomeDao">
+
+	<!-- description : 사용자의 사용 가능여부를 리턴 -->
+	<select id="retrieveUserCheck" parameterType="HashMap" resultType="HashMap">
+		SELECT COUNT(1) AS LOGIN_CNT
+		  FROM USER_INFO U
+		 WHERE U.COMPANY_CODE = #{COMPANY_CODE}
+		   AND U.USER_ID = #{USERID}
+		   AND U.PASSWORD = LOWER(#{ENC_PASSWORD})
+		   AND U.STATUS = 'Y'
+	</select>
+	
+    <select id="retrieveLoginUserInfo" parameterType="HashMap" resultType="HashMap">
+
+		SELECT U.USER_ID,
+			   U.COMPANY_CODE,
+			   U.DIVISION_CODE,
+			   get_company_name(U.COMPANY_CODE, U.DEFAULT_LANGUAGE) AS COMPANY_NAME,
+			   U.DEPT_NAME,
+			   CASE 
+			       WHEN U.DEFAULT_LANGUAGE = 'KOR' THEN U.NAME_KOR
+			       ELSE U.NAME_ENG 
+			   END AS USER_NAME,
+			   U.USER_AUTH,
+			   U.DEFAULT_LANGUAGE,
+			   COALESCE(U.WORK_YYYY_MM, TO_CHAR(now(), 'YYYYMM')) AS WORK_YYYY_MM
+          FROM USER_INFO U
+         WHERE U.USER_ID = #{USERID}
+           AND U.COMPANY_CODE = #{COMPANY_CODE}
+           AND U.STATUS = 'Y'
+           AND U.PASSWORD = LOWER(#{ENC_PASSWORD})
+    </select>
+    
+    
+    <insert id="insertLogMgrMst" parameterType="HashMap">
+		<selectKey keyProperty="LOG_SEQ" resultType="java.lang.String" order="BEFORE">
+            SELECT LPAD(nextval('log_mgr_seq')::text, 27, '0')
+        </selectKey>
+        insert into log_mgr_mst (
+			     log_seq
+			   , user_id
+			   , ip
+			   , log_date
+			   , COMPANY_CODE
+			) 
+			values ( 
+			     #{LOG_SEQ}
+			   , #{USERID}
+			   , #{IP}
+			   , NOW()
+			   , #{COMPANY_CODE}
+			)
+	</insert>
+	
+
+	
+	
+	<!-- Side Menu List 조회  -->
+	<select id="retrieveAllMenuList" parameterType="HashMap" resultType="HashMap">
+
+
+		WITH RECURSIVE menu_tree AS (
+		    SELECT 
+		        ROW_NUMBER() OVER (ORDER BY m.sort_no) AS sort_no,
+		        1 AS depth,
+		        m.menu_id AS id,
+		        CASE 'KOR'
+		            WHEN 'KOR' THEN m.menu_name
+		            WHEN 'ENG' THEN m.menu_name_eng
+		            WHEN 'LOC' THEN m.menu_name_loc
+		            ELSE m.menu_name_loc
+		        END AS text,
+		        m.parent_menu_id AS parent_id,
+		        CASE 'KOR'
+		            WHEN 'KOR' THEN sm.menu_name
+		            WHEN 'ENG' THEN sm.menu_name_eng
+		            WHEN 'LOC' THEN sm.menu_name_loc
+		            ELSE sm.menu_name_loc
+		        END AS parent_menu_name,
+		        m.menu_desc,
+		        m.menu_type,
+		        COALESCE(m.link_url, '#') as link_url,
+		        m.using_yn
+		    FROM menu m
+		    LEFT JOIN menu sm ON m.parent_menu_id = sm.menu_id
+		    WHERE m.parent_menu_id IS NULL AND m.using_yn = 'Y'
+		    UNION ALL
+		    SELECT 
+		        ROW_NUMBER() OVER (ORDER BY child.sort_no),
+		        parent.depth + 1,
+		        child.menu_id,
+		        CASE 'KOR'
+		            WHEN 'KOR' THEN child.menu_name
+		            WHEN 'ENG' THEN child.menu_name_eng
+		            WHEN 'LOC' THEN child.menu_name_loc
+		            ELSE child.menu_name_loc
+		        END,
+		        child.parent_menu_id,
+		        CASE 'KOR'
+		            WHEN 'KOR' THEN sm.menu_name
+		            WHEN 'ENG' THEN sm.menu_name_eng
+		            WHEN 'LOC' THEN sm.menu_name_loc
+		            ELSE sm.menu_name_loc
+		        END,
+		        child.menu_desc,
+		        child.menu_type,
+		        COALESCE(child.link_url, '#') as link_url,
+		        child.using_yn
+		    FROM menu child
+		    JOIN menu_tree parent ON child.parent_menu_id = parent.id
+		    LEFT JOIN menu sm ON child.parent_menu_id = sm.menu_id
+		    WHERE child.using_yn = 'Y'
+		)
+		SELECT me.*, 
+		       COALESCE(bm.menu_id, 'ENABLE_FAVORITE') AS favorite_yn
+		FROM (
+		    SELECT DISTINCT 
+		           mt.*, u.user_id, u.company_code
+		    FROM user_info u
+		    INNER JOIN menu_tree mt ON mt.using_yn = 'Y'
+		    INNER JOIN role_user ru 
+		        ON u.user_id = ru.user_id
+		       AND u.company_code = ru.company_code
+		    INNER JOIN role_menu rm 
+		        ON ru.role_code = rm.role_code
+		       AND ru.company_code = rm.company_code
+		       AND rm.menu_id = mt.id
+		    WHERE u.user_id = #{USER_ID}
+		      AND u.company_code = #{COMPANY_CODE}
+		) me
+		LEFT JOIN book_mark bm
+		  ON me.user_id = bm.user_id
+		 AND me.company_code = bm.company_code
+		 AND me.id = bm.menu_id
+		ORDER BY sort_no;
+
+	</select>
+	
+	
+	<select id="accountLockCheck" parameterType="HashMap" resultType="HashMap">
+		SELECT A.USER_ID
+		       ,CASE WHEN A.LOGIN_FAIL_CNT > 4 THEN 'Y' ELSE 'N' END AS LOCK_YN
+		       ,A.EMAIL
+		  FROM COM_USER A 
+		 WHERE A.USER_ID = #{S_USER_ID}
+		   AND A.USING_YN = 'Y'
+		   AND A.LOGIN_FAIL_CNT > 4
+	</select>
+
+	<update id="updateRandomString" parameterType="HashMap">
+		UPDATE COM_USER A
+		   SET A.UNLOCK_STR = #{LOCK_STR}
+		 WHERE A.USER_ID = #{S_USER_ID} 
+		   AND A.USING_YN = 'Y'
+	</update>
+	
+	<update id="updateUnlockUser" parameterType="HashMap">
+		UPDATE COM_USER A
+		   SET A.LOGIN_FAIL_CNT = 0
+		       ,A.LOGIN_FAIL_DATE = TO_DATE('19000101', 'YYYYMMDD')
+		       ,A.UNLOCK_STR = null
+		 WHERE A.USER_ID = #{S_USER_ID}
+		   AND A.UNLOCK_STR = #{LOCK_STR} 
+		   AND A.USING_YN = 'Y'
+	</update>
+	
+
+	
+	<update id="updateUserPwd" parameterType="HashMap">
+		UPDATE COM_USER A
+		   SET A.USER_PW = #{NEW_PWD_CONNFIRM}
+		       ,UPDATE_DATE = SYSDATE
+		 WHERE A.USER_ID = #{USER_ID} 
+		   AND A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.USER_PW = #{CURRENT_PWD}
+		   
+	</update>
+	
+	
+	<update id="updateLoginFailProcess" parameterType="HashMap">
+        UPDATE COM_USER A
+           SET LOGIN_FAIL_CNT = (SELECT NVL(MAX(LOGIN_FAIL_CNT),0)+1 FROM COM_USER A WHERE A.USER_ID = #{USERID})
+               , LOGIN_FAIL_DATE = SYSDATE
+         WHERE  A.USER_ID = #{USERID}
+	</update>
+	
+	
+	<update id="updateLoginSuccessProcess" parameterType="HashMap">
+		UPDATE COM_USER A
+           SET LOGIN_FAIL_CNT = 0
+               , LOGIN_FAIL_DATE = TO_DATE('19000101', 'YYYYMMDD')
+         WHERE  A.USER_ID = #{USERID}
+	
+	</update>
+
+	<select id="retrieveLoginAble" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN A.LOGIN_FAIL_CNT <![CDATA[>]]> 4  THEN 'N' ELSE 'Y' END AS LOGIN_ABLE_YN            
+		  FROM COM_USER A
+		 WHERE A.USER_ID = #{USERID}
+	
+	</select>	
+
+    
+ 
+ 
+	<select id="retrieveDashboard_DrawbackChart_for_Quarter" parameterType="HashMap" resultType="HashMap">
+		SELECT X_AXIS, THNG_SE, SUM(DRWBAK_AMOUNT) AS AMOUNT
+		  FROM (SELECT DISTINCT TO_CHAR(TO_DATE(A.DRWBAK_MONTH, 'YYYYMM'), 'YYYY-Q') || 'Q' AS X_AXIS,
+		                        B.THNG_SE,
+		                        A.DRWBAK_AMOUNT
+		          FROM DRWBAK_REQSTDOC_CMMN A
+		         INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+		            ON A.COMPANY_CODE = B.COMPANY_CODE
+		           AND A.DIVISION_CODE = B.DIVISION_CODE
+		           AND A.PRESENTN_NO = B.PRESENTN_NO
+		         WHERE 1=1
+		           AND A.EXECUT_STATUS = '60'
+		           AND A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.DIVISION_CODE = #{DIVISION_CODE}
+		           AND A.DRWBAK_MONTH LIKE
+		               (SELECT TO_CHAR(TO_DATE(MAX(A.DRWBAK_MONTH), 'YYYYMM'), 'YYYY')
+		                  FROM DRWBAK_REQSTDOC_CMMN A
+		                 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                   AND A.DIVISION_CODE = #{DIVISION_CODE}) || '%')
+		 GROUP BY X_AXIS, THNG_SE
+		 ORDER BY X_AXIS
+
+	</select>
+	
+	<select id="retrieveDashboard_TargetMonth" parameterType="HashMap" resultType="HashMap">
+		SELECT NVL((SELECT TO_CHAR(TO_DATE(MAX(A.DRWBAK_MONTH), 'YYYYMM'), 'YYYYMM')
+		              FROM DRWBAK_REQSTDOC_CMMN A
+		             WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		               AND A.DIVISION_CODE = #{DIVISION_CODE}), '190001') AS DRWB_TARGET
+<!-- 		       
+		       ,NVL((SELECT TO_CHAR(TO_DATE(MAX(A.BASE_SOURCE_YYYYMM), 'YYYYMM'), 'YYYYMM')
+		               FROM CTRM_CMMN A
+		              WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                AND A.ISSUE_TYPE = '02' ), '190001') AS INIT_TARGET
+		       ,NVL((SELECT TO_CHAR(TO_DATE(MAX(A.BASE_SOURCE_YYYYMM), 'YYYYMM'), 'YYYYMM')
+		               FROM CTRM_CMMN A
+		              WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                AND A.ISSUE_TYPE = '04' ), '190001') AS PART_TARGET
+-->            
+		  FROM DUAL
+	</select>   
+	
+	<select id="retrieveDashboard_MainChart" parameterType="HashMap" resultType="HashMap">
+		SELECT A.DATA_NAME, A.X_AXIS, NVL(B.AMOUNT, A.AMOUNT) AS AMOUNT
+		  FROM (SELECT B.DATA_NAME, A.X_AXIS, B.AMOUNT
+		          FROM (SELECT TO_CHAR(ADD_MONTHS(SDATE, LEVEL-1), 'YYYYMM') AS X_AXIS
+		                  FROM ( SELECT TO_DATE(TO_CHAR(ADD_MONTHS(TO_DATE(#{DRWB_TARGET},'YYYYMM'), -11) , 'YYYYMMDD'), 'YYYYMMDD') AS SDATE, LAST_DAY(TO_DATE(#{DRWB_TARGET},'YYYYMM')) AS EDATE
+		                           FROM DUAL)
+		                  CONNECT BY LEVEL <![CDATA[<=]]> MONTHS_BETWEEN(EDATE+1, SDATE)) A
+		         INNER JOIN ( SELECT 'DRWB' AS DATA_NAME, 0 AS AMOUNT FROM DUAL
+		                      UNION ALL
+		                      SELECT 'CTRM_PART' AS DATA_NAME, 0 AS AMOUNT FROM DUAL
+		                      UNION ALL
+		                      SELECT 'CTRM_INIT' AS DATA_NAME, 0 AS AMOUNT FROM DUAL
+		                      ) B
+		            ON 1=1) A
+		   LEFT OUTER JOIN (SELECT 'DRWB' AS DATA_NAME
+		                           , A.DRWBAK_MONTH AS X_AXIS
+		                           ,SUM(A.DRWBAK_AMOUNT) AS AMOUNT
+		                      FROM DRWBAK_REQSTDOC_CMMN A 
+		                      /* 발급대상만 수량 및 판매금액 계산 */
+		                     INNER JOIN (SELECT COMPANY_CODE,
+		                                         DIVISION_CODE,
+		                                         PRESENTN_NO,
+		                                         SUM(ACCMLT_ORDER_QY) AS ISSUE_ACCMLT_ORDER_QY,
+		                                         SUM(STTEMNT_PC_KRW) AS ISSUE_STTEMNT_PC_KRW
+		                                    FROM (SELECT DISTINCT COMPANY_CODE,
+		                                                          DIVISION_CODE,
+		                                                          PRESENTN_NO,
+		                                                          XPORT_STTEMNT_NO,
+		                                                          LNE_NO,
+		                                                          POUCH_NO,
+		                                                          ACCMLT_ORDER_QY,
+		                                                          BASS_UNIT,
+		                                                          STTEMNT_PC_KRW,
+		                                                          THNG_SEQ
+		                                            FROM (SELECT T.COMPANY_CODE,
+		                                                         T.DIVISION_CODE,
+		                                                         T.PRESENTN_NO,
+		                                                         T.XPORT_STTEMNT_NO,
+		                                                         T.LNE_NO,
+		                                                         T.POUCH_NO,
+		                                                         T.ACCMLT_ORDER_QY,
+		                                                         T.BASS_UNIT,
+		                                                         TRUNC(T.STTEMNT_PC_KRW) AS STTEMNT_PC_KRW,
+		                                                         T.THNG_SEQ,
+		                                                         CASE WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN A.USGQTY
+		                                                              ELSE (CASE WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+		                                                                         WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+		                                                                         WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+		                                                                         WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+		                                                                         WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+		                                                                         ELSE B.QY
+		                                                                     END)
+		                                                         END AS USGQTY
+		                                                    FROM DRWBAK_REQSTDOC_TRGET_THNG T
+		                                                   INNER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL A
+		                                                      ON T.COMPANY_CODE = A.COMPANY_CODE
+		                                                     AND T.PRESENTN_NO = A.PRESENTN_NO
+		                                                     AND T.THNG_SEQ = A.THNG_SEQ
+		                                                   INNER JOIN INCME_LOCAL_BNT_SM B
+		                                                      ON A.COMPANY_CODE = B.COMPANY_CODE
+		                                                     AND A.RAWMTRL_CODE = B.ITEM_CODE
+		                                                     AND A.LNE_NO = B.LNE_NO
+		                                                     AND A.POUCH_NO = B.POUCH_NO
+		                                                     AND A.IMPDEC_NO = B.IMPDEC_NO
+		                                                   INNER JOIN IMPDEC_CERFIN_ITEM C
+		                                                      ON A.COMPANY_CODE = C.COMPANY_CODE
+		                                                     AND A.RAWMTRL_CODE = C.ITEM_CODE
+		                                                     AND A.LNE_NO = C.LNE_NO
+		                                                     AND A.POUCH_NO = C.POUCH_NO
+		                                                     AND A.IMPDEC_NO = C.IMPDEC_NO
+		                                                   WHERE TRUNC(A.CSTMS, 4) <![CDATA[>]]>  0
+		                                                     AND T.COMPANY_CODE = #{COMPANY_CODE }
+		                                                     AND T.DIVISION_CODE = #{DIVISION_CODE}
+		                                                     ) X
+		                                           WHERE TRUNC(USGQTY, 3) > 0.000999999999999)
+		                                   GROUP BY COMPANY_CODE, DIVISION_CODE, PRESENTN_NO) ISSUE
+		                        ON A.COMPANY_CODE = ISSUE.COMPANY_CODE
+		                       AND A.DIVISION_CODE = ISSUE.DIVISION_CODE
+		                       AND A.PRESENTN_NO = ISSUE.PRESENTN_NO
+		                     WHERE A.DRWBAK_MONTH BETWEEN TO_CHAR(ADD_MONTHS(TO_DATE(#{DRWB_TARGET},'YYYYMM'), -11), 'YYYYMM') AND #{DRWB_TARGET}
+		                       AND A.COMPANY_CODE = #{COMPANY_CODE }
+		                       AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                       AND A.EXECUT_STATUS = '60'
+		                       
+		                     GROUP BY A.DRWBAK_MONTH
+		
+		                    UNION ALL
+		
+		                    SELECT 'CTRM_INIT' AS DATA_NAME
+		                           ,A.BASE_SOURCE_YYYYMM AS X_AXIS
+		                           ,SUM(A.DRWBAK_AMOUNT) AS AMOUNT
+		                      FROM CTRM_CMMN A
+		                     WHERE A.BASE_SOURCE_YYYYMM BETWEEN TO_CHAR(ADD_MONTHS(TO_DATE(#{DRWB_TARGET},'YYYYMM'), -11), 'YYYYMM') AND #{DRWB_TARGET}
+		                       AND A.COMPANY_CODE = #{COMPANY_CODE }
+		                       AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                       AND A.ISSUE_TYPE = '02'
+		                       AND A.EXECUT_STATUS = '50'
+		                     GROUP BY A.BASE_SOURCE_YYYYMM 
+		
+		                    UNION ALL
+		
+		                    SELECT 'CTRM_PART' AS DATA_NAME
+		                           ,A.BASE_SOURCE_YYYYMM AS X_AXIS
+		                           ,SUM(A.DRWBAK_AMOUNT) AS AMOUNT
+		                      FROM CTRM_CMMN A
+		                     WHERE A.BASE_SOURCE_YYYYMM BETWEEN TO_CHAR(ADD_MONTHS(TO_DATE(#{DRWB_TARGET},'YYYYMM'), -11), 'YYYYMM') AND #{DRWB_TARGET}
+		                       AND A.COMPANY_CODE = #{COMPANY_CODE }
+		                       AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                       AND A.ISSUE_TYPE = '04'
+		                       AND A.EXECUT_STATUS = '50'
+		                     GROUP BY A.BASE_SOURCE_YYYYMM 
+		                     ) B
+		     ON A.DATA_NAME = B.DATA_NAME
+		    AND A.X_AXIS = B.X_AXIS
+		 ORDER BY A.DATA_NAME, A.X_AXIS
+
+	</select>   
+</mapper>
+ 
+ 

@@ -1,0 +1,3016 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report1" language="groovy" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="778" leftMargin="32" rightMargin="32" topMargin="19" bottomMargin="42" isTitleNewPage="true" whenResourceMissingType="Empty" uuid="3d61e20d-d885-4c8c-84fe-9452d38bccdc">
+	<property name="ireport.zoom" value="1.210000000000041"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH_L" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.5"/>
+			<leftPen lineWidth="0.5"/>
+			<bottomPen lineWidth="0.5"/>
+			<rightPen lineWidth="0.5"/>
+		</box>
+	</style>
+	<style name="table_CH_R" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.5"/>
+			<leftPen lineWidth="0.5"/>
+			<bottomPen lineWidth="0.5"/>
+			<rightPen lineWidth="0.5"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.34"/>
+			<leftPen lineWidth="0.34"/>
+			<bottomPen lineWidth="0.34"/>
+			<rightPen lineWidth="0.34"/>
+		</box>
+	</style>
+	<style name="table_TD_L" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.34"/>
+			<leftPen lineWidth="0.34"/>
+			<bottomPen lineWidth="0.34"/>
+			<rightPen lineWidth="0.34"/>
+		</box>
+	</style>
+	<style name="table_TD_R" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<topPen lineWidth="0.34"/>
+			<leftPen lineWidth="0.34"/>
+			<bottomPen lineWidth="0.34"/>
+			<rightPen lineWidth="0.34"/>
+		</box>
+	</style>
+	<subDataset name="dataSet1" whenResourceMissingType="Empty" uuid="9961ada9-7efc-4262-a229-691808e364bf">
+		<parameter name="P_KEY_PARAM1" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<parameter name="P_KEY_PARAM2" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<parameter name="P_KEY_PARAM3" class="java.lang.String">
+			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+		</parameter>
+		<queryString>
+			<![CDATA[SELECT LPAD(ROWNUM, 3, '0') AS LINE_NUMBER
+       , ITEM_CODE
+       , ITEM_NM
+       , ACCMLT_ORDER_QY
+       , BASS_UNIT
+       , STTEMNT_PC_KRW
+       , KRW_CRNCY
+       , CSTMS
+       , INTTAX
+       , TRANTAX
+       , LQTX_AMOUNT
+       , ECX_AMOUNT
+       , AGSPT
+       , DRWBAK_AMOUNT
+       , BASIS_DOC_NO
+       , SUPT_DOC_SE
+  FROM (SELECT
+               ITEM_CODE
+               , ITEM_NM
+               , ACCMLT_ORDER_QY
+               , BASS_UNIT
+               , STTEMNT_PC_KRW
+               , KRW_CRNCY
+               , TRIM(TO_CHAR(SUM(CSTMS),'999,999,990')) AS CSTMS
+               , TRIM(TO_CHAR(SUM(INTTAX),'999,999,990')) AS INTTAX
+               , TRIM(TO_CHAR(SUM(TRANTAX),'999,999,990')) AS TRANTAX
+               , TRIM(TO_CHAR(SUM(LQTX_AMOUNT),'999,999,990')) AS LQTX_AMOUNT
+               , TRIM(TO_CHAR(SUM(ECX_AMOUNT),'999,999,990')) AS ECX_AMOUNT
+               , TRIM(TO_CHAR(SUM(AGSPT),'999,999,990')) AS AGSPT
+               , TRIM(TO_CHAR(SUM(DRWBAK_AMOUNT),'999,999,990')) AS DRWBAK_AMOUNT
+               , BASIS_DOC_NO
+               , SUPT_DOC_SE
+
+          FROM (SELECT  A.SEQ
+                        ,A.ITEM_CODE
+                        ,A.ITEM_NM
+                        ,TRIM(TO_CHAR(A.ACCMLT_ORDER_QY,'999,999,990')) ACCMLT_ORDER_QY
+                        ,A.BASS_UNIT
+                        ,TRIM(TO_CHAR(A.STTEMNT_PC_KRW,'999,999,990')) STTEMNT_PC_KRW
+                        ,A.KRW_CRNCY
+                        ,TRUNC(AA.CSTMS,-1) CSTMS
+                        ,TRUNC(AA.INTTAX,-1) INTTAX
+                        ,TRUNC(AA.TRANTAX,-1) TRANTAX
+                        ,TRUNC(AA.LQTX_AMOUNT,-1) LQTX_AMOUNT
+                        ,TRUNC(AA.ECX_AMOUNT,-1) ECX_AMOUNT
+                        ,TRUNC(AA.AGSPT,-1) AGSPT
+                        ,TRUNC(AA.DRWBAK_AMOUNT,-1) DRWBAK_AMOUNT
+                        , '['||LPAD(A.SUPT_DOC_SE, 2,'0')||']매매계약서 등' AS BASIS_DOC_NO
+                        ,A.SUPT_DOC_SE
+                        , TRUNC(CASE WHEN B.IMP_BASS_UNIT = AA.BASS_UNIT THEN AA.USGQTY
+                                     ELSE
+                                       (CASE
+                                           WHEN B.IMP_BASS_UNIT = 'KG' THEN AA.USGQTY / 1000
+                                           WHEN B.IMP_BASS_UNIT = 'LB' THEN AA.USGQTY / 0.453592 / 1000
+                                           WHEN B.IMP_BASS_UNIT = 'DR' THEN AA.USGQTY / 1000 / 30
+                                           WHEN B.IMP_BASS_UNIT = 'GR' THEN AA.USGQTY / 0.064799
+                                           WHEN B.IMP_BASS_UNIT = 'MT' THEN AA.USGQTY / 1000 / 1000
+                                         ELSE B.QY
+                                         END)
+                                 END, 3) AS USGQTY
+                  FROM CTRM_TRGET_THNG A
+                 INNER JOIN CTRM_INCME_RAWMTRL AA
+                    ON A.COMPANY_CODE = AA.COMPANY_CODE
+                   AND A.DIVISION_CODE = AA.DIVISION_CODE
+                   AND A.PRESENTN_NO = AA.PRESENTN_NO
+                   AND A.SEQ = AA.SEQ
+                 INNER JOIN INCME_LOCAL_BNT_SM B
+                    ON AA.COMPANY_CODE = B.COMPANY_CODE
+                   AND AA.IMPDEC_NO = B.IMPDEC_NO
+                   AND AA.LNE_NO = B.LNE_NO
+                   AND AA.POUCH_NO = B.POUCH_NO
+                   AND AA.RAWMTRL_CODE = B.ITEM_CODE
+                 WHERE A.COMPANY_CODE =  $P{P_KEY_PARAM1}
+                   AND A.DIVISION_CODE =  $P{P_KEY_PARAM2}
+                   AND A.PRESENTN_NO = $P{P_KEY_PARAM3}
+               )
+         WHERE USGQTY > 0.000999999999999
+        GROUP BY SEQ, ITEM_CODE, ITEM_NM, ACCMLT_ORDER_QY, BASS_UNIT, STTEMNT_PC_KRW, KRW_CRNCY, BASIS_DOC_NO, SUPT_DOC_SE
+        ORDER BY SEQ ASC
+       )
+ WHERE REPLACE(CSTMS, ',','') > 0]]>
+		</queryString>
+		<field name="LINE_NUMBER" class="java.math.BigDecimal"/>
+		<field name="ITEM_CODE" class="java.lang.String"/>
+		<field name="ITEM_NM" class="java.lang.String"/>
+		<field name="ACCMLT_ORDER_QY" class="java.lang.String"/>
+		<field name="BASS_UNIT" class="java.lang.String"/>
+		<field name="STTEMNT_PC_KRW" class="java.lang.String"/>
+		<field name="KRW_CRNCY" class="java.lang.String"/>
+		<field name="CSTMS" class="java.lang.String"/>
+		<field name="INTTAX" class="java.lang.String"/>
+		<field name="TRANTAX" class="java.lang.String"/>
+		<field name="LQTX_AMOUNT" class="java.lang.String"/>
+		<field name="ECX_AMOUNT" class="java.lang.String"/>
+		<field name="AGSPT" class="java.lang.String"/>
+		<field name="DRWBAK_AMOUNT" class="java.lang.String"/>
+		<field name="BASIS_DOC_NO" class="java.lang.String"/>
+		<field name="SUPT_DOC_SE" class="java.lang.String"/>
+	</subDataset>
+	<subDataset name="dataSet2" uuid="5ce52b62-054d-4444-abf7-4fdb1c99d3c0">
+		<parameter name="P_KEY_PARAM1" class="java.lang.String"/>
+		<parameter name="P_KEY_PARAM2" class="java.lang.String"/>
+		<parameter name="P_KEY_PARAM3" class="java.lang.String"/>
+		<queryString>
+			<![CDATA[SELECT LPAD(ROWNUM, 4, '0') AS LINE_NUMBER
+           , COMPANY_CODE
+          ,DIVISION_CODE
+          ,PRESENTN_NO
+          ,SEQ
+          ,RAWMTRL_SEQ
+          ,ITEM_CODE
+          ,RAWMTRL_CODE
+          ,ITEM_NM
+          ,FC01_GET_HSCODE_FORMAT(HS_CODE) AS HS_CODE
+          ,RAWMTRL_SE
+          ,IMPDEC_NO
+          ,LNE_NO
+          ,POUCH_NO
+          ,ACPT_DATE
+          ,USGQTY
+          ,BASS_UNIT
+          ,DDC_RATE_PRDCTN
+          ,ACPLC_CRNCY
+          ,TRGET_AT
+          ,BY_PRODUCT_SE
+          ,CSTMS
+          ,INTTAX
+          ,TRANTAX
+          ,LQTX_AMOUNT
+          ,ECX_AMOUNT
+          ,AGSPT
+          ,DRWBAK_AMOUNT
+          ,PO_AMOUNT
+      FROM (SELECT DISTINCT
+                   COMPANY_CODE
+                    ,DIVISION_CODE
+                    ,PRESENTN_NO
+                    ,SEQ
+                    ,RAWMTRL_SEQ
+                    ,ITEM_CODE
+                    ,RAWMTRL_CODE
+                    ,ITEM_NM
+                    ,HS_CODE
+                    ,RAWMTRL_SE
+                    ,IMPDEC_NO
+                    ,LNE_NO
+                    ,POUCH_NO
+                    ,ACPT_DATE
+                    ,USGQTY
+                    ,BASS_UNIT
+                    ,DDC_RATE_PRDCTN
+                    ,ACPLC_CRNCY
+                    ,TRGET_AT
+                    ,BY_PRODUCT_SE
+                    ,CSTMS
+                    ,INTTAX
+                    ,TRANTAX
+                    ,LQTX_AMOUNT
+                    ,ECX_AMOUNT
+                    ,AGSPT
+                    ,DRWBAK_AMOUNT
+                    ,PO_AMOUNT
+              FROM (SELECT
+
+                            AA.COMPANY_CODE
+                            ,AA.DIVISION_CODE
+                            ,AA.PRESENTN_NO
+                            ,AA.SEQ
+                            ,AA.RAWMTRL_SEQ
+                            ,AA.ITEM_CODE
+                            ,AA.RAWMTRL_CODE
+                            ,AA.ITEM_NM
+                            ,AA.HS_CODE
+                            ,AA.RAWMTRL_SE
+                            ,AA.IMPDEC_NO
+                            ,AA.LNE_NO
+                            ,AA.POUCH_NO
+                            ,TO_CHAR(TO_DATE(AA.ACPT_DATE,'YYYYMMDD'), 'YYYY-MM-DD') ACPT_DATE
+                            ,B.IMP_BASS_UNIT AS BASS_UNIT
+                            ,AA.DDC_RATE_PRDCTN
+                            ,AA.ACPLC_CRNCY
+                            ,AA.TRGET_AT
+                            ,AA.BY_PRODUCT_SE
+                            ,TRIM(TO_CHAR(TRUNC(AA.CSTMS,-1),'999,999,990')) CSTMS
+                            ,TRIM(TO_CHAR(TRUNC(AA.INTTAX,-1),'999,999,990')) INTTAX
+                            ,TRIM(TO_CHAR(TRUNC(AA.TRANTAX,-1),'999,999,990')) TRANTAX
+                            ,TRIM(TO_CHAR(TRUNC(AA.LQTX_AMOUNT,-1),'999,999,990')) LQTX_AMOUNT
+                            ,TRIM(TO_CHAR(TRUNC(AA.ECX_AMOUNT,-1),'999,999,990')) ECX_AMOUNT
+                            ,TRIM(TO_CHAR(TRUNC(AA.AGSPT,-1),'999,999,990')) AGSPT
+                            ,TRIM(TO_CHAR(TRUNC(AA.DRWBAK_AMOUNT,-1),'999,999,990')) DRWBAK_AMOUNT
+                           -- ,TRIM(TO_CHAR(TRUNC(CCD.PO_AMOUNT/CCD.QY,-1),'999,999,990')) PO_AMOUNT
+                            ,'' AS PO_AMOUNT
+                            , TRUNC(CASE WHEN B.IMP_BASS_UNIT = AA.BASS_UNIT THEN AA.USGQTY
+                                         ELSE
+                                           (CASE
+                                               WHEN B.IMP_BASS_UNIT = 'KG' THEN AA.USGQTY / 1000
+                                               WHEN B.IMP_BASS_UNIT = 'LB' THEN AA.USGQTY / 0.453592 / 1000
+                                               WHEN B.IMP_BASS_UNIT = 'DR' THEN AA.USGQTY / 1000 / 30
+                                               WHEN B.IMP_BASS_UNIT = 'GR' THEN AA.USGQTY / 0.064799
+                                               WHEN B.IMP_BASS_UNIT = 'MT' THEN AA.USGQTY / 1000 / 1000
+                                             ELSE B.QY
+                                             END)
+                                     END, 3) AS USGQTY
+                      FROM CTRM_TRGET_THNG A
+                     INNER JOIN CTRM_INCME_RAWMTRL AA
+                        ON A.COMPANY_CODE = AA.COMPANY_CODE
+                       AND A.DIVISION_CODE = AA.DIVISION_CODE
+                       AND A.PRESENTN_NO = AA.PRESENTN_NO
+                       AND A.SEQ = AA.SEQ
+                     INNER JOIN INCME_LOCAL_BNT_SM B
+                        ON AA.COMPANY_CODE = B.COMPANY_CODE
+                       AND AA.IMPDEC_NO = B.IMPDEC_NO
+                       AND AA.LNE_NO = B.LNE_NO
+                       AND AA.POUCH_NO = B.POUCH_NO
+                       AND AA.RAWMTRL_CODE = B.ITEM_CODE
+                     WHERE A.COMPANY_CODE =  $P{P_KEY_PARAM1}
+                       AND A.DIVISION_CODE =  $P{P_KEY_PARAM2}
+                       AND A.PRESENTN_NO = $P{P_KEY_PARAM3}
+                       AND TRUNC(AA.USGQTY, 3) > 0.000999999999999
+                   )
+             WHERE USGQTY > 0
+             ORDER BY SEQ ,RAWMTRL_SEQ ASC
+           )
+WHERE REPLACE(CSTMS, ',', '') > 0]]>
+		</queryString>
+		<field name="COMPANY_CODE" class="java.lang.String"/>
+		<field name="DIVISION_CODE" class="java.lang.String"/>
+		<field name="PRESENTN_NO" class="java.lang.String"/>
+		<field name="SEQ" class="java.math.BigDecimal"/>
+		<field name="LINE_NUMBER" class="java.math.BigDecimal"/>
+		<field name="ITEM_CODE" class="java.lang.String"/>
+		<field name="RAWMTRL_CODE" class="java.lang.String"/>
+		<field name="ITEM_NM" class="java.lang.String"/>
+		<field name="HS_CODE" class="java.lang.String"/>
+		<field name="RAWMTRL_SE" class="java.lang.String"/>
+		<field name="IMPDEC_NO" class="java.lang.String"/>
+		<field name="LNE_NO" class="java.math.BigDecimal"/>
+		<field name="POUCH_NO" class="java.math.BigDecimal"/>
+		<field name="ACPT_DATE" class="java.lang.String"/>
+		<field name="USGQTY" class="java.math.BigDecimal"/>
+		<field name="BASS_UNIT" class="java.lang.String"/>
+		<field name="DDC_RATE_PRDCTN" class="java.math.BigDecimal"/>
+		<field name="ACPLC_CRNCY" class="java.lang.String"/>
+		<field name="TRGET_AT" class="java.lang.String"/>
+		<field name="BY_PRODUCT_SE" class="java.lang.String"/>
+		<field name="CSTMS" class="java.lang.String"/>
+		<field name="INTTAX" class="java.lang.String"/>
+		<field name="TRANTAX" class="java.lang.String"/>
+		<field name="LQTX_AMOUNT" class="java.lang.String"/>
+		<field name="ECX_AMOUNT" class="java.lang.String"/>
+		<field name="AGSPT" class="java.lang.String"/>
+		<field name="DRWBAK_AMOUNT" class="java.lang.String"/>
+		<field name="PO_AMOUNT" class="java.lang.String"/>
+	</subDataset>
+	<subDataset name="dataSet3" uuid="6325ee96-b41e-401b-a4b8-82e6f3a8da34">
+		<field name="field1" class="java.lang.String"/>
+		<field name="field2" class="java.lang.String"/>
+		<field name="field3" class="java.lang.String"/>
+		<field name="field4" class="java.lang.String"/>
+		<field name="field5" class="java.lang.String"/>
+		<field name="field6" class="java.lang.String"/>
+		<field name="field7" class="java.lang.String"/>
+		<field name="field8" class="java.lang.String"/>
+		<field name="field9" class="java.lang.String"/>
+		<field name="field10" class="java.lang.String"/>
+		<field name="field11" class="java.lang.String"/>
+		<field name="field12" class="java.lang.String"/>
+		<field name="field13" class="java.lang.String"/>
+	</subDataset>
+	<subDataset name="dataSet4" uuid="920e44a5-462f-4330-a74c-01b934354241">
+		<field name="field1" class="java.lang.String"/>
+		<field name="field2" class="java.lang.String"/>
+		<field name="field3" class="java.lang.String"/>
+		<field name="field4" class="java.lang.String"/>
+		<field name="field5" class="java.lang.String"/>
+		<field name="field6" class="java.lang.String"/>
+		<field name="field7" class="java.lang.String"/>
+		<field name="field8" class="java.lang.String"/>
+		<field name="field9" class="java.lang.String"/>
+		<field name="field10" class="java.lang.String"/>
+		<field name="field11" class="java.lang.String"/>
+		<field name="field12" class="java.lang.String"/>
+		<field name="field13" class="java.lang.String"/>
+	</subDataset>
+	<parameter name="P_KEY_PARAM1" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_KEY_PARAM2" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_KEY_PARAM3" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT DISTINCT A.SUBMIT_NO  AS PRESENTN_NO
+        , A.REGIST_RCEPT_NO
+        , TO_CHAR(TO_DATE(A.CHIT_FRMTRM_DATE, 'YYYYMMDD'), 'YYYY-MM-DD') AS CHIT_FRMTRM_DATE
+        , ' ' AS CSTBRKR
+        , ' ' AS CSTBRKR_CODE
+        , A.DRWBAK_SE_CODE
+        , A.DRWBAK_SE
+        , A.REQREQY_CALC_MTH
+        , A.REQREQY_CALC_NM
+        , A.BIZRNO
+        , A.ECTMRK
+        , A.TELNO_1
+        , A.CSTMR_NM_1
+        , A.RPRSNTV_NM_1
+        , A.CSTMR_BIZRNO
+        , A.CSTMR_ADRES_1
+        , A.CSTMR_ECTMRK
+        , MAX(CTT.ITEM_CODE) OVER() AS ITEM_CODE
+        , TO_CHAR(TO_DATE(A.DATE_EX, 'YYYYMMDD'), 'YYYY-MM-DD') AS DATE_EX
+        , TRIM(TO_CHAR(TRUNC(ISSUE.ACCMLT_ORDER_QY,0),'999,999,990')) AS ACCMLT_ORDER_QY
+        , MAX(CTT.BASS_UNIT)  OVER() AS BASS_UNIT
+        , TRIM(TO_CHAR(TRUNC(ISSUE.STTEMNT_PC_KRW,0),'999,999,990')) AS STTEMNT_PC_KRW
+        , TRIM(TO_CHAR(TRUNC(TAX.TAX_SUM,0),'999,999,990')) AS CSTMS
+        , 0 AS INTTAX
+        , 0 AS TRANTAX
+        , 0 AS LQTX_AMOUNT
+        , 0 AS ECX_AMOUNT
+        , 0 AS AGSPT
+        , TRIM(TO_CHAR(TRUNC(TAX.TAX_SUM,0),'999,999,990')) AS SUM_AMOUNT
+        , NVL(A.CSMHSE_CODE, ' ') AS CSMHSE_CODE
+        , NVL(A.CSMHSE_TEXT, CC.CODE_NM) AS CSMHSE_TEXT
+        , A.SUBMIT_NO
+        , B.COMPANY_NM AS FROM_COMPANY_NAME
+        , B.RPRSNTV_NM AS FROM_COMPANY_PRSN
+        , B.ADRES AS ADDRESS
+        , FC01_GET_HSCODE_FORMAT(A.HS_CODE) AS HS_CODE
+        , TO_CHAR(TO_DATE(SUBSTR(R54.REGIST_RCEP_DATE, 1, 8), 'YYYYMMDD'), 'YYYY-MM-DD') AS REGIST_RCEP_DATE
+    FROM CTRM_CMMN A
+    LEFT OUTER JOIN AN_UNIPASS_R54 R54
+      ON A.COMPANY_CODE = R54.COMPANY_CODE
+     AND A.DIVISION_CODE = R54.DIVISION_CODE
+     AND A.REGIST_RCEPT_NO = R54.REGIST_RCEPT_NO
+    LEFT OUTER JOIN COM_CD CC
+      ON CC.CATEGORY_CD = 'CT'
+     AND CC.CODE_CD = A.CSMHSE_CODE
+   INNER JOIN CTRM_TRGET_THNG CTT
+      ON A.COMPANY_CODE = CTT.COMPANY_CODE
+     AND A.DIVISION_CODE = CTT.DIVISION_CODE
+     AND A.PRESENTN_NO = CTT.PRESENTN_NO
+   INNER JOIN ( SELECT PRESENTN_NO
+                       ,COMPANY_CODE
+                       ,DIVISION_CODE
+                       ,SUM(ACCMLT_ORDER_QY) AS ACCMLT_ORDER_QY
+                       ,SUM(STTEMNT_PC_KRW) AS STTEMNT_PC_KRW
+                  FROM (SELECT DISTINCT
+                               PRESENTN_NO
+                               , COMPANY_CODE
+                               , DIVISION_CODE
+                               , ACCMLT_ORDER_QY
+                               , STTEMNT_PC_KRW
+
+                          FROM (SELECT  A.PRESENTN_NO
+                                        , A.COMPANY_CODE
+                                        , A.DIVISION_CODE
+                                        , A.ACCMLT_ORDER_QY
+                                        , A.STTEMNT_PC_KRW
+                                        , CASE WHEN B.IMP_BASS_UNIT = AA.BASS_UNIT THEN AA.USGQTY
+                                                     ELSE
+                                                       (CASE
+                                                           WHEN B.IMP_BASS_UNIT = 'KG' THEN AA.USGQTY / 1000
+                                                           WHEN B.IMP_BASS_UNIT = 'LB' THEN AA.USGQTY / 0.453592 / 1000
+                                                           WHEN B.IMP_BASS_UNIT = 'DR' THEN AA.USGQTY / 1000 / 30
+                                                           WHEN B.IMP_BASS_UNIT = 'GR' THEN AA.USGQTY / 0.064799
+                                                           WHEN B.IMP_BASS_UNIT = 'MT' THEN AA.USGQTY / 1000 / 1000
+                                                         ELSE B.QY
+                                                         END)
+                                                 END AS USGQTY
+                                  FROM CTRM_TRGET_THNG A
+                                 INNER JOIN CTRM_INCME_RAWMTRL AA
+                                    ON A.COMPANY_CODE = AA.COMPANY_CODE
+                                   AND A.DIVISION_CODE = AA.DIVISION_CODE
+                                   AND A.PRESENTN_NO = AA.PRESENTN_NO
+                                   AND A.SEQ = AA.SEQ
+                                 INNER JOIN INCME_LOCAL_BNT_SM B
+                                    ON AA.COMPANY_CODE = B.COMPANY_CODE
+                                   AND AA.IMPDEC_NO = B.IMPDEC_NO
+                                   AND AA.LNE_NO = B.LNE_NO
+                                   AND AA.POUCH_NO = B.POUCH_NO
+                                   AND AA.RAWMTRL_CODE = B.ITEM_CODE
+                                 WHERE A.COMPANY_CODE =  $P{P_KEY_PARAM1}
+                                   AND A.DIVISION_CODE =  $P{P_KEY_PARAM2}
+                                   AND A.PRESENTN_NO = $P{P_KEY_PARAM3}
+                                   AND AA.CSTMS > 9.9999999999999
+                               )
+                               WHERE TRUNC(USGQTY, 3) > 0.000999999999999
+                       )
+                 GROUP BY PRESENTN_NO, COMPANY_CODE, DIVISION_CODE) ISSUE
+    ON A.COMPANY_CODE = ISSUE.COMPANY_CODE
+   AND A.DIVISION_CODE = ISSUE.DIVISION_CODE
+   AND A.PRESENTN_NO = ISSUE.PRESENTN_NO
+ INNER JOIN (SELECT A.PRESENTN_NO
+                   , A.COMPANY_CODE
+                   , A.DIVISION_CODE
+                   ,TRUNC(SUM(TAX_SUM), -1) AS TAX_SUM
+              FROM ( SELECT A.PRESENTN_NO
+                            , A.COMPANY_CODE
+                            , A.DIVISION_CODE
+                            , TRUNC(CASE WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN A.USGQTY
+                                         ELSE
+                                           (CASE
+                                               WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+                                               WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+                                               WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+                                               WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+                                               WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+                                             ELSE B.QY
+                                             END)
+                                     END, 3) AS USGQTY
+                            , (TRUNC(A.CSTMS, -1) + TRUNC(A.INTTAX, -1) + TRUNC(A.TRANTAX, -1) + TRUNC(A.LQTX_AMOUNT, -1) + TRUNC(A.ECX_AMOUNT, -1) + TRUNC(A.AGSPT, -1)) AS TAX_SUM
+                       FROM CTRM_INCME_RAWMTRL A
+                      INNER JOIN INCME_LOCAL_BNT_SM B
+                         ON A.COMPANY_CODE = B.COMPANY_CODE
+                        AND A.IMPDEC_NO = B.IMPDEC_NO
+                        AND A.LNE_NO = B.LNE_NO
+                        AND A.POUCH_NO = B.POUCH_NO
+                        AND A.RAWMTRL_CODE = B.ITEM_CODE
+                      WHERE A.COMPANY_CODE =  $P{P_KEY_PARAM1}
+                        AND A.DIVISION_CODE =  $P{P_KEY_PARAM2}
+                        AND A.PRESENTN_NO = $P{P_KEY_PARAM3}
+                   ) A
+             WHERE TRUNC(USGQTY, 3) > 0.000999999999999
+             GROUP BY A.PRESENTN_NO, A.COMPANY_CODE, A.DIVISION_CODE) TAX
+    ON A.COMPANY_CODE = TAX.COMPANY_CODE
+   AND A.DIVISION_CODE = TAX.DIVISION_CODE
+   AND A.PRESENTN_NO = TAX.PRESENTN_NO
+ INNER JOIN COMPANY B
+    ON A.COMPANY_CODE = B.COMPANY_CODE
+ WHERE A.ISSUE_TYPE = '02'
+   AND A.COMPANY_CODE =   $P{P_KEY_PARAM1}
+   AND A.DIVISION_CODE =  $P{P_KEY_PARAM2}
+   AND A.PRESENTN_NO = $P{P_KEY_PARAM3}]]>
+	</queryString>
+	<field name="PRESENTN_NO" class="java.lang.String"/>
+	<field name="REGIST_RCEPT_NO" class="java.lang.String"/>
+	<field name="CHIT_FRMTRM_DATE" class="java.lang.String"/>
+	<field name="CSTBRKR" class="java.lang.String"/>
+	<field name="CSTBRKR_CODE" class="java.lang.String"/>
+	<field name="DRWBAK_SE_CODE" class="java.lang.String"/>
+	<field name="DRWBAK_SE" class="java.lang.String"/>
+	<field name="REQREQY_CALC_MTH" class="java.lang.String"/>
+	<field name="REQREQY_CALC_NM" class="java.lang.String"/>
+	<field name="BIZRNO" class="java.lang.String"/>
+	<field name="ECTMRK" class="java.lang.String"/>
+	<field name="TELNO_1" class="java.lang.String"/>
+	<field name="CSTMR_NM_1" class="java.lang.String"/>
+	<field name="RPRSNTV_NM_1" class="java.lang.String"/>
+	<field name="CSTMR_BIZRNO" class="java.lang.String"/>
+	<field name="CSTMR_ADRES_1" class="java.lang.String"/>
+	<field name="CSTMR_ECTMRK" class="java.lang.String"/>
+	<field name="ITEM_CODE" class="java.lang.String"/>
+	<field name="DATE_EX" class="java.lang.String"/>
+	<field name="ACCMLT_ORDER_QY" class="java.lang.String"/>
+	<field name="BASS_UNIT" class="java.lang.String"/>
+	<field name="STTEMNT_PC_KRW" class="java.lang.String"/>
+	<field name="CSTMS" class="java.lang.String"/>
+	<field name="INTTAX" class="java.lang.String"/>
+	<field name="TRANTAX" class="java.lang.String"/>
+	<field name="LQTX_AMOUNT" class="java.lang.String"/>
+	<field name="ECX_AMOUNT" class="java.lang.String"/>
+	<field name="AGSPT" class="java.lang.String"/>
+	<field name="SUM_AMOUNT" class="java.lang.String"/>
+	<field name="CSMHSE_CODE" class="java.lang.String"/>
+	<field name="CSMHSE_TEXT" class="java.lang.String"/>
+	<field name="FROM_COMPANY_NAME" class="java.lang.String"/>
+	<field name="FROM_COMPANY_PRSN" class="java.lang.String"/>
+	<field name="ADDRESS" class="java.lang.String"/>
+	<field name="HS_CODE" class="java.lang.String"/>
+	<field name="REGIST_RCEP_DATE" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="514" splitType="Immediate">
+			<staticText>
+				<reportElement x="0" y="0" width="327" height="10" uuid="500a3bf1-00d9-4ea7-a526-a9f9c16f5e6a"/>
+				<textElement>
+					<font fontName="돋움" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[■ 수출용원재료에 대한 관세 등 환급사무처리에 관한 고시 [별지 제24호서식]]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="9" width="778" height="25" uuid="3c159fdd-5b7c-48d4-a83f-e9dc40ef0ea0"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="16" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[기초원재료납세증명서 (공통사항, 갑)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="674" y="29" width="104" height="15" uuid="9f866012-09c3-497f-900d-288601abea85"/>
+				<box leftPadding="2"/>
+				<textElement textAlignment="Right">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[처리기간 : 1일]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="44" width="55" height="15" uuid="38092c58-e49b-4403-b657-7e83e2f03e21"/>
+				<box leftPadding="2"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[제출번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="55" y="44" width="120" height="15" uuid="4b81d835-f7b1-4628-ae35-0ff69b79d2f6"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{PRESENTN_NO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="603" y="44" width="55" height="15" uuid="90ee37c9-2364-448d-998d-0fd5af84f16d"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[접수번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="658" y="44" width="120" height="15" uuid="67a9e73e-27d8-447d-93a7-31920c2f3579"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{REGIST_RCEPT_NO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="64" width="157" height="18" uuid="2b86eb51-d9bf-45ab-846b-b49add4a7e21"/>
+				<box leftPadding="2"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[1. 신청내역]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="82" width="99" height="28" backcolor="#FFFFFF" uuid="858ab5f8-9531-40e4-82e9-db37d51eb564"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[①접수번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="99" y="82" width="139" height="28" uuid="c1511227-2f40-4e7b-9546-9b7ad8530a65"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{REGIST_RCEPT_NO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="110" width="99" height="28" backcolor="#FFFFFF" uuid="b8f4d0cd-8207-48b7-b2c1-dd3fd164d34f"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[②접수일]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="99" y="110" width="139" height="28" uuid="93d75ac5-3314-454f-a099-fed1977d8866"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{REGIST_RCEP_DATE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="238" y="82" width="74" height="56" backcolor="#FFFFFF" uuid="8f9047a2-e8fb-4431-a536-b18d46a7f0ac"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[신청 관세사]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="312" y="82" width="204" height="28" uuid="3596997e-4627-4da8-8168-994b0b8e8302"/>
+				<box leftPadding="5">
+					<pen lineStyle="Dotted"/>
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["③상호 : " + $F{CSTBRKR}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="312" y="110" width="204" height="28" uuid="08d6b351-3ac4-4048-90af-5ba862acceb4"/>
+				<box leftPadding="5">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["④관세사 부호 : " + $F{CSTBRKR_CODE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="516" y="82" width="135" height="28" backcolor="#FFFFFF" uuid="caed5bf9-a70c-4bd7-92e3-56c352dec591"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[⑤환급구분]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="651" y="82" width="127" height="28" uuid="e7059820-9a48-4b63-88e7-6fa9e18fa7e1"/>
+				<box>
+					<pen lineStyle="Dotted"/>
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DRWBAK_SE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="516" y="110" width="135" height="28" backcolor="#FFFFFF" uuid="e13eb588-6560-4498-9132-6074a70312b1"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[⑥소요량구분]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="651" y="110" width="127" height="28" uuid="7b242cd1-40ae-4a02-b8e2-3053a54ef5d2"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["[" + $F{REQREQY_CALC_MTH} + "] " + $F{REQREQY_CALC_NM}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="159" width="157" height="17" uuid="27e520c8-ae75-40a9-ae11-53fadef40e14"/>
+				<box leftPadding="2"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[2. 양도자]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="176" width="75" height="25" backcolor="#FFFFFF" uuid="b1a6b62c-d2a5-416b-8c2b-0aea0db7392c"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[①상호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="75" y="176" width="75" height="25" uuid="e0e00acc-dd3f-4f35-beb4-2040d5724fbf"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{FROM_COMPANY_NAME}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="150" y="176" width="78" height="25" backcolor="#FFFFFF" uuid="071d9bf5-cf7c-43fb-8039-f943c9b42c7a"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[③사업자번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="228" y="176" width="73" height="25" uuid="0ee3307d-d7cd-44ca-8f40-01882a44de97"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{BIZRNO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="301" y="176" width="80" height="25" backcolor="#FFFFFF" uuid="92c11669-caac-49a0-833d-6e5b3cdcdfd9"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[⑤통관고유번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="381" y="176" width="107" height="25" uuid="918660d2-786f-4e9c-944d-660df21a146f"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ECTMRK}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="201" width="75" height="29" backcolor="#FFFFFF" uuid="d8bfde48-2046-4281-873f-248f29911367"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[②성명]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="75" y="201" width="75" height="29" uuid="c9ce76c2-8a76-4aa8-8705-8edf527403dc"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{FROM_COMPANY_PRSN}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="150" y="201" width="78" height="29" backcolor="#FFFFFF" uuid="9c7ddbe9-3eca-490c-bb16-dba3aec87294"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[④주소]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="228" y="201" width="123" height="29" uuid="be6c75ee-82fb-4d04-9411-00eba287f192"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ADDRESS}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="351" y="201" width="50" height="29" backcolor="#FFFFFF" uuid="69c6314f-6c8b-4205-b7f6-f3152a73c55c"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[⑥연락처]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="401" y="201" width="87" height="29" uuid="2a8d86fc-afd1-4b74-83a2-027de8edeed7"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{TELNO_1}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="248" width="157" height="17" uuid="ec54e2f6-df3d-4296-aace-7fbcd555c2e0"/>
+				<box leftPadding="2"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[3. 양수자]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="265" width="75" height="25" backcolor="#FFFFFF" uuid="38027703-4f6e-415a-9294-855b275c6df8"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[①상호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="75" y="265" width="75" height="25" uuid="b05c8025-e472-466d-a159-47451af68124"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CSTMR_NM_1}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="150" y="265" width="78" height="25" backcolor="#FFFFFF" uuid="08d77bf1-73b4-432d-b4ff-76438cb24cbb"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[③사업자번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="228" y="265" width="73" height="25" uuid="9651054d-b607-4c20-bca7-0f8660951d45"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CSTMR_BIZRNO}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="301" y="265" width="80" height="25" backcolor="#FFFFFF" uuid="cec84e92-7149-40ea-8f8a-9b7667b8cfcb"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[⑤통관고유번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="381" y="265" width="107" height="25" uuid="be9b4799-2514-4726-9434-5bf71f51f98a"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CSTMR_ECTMRK}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="290" width="75" height="25" backcolor="#FFFFFF" uuid="cdd91378-ec3a-43a4-a6c4-bfef1b62ce71"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[②성명]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="75" y="290" width="75" height="25" uuid="e674ef14-de11-4671-96b3-5f4748210104"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{RPRSNTV_NM_1}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="150" y="290" width="78" height="25" backcolor="#FFFFFF" uuid="84531803-83d7-4006-8cff-9dfe30eae27f"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[④주소]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="228" y="290" width="260" height="25" uuid="fd7d8851-0e3c-48a6-90a8-85577a23d890"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CSTMR_ADRES_1}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="333" width="157" height="17" uuid="0ce5b0af-ee10-4be7-9bd2-c7ac495ca63b"/>
+				<box leftPadding="2"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[4. 양도물품 내역]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="350" width="119" height="32" backcolor="#FFFFFF" uuid="5647e358-a3a5-4a2b-b237-cc3e338a20d5"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[①품목번호]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="119" y="350" width="78" height="32" uuid="8f768230-e366-4a9c-acf2-dfa980fecfd8"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{HS_CODE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="197" y="350" width="85" height="32" backcolor="#FFFFFF" uuid="db1e4e22-6466-40d8-aa0d-215f02d87c0b"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[②양도(매입)일자]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="282" y="350" width="78" height="32" uuid="a983b095-42cd-4388-bfd8-a734d35ded24"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CHIT_FRMTRM_DATE}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="360" y="350" width="60" height="32" backcolor="#FFFFFF" uuid="e5543474-e1e6-45b8-ac6b-6432f33f9c08"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[③수출이행
+기준일자]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="420" y="350" width="59" height="32" uuid="11d1e3a7-e3d2-4aaa-9c7e-4491e33646a4"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{DATE_EX}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="382" width="119" height="32" backcolor="#FFFFFF" uuid="995e51f6-e6f6-4ae6-9745-ec8f46235fb1"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[④총 물량(단위)]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="119" y="382" width="123" height="32" uuid="8caa899e-776f-4032-bd44-8c72dad625fb"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ACCMLT_ORDER_QY} + "(" + $F{BASS_UNIT} + ")"]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="242" y="382" width="101" height="32" backcolor="#FFFFFF" uuid="b7442430-098a-4ff3-9e6a-c4e8fe84fa2b"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[⑤총 공급가격(FOB)]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="343" y="382" width="136" height="32" uuid="07462639-7753-451b-8d63-456e82af5ca2"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{STTEMNT_PC_KRW}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="523" y="167" width="52" height="154" backcolor="#FFFFFF" uuid="69d3ec73-aa33-4d59-a571-d029d4148147"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[5.
+양도세액]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="575" y="167" width="81" height="22" backcolor="#FFFFFF" uuid="7ba28245-7f79-4dfe-a292-bd7da9ad1ce8"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[관        세]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="656" y="167" width="122" height="22" uuid="993c1ba0-8c1c-4454-b845-e68f359a7c49"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{CSTMS}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="575" y="189" width="81" height="22" backcolor="#FFFFFF" uuid="872a6807-0142-4e96-a1b1-cdbdf59dcfeb"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[개별소비세]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="656" y="189" width="122" height="22" uuid="56863801-34ba-4965-8c4c-0d70b72e24dc"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{INTTAX}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="575" y="211" width="81" height="22" backcolor="#FFFFFF" uuid="0a99a0ee-c009-436d-97f1-a46bca04b29d"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[교   통   세]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="656" y="211" width="122" height="22" uuid="45c1d645-5577-4290-b7de-5ee78bb37c6c"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{TRANTAX}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="575" y="233" width="81" height="22" backcolor="#FFFFFF" uuid="0a289992-8134-4c8d-9c8c-d621f235f0b5"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[주        세]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="656" y="233" width="122" height="22" uuid="925acf64-dece-46e5-8e1c-65357050aa2b"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{LQTX_AMOUNT}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="575" y="255" width="81" height="22" backcolor="#FFFFFF" uuid="ee245259-7435-4e35-947a-97f7e6ead79e"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[교   육   세]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="656" y="255" width="122" height="22" uuid="f71b8906-6d01-4366-94f5-b75949d80745"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ECX_AMOUNT}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="575" y="277" width="81" height="22" backcolor="#FFFFFF" uuid="7dd53c16-612c-4bc4-a207-2c765d541c8f"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[농   특   세]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="656" y="277" width="122" height="22" uuid="485814d8-6ce4-4f38-b900-68dab31737a0"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{AGSPT}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="575" y="299" width="81" height="22" backcolor="#FFFFFF" uuid="250a81bd-7422-4711-a2f0-b0c40b9b3d89"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" isBold="true" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[합        계]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="656" y="299" width="122" height="22" uuid="f4541fea-f696-4206-8dde-54e62eb0f1a8"/>
+				<box rightPadding="2">
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{SUM_AMOUNT}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="428" width="157" height="17" uuid="e88e4af1-c5d7-4482-924c-886c4f99cf87"/>
+				<box leftPadding="2"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[6. 신청처리내역(세관 기재사항)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="445" width="87" height="35" backcolor="#FFFFFF" uuid="b733085d-5504-43cc-b807-1de57b4e447f"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[세관
+(증명일자)]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="87" y="445" width="128" height="35" uuid="434af7f5-17e4-4bee-b068-9ce56e707cac"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="0" y="480" width="87" height="34" backcolor="#FFFFFF" uuid="fc6232a1-1939-4347-95d9-c8184f6637d8"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[담당자]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="87" y="480" width="128" height="34" uuid="4a9a938b-ec83-4f40-87fe-8b07cded527c"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="215" y="445" width="64" height="69" backcolor="#FFFFFF" uuid="808e1555-7adf-4a82-965c-a31ff45ca991"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Solid"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[결재
+사항]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="279" y="445" width="51" height="25" backcolor="#FFFFFF" uuid="1687811c-96ff-48c7-9ff1-207845ad60ac"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[담당]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="279" y="470" width="51" height="44" uuid="c61c450a-e403-4035-8914-d874274cebf9"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="330" y="445" width="51" height="25" backcolor="#FFFFFF" uuid="fa453665-e07d-4cfb-bed7-6429ae4746f3"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[주무]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="330" y="470" width="51" height="44" uuid="fffadb22-eb23-4568-8fe7-88ec82253f69"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="381" y="445" width="51" height="25" backcolor="#FFFFFF" uuid="dda1d5e0-a424-4370-b36f-4238226cd63f"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[과장]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="381" y="470" width="51" height="44" uuid="791bd3f2-dacc-4fd6-a085-6c976d7f074d"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="432" y="445" width="56" height="25" backcolor="#FFFFFF" uuid="f86bbff9-758f-44a6-bc90-f1653717dffb"/>
+				<box>
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[세관장]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="432" y="470" width="56" height="44" uuid="7614f92b-0d53-401b-ace0-d8afb359c27b"/>
+				<box>
+					<topPen lineWidth="0.34" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.34"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement mode="Transparent" x="523" y="350" width="255" height="30" backcolor="#FFFFFF" uuid="7a38e2e3-008f-42a0-821f-be19fb1d0bea"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.34"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.0" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[7. 증명인]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="523" y="380" width="255" height="134" backcolor="#FFFFFF" uuid="80f72d87-59ec-4cdf-a573-ecc40a57029d"/>
+				<box leftPadding="2">
+					<topPen lineWidth="0.0"/>
+					<leftPen lineWidth="0.34"/>
+					<bottomPen lineWidth="0.34" lineStyle="Solid"/>
+					<rightPen lineWidth="0.34" lineStyle="Solid"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[]]></text>
+			</staticText>
+		</band>
+	</title>
+	<detail>
+		<band height="135" splitType="Immediate">
+			<componentElement>
+				<reportElement key="table" style="table" x="0" y="40" width="778" height="94" uuid="59724b0e-a72d-4e40-b0f1-7af8d95acc1a"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="dataSet1" uuid="588edb8d-4829-41f3-ba87-a2d9922d97b4">
+						<datasetParameter name="P_KEY_PARAM1">
+							<datasetParameterExpression><![CDATA[$P{P_KEY_PARAM1}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="P_KEY_PARAM2">
+							<datasetParameterExpression><![CDATA[$P{P_KEY_PARAM2}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="P_KEY_PARAM3">
+							<datasetParameterExpression><![CDATA[$P{P_KEY_PARAM3}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="42" uuid="b616d874-8f5b-43bd-bad1-1fef29c84290">
+						<jr:columnHeader style="table_CH_L" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="42" height="28" uuid="b04a91fc-037e-468d-8f6a-0773b8b13d55"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓐ연번]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD_L" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="42" height="66" uuid="a58d25f8-6f1c-4a99-b416-31d109391568"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{LINE_NUMBER}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="92" uuid="297b1398-8e5a-4547-b264-2f39318be328">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="92" height="28" uuid="55ec0296-cc1e-4808-845c-13a4c4df66c3"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓑ물품식별번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="92" height="66" uuid="c7acf46e-e7fd-49c9-a184-8389bac70d93"/>
+								<box leftPadding="2"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{ITEM_CODE}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="211" uuid="14d7f39f-4032-41b9-a10e-7ec20518058f">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="211" height="28" uuid="5a62b09e-ce6d-4356-a578-74b6519e9d0e"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓒ품명 및 규격]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="211" height="66" uuid="4a982d1f-0f79-438d-b50c-c3692d51844d"/>
+								<box leftPadding="2"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{ITEM_NM}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="59" uuid="f6425394-7092-4a77-b995-f890569ea1a6">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="59" height="28" uuid="6f51cf63-1ac4-4f2b-a7dc-df1fb327d7dd"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓓ물량
+(단위)]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="59" height="66" uuid="88ef54d4-fa94-4130-a6c5-41e7f9902506"/>
+								<box rightPadding="2"/>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{ACCMLT_ORDER_QY}
+ + "(" + $F{BASS_UNIT} + ")"]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="58" uuid="c9af9d1d-3e12-4d71-9f51-7366b2138e2e">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="58" height="28" uuid="987622e4-a62f-4773-80aa-c96552704c15"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓔ금액
+(통화)]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="58" height="66" uuid="a8069bc9-241f-4200-bd0d-e8a080913589"/>
+								<box rightPadding="2"/>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{STTEMNT_PC_KRW}
+ + "(" + $F{KRW_CRNCY} + ")"]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="63" uuid="f269ac8b-ec74-47f0-b573-7ffbd038c998">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="63" height="14" uuid="a9d7eb40-b10f-4d82-a40c-9eb495fde771"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓕ관 세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="63" height="14" uuid="75409776-f5e8-408a-b46e-9d4d1739ce2d"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓘ주 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="63" height="33" uuid="812ec69d-11de-4a15-a919-ce249a9481a6"/>
+								<box rightPadding="2">
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{CSTMS}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="33" width="63" height="33" uuid="7894ce34-dcf4-467b-a6de-130e5f1cd2b0"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{LQTX_AMOUNT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="63" uuid="ca1fda91-c87c-48ed-9d94-ad3a66bd5f63">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="63" height="14" uuid="4b53121f-cb14-4fe5-b5a7-12bc0873dd2e"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓖ개별소비세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="63" height="14" uuid="223be326-feba-491d-a39d-f6beca49d6ab"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓙ교 육 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="63" height="33" uuid="acfe20a0-a3b4-4c1f-b4e7-55cb0f60e3d7"/>
+								<box rightPadding="2">
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{INTTAX}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="33" width="63" height="33" uuid="d6c05082-d3e7-44d3-8db7-07ff4a4e1b68"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{ECX_AMOUNT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="63" uuid="9135a7c7-a162-4904-aef3-97951ac2d901">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="63" height="14" uuid="a31152c1-65a0-4096-92ba-ab3b7393ed41"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓗ교 통 세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="63" height="14" uuid="15f96b3b-abab-4810-a197-83510c08a598"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓚ농 특 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="63" height="33" uuid="18b808cd-2621-4f1b-ad8a-2000d13be5f0"/>
+								<box rightPadding="2">
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{TRANTAX}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="33" width="63" height="33" uuid="8c27a0d1-8925-4891-bcde-bdfdafa5f68f"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{AGSPT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="60" uuid="b41b271a-a3a3-44bd-9be3-c061a86c25ee">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="60" height="28" uuid="6206af72-16d2-4b3e-90e0-a0afd9abcc64"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓛ세액합계]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="60" height="66" uuid="4870dc92-8492-4968-8c10-ea7fba718ccd"/>
+								<box rightPadding="2"/>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{DRWBAK_AMOUNT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="67" uuid="c0b80cd5-3a4f-479e-a2fb-275c17e394e4">
+						<jr:columnHeader style="table_CH_R" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="67" height="28" uuid="2a639606-8822-4044-9cad-17762ba60033"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓜ근거
+서류번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH_R" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="67" height="66" uuid="8166cc12-55c6-4dd7-b8a6-71423221e904"/>
+								<box leftPadding="2"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{BASIS_DOC_NO}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<staticText>
+				<reportElement x="0" y="0" width="778" height="25" uuid="ea7ce62a-5eb5-426e-af70-342834d24b4b"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="16" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[기초원재료납세증명서 (양도물품, 을)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="603" y="25" width="55" height="15" uuid="eddce446-a831-4bd1-b639-3ad480f9a188"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[접수번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="658" y="25" width="120" height="15" uuid="0a9e2398-50ef-440e-b746-d9a33c249039"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{REGIST_RCEPT_NO}]]></textFieldExpression>
+			</textField>
+			<break>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="126" width="100" height="1" uuid="4ad22d43-6ec1-472e-a7f3-e595dbb4f0b3"/>
+			</break>
+		</band>
+		<band height="123" splitType="Immediate">
+			<componentElement>
+				<reportElement key="table" style="table" x="0" y="40" width="778" height="82" uuid="59724b0e-a72d-4e40-b0f1-7af8d95acc1a"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="dataSet2" uuid="c1c8d145-a7a6-4ed6-801b-c947478298bb">
+						<datasetParameter name="P_KEY_PARAM1">
+							<datasetParameterExpression><![CDATA[$P{P_KEY_PARAM1}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="P_KEY_PARAM2">
+							<datasetParameterExpression><![CDATA[$P{P_KEY_PARAM2}]]></datasetParameterExpression>
+						</datasetParameter>
+						<datasetParameter name="P_KEY_PARAM3">
+							<datasetParameterExpression><![CDATA[$P{P_KEY_PARAM3}]]></datasetParameterExpression>
+						</datasetParameter>
+						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					</datasetRun>
+					<jr:column width="39" uuid="b616d874-8f5b-43bd-bad1-1fef29c84290">
+						<jr:columnHeader style="table_CH_L" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="39" height="28" uuid="b04a91fc-037e-468d-8f6a-0773b8b13d55"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓐ연번]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD_L" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="39" height="54" uuid="a58d25f8-6f1c-4a99-b416-31d109391568"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{LINE_NUMBER}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="105" uuid="297b1398-8e5a-4547-b264-2f39318be328">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="105" height="28" uuid="55ec0296-cc1e-4808-845c-13a4c4df66c3"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓑ물품식별번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="105" height="54" uuid="c7acf46e-e7fd-49c9-a184-8389bac70d93"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{ITEM_CODE}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="111" uuid="14d7f39f-4032-41b9-a10e-7ec20518058f">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="111" height="28" uuid="5a62b09e-ce6d-4356-a578-74b6519e9d0e"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓒ원재료식별번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="111" height="54" uuid="4a982d1f-0f79-438d-b50c-c3692d51844d"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{RAWMTRL_CODE}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="142" uuid="c9af9d1d-3e12-4d71-9f51-7366b2138e2e">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="142" height="14" uuid="987622e4-a62f-4773-80aa-c96552704c15"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓓ(원재료구분) 신고번호-란-규격]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="71" height="14" uuid="f240335a-4a00-488f-bef3-fdbfedcff989"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+									<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓔ수입(매입)일자]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="71" y="14" width="71" height="14" uuid="f240335a-4a00-488f-bef3-fdbfedcff989"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+									<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓕ품목번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="142" height="27" uuid="a8069bc9-241f-4200-bd0d-e8a080913589"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA["("+$F{RAWMTRL_SE}+")"+$F{IMPDEC_NO}+"-"+$F{LNE_NO}+"-"+$F{POUCH_NO}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="27" width="71" height="27" uuid="31ba4561-a827-45a8-a568-654b03271ed2"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+									<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{ACPT_DATE}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="71" y="27" width="71" height="27" uuid="1bbc5ec2-1e27-442a-bf3d-985775b35b94"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+									<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{HS_CODE}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="66" uuid="f353ef2c-4caa-4f44-8834-9deeeecd3ab8">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="66" height="14" uuid="f8ba7a26-37fd-40d6-be34-002d0fb5dfda"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓖ사용량(단위)]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="66" height="14" uuid="e0182375-f3bc-4d34-ac24-f43bd6cc4fa9"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓗ원자재단가]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="66" height="27" uuid="ef91dea8-c2ba-443b-b47e-57b1750b854b"/>
+								<box rightPadding="2">
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{USGQTY}+"("+$F{BASS_UNIT}+")"]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="27" width="66" height="27" uuid="4362eea1-ce1f-4820-a8d0-75e6f50175f6"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{PO_AMOUNT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="72" uuid="f269ac8b-ec74-47f0-b573-7ffbd038c998">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="72" height="14" uuid="a9d7eb40-b10f-4d82-a40c-9eb495fde771"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓘ관 세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="72" height="14" uuid="75409776-f5e8-408a-b46e-9d4d1739ce2d"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓛ주 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="72" height="27" uuid="812ec69d-11de-4a15-a919-ce249a9481a6"/>
+								<box rightPadding="2">
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{CSTMS}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="27" width="72" height="27" uuid="7894ce34-dcf4-467b-a6de-130e5f1cd2b0"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{LQTX_AMOUNT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="72" uuid="ca1fda91-c87c-48ed-9d94-ad3a66bd5f63">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="72" height="14" uuid="4b53121f-cb14-4fe5-b5a7-12bc0873dd2e"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓙ개별소비세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="72" height="14" uuid="223be326-feba-491d-a39d-f6beca49d6ab"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓜ교 육 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="72" height="27" uuid="acfe20a0-a3b4-4c1f-b4e7-55cb0f60e3d7"/>
+								<box rightPadding="2">
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{INTTAX}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="27" width="72" height="27" uuid="d6c05082-d3e7-44d3-8db7-07ff4a4e1b68"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{ECX_AMOUNT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="72" uuid="9135a7c7-a162-4904-aef3-97951ac2d901">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="72" height="14" uuid="a31152c1-65a0-4096-92ba-ab3b7393ed41"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓚ교 통 세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="72" height="14" uuid="15f96b3b-abab-4810-a197-83510c08a598"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓝ농 특 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="72" height="27" uuid="18b808cd-2621-4f1b-ad8a-2000d13be5f0"/>
+								<box rightPadding="2">
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{TRANTAX}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="27" width="72" height="27" uuid="8c27a0d1-8925-4891-bcde-bdfdafa5f68f"/>
+								<box rightPadding="2">
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{AGSPT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="55" uuid="b41b271a-a3a3-44bd-9be3-c061a86c25ee">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="55" height="28" uuid="6206af72-16d2-4b3e-90e0-a0afd9abcc64"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓞ세액합계]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="55" height="54" uuid="4870dc92-8492-4968-8c10-ea7fba718ccd"/>
+								<box rightPadding="2"/>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{DRWBAK_AMOUNT}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="44" uuid="c0b80cd5-3a4f-479e-a2fb-275c17e394e4">
+						<jr:columnHeader style="table_CH_R" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="44" height="14" uuid="2a639606-8822-4044-9cad-17762ba60033"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓟ공제구분]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="44" height="14" uuid="5e950eaf-9ac6-4c6c-a975-87f71b1cc755"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓠ비율(%)]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH_R" height="54" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="44" height="27" uuid="8166cc12-55c6-4dd7-b8a6-71423221e904"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{BY_PRODUCT_SE}]]></textFieldExpression>
+							</textField>
+							<textField>
+								<reportElement x="0" y="27" width="44" height="27" uuid="e2f0b5a6-ff4b-4937-85ee-a4026268a1b1"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{DDC_RATE_PRDCTN}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<staticText>
+				<reportElement x="0" y="0" width="778" height="25" uuid="1fd1e3d5-cef6-42e4-9a68-a1391e65b180"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="16" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[기초원재료납세증명서 (수입원재료, 병)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="603" y="25" width="55" height="15" uuid="43e9d1f7-4d8f-4874-a31d-16cd80607215"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[접수번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="658" y="25" width="120" height="15" uuid="46c0858b-940b-486d-988c-d79b6e43a26e"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{REGIST_RCEPT_NO}]]></textFieldExpression>
+			</textField>
+			<break>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="100" width="100" height="1" uuid="73c043e9-583a-442b-8be2-4ec2f3614500"/>
+			</break>
+		</band>
+		<band height="135" splitType="Immediate">
+			<staticText>
+				<reportElement x="0" y="0" width="778" height="25" uuid="33eb3341-036b-480c-8d4c-622655e3eb20"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="16" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[기초원재료납세증명서 (부산물, 정)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="603" y="25" width="55" height="15" uuid="18449f5c-48a2-4619-a9cf-03cdff65da0c"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[접수번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="658" y="25" width="120" height="15" uuid="eca9e6ba-b802-402b-9037-abcd27201c88"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{REGIST_RCEPT_NO}]]></textFieldExpression>
+			</textField>
+			<componentElement>
+				<reportElement key="table" style="table" x="0" y="40" width="778" height="94" uuid="6f97f2f4-e7e1-465f-a859-e1ed56a53254"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="dataSet3" uuid="526e481b-27ff-48fa-a63c-f099f8bfd23a">
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource(1)]]></dataSourceExpression>
+					</datasetRun>
+					<jr:column width="38" uuid="4b8a821d-d910-434e-8f1b-08eeaac58643">
+						<jr:columnHeader style="table_CH_L" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="38" height="28" uuid="6f95d445-76eb-455f-b199-b6f098146b23"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓐ연번]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD_L" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="38" height="66" uuid="4bc7c86b-783a-4553-a050-e06867c58dce"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field1}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="95" uuid="6d4bcc8d-8dd9-49cc-a04c-0840e4d87d0f">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="95" height="28" uuid="7514c26d-9ac4-453e-9259-43ef8f751e22"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓑ부산물식별번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="95" height="66" uuid="b9f6b553-56d8-4dac-b81d-c6484fa5914d"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field2}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="228" uuid="3721573f-d694-45f1-a62f-f7a0d88d13e0">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="228" height="28" uuid="54fbe038-7eec-455d-bfa3-f4d81d241e84"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓒ품명 및 규격]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="228" height="66" uuid="f9560c8c-7706-4190-96fd-63baae6bb97e"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field3}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="35" uuid="ce3fadd1-8ff7-459d-9772-5ddbac69b823">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="35" height="28" uuid="da57a63f-39d4-4178-978f-24def8b2886b"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓓ품목
+번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="35" height="66" uuid="dd6ff3fc-5447-4b03-ab9b-c10316fc949f"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field4}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="53" uuid="5c2ee458-63dc-4ff9-b141-332433aeee14">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="53" height="28" uuid="72d623ee-d1c7-4eb2-850b-578a34a3d8f2"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓔ물량
+(단위)]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="53" height="66" uuid="9217e22d-cccc-4b2c-909d-20ba7b201e23"/>
+								<textElement verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field5}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="65" uuid="5c2ee458-63dc-4ff9-b141-332433aeee14">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="65" height="28" uuid="72d623ee-d1c7-4eb2-850b-578a34a3d8f2"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓕ가격
+( 원 )]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="65" height="66" uuid="9217e22d-cccc-4b2c-909d-20ba7b201e23"/>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field6}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="65" uuid="76705d20-d8cf-486a-84d0-75db6646d0ed">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="65" height="14" uuid="2e85b825-eb1f-44dc-a886-38ae624733fa"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓖ관 세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="65" height="14" uuid="46d9a998-4d7c-4679-9d6f-44931a016820"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓙ주 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="65" height="33" uuid="3d8e3092-14ce-4d46-ba50-594f8a98a146"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field7}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="33" width="65" height="33" uuid="b071a3e4-a304-4829-832e-e41db64509a9"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field10}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="65" uuid="aec3c6ba-c965-4777-9a49-8a8de232e2cb">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="65" height="14" uuid="15cca47f-0a21-4869-895e-5da79dd17471"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓗ개별소비세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="65" height="14" uuid="6a3865e1-e550-460c-bfcc-743dfa54a0c8"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓚ교 육 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="65" height="33" uuid="6f97a4b7-3f06-4612-b4f6-d1cd9e6e6e9f"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field8}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="33" width="65" height="33" uuid="a03ae256-9ebb-4491-800f-492c56992e7c"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field11}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="65" uuid="79d23f1f-131f-483d-bc65-d9064b5a164a">
+						<jr:columnHeader style="table_CH" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="65" height="14" uuid="52ef7f4d-7281-43d7-8b97-02e773f0b79b"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓘ교 통 세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="14" width="65" height="14" uuid="f602f3e6-7dcb-4fbb-9ff6-b7c9c526c008"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓛ농 특 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="65" height="33" uuid="8d409c36-fe6a-4375-bd27-b0aa4ecfa5e5"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field9}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="33" width="65" height="33" uuid="211550f6-545f-40c7-a3d9-249ddb020a51"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field12}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="65" uuid="e4e39d35-7aef-47f5-8e99-957d71ae2edb">
+						<jr:columnHeader style="table_CH_R" height="28" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="65" height="28" uuid="2b63075e-f0f6-4119-ae06-139a1446650a"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓜ세액합계]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH_R" height="66" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="65" height="66" uuid="89c8208f-50bb-41a3-bcf2-94922b549764"/>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field13}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+			<break>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="82" width="100" height="1" uuid="fc46d879-aa89-4311-854c-a0b267756d5d"/>
+			</break>
+		</band>
+		<band height="123" splitType="Immediate">
+			<staticText>
+				<reportElement x="0" y="0" width="778" height="25" uuid="b29c01bb-ba13-4cd8-93fd-dac04d55769d"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="16" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[기초원재료납세증명서 (부산물용 수입원재료, 정B)]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="603" y="25" width="55" height="15" uuid="58c4543b-cbf7-4a79-9f2f-f2b4e866d5c6"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[접수번호 : ]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="658" y="25" width="120" height="15" uuid="89d7bc8c-f6d7-4b9b-a86f-f4c265503ad5"/>
+				<textElement>
+					<font fontName="맑은 고딕" size="10" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{REGIST_RCEPT_NO}]]></textFieldExpression>
+			</textField>
+			<componentElement>
+				<reportElement key="table" style="table" x="0" y="40" width="778" height="82" uuid="8087259e-1b30-4040-9977-d67fb53e84fd"/>
+				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<datasetRun subDataset="dataSet4" uuid="2dad7c9b-28e1-4f8f-8f56-3a6200350c6c">
+						<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource(1)]]></dataSourceExpression>
+					</datasetRun>
+					<jr:column width="41" uuid="87794173-501e-4f11-a544-48e81888ec27">
+						<jr:columnHeader style="table_CH_L" height="40" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="41" height="40" uuid="baaf16b3-1c77-405f-9f67-63ac66e1f114"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓐ연번]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD_L" height="50" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="41" height="50" uuid="47059bf0-c932-46be-ab3a-fbca6259da78"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field1}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="109" uuid="0158ca1d-0117-452d-ad99-8b7d8ac06e80">
+						<jr:columnHeader style="table_CH" height="40" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="109" height="40" uuid="5ec31cf9-3db7-4ee8-a464-52ac389c85e1"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓑ부산물식별번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="50" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="109" height="50" uuid="d73a8111-f695-432b-bc7f-718145ad4a53"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field2}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="109" uuid="85f57c40-f734-47d4-9e1c-2f9775576507">
+						<jr:columnHeader style="table_CH" height="40" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="109" height="40" uuid="59d4e4fa-4b51-405f-89a5-a835edc590a5"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓒ원재료식별번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="50" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="109" height="50" uuid="8e48285d-7765-4d98-aac2-ccaa257689d3"/>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field3}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="136" uuid="fd8d8104-9394-4924-a95d-fecfa6d3be75">
+						<jr:columnHeader style="table_CH" height="40" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="136" height="20" uuid="0683f937-18a2-48ac-a2c2-1f1aaa6af557"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓓ(원재료구분)신고번호-란-규격]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="20" width="68" height="20" uuid="2ccda9db-9113-4845-8b87-4790f8dbc2d4"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+									<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓔ수입(매입)일자]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="68" y="20" width="68" height="20" uuid="8c87e6ee-9515-4ed5-8b3a-c95ed721e931"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+									<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="8" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓕ품목번호]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_TD" height="50" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="136" height="25" uuid="6db99847-9660-4871-b924-27b4dbcb19fd"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field4}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="25" width="68" height="25" uuid="3498661a-f455-49b5-900a-f75a29f03e8f"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+									<rightPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field5}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="68" y="25" width="68" height="25" uuid="7adbeb73-7f3c-4a50-81a6-c33dc5ece1c7"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+									<leftPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field6}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="96" uuid="c0036c1a-5110-4595-90e4-b63e4df47154">
+						<jr:columnHeader style="table_CH" height="40" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="96" height="20" uuid="95f8da35-eff8-4237-8df6-a7b08c465963"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓖ관 세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="20" width="96" height="20" uuid="1f8a95b1-b645-43c5-a2d8-cb3f3ecb5900"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓙ주 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="50" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="96" height="25" uuid="e98a01a3-aab1-4e79-b8ed-710cd40ea43c"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field9}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="25" width="96" height="25" uuid="54b5652d-ec3f-40f3-b3c3-6f8f8fd9ecfc"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field12}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="96" uuid="7824049e-8b4e-4518-98f5-1632c79a7e3e">
+						<jr:columnHeader style="table_CH" height="40" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="96" height="20" uuid="c06bef71-dc3c-49f1-aa75-99acda559ce2"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓗ개별소비세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="20" width="96" height="20" uuid="2fefd2dd-8249-4953-a251-1f60ff866934"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓚ교 육 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="50" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="96" height="25" uuid="7c95f475-5ed6-40b9-a232-015cd8e5c59e"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field10}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="25" width="96" height="25" uuid="a0141a00-58dc-45b6-b34c-4f288e1f19c0"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field13}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="96" uuid="3d782a80-e655-43f3-b231-be62e36fe858">
+						<jr:columnHeader style="table_CH" height="40" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="96" height="20" uuid="1d608113-b143-4679-b77a-c37ba2f2704c"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓘ교 통 세]]></text>
+							</staticText>
+							<staticText>
+								<reportElement x="0" y="20" width="96" height="20" uuid="f0a5f2d4-88cf-48ef-bd9e-2939ec528230"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓛ농 특 세]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH" height="50" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="96" height="25" uuid="4e4e002e-5b42-4275-a0f9-2add3b183f0b"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field11}]]></textFieldExpression>
+							</textField>
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="25" width="96" height="25" uuid="f12ed7bc-ed78-4c15-9e62-db7ad8278d66"/>
+								<box>
+									<topPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field13}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+					<jr:column width="95" uuid="a880f97d-0523-49a8-88e5-f1b09e59d75f">
+						<jr:columnHeader style="table_CH_R" height="40" rowSpan="1">
+							<staticText>
+								<reportElement x="0" y="0" width="95" height="40" uuid="cfc58d27-9a04-46ef-beb7-0c0a20f69c13"/>
+								<box>
+									<bottomPen lineWidth="0.34" lineStyle="Dotted"/>
+								</box>
+								<textElement textAlignment="Center" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<text><![CDATA[ⓜ세액합계]]></text>
+							</staticText>
+						</jr:columnHeader>
+						<jr:detailCell style="table_CH_R" height="50" rowSpan="1">
+							<textField isBlankWhenNull="true">
+								<reportElement x="0" y="0" width="95" height="50" uuid="8db0b673-836c-4289-b7bc-1e90fa5393c5"/>
+								<textElement textAlignment="Right" verticalAlignment="Middle">
+									<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+								</textElement>
+								<textFieldExpression><![CDATA[$F{field13}]]></textFieldExpression>
+							</textField>
+						</jr:detailCell>
+					</jr:column>
+				</jr:table>
+			</componentElement>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement isPrintRepeatedValues="false" x="339" y="0" width="42" height="20" uuid="0cc0a8aa-fae7-4e0a-9a4a-05bffc5566b4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement isPrintRepeatedValues="false" x="381" y="0" width="63" height="20" uuid="4a374043-883b-4fb8-b909-753d6a4a2548"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="맑은 고딕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["/총 " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

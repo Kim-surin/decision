@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.master.MasterDao">
+
+	<!-- xml Common Area Start -->
+	<sql id="paging-prefix">
+		SELECT DATA.*
+		FROM (
+		SELECT '' AS ROWFLAG,
+		ROWNUM AS RNUM,
+		COUNT(*) OVER() TOTAL_RECORDS,
+		DATA.*
+		FROM (
+	</sql>
+	<sql id="paging-postfix">
+        <![CDATA[
+                       ) DATA 
+                ) DATA                   
+          WHERE RNUM BETWEEN ((#{page}-1) * #{rows} + 1) and (#{page} * #{rows} )
+        ]]>
+	</sql>
+	<sql id="paging-orderby">
+		<if test="sidx != ''">
+			ORDER BY ${sidx} ${sord}
+		</if>
+	</sql>
+	<!-- xml Common Area End -->
+		
+	<select id="retrieveCompanyInfo" parameterType="HashMap" resultType="HashMap">
+		SELECT CO.COMPANY_CODE
+	          ,CO.COMPANY_NM
+	          ,CO.ECTMRK
+	          ,CO.PRESENTN_NO
+	          ,CO.RPRSNTV_NM
+	          ,CO.NATION_CODE
+	          ,CO.BIZRNO
+	          ,CO.ZIP
+	          ,CO.ADRES
+	          ,CO.TELNO_1
+	          ,CO.FXNUM
+	          ,CO.EMAIL_ADRES
+	          ,CO.CSTBRKR
+	          ,CO.CSMHSE_CODE
+	          ,CO.ACNUTNO
+	          ,CO.BANK_CODE
+	          ,CO.UNIPASS_ID
+	          ,CO.UNIPASS_DOC_BOX_CODE
+	          ,CO.DRWBAK_SE_CODE
+	          ,CO.RTROACT_PD
+	          ,CO.REQREQY_CALC_MTH
+	          ,CO.PRIC_RQEST_TYPE
+		  FROM COMPANY CO
+		 WHERE CO.COMPANY_CODE = #{COMPANY_CODE}
+	</select>
+	
+	<update id="updateCompanyInfo" parameterType="HashMap">
+		UPDATE COMPANY CO
+		   SET CO.COMPANY_NM = #{COMPANY_NM}
+		      ,CO.ECTMRK = #{ECTMRK}
+		      ,CO.PRESENTN_NO = #{PRESENTN_NO}
+		      ,CO.RPRSNTV_NM = #{RPRSNTV_NM}
+		      ,CO.NATION_CODE = #{NATION_CODE}
+		      ,CO.BIZRNO = #{BIZRNO}
+		      ,CO.ZIP = #{ZIP}
+		      ,CO.ADRES = #{ADRES}
+		      ,CO.TELNO_1 = #{TELNO_1}
+		      ,CO.FXNUM = #{FXNUM}
+		      ,CO.EMAIL_ADRES = #{EMAIL_ADRES}
+		      ,CO.CSTBRKR = #{CSTBRKR}
+		      ,CO.CSMHSE_CODE = #{CSMHSE_CODE}
+		      ,CO.ACNUTNO = #{ACNUTNO}
+		      ,CO.BANK_CODE = #{BANK_CODE}
+		      ,CO.UNIPASS_ID = #{UNIPASS_ID}
+		      ,CO.UNIPASS_DOC_BOX_CODE = #{UNIPASS_DOC_BOX_CODE}
+		      ,CO.DRWBAK_SE_CODE = #{DRWBAK_SE_CODE}
+		      ,CO.RTROACT_PD = #{RTROACT_PD}
+		      ,CO.REQREQY_CALC_MTH = #{REQREQY_CALC_MTH}
+		      ,CO.PRIC_RQEST_TYPE = #{PRIC_RQEST_TYPE}
+		 WHERE CO.COMPANY_CODE = #{COMPANY_CODE}
+	</update>
+		
+	<select id="retrieveCustomerList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+		SELECT CU.COMPANY_CODE
+		      ,CU.CUSTOMER_CODE
+		      ,CU.REPRSNT_CUSTOMER_CODE
+		      ,CU.ECTMRK
+		      ,CU.ATTRIBUTE01
+		      ,CU.RPRSNTV_NM
+		      ,CU.NATION_CODE
+		      ,FC01_GET_CODE_NM('NA',CU.NATION_CODE) NATION_NM
+		      ,CU.BIZRNO
+		      ,CU.ZIP
+		      ,CU.ADRES
+		      ,CU.TELNO_1
+		      ,CU.TELNO_2
+		      ,CU.FXNUM
+		      ,CU.EMAIL_ADRES
+		      ,CU.EXCL_AT
+		      ,CU.DELETE_DRCTR
+		  FROM CUSTOMER CU
+		 WHERE CU.COMPANY_CODE = #{COMPANY_CODE}
+			<if test="SEARCH_DELETE_DRCTR != null and SEARCH_DELETE_DRCTR != ''">
+		   AND NVL(CU.DELETE_DRCTR,'N') = #{SEARCH_DELETE_DRCTR}
+			</if>
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'CUSTOMER_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND CU.CUSTOMER_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND CU.CUSTOMER_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND CU.CUSTOMER_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'ATTRIBUTE01'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND CU.ATTRIBUTE01 = #{SEARCH_KEY_WORD}
+			  
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND CU.ATTRIBUTE01 LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND CU.ATTRIBUTE01 LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+		  <include refid="paging-postfix"/>
+	</select>
+		
+	<select id="retrieveCustomerDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT CU.COMPANY_CODE
+		      ,CU.CUSTOMER_CODE
+		      ,CU.REPRSNT_CUSTOMER_CODE
+		      ,CU.ECTMRK
+		      ,CU.ATTRIBUTE01
+		      ,CU.RPRSNTV_NM
+		      ,CU.NATION_CODE
+		      ,FC01_GET_CODE_NM('NA',CU.NATION_CODE) NATION_NM
+		      ,CU.BIZRNO
+		      ,CU.ZIP
+		      ,CU.ADRES
+		      ,CU.TELNO_1
+		      ,CU.TELNO_2
+		      ,CU.FXNUM
+		      ,CU.EMAIL_ADRES
+		      ,CU.EXCL_AT
+		      ,CU.DELETE_DRCTR
+		  FROM CUSTOMER CU
+		 WHERE CU.COMPANY_CODE = #{COMPANY_CODE}
+		   AND CU.CUSTOMER_CODE = #{CUSTOMER_CODE}
+	</select>
+	
+	<update id="updateCustomerDetail" parameterType="HashMap">
+		UPDATE CUSTOMER
+		   SET REPRSNT_CUSTOMER_CODE = #{REPRSNT_CUSTOMER_CODE}
+		      ,ECTMRK = #{ECTMRK}
+		      ,ATTRIBUTE01 = #{ATTRIBUTE01}
+		      ,RPRSNTV_NM = #{RPRSNTV_NM}
+		      ,NATION_CODE = #{NATION_CODE}
+		      ,BIZRNO = #{BIZRNO}
+		      ,ZIP = #{ZIP}
+		      ,ADRES = #{ADRES}
+		      ,TELNO_1 = #{TELNO_1}
+		      ,TELNO_2 = #{TELNO_2}
+		      ,FXNUM = #{FXNUM}
+		      ,EMAIL_ADRES = #{EMAIL_ADRES}
+		      ,EXCL_AT = #{EXCL_AT}
+		      ,DELETE_DRCTR = #{DELETE_DRCTR}
+		 WHERE COMPANY_CODE = #{COMPANY_CODE}
+		   AND CUSTOMER_CODE = #{CUSTOMER_CODE}
+	</update>
+		
+	<select id="retrieveVendorList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+		SELECT VE.COMPANY_CODE
+		      ,VE.VENDOR_CODE
+		      ,VE.ECTMRK
+		      ,VE.VENDOR_NAME
+		      ,VE.RPRSNTV_NM
+		      ,VE.NATION_CODE
+		      ,FC01_GET_CODE_NM('NA',VE.NATION_CODE) NATION_NM
+		      ,VE.BIZRNO
+		      ,VE.ZIP
+		      ,VE.ADRES
+		      ,VE.TELNO_1
+		      ,VE.TELNO_2
+		      ,VE.FXNUM
+		      ,VE.EMAIL_ADRES
+		      ,VE.EXCL_AT
+		      ,VE.DELETE_DRCTR
+		  FROM VENDOR VE
+		 WHERE VE.COMPANY_CODE = #{COMPANY_CODE}
+			<if test="SEARCH_DELETE_DRCTR != null and SEARCH_DELETE_DRCTR != ''">
+		   AND NVL(VE.DELETE_DRCTR,'N') = #{SEARCH_DELETE_DRCTR}
+			</if>
+			<if test="SEARCH_KEY_WORD != null and SEARCH_KEY_WORD != ''">
+				<if test="SEARCH_TYPE == 'VENDOR_CODE'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND VE.VENDOR_CODE = #{SEARCH_KEY_WORD}
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND VE.VENDOR_CODE LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND VE.VENDOR_CODE LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				</if>
+				<if test="SEARCH_TYPE == 'VENDOR_NAME'">
+					<choose>
+	    				<when test="SEARCH_OPTION == 'EQ'">
+	    					AND VE.VENDOR_NAME = #{SEARCH_KEY_WORD}
+			  
+	    				</when>
+	    				<when test="SEARCH_OPTION == 'SW'">
+	    					AND VE.VENDOR_NAME LIKE #{SEARCH_KEY_WORD}|| '%'
+			  			</when>
+	    				<otherwise>
+	    					AND VE.VENDOR_NAME LIKE '%'||#{SEARCH_KEY_WORD}|| '%'
+	    				</otherwise>
+	    			</choose>
+				
+				</if>
+			</if>
+		  <include refid="paging-postfix"/>
+	</select>
+		
+	<select id="retrieveVendorDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT VE.COMPANY_CODE
+		      ,VE.VENDOR_CODE
+		      ,VE.ECTMRK
+		      ,VE.VENDOR_NAME
+		      ,VE.RPRSNTV_NM
+		      ,VE.NATION_CODE
+		      ,FC01_GET_CODE_NM('NA',VE.NATION_CODE) NATION_NM
+		      ,VE.BIZRNO
+		      ,VE.ZIP
+		      ,VE.ADRES
+		      ,VE.TELNO_1
+		      ,VE.TELNO_2
+		      ,VE.FXNUM
+		      ,VE.EMAIL_ADRES
+		      ,VE.EXCL_AT
+		      ,VE.DELETE_DRCTR
+		  FROM VENDOR VE
+		 WHERE VE.COMPANY_CODE = #{COMPANY_CODE}
+		   AND VE.VENDOR_CODE = #{VENDOR_CODE}
+	</select>
+	
+	<update id="updateVendor" parameterType="HashMap">
+		UPDATE VENDOR
+		   SET ECTMRK = #{ECTMRK}
+		      ,VENDOR_NAME = #{VENDOR_NAME}
+		      ,RPRSNTV_NM = #{RPRSNTV_NM}
+		      ,NATION_CODE = #{NATION_CODE}
+		      ,BIZRNO = #{BIZRNO}
+		      ,ZIP = #{ZIP}
+		      ,ADRES = #{ADRES}
+		      ,TELNO_1 = #{TELNO_1}
+		      ,TELNO_2 = #{TELNO_2}
+		      ,FXNUM = #{FXNUM}
+		      ,EMAIL_ADRES = #{EMAIL_ADRES}
+		      ,EXCL_AT = #{EXCL_AT}
+		      ,DELETE_DRCTR = #{DELETE_DRCTR}
+		 WHERE COMPANY_CODE = #{COMPANY_CODE}
+		   AND VENDOR_CODE = #{VENDOR_CODE}
+	</update>
+	
+	<select id="retrieveDrwbakLmttList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+		SELECT DLR.COMPANY_CODE
+		      ,DLR.DRWBAK_LMTT_REGLTN
+		      ,FC01_GET_CODE_NM('DL',DLR.DRWBAK_LMTT_REGLTN) DRWBAK_LMTT_REGLTN_NM
+		      ,DLR.HS_CODE
+		      ,DLR.EFECT_BGNDE
+		      ,DLR.EFECT_ENDDE
+		      ,DLR.RM
+		  FROM DRWBAK_LMTT_REGLTN DLR
+		 WHERE DLR.COMPANY_CODE = #{COMPANY_CODE}
+			<if test="SEARCH_DRWBAK_LMTT_REGLTN != null and SEARCH_DRWBAK_LMTT_REGLTN != ''">
+		   AND DLR.DRWBAK_LMTT_REGLTN = #{SEARCH_DRWBAK_LMTT_REGLTN}
+			</if>
+			<if test="SEARCH_HS_CODE != null and SEARCH_HS_CODE != ''">
+		   AND DLR.HS_CODE LIKE #{SEARCH_HS_CODE} || '%'
+			</if>
+			<if test="SEARCH_YYYYMMDD != null and SEARCH_YYYYMMDD != ''">
+		   AND #{SEARCH_YYYYMMDD} BETWEEN DLR.EFECT_BGNDE AND DLR.EFECT_ENDDE
+			</if>
+		  <include refid="paging-postfix"/>
+	</select>
+	
+	<select id="retrieveDrwbakLmttDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT DLR.COMPANY_CODE
+		      ,DLR.DRWBAK_LMTT_REGLTN
+		      ,DLR.HS_CODE
+		      ,DLR.EFECT_BGNDE
+		      ,DLR.EFECT_ENDDE
+		      ,DLR.RM
+		  FROM DRWBAK_LMTT_REGLTN DLR
+		 WHERE DLR.COMPANY_CODE = #{COMPANY_CODE}
+		   AND DLR.DRWBAK_LMTT_REGLTN = #{DRWBAK_LMTT_REGLTN}
+		   AND DLR.HS_CODE = #{HS_CODE}
+		   AND DLR.EFECT_BGNDE = #{EFECT_BGNDE}
+	</select>
+	
+	<insert id="insertDrwbakLmttDetail" parameterType="HashMap" >
+		INSERT INTO DRWBAK_LMTT_REGLTN DLR
+		      (DLR.COMPANY_CODE
+		      ,DLR.DRWBAK_LMTT_REGLTN
+		      ,DLR.HS_CODE
+		      ,DLR.EFECT_BGNDE
+		      ,DLR.EFECT_ENDDE
+		      ,DLR.RM)
+		VALUES(#{COMPANY_CODE}
+		      ,#{DRWBAK_LMTT_REGLTN}
+		      ,#{HS_CODE}
+		      ,#{EFECT_BGNDE}
+		      ,#{EFECT_ENDDE}
+		      ,#{RM})
+	</insert>
+	
+	<update id="updateDrwbakLmttDetail" parameterType="HashMap" >
+		UPDATE DRWBAK_LMTT_REGLTN DLR
+		   SET DLR.EFECT_ENDDE = #{EFECT_ENDDE}
+		      ,DLR.RM = #{RM}
+		 WHERE DLR.COMPANY_CODE = #{COMPANY_CODE}
+		   AND DLR.DRWBAK_LMTT_REGLTN = #{DRWBAK_LMTT_REGLTN}
+		   AND DLR.HS_CODE = #{HS_CODE}
+		   AND DLR.EFECT_BGNDE = #{EFECT_BGNDE}
+	</update>
+	
+	<update id="mergeDrwbakLmttDetail" parameterType="HashMap" >
+		 MERGE INTO DRWBAK_LMTT_REGLTN DLR
+		 USING (SELECT #{COMPANY_CODE} COMPANY_CODE
+		              ,#{DRWBAK_LMTT_REGLTN} DRWBAK_LMTT_REGLTN
+		              ,#{HS_CODE} HS_CODE
+		              ,#{EFECT_BGNDE} EFECT_BGNDE
+		              ,#{EFECT_ENDDE} EFECT_ENDDE
+		              ,#{RM} RM
+		          FROM DUAL) PARA
+		    ON (DLR.COMPANY_CODE = PARA.COMPANY_CODE
+		   AND DLR.DRWBAK_LMTT_REGLTN = PARA.DRWBAK_LMTT_REGLTN
+		   AND DLR.HS_CODE = PARA.HS_CODE
+		   AND DLR.EFECT_BGNDE = PARA.EFECT_BGNDE)
+		  WHEN MATCHED THEN
+		UPDATE
+		   SET DLR.EFECT_ENDDE = PARA.EFECT_ENDDE
+		      ,DLR.RM = PARA.RM
+		  WHEN NOT MATCHED THEN
+		INSERT (COMPANY_CODE
+		      ,DRWBAK_LMTT_REGLTN
+		      ,HS_CODE
+		      ,EFECT_BGNDE
+		      ,EFECT_ENDDE
+		      ,RM)
+		VALUES(PARA.COMPANY_CODE
+		      ,PARA.DRWBAK_LMTT_REGLTN
+		      ,PARA.HS_CODE
+		      ,PARA.EFECT_BGNDE
+		      ,PARA.EFECT_ENDDE
+		      ,PARA.RM)
+	</update>
+	
+	<delete id="deleteDrwbakLmttDetail" parameterType="HashMap" >
+		DELETE
+		  FROM DRWBAK_LMTT_REGLTN DLR
+		 WHERE DLR.COMPANY_CODE = #{COMPANY_CODE}
+		   AND DLR.DRWBAK_LMTT_REGLTN = #{DRWBAK_LMTT_REGLTN}
+		   AND DLR.HS_CODE = #{HS_CODE}
+		   AND DLR.EFECT_BGNDE = #{EFECT_BGNDE}
+	</delete>
+
+	<select id="retrieveItemList" parameterType="HashMap" resultType="HashMap">
+		<include refid="paging-prefix"/>
+		SELECT A.COMPANY_CODE  
+		     , C.COMPANY_NM AS COMPANY_NAME
+		     , A.ITEM_CODE
+		     , A.ITEM_NAME
+		     , A.ITEM_NAME_ENG
+		     , PRODUCT_CODE
+		     , SPEC
+		     , ASSETS_TYPE
+		     , HS_CODE
+		     , UNIT
+		     , WEIGHT
+		     , TO_CHAR(CREATE_DATE, 'YYYY-MM-DD') AS CREATE_DATE
+		  FROM ITEM_MST A
+		 INNER JOIN COMPANY C
+		    ON A.COMPANY_CODE = C.COMPANY_CODE
+		 WHERE 1=1
+		   AND A.COMPANY_CODE = #{COMPANY_CODE}
+			<if test="SEARCH_ITEM_CODE != null and SEARCH_ITEM_CODE != ''">
+			AND A.ITEM_CODE LIKE #{SEARCH_ITEM_CODE}|| '%'
+			</if>
+			<if test="SEARCH_ITEM_NAME != null and SEARCH_ITEM_NAME != ''">
+			AND A.ITEM_NAME LIKE #{SEARCH_ITEM_NAME}|| '%'
+			</if>
+			<if test="SEARCH_ASSETS_TYPE != null and SEARCH_ASSETS_TYPE != ''">
+			AND A.ASSETS_TYPE LIKE #{SEARCH_ASSETS_TYPE}|| '%'
+			</if>
+			<if test="SEARCH_HS_CODE != null and SEARCH_HS_CODE != ''">
+			AND A.HS_CODE LIKE #{SEARCH_HS_CODE}|| '%'
+			</if>
+		 ORDER BY A.COMPANY_CODE, A.ITEM_CODE
+		 <include refid="paging-postfix"/>
+	</select>
+	
+	
+</mapper>
+ 

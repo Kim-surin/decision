@@ -1,0 +1,2476 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.drawbackdoc.DrawbackDocDao">
+
+    
+    <select id="retrieve_Drwbak_Cmmn" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		      COMPANY_CODE
+		      , CSMHSE_CODE
+		      , SUBMIT_NO
+		      , STTEMNT_DOC_STLE
+		      , DRWBAK_SE_CODE
+		      , XPORT_TYPE
+		      , ACNUTNO
+		      , BANK_CODE
+		      , BASS_UNIT
+		      , ACCMLT_ORDER_QY
+		      , STTEMNT_PC_KRW
+		      , REQREQY_CALC_MTH
+		      , STD_ITEM_NM
+		      , HS_CODE
+		      , ECTMRK
+		      , BIZRNO
+		      , CALC_DRWBAK_AMOUNT AS CUD
+		      , IND
+		      , "5AA"
+		      , ACT
+		      , "5AB"
+		      , CAP
+		      , CALC_DRWBAK_AMOUNT AS "5CZ"
+		      , NATION_CODE
+	          , MANUFAC_BIZRNO
+	          , MANUFAC_ECTMRK
+		 FROM(
+		    SELECT A.COMPANY_CODE
+		           , COMP.CSMHSE_CODE /* 세관코드 */
+		           , A.SUBMIT_NO /* 제출번호 */
+		           , A.STTEMNT_DOC_STLE  /* 문서형태구분(GOVCBR5DA) */
+		           , A.DRWBAK_SE_CODE /* 환급구분 코드  개별환급 : 3  */
+		           , A.XPORT_TYPE
+		           , A.ACNUTNO
+		           , A.BANK_CODE
+		           , A.BASS_UNIT
+		           , ISSUE.ISSUE_ACCMLT_ORDER_QY AS ACCMLT_ORDER_QY
+                   , ISSUE.ISSUE_STTEMNT_PC_KRW AS STTEMNT_PC_KRW
+		           , A.REQREQY_CALC_MTH
+		           , SUBSTR((SELECT ITM.ITEM_NM 
+		                       FROM DRWBAK_REQSTDOC_TRGET_THNG ITM 
+		                      WHERE ITM.PRESENTN_NO = A.PRESENTN_NO
+		                        AND ITM.DIVISION_CODE = A.DIVISION_CODE
+		                        AND ROWNUM = 1),1, 299) AS STD_ITEM_NM
+		           ,A.HS_CODE
+		           ,COMP.ECTMRK
+		           ,COMP.BIZRNO
+		           ,A.CSTMS         AS CUD   -- 관세
+		           ,A.INTTAX        AS IND   -- 개별소비세액
+		           ,A.TRANTAX       AS "5AA" -- 교통에너지환경세액
+		           ,A.LQTX_AMOUNT   AS ACT   -- 주세액
+		           ,A.ECX_AMOUNT    AS "5AB" -- 교육세액
+		           ,A.AGSPT         AS CAP   -- 농특세액
+		           ,A.DRWBAK_AMOUNT AS "5CZ" -- 세액 합계
+		           ,CASE WHEN A.NATION_CODE IN ('CN', 'EU', 'US') THEN A.NATION_CODE
+		                ELSE 'ZZ' 
+		            END AS NATION_CODE
+	               ,CASE WHEN A.MANUFAC_NAME = '미상' THEN '0000000000'
+	                     WHEN A.MANUFAC_NAME LIKE '%아모레퍼시픽%' THEN (SELECT CC.BIZRNO FROM COMPANY CC WHERE CC.COMPANY_CODE = '1100' AND ROWNUM = 1)
+	                     WHEN A.MANUFAC_NAME LIKE '%코스비젼%' THEN (SELECT CC.BIZRNO FROM COMPANY CC WHERE CC.COMPANY_CODE = '1500' AND ROWNUM = 1)
+	                 END AS MANUFAC_BIZRNO
+	               ,CASE
+	                     WHEN A.MANUFAC_NAME = '미상' THEN '제조미상9999000'
+	                     WHEN A.MANUFAC_NAME LIKE '%아모레퍼시픽%' THEN (SELECT CC.ECTMRK FROM COMPANY CC WHERE CC.COMPANY_CODE = '1100' AND ROWNUM = 1)
+	                     WHEN A.MANUFAC_NAME LIKE '%코스비젼%' THEN (SELECT CC.ECTMRK FROM COMPANY CC WHERE CC.COMPANY_CODE = '1500' AND ROWNUM = 1)
+	                 END AS MANUFAC_ECTMRK
+		           /* 환급 총액 별도 계산 */
+		           ,TRUNC((SELECT TRUNC(SUM(TAX_SUM), -1)
+		                            FROM (SELECT (CASE
+		                                           WHEN B.IMP_BASS_UNIT =
+		                                                A.BASS_UNIT THEN
+		                                            A.USGQTY
+		                                           ELSE
+		                                            (CASE
+		                                              WHEN B.IMP_BASS_UNIT = 'KG' THEN
+		                                               A.USGQTY / 1000
+		                                              WHEN B.IMP_BASS_UNIT = 'LB' THEN
+		                                               A.USGQTY / 0.453592 / 1000
+		                                              WHEN B.IMP_BASS_UNIT = 'DR' THEN
+		                                               A.USGQTY / 1000 / 30
+		                                              WHEN B.IMP_BASS_UNIT = 'GR' THEN
+		                                               A.USGQTY / 0.064799
+		                                              WHEN B.IMP_BASS_UNIT = 'MT' THEN
+		                                               A.USGQTY / 1000 / 1000
+		                                              ELSE
+		                                               B.QY
+		                                            END)
+		                                         END) AS USGQTY,
+		                                         TRUNC(A.CSTMS) + TRUNC(A.INTTAX) + TRUNC(A.ECX_AMOUNT) + TRUNC(A.AGSPT) + TRUNC(A.TRANTAX) + TRUNC(A.LQTX_AMOUNT) AS TAX_SUM
+		                                    FROM DRWBAK_REQSTDOC_INCME_RAWMTRL A
+		                                   INNER JOIN INCME_LOCAL_BNT_SM B
+		                                      ON A.COMPANY_CODE = B.COMPANY_CODE
+		                                     AND A.RAWMTRL_CODE = B.ITEM_CODE
+		                                     AND A.LNE_NO = B.LNE_NO
+		                                     AND A.POUCH_NO = B.POUCH_NO
+		                                     AND A.IMPDEC_NO = B.IMPDEC_NO
+		                                   <!-- INNER JOIN IMPDEC_CERFIN_ITEM C
+		                                      ON A.COMPANY_CODE = C.COMPANY_CODE
+		                                     AND A.RAWMTRL_CODE = C.ITEM_CODE
+		                                     AND A.LNE_NO = C.LNE_NO
+		                                     AND A.POUCH_NO = C.POUCH_NO
+		                                     AND A.IMPDEC_NO = C.IMPDEC_NO -->
+		                                   WHERE TRUNC(A.CSTMS, 4) <![CDATA[>]]> 0
+		                                     AND A.COMPANY_CODE = #{COMPANY_CODE}
+		                                     AND A.PRESENTN_NO = #{PRESENTN_NO})
+		                           WHERE TRUNC(USGQTY, 3) > 0.000999999999999), -1) AS CALC_DRWBAK_AMOUNT
+		      FROM DRWBAK_REQSTDOC_CMMN A
+		     INNER JOIN COMPANY COMP
+		        ON A.COMPANY_CODE = COMP.COMPANY_CODE
+   	         /* 발급대상만 수량 및 판매금액 계산 */
+             INNER JOIN (SELECT COMPANY_CODE,
+                                 DIVISION_CODE,
+                                 PRESENTN_NO,
+                                 SUM(ACCMLT_ORDER_QY) AS ISSUE_ACCMLT_ORDER_QY,
+                                 SUM(STTEMNT_PC_KRW) AS ISSUE_STTEMNT_PC_KRW
+                            FROM (SELECT DISTINCT COMPANY_CODE,
+                                                  DIVISION_CODE,
+                                                  PRESENTN_NO,
+                                                  XPORT_STTEMNT_NO,
+                                                  LNE_NO,
+                                                  POUCH_NO,
+                                                  ACCMLT_ORDER_QY,
+                                                  BASS_UNIT,
+                                                  STTEMNT_PC_KRW,
+                                                  THNG_SEQ
+                                    FROM (SELECT T.COMPANY_CODE,
+                                                 T.DIVISION_CODE,
+                                                 T.PRESENTN_NO,
+                                                 T.XPORT_STTEMNT_NO,
+                                                 T.LNE_NO,
+                                                 T.POUCH_NO,
+                                                 T.ACCMLT_ORDER_QY,
+                                                 T.BASS_UNIT,
+                                                 TRUNC(T.STTEMNT_PC_KRW) AS STTEMNT_PC_KRW,
+                                                 T.THNG_SEQ,
+                                                 CASE WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN A.USGQTY
+                                                      ELSE (CASE WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+                                                                 WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+                                                                 WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+                                                                 WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+                                                                 WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+                                                                 ELSE B.QY
+                                                             END)
+                                                 END AS USGQTY
+                                            FROM DRWBAK_REQSTDOC_TRGET_THNG T
+                                           INNER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL A
+                                              ON T.COMPANY_CODE = A.COMPANY_CODE
+                                             AND T.PRESENTN_NO = A.PRESENTN_NO
+                                             AND T.THNG_SEQ = A.THNG_SEQ
+                                           INNER JOIN INCME_LOCAL_BNT_SM B
+                                              ON A.COMPANY_CODE = B.COMPANY_CODE
+                                             AND A.RAWMTRL_CODE = B.ITEM_CODE
+                                             AND A.LNE_NO = B.LNE_NO
+                                             AND A.POUCH_NO = B.POUCH_NO
+                                             AND A.IMPDEC_NO = B.IMPDEC_NO
+                                           <!-- INNER JOIN IMPDEC_CERFIN_ITEM C
+                                              ON A.COMPANY_CODE = C.COMPANY_CODE
+                                             AND A.RAWMTRL_CODE = C.ITEM_CODE
+                                             AND A.LNE_NO = C.LNE_NO
+                                             AND A.POUCH_NO = C.POUCH_NO
+                                             AND A.IMPDEC_NO = C.IMPDEC_NO -->
+                                           WHERE TRUNC(A.CSTMS, 4) <![CDATA[>]]> 0
+                                             AND T.COMPANY_CODE = #{COMPANY_CODE}
+                                             AND T.PRESENTN_NO = #{PRESENTN_NO}) X
+                                   WHERE TRUNC(USGQTY, 3) > 0.000999999999999)
+                           GROUP BY COMPANY_CODE, DIVISION_CODE, PRESENTN_NO) ISSUE
+                ON A.COMPANY_CODE = ISSUE.COMPANY_CODE
+               AND A.DIVISION_CODE = ISSUE.DIVISION_CODE
+               AND A.PRESENTN_NO = ISSUE.PRESENTN_NO
+		     WHERE A.PRESENTN_NO = #{PRESENTN_NO}
+		       AND A.COMPANY_CODE = #{COMPANY_CODE}
+				   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		) 
+    </select>
+    
+    <select id="retrieve_Drwbak_Thng" parameterType="HashMap" resultType="HashMap">
+		SELECT LPAD(ROWNUM, 4, '0') AS LINE_NUMBER,
+		               ITEM_CODE,
+		               XPORT_DIV_CODE,
+		               XPORT_STTEMNT_NO,
+		               LPAD(LNE_NO, 3, '0') AS LNE_NO,
+		               LPAD(POUCH_NO, 2, '0') AS POUCH_NO,
+		               DSPTH_DATE,
+		               ACCMLT_ORDER_QY,
+		               BASS_UNIT,
+		               STTEMNT_PC_KRW
+		          FROM (
+		                  SELECT DISTINCT ITEM_CODE,
+		                         XPORT_DIV_CODE,
+		                         XPORT_STTEMNT_NO,
+		                         LNE_NO,
+		                         POUCH_NO,
+		                         DSPTH_DATE,
+		                         ACCMLT_ORDER_QY,
+		                         BASS_UNIT,
+		                         STTEMNT_PC_KRW,
+		                         THNG_SEQ
+		                    FROM (SELECT T.ITEM_CODE,
+		                                 '01' AS XPORT_DIV_CODE,
+		                                 T.XPORT_STTEMNT_NO,
+		                                 T.LNE_NO,
+		                                 T.POUCH_NO,
+		                                 T.DSPTH_DATE,
+		                                 T.ACCMLT_ORDER_QY,
+		                                 T.BASS_UNIT,
+		                                 TRUNC(T.STTEMNT_PC_KRW) AS STTEMNT_PC_KRW,
+		                                 T.THNG_SEQ,
+		                                 CASE WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN A.USGQTY
+		                                      ELSE (CASE WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+		                                                 WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+		                                                 WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+		                                                 WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+		                                                 WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+		                                                 ELSE B.QY END)
+		                                 END AS USGQTY
+		                            FROM DRWBAK_REQSTDOC_TRGET_THNG T
+		                           INNER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL A
+		                              ON T.COMPANY_CODE = A.COMPANY_CODE
+		                             AND T.PRESENTN_NO = A.PRESENTN_NO
+		                             AND T.THNG_SEQ = A.THNG_SEQ
+		                           INNER JOIN INCME_LOCAL_BNT_SM B
+		                              ON A.COMPANY_CODE = B.COMPANY_CODE
+		                             AND A.RAWMTRL_CODE = B.ITEM_CODE
+		                             AND A.LNE_NO = B.LNE_NO
+		                             AND A.POUCH_NO = B.POUCH_NO
+		                             AND A.IMPDEC_NO = B.IMPDEC_NO
+		                           <!-- INNER JOIN IMPDEC_CERFIN_ITEM C
+		                              ON A.COMPANY_CODE = C.COMPANY_CODE
+		                             AND A.RAWMTRL_CODE = C.ITEM_CODE
+		                             AND A.LNE_NO = C.LNE_NO
+		                             AND A.POUCH_NO = C.POUCH_NO
+		                             AND A.IMPDEC_NO = C.IMPDEC_NO -->
+		                           WHERE TRUNC(A.CSTMS, 4) <![CDATA[>]]> 0
+		                             AND T.COMPANY_CODE = #{COMPANY_CODE}
+		                             AND T.PRESENTN_NO = #{PRESENTN_NO}
+		                             AND T.DIVISION_CODE = #{DIVISION_CODE}
+		                             ORDER BY XPORT_STTEMNT_NO, LNE_NO, POUCH_NO) X
+		                   WHERE TRUNC(USGQTY, 3) > 0.000999999999999
+		                   ORDER BY X.XPORT_STTEMNT_NO, X.LNE_NO, X.POUCH_NO
+		                   )
+    </select>
+
+    <select id="retrieve_Drwbak_Rawmtrl" parameterType="HashMap" resultType="HashMap">    
+		SELECT LPAD(ROWNUM, 5, '0') AS LINE_NUMBER,
+		           LPAD(POUCH_NO, 2, '0') AS POUCH_NO,
+		           LPAD(LNE_NO, 3, '0') AS LNE_NO,
+		           RAWMTRL_SE,
+		           RAWMTRL_CODE,
+		           ITEM_CODE,
+		           BASS_UNIT,
+		           USGQTY,
+		           IMPDEC_NO,
+		           ACPT_DATE,
+		           HS_CODE,
+		           --UNIT_PRICE,
+		           CUD,
+		           IND,
+		           "5AA",
+		           ACT,
+		           "5AB",
+		           CAP,
+		           "5CZ"
+		      FROM (SELECT A.POUCH_NO,
+		                   A.LNE_NO,
+		                   A.RAWMTRL_SE,
+		                   A.RAWMTRL_CODE,
+		                   A.ITEM_CODE,
+		                   B.IMP_BASS_UNIT AS BASS_UNIT,
+		                   TRUNC(CASE
+		                        WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN
+		                         A.USGQTY
+		                        ELSE
+		                         (CASE
+		                           WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+		                           WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+		                           WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+		                           WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+		                           WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+		                           ELSE
+		                            B.QY
+		                         END)
+		                      END, 3) AS USGQTY,
+		                   A.IMPDEC_NO,
+		                   A.ACPT_DATE,
+		                   B.HS_CODE,
+		                   --C.UNIT_PRICE,
+		                   TRUNC(A.CSTMS)         AS CUD,   -- 관세
+                           TRUNC(A.INTTAX)        AS IND,   -- 개별소비세액
+                           TRUNC(A.TRANTAX)       AS "5AA", -- 교통에너지환경세액
+                           TRUNC(A.LQTX_AMOUNT)   AS ACT,   -- 주세액
+                           TRUNC(A.ECX_AMOUNT)    AS "5AB", -- 교육세액
+                           TRUNC(A.AGSPT)         AS CAP,   -- 농특세액
+                           TRUNC(A.DRWBAK_AMOUNT) AS "5CZ" -- 세액 합계
+		            
+		              FROM DRWBAK_REQSTDOC_INCME_RAWMTRL A
+		             INNER JOIN INCME_LOCAL_BNT_SM B
+		                ON A.COMPANY_CODE = B.COMPANY_CODE
+		               AND A.RAWMTRL_CODE = B.ITEM_CODE
+		               AND A.LNE_NO = B.LNE_NO
+		               AND A.POUCH_NO = B.POUCH_NO
+		               AND A.IMPDEC_NO = B.IMPDEC_NO
+		             <!-- INNER JOIN IMPDEC_CERFIN_ITEM C
+		                ON A.COMPANY_CODE = C.COMPANY_CODE
+		               AND A.RAWMTRL_CODE = C.ITEM_CODE
+		               AND A.LNE_NO = C.LNE_NO
+		               AND A.POUCH_NO = C.POUCH_NO
+		               AND A.IMPDEC_NO = C.IMPDEC_NO -->
+		             WHERE TRUNC(A.CSTMS, 4) <![CDATA[>]]> 0
+		               AND A.PRESENTN_NO = #{PRESENTN_NO}
+		               AND A.COMPANY_CODE = #{COMPANY_CODE}
+		             ORDER BY THNG_SEQ, RAWMTRL_SEQ)
+		     WHERE TRUNC(USGQTY, 3) > 0.000999999999999
+	</select>
+	
+	
+	<select id="checkNewSubmitNo_drwb" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN A.SUBMIT_NO IS NULL THEN 'Y' ELSE 'N' END AS NEW_SUBMIT_NO_YN
+		  FROM DRWBAK_REQSTDOC_CMMN A 
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+	</select>
+	
+	<update id="createNewSubmitNo" parameterType="HashMap">
+		UPDATE CSMHSE_SUBMIT_NO_MST A
+		   SET A.CURRENT_NO  = A.CURRENT_NO + 1
+		 WHERE A.COMPANY_CODE= #{COMPANY_CODE}
+		   AND A.YY = TO_CHAR(SYSDATE, 'YY')	
+	</update>
+	
+
+	<update id="updateSubmitNo_drwb" parameterType="HashMap">
+		UPDATE DRWBAK_REQSTDOC_CMMN A
+		   SET A.SUBMIT_NO = (SELECT A.PRESENTN_NO||TO_CHAR(SYSDATE, 'YY')||LPAD(B.CURRENT_NO, 6, '0') AS SUBMIT_NO
+		                        FROM COMPANY A
+		                       INNER JOIN CSMHSE_SUBMIT_NO_MST B
+		                          ON A.COMPANY_CODE = B.COMPANY_CODE
+		                       WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                         AND B.YY = TO_CHAR(SYSDATE, 'YY'))
+		       ,A.EXECUT_AT = NULL
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	
+	<select id="checkNewSubmitNo_cmmn" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN A.SUBMIT_NO IS NULL THEN 'Y' ELSE 'N' END AS NEW_SUBMIT_NO_YN
+		  FROM CTRM_CMMN A 
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+	</select>
+	
+	
+	<update id="updateDrwbStatus" parameterType="HashMap">
+		UPDATE DRWBAK_REQSTDOC_CMMN A
+		   SET A.EXECUT_AT = 'Y'
+		       ,A.EXECUT_STATUS = '00' -- 접수중
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	<update id="updateSubmitNo_init_part" parameterType="HashMap">
+		UPDATE CTRM_CMMN A
+		   SET A.SUBMIT_NO = (SELECT A.PRESENTN_NO||TO_CHAR(SYSDATE, 'YY')||LPAD(B.CURRENT_NO, 6, '0') AS SUBMIT_NO
+		                        FROM COMPANY A
+		                       INNER JOIN CSMHSE_SUBMIT_NO_MST B
+		                          ON A.COMPANY_CODE = B.COMPANY_CODE
+		                       WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                         AND B.YY = TO_CHAR(SYSDATE, 'YY'))
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	<select id="retrieve_partial" parameterType="HashMap" resultType="HashMap">
+		SELECT A.PRESENTN_NO
+		       , A.STTEMNT_DOC_STLE
+		       , A.CSMHSE_CODE
+		       , A.ECTMRK
+		       , A.BIZRNO
+		       , A.CSTMR_ECTMRK
+		       , A.CSTMR_BIZRNO
+		       , A.HS_CODE
+		       , A.CHIT_FRMTRM_DATE
+		       , A.ACPLC_CRNCY
+		       , A.CSTMS      		AS CUD    -- 관세
+		       , A.INTTAX       	AS IND    -- 개별소비세액
+		       , A.TRANTAX      	AS "5AA"  -- 교통에너지환경세액
+		       , A.LQTX_AMOUNT    	AS ACT    -- 주세액
+		       , A.ECX_AMOUNT   	AS "5AB"  -- 교육세액
+		       , A.AGSPT      		AS CAP    -- 농특세액
+		       , A.DRWBAK_AMOUNT  	AS "5CZ"  -- 세액 합계
+		       , B.TELNO_1
+		       , NULL AS AGENT_ID
+		       , A.STTEMNT_PC_KRW 
+		       , A.ACCMLT_ORDER_QY
+		       , A.BASS_UNIT
+		       , A.SUBMIT_NO
+		       , B.UNIPASS_ID 							-- 유니패스ID
+	           , B.UNIPASS_DOC_BOX_CODE 				-- 문서함코드
+	           , '' AS UNIPASS_STATUS					-- 유니패스 상태값
+	           , 'GOVCBR5DE' AS STTEMNT_DOC_STLE	-- 문서형태코드
+	           , A.EXECUT_AT
+	           , A.EXECUT_STATUS
+		FROM CTRM_CMMN A 
+		     INNER JOIN COMPANY B
+		     ON A.COMPANY_CODE = B.COMPANY_CODE
+		WHERE A.ISSUE_TYPE = '04'
+			AND A.COMPANY_CODE = #{COMPANY_CODE}
+			AND A.PRESENTN_NO = #{PRESENTN_NO}
+			AND A.STTEMNT_PC_KRW > 0
+	</select>
+	
+	<select id="retrieve_partial_thng" parameterType="HashMap" resultType="HashMap">
+		SELECT LPAD(ROWNUM, 3, '0') AS LINE_NUMBER
+		       , RAWMTRL_SE, IMPDEC_NO, LNE_NO, GOODS_BRAND, ORGIN_NATION_CODE, USGQTY
+		       , BASS_UNIT, ACPT_DATE, DATE_EX, BASIS_DOC_NO
+		       , CUD, IND, "5AA", ACT, "5AB", CAP, "5CZ", POUCH_NO, RAWMTRL_CODE, ITEM_NM, STTEMNT_PC_KRW, ACPLC_CRNCY
+		  FROM (SELECT RAWMTRL_SE
+		               , IMPDEC_NO
+		               , LNE_NO
+		               , GOODS_BRAND
+		               , ORGIN_NATION_CODE
+		               , SUM(USGQTY) AS USGQTY
+		               , BASS_UNIT
+		               , ACPT_DATE
+		               , DATE_EX
+		               , BASIS_DOC_NO
+		               , SUM(CUD) AS CUD
+		               , SUM(IND) AS IND
+		               , SUM("5AA") AS "5AA"
+		               , SUM(ACT) AS ACT
+		               , SUM("5AB") AS "5AB"
+		               , SUM(CAP) AS CAP
+		               , SUM("5CZ") AS "5CZ"
+		               , POUCH_NO
+		               , RAWMTRL_CODE
+		               , ITEM_NM
+		               , SUM(STTEMNT_PC_KRW) AS STTEMNT_PC_KRW
+		               , ACPLC_CRNCY
+		          FROM ( SELECT A.RAWMTRL_SE
+		                        , A.IMPDEC_NO
+		                        , LPAD(A.LNE_NO, 3, '0') AS LNE_NO
+		                        , A.GOODS_BRAND
+		                        , A.ORGIN_NATION_CODE
+		                        , TRUNC(CASE
+		                            WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN
+		                             A.USGQTY
+		                            ELSE
+		                             (CASE
+		                               WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+		                               WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+		                               WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+		                               WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+		                               WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+		                               ELSE B.QY
+		                             END)
+		                          END, 3) AS USGQTY
+		                        , B.IMP_BASS_UNIT AS  BASS_UNIT
+		                        , A.ACPT_DATE
+		                        , A.DATE_EX
+		                        , '['||LPAD(A.SUPT_DOC_SE, 2,'0')||']매매계약서 등' AS BASIS_DOC_NO
+		                        , A.CSTMS       AS CUD    -- 관세
+		                        , A.INTTAX      AS IND    -- 개별소비세액
+		                        , A.TRANTAX     AS "5AA"  -- 교통에너지환경세액
+		                        , A.LQTX_AMOUNT   AS ACT    -- 주세액
+		                        , A.ECX_AMOUNT    AS "5AB"  -- 교육세액
+		                        , A.AGSPT     AS CAP    -- 농특세액
+		                        , A.DRWBAK_AMOUNT   AS "5CZ"  -- 세액 합계
+		                        , LPAD(A.POUCH_NO, 2, '0') AS POUCH_NO
+		                        , A.RAWMTRL_CODE
+		                        , A.ITEM_NM
+		                        , A.STTEMNT_PC_KRW
+		                        , A.ACPLC_CRNCY
+		                   FROM CTRM_THING_RAWMTRL A
+		                  INNER JOIN INCME_LOCAL_BNT_SM B
+		                     ON A.COMPANY_CODE = B.COMPANY_CODE
+		                    AND A.IMPDEC_NO = B.IMPDEC_NO
+		                    AND A.LNE_NO = B.LNE_NO
+		                    AND A.POUCH_NO = B.POUCH_NO
+		                    AND A.RAWMTRL_CODE = B.ITEM_CODE
+		                  WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			                AND A.PRESENTN_NO = #{PRESENTN_NO}
+		                      AND A.STTEMNT_PC_KRW > 0
+		                      AND A.CSTMS > 0 
+		               ) A
+		        GROUP BY RAWMTRL_SE
+		               , IMPDEC_NO
+		               , LNE_NO
+		               , GOODS_BRAND
+		               , ORGIN_NATION_CODE
+		               , BASS_UNIT
+		               , ACPT_DATE
+		               , DATE_EX
+		               , BASIS_DOC_NO
+		               , POUCH_NO
+		               , RAWMTRL_CODE
+		               , ITEM_NM
+		               , ACPLC_CRNCY
+		        ) LST
+	</select>
+
+	<select id="retrieve_init" parameterType="HashMap" resultType="HashMap">
+		SELECT A.PRESENTN_NO
+		        , A.STTEMNT_DOC_STLE
+		        , A.CHIT_FRMTRM_DATE
+		        , A.DATE_EX
+		        , A.DRWBAK_SE_CODE
+		        , A.CSMHSE_CODE
+		        , A.ECTMRK
+		        , A.BIZRNO
+		        , A.CSTMR_TELNO
+		        , A.CSTMR_ECTMRK
+		        , A.CSTMR_BIZRNO
+		        , A.HS_CODE
+		        , A.REQREQY_CALC_MTH
+		        , NVL(ISSUE.STTEMNT_PC_KRW, 0) AS STTEMNT_PC_KRW
+		        , ISSUE.ACCMLT_ORDER_QY
+		        , A.BASS_UNIT
+		        , TAX.TAX_SUM   AS CUD    -- 관세
+		        , A.INTTAX      AS IND    -- 개별소비세액
+		        , A.TRANTAX     AS "5AA"  -- 교통에너지환경세액
+		        , A.LQTX_AMOUNT   AS ACT    -- 주세액
+		        , A.ECX_AMOUNT    AS "5AB"  -- 교육세액
+		        , A.AGSPT     AS CAP    -- 농특세액
+		        , TAX.TAX_SUM   AS "5CZ"    -- 총세액
+		        , A.SUBMIT_NO
+		        , B.UNIPASS_ID              -- 유니패스ID
+		        , B.UNIPASS_DOC_BOX_CODE        -- 문서함코드
+		        , '' AS UNIPASS_STATUS          -- 유니패스 상태값
+		        , 'GOVCBR5DB' AS STTEMNT_DOC_STLE -- 문서형태코드
+		        , A.EXECUT_AT
+		        , A.EXECUT_STATUS
+		        , TAX.TAX_SUM AS DRWBAK_AMOUNT
+		        FROM CTRM_CMMN A
+		       INNER JOIN ( SELECT PRESENTN_NO
+		                           ,COMPANY_CODE
+		                           ,DIVISION_CODE
+		                           ,SUM(ACCMLT_ORDER_QY) AS ACCMLT_ORDER_QY
+		                           ,SUM(STTEMNT_PC_KRW) AS STTEMNT_PC_KRW
+		                      FROM (SELECT DISTINCT
+		                                   PRESENTN_NO
+		                                   , COMPANY_CODE
+		                                   , DIVISION_CODE
+		                                   , ACCMLT_ORDER_QY
+		                                   , STTEMNT_PC_KRW
+		
+		                              FROM (SELECT  A.PRESENTN_NO
+		                                            , A.COMPANY_CODE
+		                                            , A.DIVISION_CODE
+		                                            , A.ACCMLT_ORDER_QY
+		                                            , A.STTEMNT_PC_KRW
+		                                            , CASE WHEN B.IMP_BASS_UNIT = AA.BASS_UNIT THEN AA.USGQTY
+		                                                         ELSE
+		                                                           (CASE
+		                                                               WHEN B.IMP_BASS_UNIT = 'KG' THEN AA.USGQTY / 1000
+		                                                               WHEN B.IMP_BASS_UNIT = 'LB' THEN AA.USGQTY / 0.453592 / 1000
+		                                                               WHEN B.IMP_BASS_UNIT = 'DR' THEN AA.USGQTY / 1000 / 30
+		                                                               WHEN B.IMP_BASS_UNIT = 'GR' THEN AA.USGQTY / 0.064799
+		                                                               WHEN B.IMP_BASS_UNIT = 'MT' THEN AA.USGQTY / 1000 / 1000
+		                                                             ELSE B.QY
+		                                                             END)
+		                                                     END AS USGQTY
+		                                      FROM CTRM_TRGET_THNG A
+		                                     INNER JOIN CTRM_INCME_RAWMTRL AA
+		                                        ON A.COMPANY_CODE = AA.COMPANY_CODE
+		                                       AND A.DIVISION_CODE = AA.DIVISION_CODE
+		                                       AND A.PRESENTN_NO = AA.PRESENTN_NO
+		                                       AND A.SEQ = AA.SEQ
+		                                     INNER JOIN INCME_LOCAL_BNT_SM B
+		                                        ON AA.COMPANY_CODE = B.COMPANY_CODE
+		                                       AND AA.IMPDEC_NO = B.IMPDEC_NO
+		                                       AND AA.LNE_NO = B.LNE_NO
+		                                       AND AA.POUCH_NO = B.POUCH_NO
+		                                       AND AA.RAWMTRL_CODE = B.ITEM_CODE
+		                                     WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                                       AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                                       AND A.PRESENTN_NO = #{PRESENTN_NO}
+		                                       AND AA.CSTMS > 9.9999999999999
+		                                   )
+		                                   WHERE TRUNC(USGQTY, 3) > 0.000999999999999
+		                           )
+		                     GROUP BY PRESENTN_NO, COMPANY_CODE, DIVISION_CODE) ISSUE
+		        ON A.COMPANY_CODE = ISSUE.COMPANY_CODE
+		       AND A.DIVISION_CODE = ISSUE.DIVISION_CODE
+		       AND A.PRESENTN_NO = ISSUE.PRESENTN_NO
+		     INNER JOIN (SELECT A.PRESENTN_NO
+		                       , A.COMPANY_CODE
+		                       , A.DIVISION_CODE
+		                       ,TRUNC(SUM(TAX_SUM), -1) AS TAX_SUM
+		                  FROM ( SELECT A.PRESENTN_NO
+		                                , A.COMPANY_CODE
+		                                , A.DIVISION_CODE
+		                                , TRUNC(CASE WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN A.USGQTY
+		                                             ELSE
+		                                               (CASE
+		                                                   WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+		                                                   WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+		                                                   WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+		                                                   WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+		                                                   WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+		                                                 ELSE B.QY
+		                                                 END)
+		                                         END, 3) AS USGQTY
+		                                , (TRUNC(A.CSTMS, -1) + TRUNC(A.INTTAX, -1) + TRUNC(A.TRANTAX, -1) + TRUNC(A.LQTX_AMOUNT, -1) + TRUNC(A.ECX_AMOUNT, -1) + TRUNC(A.AGSPT, -1)) AS TAX_SUM
+		                           FROM CTRM_INCME_RAWMTRL A
+		                          INNER JOIN INCME_LOCAL_BNT_SM B
+		                             ON A.COMPANY_CODE = B.COMPANY_CODE
+		                            AND A.IMPDEC_NO = B.IMPDEC_NO
+		                            AND A.LNE_NO = B.LNE_NO
+		                            AND A.POUCH_NO = B.POUCH_NO
+		                            AND A.RAWMTRL_CODE = B.ITEM_CODE
+		                          WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                            AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                            AND A.PRESENTN_NO = #{PRESENTN_NO}
+		                       ) A
+		                 WHERE TRUNC(USGQTY, 3) > 0.000999999999999
+		                 GROUP BY A.PRESENTN_NO, A.COMPANY_CODE, A.DIVISION_CODE) TAX
+		        ON A.COMPANY_CODE = TAX.COMPANY_CODE             
+		       AND A.DIVISION_CODE = TAX.DIVISION_CODE
+		       AND A.PRESENTN_NO = TAX.PRESENTN_NO
+		     INNER JOIN COMPANY B
+		        ON A.COMPANY_CODE = B.COMPANY_CODE
+		     WHERE A.ISSUE_TYPE = '02'
+		       AND A.COMPANY_CODE = #{COMPANY_CODE}
+		       AND A.DIVISION_CODE = #{DIVISION_CODE}
+		       AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</select>
+	
+	<select id="retrieve_init_thng" parameterType="HashMap" resultType="HashMap">    
+		SELECT LPAD(ROWNUM, 3, '0') AS LINE_NUMBER
+		       , ITEM_CODE
+		       , ITEM_NM
+		       , ACCMLT_ORDER_QY
+		       , BASS_UNIT
+		       , STTEMNT_PC_KRW
+		       , KRW_CRNCY
+		       , BASIS_DOC_NO
+		       , CUD
+		       , IND
+		       , "5AA"
+		       , ACT
+		       , "5AB"
+		       , CAP
+		       , "5CZ"
+		       , SUM(CUD) OVER()
+		  FROM (SELECT SEQ
+		               ,ITEM_CODE
+		               , ITEM_NM
+		               , ACCMLT_ORDER_QY
+		               , BASS_UNIT
+		               , STTEMNT_PC_KRW
+		               , KRW_CRNCY
+		               , BASIS_DOC_NO
+		               , SUM(CSTMS) AS CUD
+		               , SUM(INTTAX) AS IND
+		               , SUM(TRANTAX) AS "5AA"
+		               , SUM(LQTX_AMOUNT) AS ACT
+		               , SUM(ECX_AMOUNT) AS "5AB"
+		               , SUM(AGSPT) AS CAP
+		               , SUM(DRWBAK_AMOUNT) AS "5CZ"
+		          FROM (SELECT  A.SEQ
+		                        , A.ITEM_CODE
+		                        , A.ITEM_NM
+		                        , A.ACCMLT_ORDER_QY
+		                        , A.BASS_UNIT
+		                        , A.STTEMNT_PC_KRW
+		                        , A.KRW_CRNCY
+		                        , '['||LPAD(A.SUPT_DOC_SE, 2,'0')||']매매계약서 등' AS BASIS_DOC_NO
+		                        , TRUNC(AA.CSTMS, -1)       AS CSTMS    -- 관세
+		                        , TRUNC(AA.INTTAX, -1)      AS INTTAX    -- 개별소비세액
+		                        , TRUNC(AA.TRANTAX, -1)     AS TRANTAX  -- 교통에너지환경세액
+		                        , TRUNC(AA.LQTX_AMOUNT, -1)   AS LQTX_AMOUNT    -- 주세액
+		                        , TRUNC(AA.ECX_AMOUNT, -1)    AS ECX_AMOUNT  -- 교육세액
+		                        , TRUNC(AA.AGSPT, -1)     AS AGSPT    -- 농특세액
+		                        , TRUNC(AA.DRWBAK_AMOUNT,-1)   AS DRWBAK_AMOUNT  -- 세액 합계
+		                        , TRUNC(CASE WHEN B.IMP_BASS_UNIT = AA.BASS_UNIT THEN AA.USGQTY
+		                                     ELSE
+		                                       (CASE
+		                                           WHEN B.IMP_BASS_UNIT = 'KG' THEN AA.USGQTY / 1000
+		                                           WHEN B.IMP_BASS_UNIT = 'LB' THEN AA.USGQTY / 0.453592 / 1000
+		                                           WHEN B.IMP_BASS_UNIT = 'DR' THEN AA.USGQTY / 1000 / 30
+		                                           WHEN B.IMP_BASS_UNIT = 'GR' THEN AA.USGQTY / 0.064799
+		                                           WHEN B.IMP_BASS_UNIT = 'MT' THEN AA.USGQTY / 1000 / 1000
+		                                         ELSE B.QY
+		                                         END)
+		                                 END, 3) AS USGQTY
+		                  FROM CTRM_TRGET_THNG A
+		                 INNER JOIN CTRM_INCME_RAWMTRL AA
+		                    ON A.COMPANY_CODE = AA.COMPANY_CODE
+		                   AND A.DIVISION_CODE = AA.DIVISION_CODE
+		                   AND A.PRESENTN_NO = AA.PRESENTN_NO
+		                   AND A.SEQ = AA.SEQ
+		                 INNER JOIN INCME_LOCAL_BNT_SM B
+		                    ON AA.COMPANY_CODE = B.COMPANY_CODE
+		                   AND AA.IMPDEC_NO = B.IMPDEC_NO
+		                   AND AA.LNE_NO = B.LNE_NO
+		                   AND AA.POUCH_NO = B.POUCH_NO
+		                   AND AA.RAWMTRL_CODE = B.ITEM_CODE
+		                 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                   AND A.PRESENTN_NO = #{PRESENTN_NO}
+		               )
+		         WHERE USGQTY > 0.000999999999999
+		         GROUP BY ITEM_CODE, ITEM_NM, ACCMLT_ORDER_QY, BASS_UNIT, STTEMNT_PC_KRW, KRW_CRNCY, BASIS_DOC_NO,SEQ
+		         ORDER BY SEQ ASC
+		       )
+		 WHERE "5CZ" <![CDATA[>]]> 0
+	</select>
+		
+	<select id="retrieve_init_incme" parameterType="HashMap" resultType="HashMap">    
+		 SELECT LPAD(ROWNUM, 4, '0') AS LINE_NUMBER,
+		         HS_CODE,
+		         RAWMTRL_SE,
+		         IMPDEC_NO,
+		         LPAD(LNE_NO, 3, '0') AS LNE_NO,
+		         CASE WHEN RAWMTRL_SE = '00' THEN LPAD(POUCH_NO, 2, '0')
+		              WHEN RAWMTRL_SE = '04' THEN LPAD(POUCH_NO, 3, '0')
+		          END AS POUCH_NO,
+		         ITEM_CODE,
+		         RAWMTRL_CODE,
+		         ACPT_DATE,
+		         USGQTY,
+		         BASS_UNIT,
+		         CUD,
+		         IND,
+		         "5AA",
+		         ACT,
+		         "5AB",
+		         CAP,
+		         "5CZ",
+		         SUM(CUD) OVER()
+		    FROM ( SELECT  A.HS_CODE
+		                  , A.RAWMTRL_SE
+		                  , A.IMPDEC_NO
+		                  , A.LNE_NO
+		                  , A.POUCH_NO
+		                  , A.ITEM_CODE
+		                  , A.RAWMTRL_CODE
+		                  , A.ACPT_DATE
+		                  , TRUNC(CASE WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN A.USGQTY
+		                               ELSE
+		                                 (CASE
+		                                     WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+		                                     WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+		                                     WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+		                                     WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+		                                     WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+		                                   ELSE B.QY
+		                                   END)
+		                           END, 3) AS USGQTY
+		                  , B.IMP_BASS_UNIT AS  BASS_UNIT
+		                  , TRUNC(A.CSTMS ,-1)      AS CUD    -- 관세
+		                  , TRUNC(A.INTTAX ,-1)      AS IND    -- 개별소비세액
+		                  , TRUNC(A.TRANTAX ,-1)     AS "5AA"  -- 교통에너지환경세액
+		                  , TRUNC(A.LQTX_AMOUNT ,-1)   AS ACT    -- 주세액
+		                  , TRUNC(A.ECX_AMOUNT ,-1)    AS "5AB"  -- 교육세액
+		                  , TRUNC(A.AGSPT ,-1)     AS CAP    -- 농특세액
+		                  , TRUNC(A.DRWBAK_AMOUNT ,-1)   AS "5CZ"  -- 세액 합계
+		             FROM CTRM_INCME_RAWMTRL A
+		            INNER JOIN INCME_LOCAL_BNT_SM B
+		               ON A.COMPANY_CODE = B.COMPANY_CODE
+		              AND A.IMPDEC_NO = B.IMPDEC_NO
+		              AND A.LNE_NO = B.LNE_NO
+		              AND A.POUCH_NO = B.POUCH_NO
+		              AND A.RAWMTRL_CODE = B.ITEM_CODE
+		            WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		              AND A.PRESENTN_NO = #{PRESENTN_NO}
+		            ORDER BY A.SEQ, A.RAWMTRL_SEQ ASC
+		         )
+		   WHERE TRUNC(USGQTY, 3) > 0.000999999999999
+		     AND "5CZ" <![CDATA[>]]> 0
+	</select>
+	
+	<update id="updateInitPartStatus" parameterType="HashMap">
+		UPDATE CTRM_CMMN A
+		   SET A.EXECUT_AT = 'Y'
+		       ,A.EXECUT_STATUS = '00' -- 접수중
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	
+	<update id="merge_R20_Data" parameterType="HashMap">
+
+		MERGE INTO AN_UNIPASS_R20 T
+              USING ( SELECT #{COMPANY_CODE} AS COMPANY_CODE
+                            ,#{DIVISION_CODE} AS DIVISION_CODE
+							,#{RECV_DATE} AS RECV_DATE
+							,#{STTEMNT_DOC_STLE} AS STTEMNT_DOC_STLE
+							,NVL(#{CSMHSE}, '00000') AS CSMHSE
+							,#{SUBMIT_DATE} AS SUBMIT_DATE
+							,#{SUBMIT_NO} AS SUBMIT_NO
+							,#{SUBMIT_STTEMNT_DOC_STLE} AS SUBMIT_STTEMNT_DOC_STLE
+				       FROM DUAL
+                       ) P
+                 ON (P.COMPANY_CODE = T.COMPANY_CODE
+                AND  P.DIVISION_CODE = T.DIVISION_CODE
+                AND  P.SUBMIT_NO = T.SUBMIT_NO
+                AND  P.SUBMIT_STTEMNT_DOC_STLE = T.SUBMIT_STTEMNT_DOC_STLE)
+          WHEN MATCHED THEN
+              UPDATE
+                  SET T.RECV_DATE             = P.RECV_DATE
+                      ,T.STTEMNT_DOC_STLE     = P.STTEMNT_DOC_STLE
+                      ,T.CSMHSE     		  = P.CSMHSE
+                      ,T.SUBMIT_DATE     	  = P.SUBMIT_DATE
+	      WHEN NOT MATCHED THEN
+              INSERT (COMPANY_CODE, DIVISION_CODE,RECV_DATE,STTEMNT_DOC_STLE,CSMHSE,SUBMIT_DATE,SUBMIT_NO,SUBMIT_STTEMNT_DOC_STLE)
+              VALUES (P.COMPANY_CODE, P.DIVISION_CODE, P.RECV_DATE, P.STTEMNT_DOC_STLE, P.CSMHSE, P.SUBMIT_DATE, P.SUBMIT_NO, P.SUBMIT_STTEMNT_DOC_STLE)
+	
+	</update>
+	
+	
+	<delete id="delete_R20_DetailData" parameterType="HashMap">
+		DELETE FROM AN_UNIPASS_R20_ITEM A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}
+		   AND A.SUBMIT_STTEMNT_DOC_STLE = #{SUBMIT_STTEMNT_DOC_STLE}
+	</delete>
+	
+	
+	<insert id="insert_R20_DetailData" parameterType="HashMap">
+		<selectKey keyProperty="KEY_ERROR_SEQ" resultType="java.lang.String" order="BEFORE">
+			SELECT NVL(MAX(A.ERROR_SEQ), 0)+1
+			  FROM AN_UNIPASS_R20_ITEM A 
+			 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+			   AND A.DIVISION_CODE = #{DIVISION_CODE}
+			   AND A.SUBMIT_NO = #{SUBMIT_NO}
+			   AND A.SUBMIT_STTEMNT_DOC_STLE = #{SUBMIT_STTEMNT_DOC_STLE}
+        </selectKey>	
+		INSERT INTO AN_UNIPASS_R20_ITEM
+		  (COMPANY_CODE,
+		   DIVISION_CODE,
+		   SUBMIT_NO,
+		   SUBMIT_STTEMNT_DOC_STLE,
+		   ERROR_SEQ,
+		   ERROR_MESSAGE,
+		   CREATE_DATE)
+		VALUES
+		  (#{COMPANY_CODE},
+		   #{DIVISION_CODE},
+		   #{SUBMIT_NO},
+		   #{SUBMIT_STTEMNT_DOC_STLE},
+		   #{KEY_ERROR_SEQ},
+		   #{ERROR_MESSAGE},
+		   SYSDATE)
+	</insert>
+	
+	
+	<delete id="update_Drwb_ExecutStatus60" parameterType="HashMap">
+		UPDATE DRWBAK_REQSTDOC_CMMN A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		       ,A.DRWBAK_COMP_DATE = #{AUTHEN_DATE}
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.REGIST_RCEPT_NO = #{PAY_ORDER_NO}	
+	</delete>
+	
+	<delete id="update_Drwb_ExecutStatus" parameterType="HashMap">
+		UPDATE DRWBAK_REQSTDOC_CMMN A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		   <if test="REGIST_RCEPT_NO != null and REGIST_RCEPT_NO != ''">
+		   		,A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   </if>
+		       
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}	
+	</delete>
+	
+	<update id="update_Ctrm_ExecutStatus" parameterType="HashMap">
+		UPDATE CTRM_CMMN A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		   <if test="REGIST_RCEPT_NO != null and REGIST_RCEPT_NO != ''">
+		   		,A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   </if>
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}	
+	</update>
+	
+	
+	<update id="update_Over_ExecutStatus" parameterType="HashMap">
+		UPDATE OVER_DRWBAK_VOL_DECL_HDR A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		   <if test="REGIST_RCEPT_NO != null and REGIST_RCEPT_NO != ''">
+		   		,A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   </if>
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}	
+	</update>
+	
+	
+	<update id="update_QuickRef_ExecutStatus" parameterType="HashMap">
+		UPDATE DOC_QUICK_REFERENCE_HDR A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		   <if test="REGIST_RCEPT_NO != null and REGIST_RCEPT_NO != ''">
+		   		,A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   </if>
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}	
+	</update>
+	
+	
+	
+	<update id="update_BomSubmit_ExecutStatus" parameterType="HashMap">
+		UPDATE BOM_SUBMIT_MST A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		   <if test="REGIST_RCEPT_NO != null and REGIST_RCEPT_NO != ''">
+		   		,A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   </if>
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}	
+	</update>
+
+	<update id="merge_R54_Data" parameterType="HashMap">
+
+		MERGE INTO AN_UNIPASS_R54 T
+	          USING ( SELECT #{COMPANY_CODE} AS COMPANY_CODE
+	                        ,#{DIVISION_CODE} AS DIVISION_CODE
+	                        ,#{REGIST_RCEPT_NO} AS REGIST_RCEPT_NO
+	                        ,#{COMPLETE_DATE} AS COMPLETE_DATE
+	                        ,#{STTEMNT_DOC_STLE} AS STTEMNT_DOC_STLE
+	                        ,NVL(#{CSMHSE_PRSN}, '00000') AS CSMHSE_PRSN
+	                        ,#{PL_TYPE} AS PL_TYPE
+	                        ,#{SUBMIT_NO} AS SUBMIT_NO
+	                        ,#{CSMHSE_CODE} AS CSMHSE_CODE
+	                        ,#{FORM_TYPE} AS FORM_TYPE
+	                        ,#{REGIST_RCEP_DATE} AS REGIST_RCEP_DATE
+	                    FROM DUAL
+	                   ) P
+	             ON (P.COMPANY_CODE = T.COMPANY_CODE
+	            AND  P.DIVISION_CODE = T.DIVISION_CODE
+	            AND  P.REGIST_RCEPT_NO = T.REGIST_RCEPT_NO
+	            AND  P.STTEMNT_DOC_STLE = T.STTEMNT_DOC_STLE)
+	      WHEN MATCHED THEN
+	          UPDATE
+	              SET T.CSMHSE_PRSN        = P.CSMHSE_PRSN
+	                  ,T.PL_TYPE           = P.PL_TYPE
+	                  ,T.CSMHSE_CODE       = P.CSMHSE_CODE
+	                  ,T.FORM_TYPE         = P.FORM_TYPE
+	                  ,T.REGIST_RCEP_DATE  = P.REGIST_RCEP_DATE
+	                  ,T.COMPLETE_DATE     = P.COMPLETE_DATE
+	                  ,T.SUBMIT_NO         = P.SUBMIT_NO
+	    WHEN NOT MATCHED THEN
+	          INSERT (COMPANY_CODE, DIVISION_CODE, REGIST_RCEPT_NO, SUBMIT_NO, PL_TYPE, CSMHSE_PRSN, REGIST_RCEP_DATE, COMPLETE_DATE, STTEMNT_DOC_STLE, FORM_TYPE, CSMHSE_CODE, CREATE_DATE)
+	          VALUES (P.COMPANY_CODE, P.DIVISION_CODE, P.REGIST_RCEPT_NO, P.SUBMIT_NO, P.PL_TYPE, P.CSMHSE_PRSN, P.REGIST_RCEP_DATE, P.COMPLETE_DATE, P.STTEMNT_DOC_STLE, P.FORM_TYPE, P.CSMHSE_CODE, SYSDATE)
+	
+	</update>
+	
+	<update id="merge_R58_Data" parameterType="HashMap">
+		MERGE INTO AN_UNIPASS_R58 T
+		     USING (SELECT #{COMPANY_CODE} AS COMPANY_CODE
+		                    ,#{DIVISION_CODE} AS DIVISION_CODE
+		                    ,#{REGIST_RCEPT_NO} AS REGIST_RCEPT_NO
+		                    ,#{SPLMT_NO} AS SPLMT_NO
+		                    ,#{FORM_TYPE} AS FORM_TYPE
+		                    ,#{STTEMNT_DOC_STLE} AS STTEMNT_DOC_STLE
+		                    ,#{CSMHSE_CODE} AS CSMHSE_CODE
+		                    ,#{CSMHSE_KWA_CODE} AS CSMHSE_KWA_CODE
+		                    ,#{CSMHSE_KWAJANG_NAME} AS CSMHSE_KWAJANG_NAME
+		                    ,#{CSMHSE_PRSN} AS CSMHSE_PRSN
+		                    ,#{CSMHSE_PRSN_TEL} AS CSMHSE_PRSN_TEL
+		                    ,#{RECV_CMPNY_NAME} AS RECV_CMPNY_NAME
+		                    ,#{RECV_NAME} AS RECV_NAME
+		                    ,#{COMPLETE_DATE} AS COMPLETE_DATE
+		                    ,#{SUBMIT_DUE_DATE} AS SUBMIT_DUE_DATE
+		                    ,#{SPLMT_TEXT} AS SPLMT_TEXT
+		                    ,#{REMARK} AS REMARK
+		                  FROM DUAL
+		             ) P
+		        ON (P.COMPANY_CODE = T.COMPANY_CODE
+		       AND  P.DIVISION_CODE = T.DIVISION_CODE
+		       AND  P.REGIST_RCEPT_NO = T.REGIST_RCEPT_NO
+		       AND  P.STTEMNT_DOC_STLE = T.STTEMNT_DOC_STLE)
+		    WHEN MATCHED THEN
+		        UPDATE
+		            SET T.SPLMT_NO = P.SPLMT_NO
+		                ,T.FORM_TYPE = P.FORM_TYPE
+		                ,T.CSMHSE_CODE = P.CSMHSE_CODE
+		                ,T.CSMHSE_KWA_CODE = P.CSMHSE_KWA_CODE
+		                ,T.CSMHSE_KWAJANG_NAME = P.CSMHSE_KWAJANG_NAME
+		                ,T.CSMHSE_PRSN = P.CSMHSE_PRSN
+		                ,T.CSMHSE_PRSN_TEL = P.CSMHSE_PRSN_TEL
+		                ,T.RECV_CMPNY_NAME = P.RECV_CMPNY_NAME
+		                ,T.RECV_NAME = P.RECV_NAME
+		                ,T.COMPLETE_DATE = P.COMPLETE_DATE
+		                ,T.SUBMIT_DUE_DATE = P.SUBMIT_DUE_DATE
+		                ,T.SPLMT_TEXT = P.SPLMT_TEXT
+		                ,T.REMARK = P.REMARK
+		    WHEN NOT MATCHED THEN
+		        INSERT(COMPANY_CODE, DIVISION_CODE, REGIST_RCEPT_NO, SPLMT_NO, FORM_TYPE, STTEMNT_DOC_STLE, CSMHSE_CODE, CSMHSE_KWA_CODE, CSMHSE_KWAJANG_NAME, 
+		               CSMHSE_PRSN, CSMHSE_PRSN_TEL, RECV_CMPNY_NAME, RECV_NAME, COMPLETE_DATE, SUBMIT_DUE_DATE, SPLMT_TEXT, REMARK)
+		        VALUES(P.COMPANY_CODE, P.DIVISION_CODE, P.REGIST_RCEPT_NO, P.SPLMT_NO, P.FORM_TYPE, P.STTEMNT_DOC_STLE, P.CSMHSE_CODE, P.CSMHSE_KWA_CODE, P.CSMHSE_KWAJANG_NAME, 
+		               P.CSMHSE_PRSN, P.CSMHSE_PRSN_TEL, P.RECV_CMPNY_NAME, P.RECV_NAME, P.COMPLETE_DATE, P.SUBMIT_DUE_DATE, P.SPLMT_TEXT, P.REMARK)
+	</update>
+
+	<update id="merge_381_Data" parameterType="HashMap">
+		MERGE INTO AN_UNIPASS_381 T
+		         USING (SELECT 
+		                      #{COMPANY_CODE} AS COMPANY_CODE, 
+		                      #{DIVISION_CODE} AS DIVISION_CODE, 
+		                      #{PAY_ORDER_NO} AS PAY_ORDER_NO,  
+		                      #{STTEMNT_DOC_STLE} AS STTEMNT_DOC_STLE,  
+		                      #{SUBMITTER_COMP_NAME} AS SUBMITTER_COMP_NAME,  
+		                      #{SUBMITTER_PRSN_NAME} AS SUBMITTER_PRSN_NAME,  
+		                      #{PAY_BANK_CODE} AS PAY_BANK_CODE,  
+		                      #{PAY_BANK_NAME} AS PAY_BANK_NAME,  
+		                      #{AUTHEN_DATE} AS AUTHEN_DATE,  
+		                      #{RECV_DATE} AS RECV_DATE,  
+		                      #{ACNUTNO} AS ACNUTNO,  
+		                      #{PAY_AMOUNT} AS PAY_AMOUNT 
+		                  FROM DUAL
+		                 ) P
+		            ON (P.COMPANY_CODE = T.COMPANY_CODE
+		           AND  P.DIVISION_CODE = T.DIVISION_CODE
+		           AND  P.PAY_ORDER_NO = T.PAY_ORDER_NO
+		           AND  P.STTEMNT_DOC_STLE = T.STTEMNT_DOC_STLE)
+		        WHEN MATCHED THEN
+		            UPDATE
+		                SET T.SUBMITTER_COMP_NAME = P.SUBMITTER_COMP_NAME
+		                    ,T.SUBMITTER_PRSN_NAME = P.SUBMITTER_PRSN_NAME
+		                    ,T.PAY_BANK_CODE = P.PAY_BANK_CODE
+		                    ,T.PAY_BANK_NAME = P.PAY_BANK_NAME
+		                    ,T.AUTHEN_DATE = P.AUTHEN_DATE
+		                    ,T.RECV_DATE = P.RECV_DATE
+		                    ,T.ACNUTNO = P.ACNUTNO
+		                    ,T.PAY_AMOUNT = P.PAY_AMOUNT
+		                    ,T.CREATE_DATE = SYSDATE
+		        WHEN NOT MATCHED THEN
+		            INSERT (COMPANY_CODE, DIVISION_CODE, PAY_ORDER_NO, STTEMNT_DOC_STLE, SUBMITTER_COMP_NAME, SUBMITTER_PRSN_NAME, PAY_BANK_CODE, PAY_BANK_NAME, AUTHEN_DATE, RECV_DATE, ACNUTNO, PAY_AMOUNT)
+		            VALUES (P.COMPANY_CODE, P.DIVISION_CODE, P.PAY_ORDER_NO, P.STTEMNT_DOC_STLE, P.SUBMITTER_COMP_NAME, P.SUBMITTER_PRSN_NAME, P.PAY_BANK_CODE, P.PAY_BANK_NAME, P.AUTHEN_DATE, P.RECV_DATE, P.ACNUTNO, P.PAY_AMOUNT)
+
+	
+	</update>
+	
+	
+	<update id="merge_R57_Data" parameterType="HashMap">
+		MERGE INTO AN_UNIPASS_R57 T
+		      USING ( SELECT #{COMPANY_CODE} AS COMPANY_CODE
+		                     ,#{DIVISION_CODE} AS DIVISION_CODE
+		                     ,#{DRWB_REVIEW_DOC_NO} AS DRWB_REVIEW_DOC_NO
+		                     ,#{STTEMNT_DOC_STLE} AS STTEMNT_DOC_STLE
+		                     ,#{RECV_TYPE_CODE} AS RECV_TYPE_CODE
+		                     ,#{RECV_CMPNY_NAME} AS RECV_CMPNY_NAME
+		                     ,#{RECV_NAME} AS RECV_NAME
+		                     ,#{APPLICANT_DATE} AS APPLICANT_DATE
+		                     ,#{MAIN_REGIST_RCEPT_NO} AS MAIN_REGIST_RCEPT_NO
+		                     ,#{REQ_RESN} AS REQ_RESN
+		                     ,#{COMPLETE_DATE} AS COMPLETE_DATE
+		                     ,#{SUBMIT_DUE_DATE} AS SUBMIT_DUE_DATE
+		                     ,#{CSMHSE_KWAJANG_NAME} AS CSMHSE_KWAJANG_NAME
+		                     ,#{CSMHSE_PRSN} AS CSMHSE_PRSN
+		                     ,#{CSMHSE_PRSN_TEL} AS CSMHSE_PRSN_TEL
+		                     ,#{CSMHSE_NAME} AS CSMHSE_NAME
+		                     ,#{CSMHSE_KWA_NAME} AS CSMHSE_KWA_NAME
+		                FROM DUAL
+		               ) P
+		         ON (P.COMPANY_CODE = T.COMPANY_CODE
+		        AND  P.DIVISION_CODE = T.DIVISION_CODE
+		        AND  P.DRWB_REVIEW_DOC_NO = T.DRWB_REVIEW_DOC_NO
+		        AND  P.STTEMNT_DOC_STLE = T.STTEMNT_DOC_STLE)
+		  WHEN MATCHED THEN
+		      UPDATE
+		          SET T.RECV_TYPE_CODE = P.RECV_TYPE_CODE
+		              ,T.RECV_CMPNY_NAME = P.RECV_CMPNY_NAME
+		              ,T.RECV_NAME = P.RECV_NAME
+		              ,T.APPLICANT_DATE = P.APPLICANT_DATE
+		              ,T.MAIN_REGIST_RCEPT_NO = P.MAIN_REGIST_RCEPT_NO
+		              ,T.REQ_RESN = P.REQ_RESN
+		              ,T.COMPLETE_DATE = P.COMPLETE_DATE
+		              ,T.SUBMIT_DUE_DATE = P.SUBMIT_DUE_DATE
+		              ,T.CSMHSE_KWAJANG_NAME = P.CSMHSE_KWAJANG_NAME
+		              ,T.CSMHSE_PRSN = P.CSMHSE_PRSN
+		              ,T.CSMHSE_PRSN_TEL = P.CSMHSE_PRSN_TEL
+		              ,T.CSMHSE_NAME = P.CSMHSE_NAME
+		              ,T.CSMHSE_KWA_NAME = P.CSMHSE_KWA_NAME              
+		  WHEN NOT MATCHED THEN
+		      INSERT (COMPANY_CODE, DIVISION_CODE, DRWB_REVIEW_DOC_NO, STTEMNT_DOC_STLE, RECV_TYPE_CODE, RECV_CMPNY_NAME, RECV_NAME, APPLICANT_DATE, MAIN_REGIST_RCEPT_NO, REQ_RESN, COMPLETE_DATE, SUBMIT_DUE_DATE, CSMHSE_KWAJANG_NAME, CSMHSE_PRSN, CSMHSE_PRSN_TEL, CSMHSE_NAME, CSMHSE_KWA_NAME, CREATE_DATE)
+		      VALUES (P.COMPANY_CODE, P.DIVISION_CODE, P.DRWB_REVIEW_DOC_NO, P.STTEMNT_DOC_STLE, P.RECV_TYPE_CODE, P.RECV_CMPNY_NAME, P.RECV_NAME, P.APPLICANT_DATE, P.MAIN_REGIST_RCEPT_NO, P.REQ_RESN, P.COMPLETE_DATE, P.SUBMIT_DUE_DATE, P.CSMHSE_KWAJANG_NAME, P.CSMHSE_PRSN, P.CSMHSE_PRSN_TEL, P.CSMHSE_NAME, P.CSMHSE_KWA_NAME, SYSDATE)
+	</update>	
+	
+	
+	<delete id="delete_R57_DetailData" parameterType="HashMap">
+		DELETE AN_UNIPASS_R57_ITEM A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE} 
+		   AND A.DRWB_REVIEW_DOC_NO = #{DRWB_REVIEW_DOC_NO}
+	</delete>
+	
+	
+	<insert id="insert_R57_DetailData" parameterType="HashMap">
+		INSERT INTO AN_UNIPASS_R57_ITEM
+		  (COMPANY_CODE, DIVISION_CODE, DRWB_REVIEW_DOC_NO, DRWB_DOC_TYPE, SEQ, REGIST_RCEPT_NO, ITEM_CODE, REQ_DOC_NAME, XPORT_STTEMNT_NO, XPORT_LNE_NO, XPORT_POUCH_NO, CREATE_DATE)
+		VALUES
+		  (#{COMPANY_CODE}, #{DIVISION_CODE}, #{DRWB_REVIEW_DOC_NO}, #{DRWB_DOC_TYPE}, #{SEQ}, #{REGIST_RCEPT_NO}, #{ITEM_CODE}, #{REQ_DOC_NAME}, #{XPORT_STTEMNT_NO}, #{XPORT_LNE_NO}, #{XPORT_POUCH_NO}, SYSDATE)	
+	</insert>
+	
+	
+	<update id="update_Drwb_ExecutStatus40" parameterType="HashMap">
+		UPDATE DRWBAK_REQSTDOC_CMMN A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}	
+	</update>
+	
+	<update id="update_Drwb_ExecutStatus10" parameterType="HashMap">
+		UPDATE DRWBAK_REQSTDOC_CMMN A
+		   SET A.EXECUT_STATUS    = #{EXECUT_STATUS}
+		       ,A.DRWBAK_REQ_DATE = #{REGIST_RCEP_DATE}
+		       ,A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}	
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}
+
+	</update>
+	
+	<update id="update_Cmmn_ExecutStatus40" parameterType="HashMap">
+		UPDATE CTRM_CMMN A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}	
+	</update>
+	
+	
+	<update id="merge_5DF_Data" parameterType="HashMap">
+		MERGE INTO AN_UNIPASS_5DF T
+		      USING ( SELECT #{COMPANY_CODE} AS COMPANY_CODE
+		                     ,#{DIVISION_CODE} AS DIVISION_CODE
+		                     ,#{SUBMIT_NO} AS SUBMIT_NO
+		                     ,#{REGIST_RCEPT_NO} AS REGIST_RCEPT_NO
+		                     ,#{STTEMNT_DOC_STLE} AS STTEMNT_DOC_STLE
+		                     ,#{COMPLETE_DATE} AS COMPLETE_DATE
+		                     ,#{CSMHSE_PRSN} AS CSMHSE_PRSN
+		                     ,#{INSPECTIONENDDATE} AS INSPECTIONENDDATE
+		                     ,#{CSMHSE_CODE} AS CSMHSE_CODE
+		                     ,#{FORM_TYPE} AS FORM_TYPE
+		                FROM DUAL
+		               ) P
+		         ON (P.COMPANY_CODE = T.COMPANY_CODE
+		        AND  P.DIVISION_CODE = T.DIVISION_CODE
+		        AND  P.SUBMIT_NO = T.SUBMIT_NO
+		        AND  P.REGIST_RCEPT_NO = T.REGIST_RCEPT_NO)
+		  WHEN MATCHED THEN
+		      UPDATE
+		          SET T.COMPLETE_DATE      = P.COMPLETE_DATE
+		              ,T.CSMHSE_PRSN       = P.CSMHSE_PRSN
+		              ,T.INSPECTIONENDDATE = P.INSPECTIONENDDATE
+		              ,T.CSMHSE_CODE       = P.CSMHSE_CODE
+		              ,T.FORM_TYPE         = P.FORM_TYPE
+		  WHEN NOT MATCHED THEN
+		      INSERT (COMPANY_CODE, DIVISION_CODE, SUBMIT_NO, REGIST_RCEPT_NO, STTEMNT_DOC_STLE, COMPLETE_DATE, CSMHSE_PRSN, INSPECTIONENDDATE, CSMHSE_CODE, FORM_TYPE, CREATE_DATE)
+		      VALUES (P.COMPANY_CODE, P.DIVISION_CODE, P.SUBMIT_NO, P.REGIST_RCEPT_NO, P.STTEMNT_DOC_STLE, P.COMPLETE_DATE, P.CSMHSE_PRSN, P.INSPECTIONENDDATE, P.CSMHSE_CODE, P.FORM_TYPE, SYSDATE)
+	
+	</update>	
+	
+	
+	<select id="checkDuplicateCtrm" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN COUNT(1) <![CDATA[>]]> 0 THEN 'N' ELSE 'Y' END AS CTRM_YN
+		  FROM AN_CTRM_CMMN A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}
+		   AND A.RECV_DOC_TYPE = #{RECV_DOC_TYPE}
+		   AND A.IF_YN = 'Y'
+	</select>
+	
+	<update id="merge_An_Ctrm_Cmmn" parameterType="HashMap">
+		MERGE INTO AN_CTRM_CMMN T
+		    USING ( SELECT #{COMPANY_CODE} AS  COMPANY_CODE
+		                   ,#{DIVISION_CODE} AS  DIVISION_CODE
+		                   ,#{ISSUE_TYPE}  AS  ISSUE_TYPE
+		                   ,#{REGIST_RCEPT_NO} AS  REGIST_RCEPT_NO
+		                   ,#{RECV_DOC_TYPE} AS  RECV_DOC_TYPE
+		                   ,#{STTEMNT_DOC_STLE}  AS  STTEMNT_DOC_STLE
+		                   ,#{REGIST_RCEPT_DATE} AS  REGIST_RCEPT_DATE
+		                   ,#{CHIT_FRMTRM_DATE}  AS  CHIT_FRMTRM_DATE
+		                   ,#{COMPLETE_DATE} AS  COMPLETE_DATE
+		                   ,#{ISSUE_MATHOD}  AS  ISSUE_MATHOD
+		                   ,#{SUBMIT_NO} AS  SUBMIT_NO
+		                   ,#{FROM_ECTMRK} AS  FROM_ECTMRK
+		                   ,#{FROM_COMPANY_NAME} AS  FROM_COMPANY_NAME
+		                   ,#{FROM_RPRSNTV_NAME} AS  FROM_RPRSNTV_NAME
+		                   ,#{FROM_ADDRESS}  AS  FROM_ADDRESS
+		                   ,#{FROM_BIZRNO} AS  FROM_BIZRNO
+		                   ,#{TO_ECTMRK} AS  TO_ECTMRK
+		                   ,#{TO_COMPANY_NAME} AS  TO_COMPANY_NAME
+		                   ,#{TO_RPRSNTV_NAME} AS  TO_RPRSNTV_NAME
+		                   ,#{TO_ADDRESS}  AS  TO_ADDRESS
+		                   ,#{TO_BIZRNO} AS  TO_BIZRNO
+		                   ,#{CSTBRKR} AS  CSTBRKR
+		                   ,#{CNVN_TYPE_CODE}  AS  CNVN_TYPE_CODE
+		                   ,#{REQ_QTY_CODE}  AS  REQ_QTY_CODE
+		                   ,#{EXP_REF_DATE}  AS  EXP_REF_DATE
+		                   ,#{HS_CODE} AS  HS_CODE
+		                   ,#{STTEMNT_PC_KRW}  AS  STTEMNT_PC_KRW
+		                   ,#{ACCMLT_ORDER_QY} AS  ACCMLT_ORDER_QY
+		                   ,#{BASS_UNIT} AS  BASS_UNIT
+		                   ,#{CSTMS} AS  CSTMS
+		                   ,#{INTTAX}  AS  INTTAX
+		                   ,#{TRANTAX} AS  TRANTAX
+		                   ,#{LQTX_AMOUNT} AS  LQTX_AMOUNT
+		                   ,#{ECX_AMOUNT}  AS  ECX_AMOUNT
+		                   ,#{AGSPT} AS  AGSPT
+		                   ,#{TOT_TAX} AS  TOT_TAX
+		                   ,'N' AS  IF_YN
+		                   ,SYSDATE AS  CREATE_DATE
+		              FROM DUAL ) P
+		       ON (P.COMPANY_CODE = T.COMPANY_CODE
+		      AND  P.DIVISION_CODE = T.DIVISION_CODE
+		      AND  P.ISSUE_TYPE = T.ISSUE_TYPE
+		      AND  P.RECV_DOC_TYPE = T.RECV_DOC_TYPE
+		      AND  P.REGIST_RCEPT_NO = T.REGIST_RCEPT_NO
+		      AND  P.SUBMIT_NO = T.SUBMIT_NO)
+		    WHEN MATCHED THEN
+		          UPDATE
+		              SET T.STTEMNT_DOC_STLE = P.STTEMNT_DOC_STLE
+		                  ,T.REGIST_RCEPT_DATE  = P.REGIST_RCEPT_DATE
+		                  ,T.CHIT_FRMTRM_DATE = P.CHIT_FRMTRM_DATE
+		                  ,T.COMPLETE_DATE  = P.COMPLETE_DATE
+		                  ,T.ISSUE_MATHOD = P.ISSUE_MATHOD
+		                  ,T.FROM_ECTMRK  = P.FROM_ECTMRK
+		                  ,T.FROM_COMPANY_NAME  = P.FROM_COMPANY_NAME
+		                  ,T.FROM_RPRSNTV_NAME  = P.FROM_RPRSNTV_NAME
+		                  ,T.FROM_ADDRESS = P.FROM_ADDRESS
+		                  ,T.FROM_BIZRNO  = P.FROM_BIZRNO
+		                  ,T.TO_ECTMRK  = P.TO_ECTMRK
+		                  ,T.TO_COMPANY_NAME  = P.TO_COMPANY_NAME
+		                  ,T.TO_RPRSNTV_NAME  = P.TO_RPRSNTV_NAME
+		                  ,T.TO_ADDRESS = P.TO_ADDRESS
+		                  ,T.TO_BIZRNO  = P.TO_BIZRNO
+		                  ,T.CSTBRKR  = P.CSTBRKR
+		                  ,T.CNVN_TYPE_CODE = P.CNVN_TYPE_CODE
+		                  ,T.REQ_QTY_CODE = P.REQ_QTY_CODE
+		                  ,T.EXP_REF_DATE = P.EXP_REF_DATE
+		                  ,T.HS_CODE  = P.HS_CODE
+		                  ,T.STTEMNT_PC_KRW = P.STTEMNT_PC_KRW
+		                  ,T.ACCMLT_ORDER_QY  = P.ACCMLT_ORDER_QY
+		                  ,T.BASS_UNIT  = P.BASS_UNIT
+		                  ,T.CSTMS  = P.CSTMS
+		                  ,T.INTTAX = P.INTTAX
+		                  ,T.TRANTAX  = P.TRANTAX
+		                  ,T.LQTX_AMOUNT  = P.LQTX_AMOUNT
+		                  ,T.ECX_AMOUNT = P.ECX_AMOUNT
+		                  ,T.AGSPT  = P.AGSPT
+		                  ,T.TOT_TAX  = P.TOT_TAX
+		                  ,T.IF_YN  = P.IF_YN
+		                  ,T.CREATE_DATE  = P.CREATE_DATE
+		    WHEN NOT MATCHED THEN
+		        INSERT (COMPANY_CODE, DIVISION_CODE, ISSUE_TYPE, REGIST_RCEPT_NO, RECV_DOC_TYPE, STTEMNT_DOC_STLE, REGIST_RCEPT_DATE, CHIT_FRMTRM_DATE, COMPLETE_DATE, 
+		                ISSUE_MATHOD, SUBMIT_NO, FROM_ECTMRK, FROM_COMPANY_NAME, FROM_RPRSNTV_NAME, FROM_ADDRESS, FROM_BIZRNO, TO_ECTMRK, TO_COMPANY_NAME, TO_RPRSNTV_NAME, 
+		                TO_ADDRESS, TO_BIZRNO, CSTBRKR, CNVN_TYPE_CODE, REQ_QTY_CODE, EXP_REF_DATE, HS_CODE, STTEMNT_PC_KRW, ACCMLT_ORDER_QY, BASS_UNIT, CSTMS, INTTAX, TRANTAX, 
+		                LQTX_AMOUNT, ECX_AMOUNT, AGSPT, TOT_TAX, IF_YN, CREATE_DATE)
+		        VALUES (P.COMPANY_CODE,P.DIVISION_CODE,P.ISSUE_TYPE,P.REGIST_RCEPT_NO,P.RECV_DOC_TYPE,P.STTEMNT_DOC_STLE,P.REGIST_RCEPT_DATE,P.CHIT_FRMTRM_DATE,P.COMPLETE_DATE
+		               ,P.ISSUE_MATHOD,P.SUBMIT_NO,P.FROM_ECTMRK,P.FROM_COMPANY_NAME,P.FROM_RPRSNTV_NAME,P.FROM_ADDRESS,P.FROM_BIZRNO,P.TO_ECTMRK,P.TO_COMPANY_NAME,P.TO_RPRSNTV_NAME
+		               ,P.TO_ADDRESS,P.TO_BIZRNO,P.CSTBRKR,P.CNVN_TYPE_CODE,P.REQ_QTY_CODE,P.EXP_REF_DATE,P.HS_CODE,P.STTEMNT_PC_KRW,P.ACCMLT_ORDER_QY,P.BASS_UNIT,P.CSTMS,P.INTTAX,P.TRANTAX
+		               ,P.LQTX_AMOUNT,P.ECX_AMOUNT,P.AGSPT,P.TOT_TAX,P.IF_YN,P.CREATE_DATE)
+
+	</update>
+	
+	<delete id="delete_An_Ctrm_Trget_Thng" parameterType="HashMap">
+		DELETE FROM AN_CTRM_TRGET_THNG A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   AND A.RECV_DOC_TYPE = #{RECV_DOC_TYPE}
+		   AND A.SEQ = #{SEQ}
+	</delete>
+
+	<insert id="insert_An_Ctrm_Trget_Thng" parameterType="HashMap">
+		INSERT INTO AN_CTRM_TRGET_THNG
+		  (COMPANY_CODE,DIVISION_CODE,REGIST_RCEPT_NO,RECV_DOC_TYPE,SEQ,SUBMIT_NO,ACPLC_CRNCY,ITEM_NM,ITEM_CODE,ECX_AMOUNT,STTEMNT_PC_KRW,BASS_UNIT,CSTMS,USGQTY,LQTX_AMOUNT,INTTAX,TRANTAX,AGSPT,TOT_TAX,BASIS_DOC_NO)
+		VALUES
+		  (#{COMPANY_CODE},#{DIVISION_CODE},#{REGIST_RCEPT_NO},#{RECV_DOC_TYPE},#{SEQ},#{SUBMIT_NO},#{ACPLC_CRNCY},#{ITEM_NM},#{ITEM_CODE},#{ECX_AMOUNT},#{STTEMNT_PC_KRW},#{BASS_UNIT},#{CSTMS},#{USGQTY},#{LQTX_AMOUNT},#{INTTAX},#{TRANTAX},#{AGSPT},#{TOT_TAX},#{BASIS_DOC_NO})
+	
+	</insert>
+	
+	<update id="merge_IncmeLocalBntSm_for_02_09" parameterType="HashMap">
+		<!-- 양수자 통보 기납증 : 잔량생성 09 원본 -->
+		MERGE INTO INCME_LOCAL_BNT_SM T
+		 USING (SELECT A.COMPANY_CODE
+		               ,A.DIVISION_CODE
+		               ,B.REGIST_RCEPT_NO AS IMPDEC_NO
+		               ,'001' AS LNE_NO
+		               ,B.SEQ AS POUCH_NO
+		               ,A.CHIT_FRMTRM_DATE AS EFECT_BGNDE
+		               ,B.ITEM_CODE
+		               ,A.HS_CODE
+		               ,SUBSTR(A.CHIT_FRMTRM_DATE, 1,6) AS STDR_MT
+		               ,A.CHIT_FRMTRM_DATE AS ACPT_DATE
+                       ,CASE /* 1드럼(DR) = 30KG/1 LB = 0.453592 KG/1MT = 1000KG/1M =100CM/1GR = 0.064799 G*/
+                             WHEN B.BASS_UNIT = 'KG' THEN B.USGQTY * 1000
+                             WHEN B.BASS_UNIT = 'LB' THEN B.USGQTY * 0.453592 * 1000
+                             WHEN B.BASS_UNIT = 'DR' THEN B.USGQTY * 1000 * 30
+                             WHEN B.BASS_UNIT = 'GR' THEN B.USGQTY * 0.064799
+                             WHEN B.BASS_UNIT = 'MT' THEN B.USGQTY * 1000 * 1000
+                             ELSE B.USGQTY
+                         END AS QY
+                        ,CASE WHEN B.BASS_UNIT IN ('KG','LB','DR','GR','MT') THEN 'G'
+                             ELSE B.BASS_UNIT
+                         END AS BASS_UNIT
+		               ,NULL AS INCME_TARRATE
+		               ,B.CSTMS
+                       ,CASE WHEN B.USGQTY = 0 THEN 0
+                             ELSE (TRUNC(B.CSTMS/(CASE WHEN B.BASS_UNIT = 'KG' THEN B.USGQTY * 1000
+	                                       WHEN B.BASS_UNIT = 'LB' THEN B.USGQTY * 0.453592 * 1000
+	                                       WHEN B.BASS_UNIT = 'DR' THEN B.USGQTY * 1000 * 30
+	                                       WHEN B.BASS_UNIT = 'GR' THEN B.USGQTY * 0.064799
+	                                       WHEN B.BASS_UNIT = 'MT' THEN B.USGQTY * 1000 * 1000
+	                                       ELSE B.USGQTY
+	                                   END),3))
+	                     END AS CSTMS_AMOUNT
+		               ,1 AS CSTMS_AMOUNT_UNIT
+		               ,'KRW' AS AMOUNT_CRNCY
+		               ,A.ISSUE_TYPE AS RAWMTRL_SE
+		               ,NULL AS BKRECKN_MT
+		               ,'Y' AS DCSN_ENNC
+		               ,NULL AS LAST_USE_YYYYMMDD
+		               ,B.INTTAX
+		               ,B.ECX_AMOUNT
+		               ,B.AGSPT
+		               ,B.TRANTAX
+		               ,B.LQTX_AMOUNT
+		               ,NULL AS ORIGIN_NATION_CODE
+		               ,A.FROM_ECTMRK AS VENDOR_CODE
+		               ,B.ITEM_NM
+		               ,A.FROM_COMPANY_NAME AS VENDOR_NAME
+		               ,B.BASS_UNIT AS IMP_BASS_UNIT
+		          FROM AN_CTRM_CMMN A 
+		         INNER JOIN AN_CTRM_TRGET_THNG B
+		            ON A.COMPANY_CODE = B.COMPANY_CODE
+		           AND A.DIVISION_CODE = B.DIVISION_CODE
+		           AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+		           AND A.RECV_DOC_TYPE = B.RECV_DOC_TYPE
+		         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.DIVISION_CODE = #{DIVISION_CODE}
+		           AND A.ISSUE_TYPE = '02'
+		           AND A.IF_YN = 'N'
+		           AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		           AND LPAD(A.RECV_DOC_TYPE, 2, '0') = '09') P
+		    ON (T.COMPANY_CODE = P.COMPANY_CODE
+		   AND T.DIVISION_CODE = P.DIVISION_CODE
+		   AND T.IMPDEC_NO = P.IMPDEC_NO
+		   AND T.LNE_NO = P.LNE_NO
+		   AND T.POUCH_NO = P.POUCH_NO)
+		WHEN NOT MATCHED THEN
+		   INSERT 
+		     (COMPANY_CODE, DIVISION_CODE, IMPDEC_NO, LNE_NO, POUCH_NO, EFECT_BGNDE, ITEM_CODE, HS_CODE, STDR_MT, ACPT_DATE, QY
+		      , BASS_UNIT, INCME_TARRATE, CSTMS, CSTMS_AMOUNT, CSTMS_AMOUNT_UNIT, AMOUNT_CRNCY, DLIVY_QY, REMNDR_QY, RAWMTRL_SE, BKRECKN_MT, DCSN_ENNC
+		      , LAST_USE_YYYYMMDD, INTTAX, ECX_AMOUNT, AGSPT, TRANTAX, LQTX_AMOUNT, ORIGIN_NATION_CODE, VENDOR_CODE, ITEM_NM
+		      , VENDOR_NAME, IMP_BASS_UNIT)
+		   VALUES
+		     (P.COMPANY_CODE, P.DIVISION_CODE, P.IMPDEC_NO, P.LNE_NO, P.POUCH_NO, P.EFECT_BGNDE, P.ITEM_CODE, P.HS_CODE, P.STDR_MT, P.ACPT_DATE, P.QY
+		      , P.BASS_UNIT, P.INCME_TARRATE, P.CSTMS, P.CSTMS_AMOUNT, P.CSTMS_AMOUNT_UNIT, P.AMOUNT_CRNCY, 0, P.QY, P.RAWMTRL_SE, P.BKRECKN_MT, P.DCSN_ENNC
+		      , P.LAST_USE_YYYYMMDD, P.INTTAX, P.ECX_AMOUNT, P.AGSPT, P.TRANTAX, P.LQTX_AMOUNT, P.ORIGIN_NATION_CODE, P.VENDOR_CODE, P.ITEM_NM
+		      , P.VENDOR_NAME, P.IMP_BASS_UNIT)
+	</update>	
+	
+	<update id="merge_IncmeLocalBntSm_for_02_01_35" parameterType="HashMap">
+		<!-- 양수자 통보 기납증 : 잔량 01-취하 / 35-정정 -->
+		MERGE INTO INCME_LOCAL_BNT_SM T
+		 USING (SELECT A.COMPANY_CODE,
+		               A.DIVISION_CODE,
+		               A.REGIST_RCEPT_NO,
+		               A.SEQ,
+		               SUM(B.USGQTY) AS USGQTY,
+		               A.IMPDEC_NO,
+		               A.LNE_NO,
+		               A.POUCH_NO,
+		               SUM(A.CSTMS) AS CSTMS,
+		               B.RECV_DOC_TYPE
+		          FROM (SELECT B.COMPANY_CODE,
+		                       B.DIVISION_CODE,
+		                       B.REGIST_RCEPT_NO,
+		                       B.SEQ,
+		                       B.RECV_DOC_TYPE,
+		                       CASE /* 1드럼(DR) = 30KG/1 LB = 0.453592 KG/1MT = 1000KG/1M =100CM/1GR = 0.064799 G*/
+		                             WHEN B.BASS_UNIT = 'KG' THEN B.USGQTY * 1000
+		                             WHEN B.BASS_UNIT = 'LB' THEN B.USGQTY * 0.453592 * 1000
+		                             WHEN B.BASS_UNIT = 'DR' THEN B.USGQTY * 1000 * 30
+		                             WHEN B.BASS_UNIT = 'GR' THEN B.USGQTY * 0.064799
+		                             WHEN B.BASS_UNIT = 'MT' THEN B.USGQTY * 1000 * 1000
+		                             ELSE B.USGQTY
+		                        END AS USGQTY,
+		                       B.REGIST_RCEPT_NO AS IMPDEC_NO,
+		                       '001' AS LNE_NO,
+		                       B.SEQ AS POUCH_NO,
+		                       B.CSTMS
+		                  FROM AN_CTRM_CMMN A 
+		                 INNER JOIN AN_CTRM_TRGET_THNG B
+		                    ON A.COMPANY_CODE = B.COMPANY_CODE
+		                   AND A.DIVISION_CODE = B.DIVISION_CODE
+		                   AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+		                   AND A.RECV_DOC_TYPE = B.RECV_DOC_TYPE
+		                 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                   AND A.ISSUE_TYPE = '02'
+		                   AND A.IF_YN = 'Y'
+		                   AND LPAD(A.RECV_DOC_TYPE, 2, '0') = '09') A
+		         INNER JOIN ( SELECT B.COMPANY_CODE,
+		                             B.DIVISION_CODE,
+		                             B.REGIST_RCEPT_NO,
+		                             B.SEQ,
+		                             B.RECV_DOC_TYPE,
+				                     CASE /* 1드럼(DR) = 30KG/1 LB = 0.453592 KG/1MT = 1000KG/1M =100CM/1GR = 0.064799 G*/
+				                             WHEN B.BASS_UNIT = 'KG' THEN B.USGQTY * 1000
+				                             WHEN B.BASS_UNIT = 'LB' THEN B.USGQTY * 0.453592 * 1000
+				                             WHEN B.BASS_UNIT = 'DR' THEN B.USGQTY * 1000 * 30
+				                             WHEN B.BASS_UNIT = 'GR' THEN B.USGQTY * 0.064799
+				                             WHEN B.BASS_UNIT = 'MT' THEN B.USGQTY * 1000 * 1000
+				                             ELSE B.USGQTY
+				                      END AS USGQTY,
+		                             B.REGIST_RCEPT_NO AS IMPDEC_NO,
+		                             '001' AS LNE_NO,
+		                             B.SEQ AS POUCH_NO
+		                        FROM AN_CTRM_CMMN A 
+		                       INNER JOIN AN_CTRM_TRGET_THNG B
+		                          ON A.COMPANY_CODE = B.COMPANY_CODE
+		                         AND A.DIVISION_CODE = B.DIVISION_CODE
+		                         AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+		                         AND A.RECV_DOC_TYPE = B.RECV_DOC_TYPE
+		                       WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                         AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                         AND A.ISSUE_TYPE = '02'
+		                         AND A.IF_YN = 'N'
+		                         AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		                         AND LPAD(A.RECV_DOC_TYPE, 2, '0') IN ('01', '35') ) B
+		            ON A.COMPANY_CODE = B.COMPANY_CODE
+		           AND A.DIVISION_CODE = B.DIVISION_CODE
+		           AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+		           AND A.SEQ = B.SEQ
+		         GROUP BY A.COMPANY_CODE,
+		               A.DIVISION_CODE,
+		               A.REGIST_RCEPT_NO,
+		               A.SEQ,
+		               A.IMPDEC_NO,
+		               A.LNE_NO,
+		               A.POUCH_NO,
+		               B.RECV_DOC_TYPE
+		           ) P
+		    ON (T.COMPANY_CODE = P.COMPANY_CODE
+		   AND T.DIVISION_CODE = P.DIVISION_CODE
+		   AND T.IMPDEC_NO = P.IMPDEC_NO
+		   AND T.LNE_NO = P.LNE_NO
+		   AND T.POUCH_NO = P.POUCH_NO)
+		WHEN MATCHED THEN
+	      UPDATE
+	         SET T.QY = P.USGQTY
+	             ,T.REMNDR_QY = CASE WHEN T.REMNDR_QY <![CDATA[>]]> P.USGQTY THEN P.USGQTY
+	                                 WHEN T.REMNDR_QY <![CDATA[<]]> P.USGQTY THEN T.REMNDR_QY
+	                                 ELSE 0 
+	                             END
+	             ,T.CSTMS = P.CSTMS
+	      DELETE WHERE P.RECV_DOC_TYPE = '01'
+	</update>	
+
+	
+	<delete id="delete_An_Ctrm_Thing_Rawmtrl" parameterType="HashMap">
+		DELETE FROM AN_CTRM_THING_RAWMTRL A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   AND A.RECV_DOC_TYPE = #{RECV_DOC_TYPE}
+		   AND A.SEQ = #{SEQ}
+	</delete>
+	
+
+	<insert id="insert_An_Ctrm_Thing_Rawmtrl" parameterType="HashMap">
+		INSERT INTO AN_CTRM_THING_RAWMTRL
+		  (COMPANY_CODE, DIVISION_CODE, REGIST_RCEPT_NO, RECV_DOC_TYPE, SEQ, SUBMIT_NO, RAWMTRL_CODE, ITEM_NM, USGQTY, BASS_UNIT, RAWMTRL_SE, IMPDEC_NO, LNE_NO, POUCH_NO, GOODS_BRAND, EXP_REF_DATE, CSTMS, INTTAX, TRANTAX, LQTX_AMOUNT, ECX_AMOUNT, AGSPT, TOT_TAX, ORGIN_NATION_CODE, STTEMNT_PC_KRW, ACPLC_CRNCY, BASIS_DOC_NO, CREATE_DATE)
+		VALUES
+		  (#{COMPANY_CODE}, #{DIVISION_CODE}, #{REGIST_RCEPT_NO}, #{RECV_DOC_TYPE}, #{SEQ}, #{SUBMIT_NO}, #{RAWMTRL_CODE}, #{ITEM_NM}, #{USGQTY}, #{BASS_UNIT}, #{RAWMTRL_SE}, #{IMPDEC_NO}, #{LNE_NO}, #{POUCH_NO}, #{GOODS_BRAND}, #{EXP_REF_DATE}, #{CSTMS}, #{INTTAX}, #{TRANTAX}, #{LQTX_AMOUNT}, #{ECX_AMOUNT}, #{AGSPT}, #{TOT_TAX}, #{ORGIN_NATION_CODE}, #{STTEMNT_PC_KRW}, #{ACPLC_CRNCY}, #{BASIS_DOC_NO}, SYSDATE)
+
+	</insert>
+	
+	
+	<update id="merge_IncmeLocalBntSm_for_04_09" parameterType="HashMap">
+		<!-- 양수자 통보 잔량생성 09- 원본 -->
+		MERGE INTO INCME_LOCAL_BNT_SM T
+		 USING (SELECT A.COMPANY_CODE
+		               ,A.DIVISION_CODE
+		               ,A.REGIST_RCEPT_NO AS IMPDEC_NO
+		               ,'001' AS LNE_NO
+		               ,B.SEQ AS POUCH_NO
+		               ,B.EXP_REF_DATE AS EFECT_BGNDE
+		               ,B.RAWMTRL_CODE AS ITEM_CODE
+		               ,A.HS_CODE
+		               ,SUBSTR(A.CHIT_FRMTRM_DATE, 1,6) AS STDR_MT
+		               ,A.CHIT_FRMTRM_DATE AS ACPT_DATE
+                       ,CASE /* 1드럼(DR) = 30KG/1 LB = 0.453592 KG/1MT = 1000KG/1M =100CM/1GR = 0.064799 G*/
+                             WHEN B.BASS_UNIT = 'KG' THEN B.USGQTY * 1000
+                             WHEN B.BASS_UNIT = 'LB' THEN B.USGQTY * 0.453592 * 1000
+                             WHEN B.BASS_UNIT = 'DR' THEN B.USGQTY * 1000 * 30
+                             WHEN B.BASS_UNIT = 'GR' THEN B.USGQTY * 0.064799
+                             WHEN B.BASS_UNIT = 'MT' THEN B.USGQTY * 1000 * 1000
+                             ELSE B.USGQTY
+                         END AS QY
+                        ,CASE WHEN B.BASS_UNIT IN ('KG','LB','DR','GR','MT') THEN 'G'
+                             ELSE B.BASS_UNIT
+                          END AS BASS_UNIT
+		               ,NULL AS INCME_TARRATE
+		               ,B.CSTMS
+                       ,CASE WHEN B.USGQTY = 0 THEN 0
+                             ELSE (TRUNC(B.CSTMS/(CASE WHEN B.BASS_UNIT = 'KG' THEN B.USGQTY * 1000
+                                       WHEN B.BASS_UNIT = 'LB' THEN B.USGQTY * 0.453592 * 1000
+                                       WHEN B.BASS_UNIT = 'DR' THEN B.USGQTY * 1000 * 30
+                                       WHEN B.BASS_UNIT = 'GR' THEN B.USGQTY * 0.064799
+                                       WHEN B.BASS_UNIT = 'MT' THEN B.USGQTY * 1000 * 1000
+                                       ELSE B.USGQTY
+                                   END),3))
+                         END AS CSTMS_AMOUNT
+		               ,1 AS CSTMS_AMOUNT_UNIT
+		               ,'KRW' AS AMOUNT_CRNCY
+		               ,A.ISSUE_TYPE AS RAWMTRL_SE
+		               ,NULL AS BKRECKN_MT
+		               ,'Y' AS DCSN_ENNC
+		               ,NULL AS LAST_USE_YYYYMMDD
+		               ,B.INTTAX
+		               ,B.ECX_AMOUNT
+		               ,B.AGSPT
+		               ,B.TRANTAX
+		               ,B.LQTX_AMOUNT
+		               ,NULL AS ORIGIN_NATION_CODE
+		               ,A.FROM_ECTMRK AS VENDOR_CODE
+		               ,B.ITEM_NM
+		               ,A.FROM_COMPANY_NAME AS VENDOR_NAME
+		               ,B.BASS_UNIT AS IMP_BASS_UNIT
+		          FROM AN_CTRM_CMMN A 
+		         INNER JOIN AN_CTRM_THING_RAWMTRL B
+		            ON A.COMPANY_CODE = B.COMPANY_CODE
+		           AND A.DIVISION_CODE = B.DIVISION_CODE
+		           AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+		           AND A.RECV_DOC_TYPE = B.RECV_DOC_TYPE
+		         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.DIVISION_CODE = #{DIVISION_CODE}
+		           AND A.ISSUE_TYPE = '04'
+		           AND A.IF_YN = 'N'
+		           AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		           AND LPAD(A.RECV_DOC_TYPE, 2, '0') = '09') P
+		    ON (T.COMPANY_CODE = P.COMPANY_CODE
+		   AND T.DIVISION_CODE = P.DIVISION_CODE
+		   AND T.IMPDEC_NO = P.IMPDEC_NO
+		   AND T.LNE_NO = P.LNE_NO
+		   AND T.POUCH_NO = P.POUCH_NO)
+		WHEN NOT MATCHED THEN
+		   INSERT 
+		     (COMPANY_CODE, DIVISION_CODE, IMPDEC_NO, LNE_NO, POUCH_NO, EFECT_BGNDE, ITEM_CODE, HS_CODE, STDR_MT, ACPT_DATE, QY
+		      , BASS_UNIT, INCME_TARRATE, CSTMS, CSTMS_AMOUNT, CSTMS_AMOUNT_UNIT, AMOUNT_CRNCY, DLIVY_QY, REMNDR_QY, RAWMTRL_SE, BKRECKN_MT, DCSN_ENNC
+		      , LAST_USE_YYYYMMDD, INTTAX, ECX_AMOUNT, AGSPT, TRANTAX, LQTX_AMOUNT, ORIGIN_NATION_CODE, VENDOR_CODE, ITEM_NM
+		      , VENDOR_NAME, IMP_BASS_UNIT)
+		   VALUES
+		     (P.COMPANY_CODE, P.DIVISION_CODE, P.IMPDEC_NO, P.LNE_NO, P.POUCH_NO, P.EFECT_BGNDE, P.ITEM_CODE, P.HS_CODE, P.STDR_MT, P.ACPT_DATE, P.QY
+		      , P.BASS_UNIT, P.INCME_TARRATE, P.CSTMS, P.CSTMS_AMOUNT, P.CSTMS_AMOUNT_UNIT, P.AMOUNT_CRNCY, 0, P.QY, P.RAWMTRL_SE, P.BKRECKN_MT, P.DCSN_ENNC
+		      , P.LAST_USE_YYYYMMDD, P.INTTAX, P.ECX_AMOUNT, P.AGSPT, P.TRANTAX, P.LQTX_AMOUNT, P.ORIGIN_NATION_CODE, P.VENDOR_CODE, P.ITEM_NM
+		      , P.VENDOR_NAME, P.IMP_BASS_UNIT)
+	
+	</update>
+	
+	<update id="update_An_CtrmCmmn" parameterType="HashMap">
+		UPDATE AN_CTRM_CMMN A
+		   SET A.IF_YN = 'Y'
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+           AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.ISSUE_TYPE = #{ISSUE_TYPE}
+		   AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   AND LPAD(A.RECV_DOC_TYPE, 2, '0') IN (${RECV_DOC_TYPE})
+	</update>
+	
+	<update id="merge_IncmeLocalBntSm_for_04_01_35" parameterType="HashMap">
+		<!-- 양수자 통보 잔량생성된 분증정보 상태값 update  -->
+		MERGE INTO INCME_LOCAL_BNT_SM T
+		 USING (SELECT B.COMPANY_CODE,
+	                   B.DIVISION_CODE,
+	                   B.RECV_DOC_TYPE,
+	                   B.REGIST_RCEPT_NO,
+	                   B.SEQ,
+	                   B.USGQTY,
+	                   B.IMPDEC_NO,
+	                   B.LNE_NO,
+	                   B.POUCH_NO,
+	                   B.CSTMS
+		          FROM (SELECT B.COMPANY_CODE,
+		                       B.DIVISION_CODE,
+		                       B.REGIST_RCEPT_NO,
+		                       B.SEQ,
+		                       B.RECV_DOC_TYPE,
+		                       CASE /* 1드럼(DR) = 30KG/1 LB = 0.453592 KG/1MT = 1000KG/1M =100CM/1GR = 0.064799 G*/
+		                             WHEN B.BASS_UNIT = 'KG' THEN B.USGQTY * 1000
+		                             WHEN B.BASS_UNIT = 'LB' THEN B.USGQTY * 0.453592 * 1000
+		                             WHEN B.BASS_UNIT = 'DR' THEN B.USGQTY * 1000 * 30
+		                             WHEN B.BASS_UNIT = 'GR' THEN B.USGQTY * 0.064799
+		                             WHEN B.BASS_UNIT = 'MT' THEN B.USGQTY * 1000 * 1000
+		                             ELSE B.USGQTY
+		                         END AS USGQTY,
+		                       --B.USGQTY,
+		                       A.REGIST_RCEPT_NO AS IMPDEC_NO,
+                           	   '001' AS LNE_NO,
+                               B.SEQ AS POUCH_NO,
+                               B.CSTMS
+		                  FROM AN_CTRM_CMMN A 
+		                 INNER JOIN AN_CTRM_THING_RAWMTRL B
+		                    ON A.COMPANY_CODE = B.COMPANY_CODE
+		                   AND A.DIVISION_CODE = B.DIVISION_CODE
+		                   AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+		                   AND A.RECV_DOC_TYPE = B.RECV_DOC_TYPE
+		                 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+                           AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                   AND A.ISSUE_TYPE = '04'
+		                   AND A.IF_YN = 'Y'
+		                   AND LPAD(A.RECV_DOC_TYPE, 2, '0') = '09') A
+		         INNER JOIN ( SELECT B.COMPANY_CODE,
+		                             B.DIVISION_CODE,
+		                             B.REGIST_RCEPT_NO,
+		                             B.SEQ,
+		                             B.RECV_DOC_TYPE,
+				                     CASE /* 1드럼(DR) = 30KG/1 LB = 0.453592 KG/1MT = 1000KG/1M =100CM/1GR = 0.064799 G*/
+				                             WHEN B.BASS_UNIT = 'KG' THEN B.USGQTY * 1000
+				                             WHEN B.BASS_UNIT = 'LB' THEN B.USGQTY * 0.453592 * 1000
+				                             WHEN B.BASS_UNIT = 'DR' THEN B.USGQTY * 1000 * 30
+				                             WHEN B.BASS_UNIT = 'GR' THEN B.USGQTY * 0.064799
+				                             WHEN B.BASS_UNIT = 'MT' THEN B.USGQTY * 1000 * 1000
+				                             ELSE B.USGQTY
+				                       END AS USGQTY,
+				                     --B.USGQTY,
+		                             A.REGIST_RCEPT_NO AS IMPDEC_NO,
+                                     '001' AS LNE_NO,
+                                     B.SEQ AS POUCH_NO,
+                                     B.CSTMS
+		                        FROM AN_CTRM_CMMN A 
+		                       INNER JOIN AN_CTRM_THING_RAWMTRL B
+		                          ON A.COMPANY_CODE = B.COMPANY_CODE
+		                         AND A.DIVISION_CODE = B.DIVISION_CODE
+		                         AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+		                         AND A.RECV_DOC_TYPE = B.RECV_DOC_TYPE
+		                       WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+                                 AND A.DIVISION_CODE = #{DIVISION_CODE}
+		                         AND A.ISSUE_TYPE = '04'
+		                         AND A.IF_YN = 'N'
+		                         AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		                         AND LPAD(A.RECV_DOC_TYPE, 2, '0') IN ('01', '35') ) B
+		            ON A.COMPANY_CODE = B.COMPANY_CODE
+		           AND A.DIVISION_CODE = B.DIVISION_CODE
+		           AND A.REGIST_RCEPT_NO = B.REGIST_RCEPT_NO
+		           AND A.SEQ = B.SEQ
+		           ) P
+		    ON (T.COMPANY_CODE = P.COMPANY_CODE
+		   AND T.DIVISION_CODE = P.DIVISION_CODE
+		   AND T.IMPDEC_NO = P.IMPDEC_NO
+		   AND T.LNE_NO = P.LNE_NO
+		   AND T.POUCH_NO = P.POUCH_NO)
+		WHEN MATCHED THEN
+	      UPDATE
+	         SET T.QY = P.USGQTY
+	             ,T.REMNDR_QY = CASE WHEN T.REMNDR_QY <![CDATA[>]]> P.USGQTY THEN P.USGQTY
+	                                 WHEN T.REMNDR_QY <![CDATA[<]]> P.USGQTY THEN T.REMNDR_QY
+	                                 ELSE 0 
+	                             END
+	             ,T.CSTMS = P.CSTMS
+	      DELETE WHERE P.RECV_DOC_TYPE = '01'  --취하인경우 삭제 처리
+	</update>
+	
+	<select id="checkNewSubmitNo_bom" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN A.SUBMIT_NO IS NULL THEN 'Y' ELSE 'N' END AS NEW_SUBMIT_NO_YN
+		  FROM BOM_SUBMIT_MST A 
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.BOM_PRESENTN_NO = #{PRESENTN_NO}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+	</select>
+	
+	<update id="updateSubmitNo_bom" parameterType="HashMap">
+	 	UPDATE BOM_SUBMIT_MST A
+		   SET A.SUBMIT_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')
+		       ,A.SUBMIT_NO = (SELECT A.PRESENTN_NO||TO_CHAR(SYSDATE, 'YY')||LPAD(B.CURRENT_NO, 6, '0') AS SUBMIT_NO
+		                         FROM COMPANY A
+		                        INNER JOIN CSMHSE_SUBMIT_NO_MST B
+		                           ON A.COMPANY_CODE = B.COMPANY_CODE
+		                        WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                          AND B.YY = TO_CHAR(SYSDATE, 'YY'))
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.BOM_PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	<update id="updateBomSubmitStatus" parameterType="HashMap">
+	 	UPDATE BOM_SUBMIT_MST A
+		   SET A.SUBMIT_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')
+		       ,A.EXECUT_STATUS = '00'
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.BOM_PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	
+	<select id="retrieve_Initbom" parameterType="HashMap" resultType="HashMap">
+		SELECT A.BOM_PRESENTN_NO
+		       ,A.REGIST_RCEPT_NO
+		       ,B.REGIST_RCEPT_NO AS CTRM_REGIST_RCEPT_NO
+		       ,B.CHIT_FRMTRM_DATE
+		       ,A.SUBMIT_NO
+		       ,A.SUBMIT_DATE
+		       ,CC.CSMHSE_CODE
+		       ,A.REQ_DOC_NO
+		       ,A.REQ_DOC_LINE_NO
+		       ,NVL(B.ECTMRK, CC.ECTMRK) AS ECTMRK
+		       ,A.FORM_TYPE
+		       ,A.CTRM_REGIST_RCEPT_NO
+		       ,B.CSTBRKR
+		       ,C.ITEM_CODE
+		       ,C.ITEM_NM
+		       ,I.SPEC
+		       ,I.HS_CODE
+		       ,A.USE_BOM_VERSION AS START_DATE
+		       ,'99991231' AS END_DATE
+		       ,A.STTEMNT_DOC_STLE
+		       ,CC.UNIPASS_DOC_BOX_CODE
+		       ,CC.UNIPASS_ID
+		  FROM BOM_SUBMIT_MST A
+		 INNER JOIN CTRM_CMMN B
+		    ON A.COMPANY_CODE = B.COMPANY_CODE
+		   AND A.DIVISION_CODE = B.COMPANY_CODE
+		   AND A.CTRM_PRESENTN_NO = B.PRESENTN_NO
+		 INNER JOIN CTRM_TRGET_THNG C
+		    ON A.COMPANY_CODE = C.COMPANY_CODE
+		   AND A.DIVISION_CODE = C.DIVISION_CODE
+		   AND B.PRESENTN_NO = C.PRESENTN_NO
+		   AND A.CTRM_SEQ = C.SEQ
+		 INNER JOIN COMPANY CC
+		    ON A.COMPANY_CODE = CC.COMPANY_CODE   
+		  LEFT OUTER JOIN ITEM_MST I
+		    ON A.COMPANY_CODE = I.COMPANY_CODE
+		   AND C.ITEM_CODE = I.ITEM_CODE
+		 WHERE A.BOM_PRESENTN_NO = #{BOM_PRESENTN_NO}
+		   AND A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+	</select>
+	
+	<select id="retrieve_Initbom_detail" parameterType="HashMap" resultType="HashMap">
+		SELECT LPAD(ROWNUM, 5, '0') AS BOM_SEQ
+		           ,BOM_PRESENTN_NO
+		           , ITEM_CODE
+		           , ITEM_NM
+		           , PARENT_ITEM_CODE
+		           , INPUT_QTY
+		           , INPUT_BASS_UNIT
+		           , CALC_USGQTY
+		           , HS_CODE
+		      FROM (SELECT A.BOM_PRESENTN_NO
+		                   ,BOM.ITEM_CODE
+		                   ,IMP.ITEM_NM
+		                   ,BOM.PRODUCT_CODE AS PARENT_ITEM_CODE
+		                   ,BOM.INPUT_QTY
+		                   ,BOM.INPUT_BASS_UNIT
+		                   ,IMP.HS_CODE
+		                   ,TRUNC(CASE WHEN IMP.IMP_BASS_UNIT = D.BASS_UNIT THEN D.USGQTY
+		                               ELSE (CASE WHEN IMP.IMP_BASS_UNIT = 'KG' THEN D.USGQTY / 1000
+		                                          WHEN IMP.IMP_BASS_UNIT = 'LB' THEN D.USGQTY / 0.453592 / 1000
+		                                          WHEN IMP.IMP_BASS_UNIT = 'DR' THEN D.USGQTY / 1000 / 30
+		                                          WHEN IMP.IMP_BASS_UNIT = 'GR' THEN D.USGQTY / 0.064799
+		                                          WHEN IMP.IMP_BASS_UNIT = 'MT' THEN D.USGQTY / 1000 / 1000
+		                                          ELSE IMP.QY
+		                                      END)
+		                           END, 3) AS CALC_USGQTY
+		              FROM BOM_SUBMIT_MST A
+		             INNER JOIN CTRM_CMMN B
+		                ON A.COMPANY_CODE = B.COMPANY_CODE
+		               AND A.DIVISION_CODE = B.COMPANY_CODE
+		               AND A.CTRM_PRESENTN_NO = B.PRESENTN_NO
+		             INNER JOIN CTRM_TRGET_THNG C
+		                ON A.COMPANY_CODE = C.COMPANY_CODE
+		               AND A.DIVISION_CODE = C.DIVISION_CODE
+		               AND B.PRESENTN_NO = C.PRESENTN_NO
+		               AND A.CTRM_SEQ = C.SEQ
+		             INNER JOIN CTRM_INCME_RAWMTRL D
+		                ON C.COMPANY_CODE = D.COMPANY_CODE
+		               AND C.SEQ = D.SEQ
+		               AND C.PRESENTN_NO = D.PRESENTN_NO
+		             INNER JOIN INCME_LOCAL_BNT_SM IMP
+		                ON D.COMPANY_CODE = IMP.COMPANY_CODE
+		               AND D.RAWMTRL_CODE = IMP.ITEM_CODE
+		               AND D.LNE_NO = IMP.LNE_NO
+		               AND D.POUCH_NO = IMP.POUCH_NO
+		               AND D.IMPDEC_NO = IMP.IMPDEC_NO
+		             INNER JOIN RESULT_BOM_AP BOM
+		                ON BOM.PRODUCT_CODE = C.ITEM_CODE
+		               AND BOM.ITEM_CODE = D.RAWMTRL_CODE
+		               AND BOM.BOM_VERSION = A.USE_BOM_VERSION
+		               AND BOM.COMPANY_CODE = C.COMPANY_CODE
+		               AND BOM.DIVISION_CODE = C.DIVISION_CODE
+		             WHERE A.BOM_PRESENTN_NO = #{BOM_PRESENTN_NO}
+		               AND A.COMPANY_CODE = #{COMPANY_CODE}
+		               AND A.DIVISION_CODE = #{DIVISION_CODE}
+		
+		            ) 
+		    WHERE TRUNC(CALC_USGQTY, 3) > 0.000999999999999
+	</select>
+	
+	<select id="retrieve_bom" parameterType="HashMap" resultType="HashMap">
+		SELECT A.BOM_PRESENTN_NO
+		       ,A.REGIST_RCEPT_NO
+	           ,B.DRWBAK_REQ_DATE
+	           ,A.SUBMIT_NO
+	           ,A.SUBMIT_DATE
+	           ,CC.CSMHSE_CODE
+	           ,A.REQ_DOC_NO
+	           ,A.REQ_DOC_LINE_NO
+	           ,NVL(B.ECTMRK, CC.ECTMRK) AS ECTMRK
+	           ,A.FORM_TYPE
+	           ,A.DRWB_REGIST_RCEPT_NO
+	           ,B.CSTBRKR
+	           ,C.ITEM_CODE
+	           ,C.ITEM_NM
+	           ,I.SPEC
+	           ,EX.HS_CODE
+	           ,C.USE_BOM_VERSION AS START_DATE
+	           ,'99991231' AS END_DATE
+	           ,A.STTEMNT_DOC_STLE
+	           ,CC.UNIPASS_DOC_BOX_CODE
+	           ,CC.UNIPASS_ID
+		  FROM BOM_SUBMIT_MST A
+		 INNER JOIN DRWBAK_REQSTDOC_CMMN B
+		    ON A.COMPANY_CODE = B.COMPANY_CODE
+		   AND A.DIVISION_CODE = B.COMPANY_CODE
+		   AND A.DRWB_PRESENTN_NO = B.PRESENTN_NO
+		 INNER JOIN COMPANY CC
+		    ON A.COMPANY_CODE = CC.COMPANY_CODE
+		 INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG C
+		    ON A.COMPANY_CODE = C.COMPANY_CODE
+		   AND A.DIVISION_CODE = C.DIVISION_CODE
+		   AND B.PRESENTN_NO = C.PRESENTN_NO
+		   AND A.LNE_NO = C.LNE_NO
+		   AND A.POUCH_NO = C.POUCH_NO
+		 INNER JOIN EXPORT_CERT_MST EX
+		    ON C.COMPANY_CODE = EX.COMPANY_CODE
+		   AND C.DIVISION_CODE = EX.DIVISION_CODE
+		   AND C.XPORT_STTEMNT_NO = EX.XPORT_STTEMNT_NO
+		   AND C.LNE_NO = EX.LNE_NO
+		   AND C.POUCH_NO = EX.POUCH_NO
+		  LEFT OUTER JOIN ITEM_MST I
+		    ON A.COMPANY_CODE = I.COMPANY_CODE
+		   AND C.ITEM_CODE = I.ITEM_CODE
+		 WHERE A.BOM_PRESENTN_NO = #{BOM_PRESENTN_NO}
+		   AND A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+	</select>
+	
+	<select id="retrieve_bom_detail" parameterType="HashMap" resultType="HashMap">
+		SELECT LPAD(ROWNUM, 5, '0') AS BOM_SEQ
+		       ,BOM_PRESENTN_NO
+		       , ITEM_CODE
+		       , ITEM_NM
+		       , PARENT_ITEM_CODE
+		       , INPUT_QTY
+		       , INPUT_BASS_UNIT
+		       , CALC_USGQTY
+		       , HS_CODE
+		  FROM (SELECT A.BOM_PRESENTN_NO
+		               ,BOM.ITEM_CODE
+		               ,IMP.ITEM_NM
+		               ,BOM.PRODUCT_CODE AS PARENT_ITEM_CODE
+		               ,BOM.INPUT_QTY
+		               ,BOM.INPUT_BASS_UNIT
+		               ,IMP.HS_CODE
+		               ,TRUNC(CASE WHEN IMP.IMP_BASS_UNIT = D.BASS_UNIT THEN D.USGQTY
+		                           ELSE (CASE WHEN IMP.IMP_BASS_UNIT = 'KG' THEN D.USGQTY / 1000
+		                                      WHEN IMP.IMP_BASS_UNIT = 'LB' THEN D.USGQTY / 0.453592 / 1000
+		                                      WHEN IMP.IMP_BASS_UNIT = 'DR' THEN D.USGQTY / 1000 / 30
+		                                      WHEN IMP.IMP_BASS_UNIT = 'GR' THEN D.USGQTY / 0.064799
+		                                      WHEN IMP.IMP_BASS_UNIT = 'MT' THEN D.USGQTY / 1000 / 1000
+		                                      ELSE IMP.QY
+		                                  END)
+		                       END, 3) AS CALC_USGQTY
+		          FROM BOM_SUBMIT_MST A
+		         INNER JOIN DRWBAK_REQSTDOC_CMMN B
+		            ON A.COMPANY_CODE = B.COMPANY_CODE
+		           AND A.DIVISION_CODE = B.COMPANY_CODE
+		           AND A.DRWB_PRESENTN_NO = B.PRESENTN_NO
+		         INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG C
+		            ON A.COMPANY_CODE = C.COMPANY_CODE
+		           AND A.DIVISION_CODE = C.DIVISION_CODE
+		           AND B.PRESENTN_NO = C.PRESENTN_NO
+		           AND A.LNE_NO = C.LNE_NO
+		           AND A.POUCH_NO = C.POUCH_NO
+		         INNER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL D
+		            ON C.COMPANY_CODE = D.COMPANY_CODE
+		           AND C.THNG_SEQ = D.THNG_SEQ
+		           AND C.PRESENTN_NO = D.PRESENTN_NO
+		         INNER JOIN INCME_LOCAL_BNT_SM IMP
+		            ON D.COMPANY_CODE = IMP.COMPANY_CODE
+		           AND D.RAWMTRL_CODE = IMP.ITEM_CODE
+		           AND D.LNE_NO = IMP.LNE_NO
+		           AND D.POUCH_NO = IMP.POUCH_NO
+		           AND D.IMPDEC_NO = IMP.IMPDEC_NO
+		         INNER JOIN RESULT_BOM_AP BOM
+		            ON BOM.PRODUCT_CODE = C.ITEM_CODE
+		           AND BOM.ITEM_CODE = D.RAWMTRL_CODE
+		           AND BOM.BOM_VERSION = C.USE_BOM_VERSION
+		           AND BOM.COMPANY_CODE = C.COMPANY_CODE
+		           AND BOM.DIVISION_CODE = C.DIVISION_CODE
+		         WHERE A.BOM_PRESENTN_NO = #{BOM_PRESENTN_NO}
+		           AND A.COMPANY_CODE = #{COMPANY_CODE}
+		           AND A.DIVISION_CODE = #{DIVISION_CODE}
+		        ) 
+		WHERE TRUNC(CALC_USGQTY, 3) > 0.000999999999999
+	</select>
+
+	<select id="checkNewSubmitNo_overDrwb" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN A.SUBMIT_NO IS NULL THEN 'Y' ELSE 'N' END AS NEW_SUBMIT_NO_YN
+		  FROM OVER_DRWBAK_VOL_DECL_HDR A 
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.OVER_DRWBAK_PRESENTN_NO = #{OVER_DRWBAK_PRESENTN_NO}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+	</select>
+	
+	<update id="updateSubmitNo_overDrwb" parameterType="HashMap">
+		UPDATE OVER_DRWBAK_VOL_DECL_HDR A
+		   SET A.SUBMIT_NO = (SELECT A.PRESENTN_NO||TO_CHAR(SYSDATE, 'YY')||LPAD(B.CURRENT_NO, 6, '0') AS SUBMIT_NO
+		                        FROM COMPANY A
+		                       INNER JOIN CSMHSE_SUBMIT_NO_MST B
+		                          ON A.COMPANY_CODE = B.COMPANY_CODE
+		                       WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                         AND B.YY = TO_CHAR(SYSDATE, 'YY'))
+		       ,A.EXECUT_AT = 'Y'
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.OVER_DRWBAK_PRESENTN_NO = #{OVER_DRWBAK_PRESENTN_NO}
+	</update>
+	
+	<select id="retrieve_overDrwb" parameterType="HashMap" resultType="HashMap">
+		SELECT C.OVER_DRWBAK_PRESENTN_NO
+			,C.SUBMIT_NO
+			,C.RCEPT_DATE
+			,A.REGIST_RCEPT_NO -- 관련접수번호
+			,TO_CHAR(A.DRWBAK_COMP_DATE, 'RRRRMMDD') AS DRWBAK_COMP_YYYYMMDD
+	        ,TRUNC((SELECT TRUNC(SUM(TAX_SUM), -1)
+	                  FROM (SELECT (CASE WHEN B.IMP_BASS_UNIT = A.BASS_UNIT THEN A.USGQTY
+	                                     ELSE (CASE WHEN B.IMP_BASS_UNIT = 'KG' THEN A.USGQTY / 1000
+	                                                WHEN B.IMP_BASS_UNIT = 'LB' THEN A.USGQTY / 0.453592 / 1000
+	                                                WHEN B.IMP_BASS_UNIT = 'DR' THEN A.USGQTY / 1000 / 30
+	                                                WHEN B.IMP_BASS_UNIT = 'GR' THEN A.USGQTY / 0.064799
+	                                                WHEN B.IMP_BASS_UNIT = 'MT' THEN A.USGQTY / 1000 / 1000
+	                                                ELSE B.QY
+	                                            END)
+	                                 END) AS USGQTY,
+	                              TRUNC(A.CSTMS) + TRUNC(A.INTTAX) + TRUNC(A.ECX_AMOUNT) + TRUNC(A.AGSPT) + TRUNC(A.TRANTAX) + TRUNC(A.LQTX_AMOUNT) AS TAX_SUM
+	                         FROM DRWBAK_REQSTDOC_INCME_RAWMTRL A
+	                        INNER JOIN INCME_LOCAL_BNT_SM B
+	                           ON A.COMPANY_CODE = B.COMPANY_CODE
+	                          AND A.RAWMTRL_CODE = B.ITEM_CODE
+	                          AND A.LNE_NO = B.LNE_NO
+	                          AND A.POUCH_NO = B.POUCH_NO
+	                          AND A.IMPDEC_NO = B.IMPDEC_NO
+	                        INNER JOIN IMPDEC_CERFIN_ITEM C
+	                           ON A.COMPANY_CODE = C.COMPANY_CODE
+	                          AND A.RAWMTRL_CODE = C.ITEM_CODE
+	                          AND A.LNE_NO = C.LNE_NO
+	                          AND A.POUCH_NO = C.POUCH_NO
+	                          AND A.IMPDEC_NO = C.IMPDEC_NO
+	                        WHERE TRUNC(A.CSTMS, 4) > 0
+	                          AND A.COMPANY_CODE = #{COMPANY_CODE}
+	                          AND A.PRESENTN_NO = #{PRESENTN_NO})
+	                WHERE TRUNC(USGQTY, 3) > 0.000999999999999), -1) AS DRWBAK_AMOUNT
+			,B.PROPER_DRWBAK_AMOUNT -- 정당환급액
+			,B.BALANCE_AMOUNT -- 과다환급액
+			,B.OVER_DRWBAK_REMARK -- 비고
+			,C.OVER_DRWBAK_REASON -- 과다환급사유내용
+			,NVL(C.RCEPT_RPRSNTV_NM, P.RPRSNTV_NM) AS RCEPT_RPRSNTV_NM -- 신고인명
+			,NVL(C.ECTMRK, P.ECTMRK) AS ECTMRK -- 신청인통관고유부호
+			,NVL(C.BIZRNO, P.BIZRNO) AS BIZRNO -- 신청인사업자등록번호
+			,D.CSMHSE_CODE
+			,D.UNIPASS_ID 							-- 유니패스ID
+	        ,D.UNIPASS_DOC_BOX_CODE 				-- 문서함코드
+	        , '' AS UNIPASS_STATUS					-- 유니패스 상태값
+	        , 'GOVCBRDCC' AS STTEMNT_DOC_STLE	-- 문서형태코드
+		FROM DRWBAK_REQSTDOC_CMMN A
+		INNER JOIN PLANT P ON A.COMPANY_CODE = P.COMPANY_CODE
+			AND A.DIVISION_CODE = P.DIVISION_CODE
+		LEFT JOIN OVER_DRWBAK_VOL_DECL_ITEM B ON A.COMPANY_CODE = B.COMPANY_CODE
+			AND A.DIVISION_CODE = B.DIVISION_CODE
+			AND A.PRESENTN_NO = B.PRE_PRESENTN_NO
+		LEFT JOIN OVER_DRWBAK_VOL_DECL_HDR C ON B.COMPANY_CODE = C.COMPANY_CODE
+			AND B.DIVISION_CODE = C.DIVISION_CODE
+			AND B.OVER_DRWBAK_PRESENTN_NO = C.OVER_DRWBAK_PRESENTN_NO
+		INNER JOIN COMPANY D ON A.COMPANY_CODE = D.COMPANY_CODE
+		WHERE A.DRWBAK_COMP_DATE IS NOT NULL
+			AND A.COMPANY_CODE =  #{COMPANY_CODE}
+			AND A.PRESENTN_NO = #{PRESENTN_NO}
+	
+	</select>
+	
+	<update id="updateOverDrwbStatus" parameterType="HashMap">
+		UPDATE OVER_DRWBAK_VOL_DECL_HDR A
+		   SET A.EXECUT_AT = 'Y'
+		       ,A.EXECUT_STATUS = '00' -- 접수중
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.OVER_DRWBAK_PRESENTN_NO = #{OVER_DRWBAK_PRESENTN_NO}
+	</update>
+
+	<select id="checkNewSubmitNo_quickRef" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN A.SUBMIT_NO IS NULL THEN 'Y' ELSE 'N' END AS NEW_SUBMIT_NO_YN
+		  FROM DOC_QUICK_REFERENCE_HDR A 
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+	</select>	
+
+	<update id="updateSubmitNo_quickRef" parameterType="HashMap">
+		UPDATE DOC_QUICK_REFERENCE_HDR A
+		     SET A.SUBMIT_NO = (SELECT A.PRESENTN_NO||TO_CHAR(SYSDATE, 'YY')||LPAD(B.CURRENT_NO, 6, '0') AS SUBMIT_NO
+		                        FROM COMPANY A
+		                       INNER JOIN CSMHSE_SUBMIT_NO_MST B
+		                          ON A.COMPANY_CODE = B.COMPANY_CODE
+		                       WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                         AND B.YY = TO_CHAR(SYSDATE, 'YY'))
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	<select id="retrieve_quickRef" parameterType="HashMap" resultType="HashMap">
+		<choose>
+			<when test="JUDGE_REQ_DOC_TYPE == '10'">
+					SELECT B.CSMHSE_CODE
+						, C.JUDGE_REQ_DOC_NO
+						, C.JUDGE_REQ_DOC_SEQ
+						, A.ECTMRK
+						, A.BIZRNO
+						, C.REL_REGIST_RCEPT_NO
+						, LPAD(ROWNUM,4, '0') AS SEQ
+						, D.ITEM_CODE AS PRODUCT_CODE
+						, D.ITEM_NM AS PRODUCT_NAME
+						, D.XPORT_STTEMNT_NO AS REF_NO
+						, LPAD(D.LNE_NO, 3, '0') AS REF_LNE_NO
+						, LPAD(D.POUCH_NO, 2, '0') AS REF_POUCH_NO
+						, D.THNG_SEQ
+						, D.ACCMLT_ORDER_QY
+						, D.BASS_UNIT
+						, E.SUBMIT_NO
+						,B.UNIPASS_ID 							-- 유니패스ID
+				        ,B.UNIPASS_DOC_BOX_CODE 				-- 문서함코드
+				        , '' AS UNIPASS_STATUS					-- 유니패스 상태값
+				        , 'GOVCBRDEX' AS STTEMNT_DOC_STLE	-- 문서형태코드
+					FROM DRWBAK_REQSTDOC_CMMN A
+					LEFT JOIN COMPANY B
+						ON A.COMPANY_CODE = B.COMPANY_CODE
+					LEFT JOIN DOC_QUICK_REFERENCE_HDR C
+						ON A.COMPANY_CODE = C.COMPANY_CODE
+						AND A.REGIST_RCEPT_NO = C.REL_REGIST_RCEPT_NO
+					INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG D
+						ON A.COMPANY_CODE = D.COMPANY_CODE
+						AND A.PRESENTN_NO = D.PRESENTN_NO
+						AND A.DIVISION_CODE = D.DIVISION_CODE
+					LEFT JOIN (SELECT SUBMIT_NO 
+			                     FROM DOC_QUICK_REFERENCE_HDR 
+			                     WHERE PRESENTN_NO = #{PRESENTN_NO}
+			                     AND COMPANY_CODE = #{COMPANY_CODE}) E
+                     ON 1=1
+					WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+					AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+				</when>
+				<otherwise>
+					SELECT B.CSMHSE_CODE
+					, C.JUDGE_REQ_DOC_NO
+					, C.JUDGE_REQ_DOC_SEQ
+					, A.ECTMRK
+					, A.BIZRNO
+					, C.REL_REGIST_RCEPT_NO
+					, LPAD(ROWNUM,4, '0') AS SEQ
+					, D.ITEM_CODE AS PRODUCT_CODE
+					, D.ITEM_NM AS PRODUCT_NAME
+					, A.REGIST_RCEPT_NO AS REF_NO
+					, '001' AS REF_LNE_NO
+					, D.SEQ AS REF_POUCH_NO
+					, D.ACCMLT_ORDER_QY
+					, D.BASS_UNIT
+					, C.SUBMIT_NO
+					,B.UNIPASS_ID 							-- 유니패스ID
+			        ,B.UNIPASS_DOC_BOX_CODE 				-- 문서함코드
+			        , '' AS UNIPASS_STATUS					-- 유니패스 상태값
+			        , 'GOVCBRDEX' AS STTEMNT_DOC_STLE	-- 문서형태코드
+					FROM CTRM_CMMN A
+					LEFT JOIN COMPANY B
+						ON A.COMPANY_CODE = B.COMPANY_CODE
+					LEFT JOIN DOC_QUICK_REFERENCE_HDR C
+						ON A.COMPANY_CODE = C.COMPANY_CODE
+						AND A.REGIST_RCEPT_NO = C.REL_REGIST_RCEPT_NO
+					INNER JOIN CTRM_TRGET_THNG D
+						ON A.COMPANY_CODE = D.COMPANY_CODE
+						AND A.PRESENTN_NO = D.PRESENTN_NO
+						AND A.DIVISION_CODE = D.DIVISION_CODE
+					LEFT JOIN (SELECT SUBMIT_NO 
+			                     FROM DOC_QUICK_REFERENCE_HDR 
+			                     WHERE PRESENTN_NO = #{PRESENTN_NO}
+			                     AND COMPANY_CODE = #{COMPANY_CODE}) E
+			        	ON 1=1
+					WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+					AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+				</otherwise>	
+			</choose>
+	</select>
+ 
+ 	<select id="retrieve_quickRef_detail" parameterType="HashMap" resultType="HashMap">
+ 		<choose>
+			<when test="JUDGE_REQ_DOC_TYPE == '10'">
+				SELECT LPAD(ROWNUM, 3, '0') AS SEQ,
+				       RAWMTRL_CODE, RAWMTRL_NAME, RAWMTRL_SE, IMPDEC_NO, LNE_NO, POUCH_NO, ACPT_DATE, USGQTY, DRWBAK_AMOUNT, BASS_UNIT
+				  FROM (SELECT RAWMTRL_CODE,
+				               IMP.ITEM_NM AS RAWMTRL_NAME,
+				               C.RAWMTRL_SE,
+				               C.IMPDEC_NO,
+				               LPAD(C.LNE_NO, 3, '0') AS LNE_NO,
+				               LPAD(C.POUCH_NO, 2, '0') AS POUCH_NO,
+				               C.ACPT_DATE,
+				               TRUNC(CASE WHEN C.BASS_UNIT = IMP.BASS_UNIT THEN C.USGQTY
+				                          ELSE (CASE WHEN IMP.BASS_UNIT = 'KG' THEN C.USGQTY / 1000
+				                                     WHEN IMP.BASS_UNIT = 'LB' THEN C.USGQTY / 0.453592 / 1000
+				                                     WHEN IMP.BASS_UNIT = 'DR' THEN C.USGQTY / 1000 / 30
+				                                     WHEN IMP.BASS_UNIT = 'GR' THEN C.USGQTY / 0.064799
+				                                     WHEN IMP.BASS_UNIT = 'MT' THEN C.USGQTY / 1000 / 1000
+				                                     ELSE IMP.QY
+				                                 END)
+				                      END, 3) AS USGQTY,
+				               TRUNC(C.CSTMS+C.INTTAX+C.ECX_AMOUNT+C.AGSPT+C.TRANTAX+C.LQTX_AMOUNT, -1) AS DRWBAK_AMOUNT,
+				               IMP.BASS_UNIT AS BASS_UNIT
+				          FROM DRWBAK_REQSTDOC_CMMN A
+				         INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG B
+				            ON A.COMPANY_CODE = B.COMPANY_CODE
+				           AND A.DIVISION_CODE = B.DIVISION_CODE
+				           AND A.PRESENTN_NO = B.PRESENTN_NO
+				         INNER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL C
+				            ON B.COMPANY_CODE = C.COMPANY_CODE
+				           AND B.PRESENTN_NO = C.PRESENTN_NO
+				           AND B.THNG_SEQ = C.THNG_SEQ
+				         INNER JOIN IMPDEC_CERFIN_ITEM IMP
+				            ON C.COMPANY_CODE = IMP.COMPANY_CODE
+				           AND C.IMPDEC_NO = IMP.IMPDEC_NO
+				           AND C.LNE_NO = IMP.LNE_NO
+				           AND C.POUCH_NO = IMP.POUCH_NO
+				         WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+				           AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+				           AND B.THNG_SEQ = #{THNG_SEQ}
+				        )
+				  WHERE TRUNC(USGQTY, 3) > 0.000999999999999
+			</when>
+			<otherwise>
+				SELECT RAWMTRL_CODE
+		              , C.ITEM_NM AS RAWMTRL_NAME
+		              , C.RAWMTRL_SE
+		              , C.IMPDEC_NO
+		              , C.LNE_NO
+		              , C.POUCH_NO
+		              , C.ACPT_DATE
+		              , C.USGQTY
+		              , C.BASS_UNIT
+		              , C.CSTMS 
+		           FROM CTRM_CMMN A
+		          INNER JOIN CTRM_TRGET_THNG B
+		             ON A.COMPANY_CODE = B.COMPANY_CODE
+		            AND A.PRESENTN_NO = B.PRESENTN_NO
+		            AND A.DIVISION_CODE = B.DIVISION_CODE
+		          INNER JOIN CTRM_INCME_RAWMTRL C
+		             ON B.COMPANY_CODE = C.COMPANY_CODE
+		            AND B.DIVISION_CODE = C.DIVISION_CODE
+		            AND B.PRESENTN_NO = C.PRESENTN_NO
+		            AND B.SEQ = C.SEQ
+		          WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+				    AND A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+				    AND B.SEQ = #{REF_POUCH_NO}
+			</otherwise>
+		</choose>
+ 	</select>
+ 	
+ 	<update id="updateQuickRefStatus" parameterType="HashMap">
+		UPDATE DOC_QUICK_REFERENCE_HDR A
+		   SET A.EXECUT_STATUS = '00' -- 접수중
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	<update id="updateBomSubmit_MasterData" parameterType="HashMap">
+		UPDATE BOM_SUBMIT_MST A
+		   SET A.REQ_DOC_NO = #{REQ_DOC_NO}
+		       , A.REQ_DOC_LINE_NO = #{REQ_DOC_LINE_NO}
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.BOM_PRESENTN_NO = #{BOM_PRESENTN_NO}
+	</update>
+	
+	<insert id="insertBomSubmit_MasterData" parameterType="java.util.Map">
+        <selectKey keyProperty="KEY_PRESENTN_NO" resultType="java.lang.String" order="BEFORE">
+			SELECT 'BOM-'||#{COMPANY_CODE}|| #{DIVISION_CODE}||'-'||TO_CHAR(SYSDATE, 'RRRRMMDD') ||'-'||
+			       LPAD(CASE WHEN COUNT(1) = 0 THEN '1' ELSE TO_CHAR(COUNT(1)+1) END, 4, '0')  
+			  FROM BOM_SUBMIT_MST A
+			 WHERE A.BOM_PRESENTN_NO LIKE #{COMPANY_CODE}|| #{DIVISION_CODE}||'-'||TO_CHAR(SYSDATE, 'RRRRMMDD') || '%'
+        </selectKey>
+		INSERT INTO BOM_SUBMIT_MST
+		   (COMPANY_CODE, DIVISION_CODE, BOM_PRESENTN_NO, FORM_TYPE, REGIST_RCEPT_NO, SUBMIT_NO, EXECUT_STATUS, STTEMNT_DOC_STLE
+		   , SUBMIT_DATE, DRWB_PRESENTN_NO, DRWB_REGIST_RCEPT_NO, DRWB_SUBMIT_NO, XPORT_STTEMNT_NO, LNE_NO, POUCH_NO, PRODUCT_CODE
+		   , USE_BOM_VERSION, REQ_DOC_NO, REQ_DOC_LINE_NO, CREATE_DATE)
+		SELECT DR.COMPANY_CODE
+		       ,DR.DIVISION_CODE
+		       ,#{KEY_PRESENTN_NO} AS BOM_PRESENTN_NO
+		       ,#{FORM_TYPE} AS FORM_TYPE
+		       ,NULL AS REGIST_RCEPT_NO
+		       ,NULL AS SUBMIT_NO
+		       ,'00' AS EXECUT_STATUS
+		       ,'GOVCBRD93' AS STTEMNT_DOC_STLE
+		       ,NULL AS SUBMIT_DATE
+		       ,DR.PRESENTN_NO AS  DRWB_PRESENTN_NO
+		       ,DR.REGIST_RCEPT_NO AS DRWB_REGIST_RCEPT_NO
+		       ,DR.SUBMIT_NO AS  DRWB_SUBMIT_NO
+		       ,DRT.XPORT_STTEMNT_NO AS XPORT_STTEMNT_NO
+		       ,DRT.LNE_NO AS LNE_NO
+		       ,DRT.POUCH_NO AS POUCH_NO
+		       ,DRT.ITEM_CODE AS PRODUCT_CODE
+		       ,DRT.USE_BOM_VERSION AS USE_BOM_VERSION
+		       ,#{REQ_DOC_NO} AS REQ_DOC_NO
+		       ,#{REQ_DOC_LINE_NO} AS REQ_DOC_LINE_NO
+		       ,SYSDATE AS CREATE_DATE
+		  FROM DRWBAK_REQSTDOC_CMMN DR
+		 INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG DRT 
+		    ON DR.PRESENTN_NO = DRT.PRESENTN_NO
+		   AND DR.COMPANY_CODE = DRT.COMPANY_CODE
+		   AND DR.DIVISION_CODE = DRT.DIVISION_CODE
+		 INNER JOIN COMPANY C
+		    ON DR.COMPANY_CODE = C.COMPANY_CODE
+		  LEFT JOIN ITEM_MST I ON DRT.COMPANY_CODE = I.COMPANY_CODE
+		   AND DRT.ITEM_CODE = I.ITEM_CODE
+		 WHERE DR.COMPANY_CODE = #{COMPANY_CODE}
+		   AND DR.PRESENTN_NO = #{PRESENTN_NO}
+		   AND DRT.XPORT_STTEMNT_NO = #{XPORT_STTEMNT_NO}
+		   AND DRT.LNE_NO = #{LNE_NO}
+		   AND DRT.POUCH_NO = #{POUCH_NO}
+	</insert>
+	
+	
+	<insert id="insertInitBomSubmit_MasterData" parameterType="java.util.Map">
+        <selectKey keyProperty="KEY_PRESENTN_NO" resultType="java.lang.String" order="BEFORE">
+			SELECT 'BOM-'||#{COMPANY_CODE}|| #{DIVISION_CODE}||'-'||TO_CHAR(SYSDATE, 'RRRRMMDD') ||'-'||
+			       LPAD(CASE WHEN COUNT(1) = 0 THEN '1' ELSE TO_CHAR(COUNT(1)+1) END, 4, '0')  
+			  FROM BOM_SUBMIT_MST A
+			 WHERE A.BOM_PRESENTN_NO LIKE #{COMPANY_CODE}|| #{DIVISION_CODE}||'-'||TO_CHAR(SYSDATE, 'RRRRMMDD') || '%'
+        </selectKey>
+		INSERT INTO BOM_SUBMIT_MST
+		 (COMPANY_CODE, DIVISION_CODE, BOM_PRESENTN_NO, FORM_TYPE, REGIST_RCEPT_NO, SUBMIT_NO, EXECUT_STATUS, STTEMNT_DOC_STLE, SUBMIT_DATE, 
+		   CTRM_PRESENTN_NO,CTRM_REGIST_RCEPT_NO, CTRM_SUBMIT_NO, CTRM_SEQ, PRODUCT_CODE, USE_BOM_VERSION, REQ_DOC_NO, REQ_DOC_LINE_NO, CREATE_DATE)
+		SELECT DR.COMPANY_CODE
+		       ,DR.DIVISION_CODE
+		       ,#{KEY_PRESENTN_NO} AS BOM_PRESENTN_NO
+		       ,'20' AS FORM_TYPE
+		       ,NULL AS REGIST_RCEPT_NO
+		       ,NULL AS SUBMIT_NO
+		       ,'00' AS EXECUT_STATUS
+		       ,'GOVCBRD93' AS STTEMNT_DOC_STLE
+		       ,NULL AS SUBMIT_DATE
+		       ,DR.PRESENTN_NO AS  CTRM_PRESENTN_NO
+		       ,DR.REGIST_RCEPT_NO AS CTRM_REGIST_RCEPT_NO
+		       ,DR.SUBMIT_NO AS  CTRM_SUBMIT_NO
+		       ,DRT.SEQ AS CTRM_SEQ
+		       ,DRT.ITEM_CODE AS PRODUCT_CODE
+		       ,(SELECT MAX(Z.BOM_VERSION)
+		           FROM RESULT_BOM_AP Z
+		          WHERE Z.COMPANY_CODE = DRT.COMPANY_CODE
+		            AND Z.PRODUCT_CODE = DRT.ITEM_CODE
+		            AND Z.BOM_VERSION <![CDATA[<]]> DRT.CHIT_FRMTRM_DATE) AS USE_BOM_VERSION
+		       ,#{REQ_DOC_NO} AS REQ_DOC_NO
+		       ,#{REQ_DOC_LINE_NO} AS REQ_DOC_LINE_NO
+		       ,SYSDATE AS CREATE_DATE
+		  FROM CTRM_CMMN DR
+		 INNER JOIN CTRM_TRGET_THNG DRT 
+		    ON DR.PRESENTN_NO = DRT.PRESENTN_NO
+		   AND DR.COMPANY_CODE = DRT.COMPANY_CODE
+		   AND DR.DIVISION_CODE = DRT.DIVISION_CODE
+		 INNER JOIN COMPANY C
+		    ON DR.COMPANY_CODE = C.COMPANY_CODE
+		  LEFT JOIN ITEM_MST I 
+		    ON DRT.COMPANY_CODE = I.COMPANY_CODE
+		   AND DRT.ITEM_CODE = I.ITEM_CODE
+		 WHERE DR.COMPANY_CODE = #{COMPANY_CODE}
+		   AND DR.PRESENTN_NO = #{PRESENTN_NO}
+		   AND DRT.SEQ = #{SEQ}
+	</insert>
+	
+	
+	
+	<select id="retrieve_BomMasterData" parameterType="HashMap" resultType="HashMap">
+		SELECT A.COMPANY_CODE
+		       ,A.DIVISION_CODE
+		       ,A.BOM_PRESENTN_NO
+		       ,A.XPORT_STTEMNT_NO
+		       ,A.DRWB_PRESENTN_NO
+		       ,A.USE_BOM_VERSION
+		       ,A.LNE_NO
+		       ,A.POUCH_NO
+		       ,A.CTRM_SEQ
+		       ,A.CTRM_PRESENTN_NO
+		       ,A.CTRM_SUBMIT_NO
+		       ,A.CTRM_REGIST_RCEPT_NO
+		  FROM BOM_SUBMIT_MST A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   AND A.BOM_PRESENTN_NO = #{KEY_PRESENTN_NO}
+	</select>
+	
+	<insert id="insertBomSubmit_ItemData" parameterType="java.util.Map">
+		INSERT INTO BOM_SUBMIT_ITEM
+		    (COMPANY_CODE, DIVISION_CODE, BOM_PRESENTN_NO, BOM_SEQ, BOM_VERSION, PARENT_ITEM_CODE, ITEM_CODE, ITEM_NAME, INPUT_QTY, INPUT_BASS_UNIT)
+		SELECT DR.COMPANY_CODE
+		       ,DR.DIVISION_CODE
+		       ,#{BOM_PRESENTN_NO} AS BOM_PRESENTN_NO
+		       ,LPAD(ROWNUM, 5, '0') AS BOM_SEQ
+		       ,#{USE_BOM_VERSION} AS BOM_VERSION
+		       ,DRT.ITEM_CODE AS PARENT_ITEM_CODE
+		       ,C.RAWMTRL_CODE AS ITEM_CODE
+		       ,BOM.ITEM_NAME
+		       ,BOM.INPUT_QTY
+		       ,BOM.INPUT_BASS_UNIT
+		  FROM DRWBAK_REQSTDOC_CMMN DR
+		 INNER JOIN DRWBAK_REQSTDOC_TRGET_THNG DRT 
+		    ON DR.PRESENTN_NO = DRT.PRESENTN_NO
+		   AND DR.COMPANY_CODE = DRT.COMPANY_CODE
+		   AND DR.DIVISION_CODE = DRT.DIVISION_CODE
+		 INNER JOIN DRWBAK_REQSTDOC_INCME_RAWMTRL C
+		    ON C.COMPANY_CODE = DRT.COMPANY_CODE
+		   AND C.PRESENTN_NO = DRT.PRESENTN_NO
+		   AND C.THNG_SEQ = DRT.THNG_SEQ
+		 INNER JOIN RESULT_BOM_AP BOM
+		    ON C.COMPANY_CODE = BOM.COMPANY_CODE
+		   AND C.RAWMTRL_CODE = BOM.ITEM_CODE
+		   AND DRT.ITEM_CODE = BOM.PRODUCT_CODE
+		   AND BOM.BOM_VERSION = DRT.USE_BOM_VERSION
+		 WHERE DR.COMPANY_CODE = #{COMPANY_CODE}
+		   AND DR.DIVISION_CODE = #{DIVISION_CODE} 
+		   AND DR.PRESENTN_NO = #{DRWB_PRESENTN_NO}
+		   AND DRT.XPORT_STTEMNT_NO = #{XPORT_STTEMNT_NO}
+		   AND DRT.LNE_NO = #{LNE_NO}
+		   AND DRT.POUCH_NO = #{POUCH_NO}
+	</insert>
+	
+	<insert id="insertInitBomSubmit_ItemData" parameterType="java.util.Map">
+		INSERT INTO BOM_SUBMIT_ITEM
+		    (COMPANY_CODE, DIVISION_CODE, BOM_PRESENTN_NO, BOM_SEQ, BOM_VERSION, PARENT_ITEM_CODE, ITEM_CODE, ITEM_NAME, INPUT_QTY, INPUT_BASS_UNIT)
+		SELECT DR.COMPANY_CODE
+		       ,DR.DIVISION_CODE
+		       ,'11' AS BOM_PRESENTN_NO
+		       ,LPAD(ROWNUM, 5, '0') AS BOM_SEQ
+		       ,#{USE_BOM_VERSION} AS BOM_VERSION
+		       ,DRT.ITEM_CODE AS PARENT_ITEM_CODE
+		       ,C.RAWMTRL_CODE AS ITEM_CODE
+		       ,BOM.ITEM_NAME
+		       ,BOM.INPUT_QTY
+		       ,BOM.INPUT_BASS_UNIT
+		  FROM CTRM_CMMN DR
+		 INNER JOIN CTRM_TRGET_THNG DRT 
+		    ON DR.PRESENTN_NO = DRT.PRESENTN_NO
+		   AND DR.COMPANY_CODE = DRT.COMPANY_CODE
+		   AND DR.DIVISION_CODE = DRT.DIVISION_CODE
+		 INNER JOIN CTRM_INCME_RAWMTRL C
+		    ON C.COMPANY_CODE = DRT.COMPANY_CODE
+		   AND C.PRESENTN_NO = DRT.PRESENTN_NO
+		   AND C.SEQ = DRT.SEQ
+		 INNER JOIN RESULT_BOM_AP BOM
+		    ON C.COMPANY_CODE = BOM.COMPANY_CODE
+		   AND C.RAWMTRL_CODE = BOM.ITEM_CODE
+		   AND DRT.ITEM_CODE = BOM.PRODUCT_CODE
+		   AND BOM.BOM_VERSION = #{USE_BOM_VERSION}
+		 WHERE DR.PRESENTN_NO = #{CTRM_PRESENTN_NO}
+		   AND DRT.SEQ = #{CTRM_SEQ}
+		   AND DR.COMPANY_CODE = #{COMPANY_CODE}
+		   AND DR.DIVISION_CODE = #{DIVISION_CODE}
+	</insert>
+	
+	<select id="checkNewSubmitNo_Adamt" parameterType="HashMap" resultType="String">
+		SELECT CASE WHEN A.SUBMIT_NO IS NULL THEN 'Y' ELSE 'N' END AS NEW_SUBMIT_NO_YN
+		  FROM ADAMT_PAMT_DOC_HDR A 
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+	</select>
+	
+	<update id="updateSubmitNo_Adamt" parameterType="HashMap">
+	 	UPDATE ADAMT_PAMT_DOC_HDR A
+		   SET A.SUBMIT_NO = (SELECT A.PRESENTN_NO||TO_CHAR(SYSDATE, 'YY')||LPAD(B.CURRENT_NO, 6, '0') AS SUBMIT_NO
+		                         FROM COMPANY A
+		                        INNER JOIN CSMHSE_SUBMIT_NO_MST B
+		                           ON A.COMPANY_CODE = B.COMPANY_CODE
+		                        WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		                          AND B.YY = TO_CHAR(SYSDATE, 'YY'))
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	
+	<select id="retrieve_Adamt" parameterType="HashMap" resultType="HashMap">
+		SELECT A.STTEMNT_DOC_STLE 
+		       ,C.CSMHSE_CODE
+		       ,A.SUBMIT_NO
+		       ,A.BIZRNO
+		       ,A.ECTMRK
+		       ,A.BANK_CODE
+		       ,A.ACNUTNO
+		       ,CSTMS AS CUD -- 관세
+		       ,INTTAX AS IND--개별소비세
+		       ,ECX_AMOUNT AS "5AB"--교육세
+		       ,AGSPT AS CAP--농특세
+		       ,TRANTAX AS "5AA"--교통세
+		       ,LQTX_AMOUNT AS ACT--주세
+		       ,TOT_TAX AS "5CZ" --세액합계
+		       , C.UNIPASS_ID 							-- 유니패스ID
+	           , C.UNIPASS_DOC_BOX_CODE 				-- 문서함코드
+	           ,A.CSTBRKR
+		  FROM ADAMT_PAMT_DOC_HDR A
+		 INNER JOIN COMPANY C
+		    ON A.COMPANY_CODE = C.COMPANY_CODE
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE =#{DIVISION_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</select>
+	
+	<select id="retrieve_Adamt_detail" parameterType="HashMap" resultType="HashMap">
+		SELECT A.SEQ
+		       ,A.PRE_REGIST_RCEPT_NO -- 최초환급 접수번호
+		       ,A.PROPER_REGIST_RCEPT_NO-- 추가환급접수번호 
+		       ,A.IDV_PAMT_NO -- 개별납부 고지서번호
+		       ,A.IDV_PAMT_DATE -- 개별납부일자
+		       ,A.TAX_TYPE -- 세목
+		       ,A.PRE_DRWBAK_AMOUNT -- 과다환급금
+		       ,A.ADAMT -- 가산금
+		       ,A.PROPER_DRWBAK_AMOUNT -- 추가환금금액
+		       ,A.PAMT_REQ_ADAMT -- 지급신청 가산금액
+		       ,A.OVER_REGIST_RCEPT_NO -- (과다환급접수번호)       
+		  FROM ADAMT_PAMT_DOC_ITEM A
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE =#{DIVISION_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</select>
+	
+	
+	<update id="updateAdamtSubmitStatus" parameterType="HashMap">
+	 	UPDATE ADAMT_PAMT_DOC_HDR A
+		   SET A.EXECUT_STATUS = '00'
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.PRESENTN_NO = #{PRESENTN_NO}
+	</update>
+	
+	
+	
+	<update id="update_Adamt_ExecutStatus" parameterType="HashMap">
+		UPDATE ADAMT_PAMT_DOC_HDR A
+		   SET A.EXECUT_STATUS = #{EXECUT_STATUS}
+		   <if test="REGIST_RCEPT_NO != null and REGIST_RCEPT_NO != ''">
+		   		,A.REGIST_RCEPT_NO = #{REGIST_RCEPT_NO}
+		   </if>
+		 WHERE A.COMPANY_CODE = #{COMPANY_CODE}
+		   AND A.DIVISION_CODE = #{DIVISION_CODE}
+		   <if test="SUBMIT_NO != null and SUBMIT_NO != ''">
+		   AND A.SUBMIT_NO = #{SUBMIT_NO}
+		   </if>
+		   <if test="PAY_ORDER_NO != null and PAY_ORDER_NO != ''">
+		   AND A.REGIST_RCEPT_NO = #{PAY_ORDER_NO}
+		   </if>
+		   
+	</update>	
+	
+ 
+</mapper>
+

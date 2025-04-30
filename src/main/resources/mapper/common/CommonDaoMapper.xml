@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.common.CommonDao">
+    
+	<select id="retrieveComCdList" parameterType="HashMap" resultType="HashMap">
+		<if test="OPTION_ALL == 'Y'.toString()">
+		SELECT '' CODE
+		      ,'선택' NAME
+		      ,0 SORT_NO
+		  FROM DUAL
+		 UNION ALL
+		</if>
+		SELECT C.CODE_CD CODE
+		      ,'['||C.CODE_CD||'] '||C.CODE_NM NAME
+		      ,C.SORT_NO
+		  FROM COM_CD C
+		 WHERE C.CATEGORY_CD = #{CATEGORY_CD}
+		   AND C.USING_YN = 'Y'
+		ORDER  BY SORT_NO ASC
+	</select>
+	
+	
+	<select id="retrievePlantCombo" parameterType="HashMap" resultType="HashMap">
+		<if test="OPTION_ALL == 'Y'.toString()">
+		SELECT '' CODE
+		       ,'선택' NAME
+		       ,'000' SORT_NO
+		  FROM DUAL
+		 UNION ALL
+		</if>
+		SELECT C.DIVISION_CODE AS  CODE
+		      ,C.DIVISION_NAME AS  NAME
+		      ,DIVISION_CODE AS SORT_NO
+		  FROM PLANT C
+		 WHERE C.STATUS = 'Y'
+		   AND C.COMPANY_CODE = #{COMPANY_CODE}
+		ORDER  BY SORT_NO ASC
+	</select>
+    
+</mapper>
+ 
+ 
