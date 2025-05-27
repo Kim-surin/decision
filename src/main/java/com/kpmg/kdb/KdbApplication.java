@@ -17,7 +17,7 @@ public class KdbApplication extends SpringBootServletInitializer {
 
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		System.out.println("=========================================KDB START========================================");
+		System.out.println("========================================= KPMG Application Starting ========================================");
 		return application.sources(KdbApplication.class);
 	}
 
