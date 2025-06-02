@@ -263,34 +263,34 @@ public class GenericController {
         HttpSession session = sra.getRequest().getSession();
         Map returnMap = null==session ? null : (Map) session.getAttribute(SystemConstant.session.USER_SESSION_KEY);
         
-        if(reqParam.get("CREATE_BY") == null || "".equalsIgnoreCase(""+reqParam.get("CREATE_BY"))){
-        	reqParam.put("CREATE_BY", returnMap.get("user_id"));
+        if(reqParam.get("create_by") == null || "".equalsIgnoreCase(""+reqParam.get("CREATE_BY"))){
+        	reqParam.put("create_by", returnMap.get("user_id"));
         }
         
-        if(reqParam.get("UPDATE_BY") == null || "".equalsIgnoreCase(""+reqParam.get("UPDATE_BY"))){
-        	reqParam.put("UPDATE_BY", returnMap.get("user_id"));
+        if(reqParam.get("update_by") == null || "".equalsIgnoreCase(""+reqParam.get("UPDATE_BY"))){
+        	reqParam.put("update_by", returnMap.get("user_id"));
         }
         
         
         
-        if(reqParam.get("DIVISION_CODE") == null || "".equalsIgnoreCase(""+reqParam.get("DIVISION_CODE"))){
-        	reqParam.put("DIVISION_CODE", returnMap.get("division_code"));
+        if(reqParam.get("division_code") == null || "".equalsIgnoreCase(""+reqParam.get("DIVISION_CODE"))){
+        	reqParam.put("division_code", returnMap.get("division_code"));
         }
         
-        if(reqParam.get("COMPANY_CODE") == null || "".equalsIgnoreCase(""+reqParam.get("COMPANY_CODE"))){
-        	reqParam.put("COMPANY_CODE", returnMap.get("company_code"));
+        if(reqParam.get("company_code") == null || "".equalsIgnoreCase(""+reqParam.get("COMPANY_CODE"))){
+        	reqParam.put("company_code", returnMap.get("company_code"));
         }
 
-        if(reqParam.get("DEFAULT_LANGUAGE") == null || "".equalsIgnoreCase(""+reqParam.get("DEFAULT_LANGUAGE"))){
-        	reqParam.put("DEFAULT_LANGUAGE", returnMap.get("default_language"));	
+        if(reqParam.get("default_language") == null || "".equalsIgnoreCase(""+reqParam.get("DEFAULT_LANGUAGE"))){
+        	reqParam.put("default_language", returnMap.get("default_language"));	
         }
         
         if(reqParam.get("page") == null || "".equalsIgnoreCase(""+reqParam.get("page"))){
         	reqParam.put("page", "1");	
         }
         
-        if(reqParam.get("USER_ID") == null || "".equalsIgnoreCase(""+reqParam.get("USER_ID"))){
-        	reqParam.put("USER_ID", returnMap.get("user_id"));
+        if(reqParam.get("user_id") == null || "".equalsIgnoreCase(""+reqParam.get("USER_ID"))){
+        	reqParam.put("user_id", returnMap.get("user_id"));
         }
         
         

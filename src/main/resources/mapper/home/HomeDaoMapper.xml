@@ -128,8 +128,8 @@
 		        ON ru.role_code = rm.role_code
 		       AND ru.company_code = rm.company_code
 		       AND rm.menu_id = mt.id
-		    WHERE u.user_id = #{USER_ID}
-		      AND u.company_code = #{COMPANY_CODE}
+		    WHERE u.user_id = #{user_id}
+		      AND u.company_code = #{company_code}
 		) me
 		LEFT JOIN book_mark bm
 		  ON me.user_id = bm.user_id

@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.poledger.PoledgerDao">
+    <select id="retrievPoledger" parameterType="HashMap" resultType="HashMap">
+        SELECT COMPANY_CODE
+		      ,PU_CODE
+		      ,PU_NAME
+		      ,DIVISION_CODE
+		      ,DIVISION_NAME
+		      ,VENDOR_CODE
+		      ,VENDOR_NAME
+		      ,ORDER_NO
+		      ,ORDER_SEQ
+		      ,WAREHOUSING_TYPE
+		      ,ORDER_NO AS WAREHOUSING_NO
+		      ,WAREHOUSING_AMOUNT
+		      ,AMOUNT
+		      ,ORDER_EMP_NO
+		      ,ORDER_EMP_NAME
+		      /*,WAREHOUSING_TYPE_NAME*/
+		      ,NONCOO_CNT_BU || ' / ' || NONCOO_CNT_TT AS NONCOO_CNT_BU
+		      ,ITEM_CODE
+		      ,ITEM_NAME
+		      ,COO_CERTIFY_NO
+		      /*,TAX_CERT_NO */
+		      ,ORIGIN_FILE_NAME
+		      ,FILE_PATH
+		  FROM (
+						SELECT COMPANY_CODE
+						      ,PU_CODE
+						      ,NULL AS PU_NAME
+						      ,DIVISION_CODE
+						      ,DIVISION_NAME
+						      ,VENDOR_CODE
+						      ,VENDOR_NAME
+						      ,ORDER_NO
+						      ,ORDER_SEQ
+						      ,WAREHOUSING_TYPE
+						      ,ORDER_NO AS WAREHOUSING_NO
+						      ,SUM(WAREHOUSING_AMOUNT) AS WAREHOUSING_AMOUNT
+						      ,SUM(AMOUNT) AS AMOUNT
+						      ,ORDER_EMP_NO
+						      ,NULL AS ORDER_EMP_NAME
+						      /* ,COMMON_PKG.GET_CODE_NAME(WAREHOUSING_TYPE, 'WT', COMPANY_CODE, {DEFAULT_LANGUAGE}) WAREHOUSING_TYPE_NAME */
+							, (CASE WHEN 
+	(CASE WHEN WAREHOUSING_TYPE = 'IMP' THEN 'N' ELSE COALESCE(COO_TYPE, 'C') END) = 'C' THEN 
+		                          COUNT(DISTINCT
+		                                CASE WHEN COALESCE(NONCOO_CNT, 0) > 0 THEN
+		                                					
+		                                          (SELECT MAX(ECCD.COO_CERTIFY_NO)
+		                                             FROM EXT_COO_CERTIFY_DTL ECCD
+		                                            WHERE ECCD.COO_CERTIFY_NO = COO_CERTIFY_NO
+		                                              AND ECCD.VENDOR_CODE = VENDOR_CODE
+		                                              AND ECCD.DIVISION_CODE = DIVISION_CODE
+		                                              AND ECCD.COMPANY_CODE = COMPANY_CODE
+		                                              AND ECCD.ITEM_CODE = ITEM_CODE
+		                                              AND ECCD.FTA_CODE = (SELECT MAX(FTA_CODE) 
+		                                                                     FROM FTA_MASTER 
+		                                                                    WHERE FTA_CODE = ECCD.FTA_CODE
+		                                                                      AND COMPANY_CODE = ECCD.COMPANY_CODE)
+		                                              AND ECCD.WAREHOUSING_NO = '-1'
+		                                              AND ECCD.WAREHOUSING_SEQ = '-1'
+		                                              AND WAREHOUSING_DATE BETWEEN ECCD.APPLY_DATE AND ECCD.END_DATE)
+		                                     ELSE NULL
+		                                END
+		                          )
+		                     ELSE 
+		                          SUM(COALESCE(NONCOO_CNT, 0))
+		                END) AS NONCOO_CNT_BU
+		              ,(CASE WHEN
+						(CASE WHEN WAREHOUSING_TYPE  ='IMP' THEN 'N' ELSE COALESCE(COO_TYPE, 'C') END)
+					= 'C' THEN 
+													COUNT(DISTINCT ORDER_NO)
+												ELSE 
+													COUNT(WAREHOUSING_NO) 
+											END) AS NONCOO_CNT_TT
+						      ,ITEM_CODE
+						      ,ITEM_NAME
+						      ,COO_CERTIFY_NO
+						      /*,TAX_CERT_NO*/
+				          ,MAX(ORIGIN_FILE_NAME) ORIGIN_FILE_NAME
+				          ,MAX(FILE_PATH) FILE_PATH
+						  FROM (SELECT PL.WAREHOUSING_NO
+				                  ,PL.SEQ
+				                  ,D.COMPANY_CODE
+						              ,D.DIVISION_GROUP_CODE PU_CODE
+						              ,D.DIVISION_CODE
+						              ,D.DIVISION_NAME
+						              ,V.VENDOR_CODE
+						              ,V.VENDOR_NAME
+						              ,PL.ORDER_NO
+						              ,PL.ORDER_SEQ
+						              ,PL.ORDER_EMP_NO
+						              /* ,PL.TAX_CERT_NO */
+						              ,PL.WAREHOUSING_TYPE
+						              ,SUM(PL.WAREHOUSING_AMOUNT) WAREHOUSING_AMOUNT  /*FTA입고금액*/
+						              ,(SUM(PL.WAREHOUSING_AMOUNT)+SUM(COALESCE(PL.TARIFF_AMOUNT, 0))) AMOUNT /*입고금액*/
+						              ,SUM(
+                                        CASE WHEN PL.COO_CERTIFY_NO is null THEN 0 ELSE 1 END) NONCOO_CNT 
+						              ,PL.COO_CERTIFY_NO
+						              ,PL.COO_TYPE
+						              ,PL.ITEM_CODE
+						              ,IM.ITEM_NAME
+				                  ,MAX(ECM.ORIGIN_FILE_NAME) AS ORIGIN_FILE_NAME
+				                  ,MAX(ECM.FILE_PATH) AS FILE_PATH
+				                  ,SUBSTR(PL.WAREHOUSING_DATE,1,6)||'01' AS WAREHOUSING_DATE
+						          FROM PO_LEDGER PL
+						               INNER JOIN DIVISION  D
+						                  ON PL.DIVISION_CODE = D.DIVISION_CODE
+									           AND PL.COMPANY_CODE = D.COMPANY_CODE
+									           AND PL.DIVISION_CODE = D.DIVISION_CODE
+									        /*  AND D.DIVISION_GROUP_CODE = '18'  [TODO] - 수린 PU_CODE 의미 확인*/
+		                         AND D.STATUS = 'Y'
+							<if test="inv_org != '' and inv_org != null">
+								AND D.DIVISION_CODE = #{inv_org}
+							</if>
+						               INNER JOIN VENDOR    V
+						                  ON V.VENDOR_CODE = PL.VENDOR_CODE
+		                         AND V.COMPANY_CODE = PL.COMPANY_CODE
+				                    LEFT OUTER JOIN EXT_COO_CERTIFY_MST ECM
+				                      ON ECM.COO_CERTIFY_NO = PL.COO_CERTIFY_NO
+									           AND ECM.VENDOR_CODE = PL.VENDOR_CODE
+									           AND ECM.DIVISION_CODE = PL.DIVISION_CODE
+									           AND ECM.COMPANY_CODE = PL.COMPANY_CODE
+													 INNER JOIN ITEM_MST IM
+													    ON IM.ITEM_CODE = PL.ITEM_CODE
+													   AND IM.COMPANY_CODE = PL.COMPANY_CODE		
+                                    WHERE PL.COMPANY_CODE = #{company_code}
+<if test="warehousing_type != '' and warehousing_type != null">
+	 AND PL.WAREHOUSING_TYPE = #{warehousing_type}
+</if>
+
+<if test="start_date != ''">
+<if test="end_date != ''">
+AND PL.WAREHOUSING_DATE BETWEEN REPLACE(#{start_date}, '-', '') AND REPLACE(#{end_date}, '-', '')
+</if>
+</if>
+
+<if test="search_keyword != ''">
+
+<choose>
+<when test='search_keyword == "VENDOR_NAME"'>
+ AND UPPER(V.VENDOR_NAME) LIKE UPPER('%' || #{search_keyword} || '%')
+ </when>
+ <when test='search_keyword == "VENDOR_CODE"'>
+ AND V.VENDOR_CODE LIKE '%' || #{search_keyword} || '%'
+ </when>
+ <when test='search_keyword == "ORDER_NO"'>
+  AND PL.ORDER_NO LIKE '%' || #{search_keyword} || '%'
+ </when>
+ <when test='SEARCH_KEYWORD == "ITEM_CODE"'>
+ AND UPPER(PL.ITEM_CODE) LIKE UPPER('%' || #{search_keyword} || '%')
+ </when>
+ <when test='search_keyword == "ITEM_NAME"'>
+ AND IM.ITEM_NAME LIKE '%' || #{search_keyword} || '%'
+ </when>
+  </choose>					  
+						</if>
+
+
+						 GROUP BY PL.WAREHOUSING_NO
+                                 ,PL.SEQ
+                                 ,D.COMPANY_CODE
+						         ,D.DIVISION_GROUP_CODE
+						         ,D.DIVISION_CODE
+						         ,D.DIVISION_NAME
+						         ,V.VENDOR_CODE
+						         ,V.VENDOR_NAME
+						         ,PL.ORDER_NO
+						         ,PL.ORDER_SEQ
+						         ,PL.ORDER_EMP_NO
+						         ,PL.WAREHOUSING_TYPE
+						         /*,PL.TAX_CERT_NO*/
+						         ,PL.COO_CERTIFY_NO
+						         ,PL.COO_TYPE
+						         ,PL.ITEM_CODE
+						         ,IM.ITEM_NAME
+						         ,SUBSTR(PL.WAREHOUSING_DATE,1,6))
+				 GROUP BY COMPANY_CODE
+				         ,PU_CODE
+				         ,DIVISION_CODE
+				         ,DIVISION_NAME
+				         ,VENDOR_CODE
+				         ,VENDOR_NAME
+				         ,ORDER_NO
+				         ,ORDER_SEQ
+				         ,WAREHOUSING_TYPE
+				         ,ORDER_EMP_NO
+				         ,ITEM_CODE
+				         ,ITEM_NAME
+				         /*,TAX_CERT_NO*/
+				         ,CASE WHEN COO_CERTIFY_NO is null THEN 0 ELSE 1 END
+				         ,COO_CERTIFY_NO
+				         ,COO_TYPE
+				         ,WAREHOUSING_DATE
+						)
+    </select>
+
+	<select id="poLedgerDtlList" parameterType="HashMap" resultType="HashMap">
+		SELECT PL.WAREHOUSING_NO
+		      ,PL.ORDER_NO
+		      ,PL.ORDER_SEQ
+		      ,PL.SEQ
+		      ,TO_CHAR(TO_DATE(PL.WAREHOUSING_DATE,'YYYYMMDD'), 'YYYY-MM-DD') WAREHOUSING_DATE
+		      ,PL.ITEM_CODE
+		      ,IM.ITEM_NAME
+		      ,IM.SPEC
+		      ,IM.UNIT
+		      ,PL.WAREHOUSING_QTY
+		      ,PL.UNIT_PRICE
+		      ,PL.WAREHOUSING_AMOUNT
+		      <!-- ,COMMON_PKG.GET_CODE_NAME(PL.WAREHOUSING_TYPE, 'WT', PL.COMPANY_CODE, #{DEFAULT_LANGUAGE}) WAREHOUSING_TYPE_NAME -->
+		      ,COALESCE(PL.BL_NO,'') BL_NO
+		      ,PL.COO_CERTIFY_NO
+		      ,PL.COO_TYPE
+		      ,PL.DIVISION_CODE
+		      ,PL.VENDOR_CODE
+		      ,PL.COMPANY_CODE
+		      ,V.VENDOR_NAME
+		      ,D.DIVISION_NAME
+		      ,PL.PRODUCT_NATION_CODE
+		  FROM PO_LEDGER PL
+		      ,ITEM_MST  IM
+		      ,VENDOR V
+		      ,DIVISION D
+		 WHERE 1 = 1
+			<if test="inv_org != '' and inv_org != null">
+	           AND PL.DIVISION_CODE = #{inv_org}
+			</if>	    
+		   AND PL.COMPANY_CODE = #{company_code} 
+		   AND IM.ITEM_CODE = PL.ITEM_CODE
+		   AND IM.COMPANY_CODE = PL.COMPANY_CODE
+		   AND PL.VENDOR_CODE = V.VENDOR_CODE
+		   AND PL.COMPANY_CODE = V.COMPANY_CODE
+		   AND PL.COMPANY_CODE = D.COMPANY_CODE
+		   AND PL.DIVISION_CODE = D.DIVISION_CODE
+		   /* AND D.DIVISION_GROUP_CODE =  [todo] 수린 - pu code 확인*/
+		   AND PL.ORDER_NO = #{order_no}
+		   AND PL.ORDER_SEQ = #{order_seq}
+		   AND PL.ITEM_CODE = #{item_code}
+		   AND PL.WAREHOUSING_DATE BETWEEN REPLACE(#{start_date},'-','') AND REPLACE(#{end_date},'-','')
+		 ORDER BY PL.ITEM_CODE, WAREHOUSING_DATE
+	</select>
+</mapper>
