@@ -1,1 +1,7 @@
 # TS FTA System 123
+
+#Spring Boot 2.5.7
+
+#openjdk version "17.0.18" 2026-01-20
+#OpenJDK Runtime Environment Temurin-17.0.18+8 (build 17.0.18+8)
+#OpenJDK 64-Bit Server VM Temurin-17.0.18+8 (build 17.0.18+8, mixed mode, sharing)
