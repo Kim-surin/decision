@@ -39,6 +39,11 @@
 		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/css/customize_style-v2.1.css">
 		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/css/customize_style_Button.css">
 		
+		<!-- AUIGrid CSS -->
+		<!-- <link rel="stylesheet" href="/rcs/js/plugin/auigrid/AUIGrid_style.css" /> -->
+		<link rel="stylesheet" type="text/css" media="screen"  href="/rcs/auigrid/AUIGrid_gts_style.css">
+		
+		
 		<style>
 			.primary-nav ul ul::before {
 				content: "";
@@ -72,6 +77,15 @@
 			}
 			#mainPage_tab .nav-item .nav-link.active {
 			    border-bottom: none !important;
+			}
+			
+			
+			.tui-grid-layer-state {
+			    z-index: 9;
+			}
+			
+			.tui-grid-border-line {
+			    z-index: 9;
 			}
 			
 		</style>
@@ -225,6 +239,7 @@
 		            
 		        </div>
 		    </aside>
+		    
 		    <main class="app-body">
 		    	<!-- Contents Area Start -->
 		        <div id="contents" class="app-content"></div>
@@ -232,7 +247,7 @@
 		        
 		    </main>
 		</div>
-	</body>
+
 
 	
 		<!--================================================== -->
@@ -272,6 +287,10 @@
 		<script src="/rcs/js/tui4x/js/plug-in/toast/grid/xlsx.full.min.js"></script><!-- Excel plugin -->
 		<script src="/rcs/js/tui4x/js/plug-in/toast/grid/tui-grid-4.21.2.js"></script>
 
+
+
+		
+		
         <!-- Core scripts -->
         <script src="/rcs/ui5x/scripts/smartApp.js"></script>
         <script src="/rcs/ui5x/scripts/smartNavigation.js"></script>
@@ -302,9 +321,20 @@
 		<!-- Custom Common JS -->
 		<script src="/rcs/js/plugin/monthPicker/MonthPicker.js"></script>
 		
+		
+	
 		<script src="/rcs/js/security/encrypt.js"></script>
 		<script src="/rcs/js/utils.common.js"></script>
 		<script src="/rcs/js/package.common-v2.3.js"></script>
+		
+				    <!-- AUIGrid JS -->
+		<!-- <script src="/rcs/js/plugin/auigrid/AUIGridLicense.js"></script>
+		<script src="/rcs/js/plugin/auigrid/AUIGrid.js"></script> -->
+		<script type="text/javascript" src="/rcs/auigrid/AUIGridLicense.js"></script>
+		<script type="text/javascript" src="/rcs/auigrid/AUIGrid.js"></script>
+		
+		
+		
 
 	</body>
 	<script type="text/javascript">
@@ -343,6 +373,9 @@
 	        "${_csrf.headerName}": "${_csrf.token}"
 	    }
 	});
+	
+	
+	
 	</script>
 
 </html>

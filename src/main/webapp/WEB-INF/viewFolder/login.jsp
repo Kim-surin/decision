@@ -9,7 +9,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>SmartAdmin v5</title>
+        <title>5555</title>
         <link href="/rcs/ui5x/css/bootstrap.css" rel="stylesheet">
         <link href="/rcs/ui5x/css/smartapp.css" rel="stylesheet">
         <link href="/rcs/ui5x/css/authentication.css" rel="stylesheet">
