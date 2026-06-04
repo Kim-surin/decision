@@ -40,8 +40,7 @@
 		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/css/customize_style_Button.css">
 		
 		<!-- AUIGrid CSS -->
-		<!-- <link rel="stylesheet" href="/rcs/js/plugin/auigrid/AUIGrid_style.css" /> -->
-		<link rel="stylesheet" type="text/css" media="screen"  href="/rcs/auigrid/AUIGrid_gts_style.css">
+		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/auigrid/AUIGrid_gts_style.css">
 		
 		
 		<style>

@@ -10,7 +10,7 @@
 </head>
 <body>
 	<button onclick="init()" style="width:150px; height:30px">Grid 생성</button>
-    <div>
+    <div style="padding-top: 50px">
         <!-- 에이유아이 그리드가 이곳에 생성됩니다. -->
         <div id="grid_wrap" style="width:100%;height:480px; margin:0 auto;"></div>
     </div>
@@ -1117,7 +1117,11 @@
 			// 그룹핑 또는 트리로 만들었을 때 펼쳐지게 할지 여부 (기본값 : false)
 			displayTreeOpen: true,
 			noDataMessage: "출력할 데이터가 없습니다.",
-			groupingMessage: "여기에 칼럼을 드래그하면 그룹핑이 됩니다."
+			groupingMessage: "여기에 칼럼을 드래그하면 그룹핑이 됩니다.",
+			headerHeight: 32,
+			rowHeight: 32,
+  			showRowNumColumn: true,
+			rowNumHeaderText: "#"
 		};
 
         // 실제로 #grid_wrap 에 그리드 생성
