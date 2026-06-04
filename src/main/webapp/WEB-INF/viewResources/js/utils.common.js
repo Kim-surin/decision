@@ -136,21 +136,7 @@ function findPosY(obj) {
     return curtop;
 }
 
-function unescape(ostr) {
-	if(!oUtil.isNull(ostr) && typeof ostr == "string") {
-		var str = ostr.toString();
-		var sold = new Array(/&amp;/g, /&quot;/g, /&lt;/g, /&gt;/g, /&apos;/g);
-		var snew = new Array("&", "\"", "<", ">", "'");
-		
-		for(var i = 0; i < sold.length; i++) {
-			str =  str.replace(sold[i], snew[i]);
-		}
-		
-		return str;
-	}
-	
-	return ostr;
-}
+
 
 function IsPositiveInt(string) {
     if (string == "") return false;
