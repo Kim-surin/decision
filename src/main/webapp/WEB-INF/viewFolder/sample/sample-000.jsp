@@ -126,7 +126,7 @@
 	    <div class="row">
 	   		<div class="col-12">
 		        <!-- 에이유아이 그리드가 이곳에 생성됩니다. -->
-		        <div id="oAuiGrid_Sample000_01" style="width:100%;height:480px; margin:0 auto;background-color: #FFA"></div>
+		        <div id="oAuiGrid_Sample000_01" style="width:100%;height:480px; margin:0 auto;"></div>
 		    </div>
 	    </div>	
 
@@ -299,7 +299,6 @@
 
 			// 실제로 #oAuiGrid_Sample000_01 에 그리드 생성
 			// 파라메터 : Grid Div ID, 컬럼레이아웃, 그리드속성, 그리드타입(없음 : null or "", 행번호 : number ,체크박스 : check ,라디오 : radio)
-			
 			SAMPLE000.myGridID = KpackageOBJ.auiGrid.create("oAuiGrid_Sample000_01", columnLayout, gridProps, "");
 			
 			
