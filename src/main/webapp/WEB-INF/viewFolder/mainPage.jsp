@@ -27,15 +27,6 @@
 		<link rel="stylesheet" media="screen, print" href="/rcs/ui5x/css/sa-icons.css">
 		<!-- Page specific CSS -->
 		
-		
-		<!-- TOAST UI Styles -->
-		<link rel="stylesheet" type="text/css" href="/rcs/js/tui4x/css/toast/grid/tui-grid-4.17.2.css">
-		<link rel="stylesheet" type="text/css" href="/rcs/css/tui-pagination.css">
-		<link rel="stylesheet" type="text/css" href="/rcs/css/tui-date-picker.css">
-		
-		<!-- MonthPicker Styles -->
-		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/js/plugin/monthPicker/MonthPicker.css">
-
 		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/css/customize_style-v2.1.css">
 		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/css/customize_style_Button.css">
 		
@@ -302,6 +293,10 @@
         <script src="/rcs/ui5x/scripts/waves.js"></script>
         <!-- Page Specific scripts -->
         <script src="/rcs/ui5x/scripts/sortable.js"></script>
+        
+        
+        
+
 
 		<!--[if IE 8]>
 			<h1>Your browser is out of date, please update your browser by going to www.microsoft.com/download</h1>
@@ -320,17 +315,21 @@
 		<!-- Custom Common JS -->
 		<script src="/rcs/js/plugin/monthPicker/MonthPicker.js"></script>
 		
-		
+		<!-- 미니차트 -->
+		<script src="/rcs/js/plugin/perityChart/perityChar-v3.3.0.js"></script>
 	
 		<script src="/rcs/js/security/encrypt.js"></script>
 		<script src="/rcs/js/utils.common.js"></script>
 		<script src="/rcs/js/package.common-v2.3.js"></script>
 		
+				
 				    <!-- AUIGrid JS -->
 		<!-- <script src="/rcs/js/plugin/auigrid/AUIGridLicense.js"></script>
 		<script src="/rcs/js/plugin/auigrid/AUIGrid.js"></script> -->
 		<script type="text/javascript" src="/rcs/auigrid/AUIGridLicense.js"></script>
 		<script type="text/javascript" src="/rcs/auigrid/AUIGrid.js"></script>
+		<script type="text/javascript" src="/rcs/auigrid/FileSaver.js"></script>
+		
 		
 		
 		
