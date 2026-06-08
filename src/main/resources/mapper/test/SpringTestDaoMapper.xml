@@ -8,5 +8,13 @@
 	<select id="start_TestSql" parameterType="HashMap" resultType="HashMap">
  		SELECT 1 AS TEST_VALUE FROM DUAL
  	</select>
+ 	
+ 	<select id="retrieveTestSalesMaster" parameterType="HashMap" resultType="HashMap">
+		select sales_no, division_code, company_code, customer_code, export_flag, department_code, invoice_date, status, exporter_name, exporter_representative_name, exporter_biz_no, exporter_tel_no, exporter_address, producer_name, producer_representative_name, producer_biz_no, producer_tel_no, producer_address, inkoterms, invoice_no, export_declare_no, export_declare_date, export_accept_date, target_fta_code, bl_no, vehicle_type, vehicle_name, departure_port_code, departure_port_name, shipping_date, arrival_customer, arrival_nation, arrival_port_code, arrival_port_name, packing_mark, packing_count, total_weight, count_unit, customs_code, coo_certify_no, coo_issue_type, coo_date, intg_interface_trans_id, virtual_yn, shipment_before, shipment_after, ship_invoice_no, sales_type, invoice_header_id, delivery_customer_code, attribute01, attribute02, attribute03, attribute04, attribute05, delete_yn, create_date, create_by, update_date, update_by, export_tot_declare_seq, emp_no
+          from public.sales_mst a
+		 where a.company_code = #{company_code}
+		   and a.invoice_date between #{search_from_date} and #{search_to_date}
+ 	</select>
+ 	
 	
 </mapper>

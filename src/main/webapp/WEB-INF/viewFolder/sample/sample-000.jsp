@@ -137,9 +137,9 @@
 	var SAMPLE000 = new function() {
 
 		// AUIGrid 생성 후 반환 ID
-		this.myGridID = null;
-		this.myGridID2 = null;
-		this.myGridID3 = null;
+		this.grid_Sample000_01 = null;
+		this.grid_Sample000_012 = null;
+		this.grid_Sample000_013 = null;
 
 		// 시작점
 		this.Initialize_viewObject = function() {
@@ -149,7 +149,7 @@
 			KpackageOBJ.perityChart.create("span.peity-bar", "bar");
 			// AUIGrid 그리드를 생성합니다.
 			SAMPLE000.createAUIGrid();
-			AUIGrid.setGridData(SAMPLE000.myGridID, SAMPLE000.data);
+			AUIGrid.setGridData(SAMPLE000.grid_Sample000_01, SAMPLE000.data);
 		}
 
 		this.data = [
@@ -299,16 +299,16 @@
 
 			// 실제로 #oAuiGrid_Sample000_01 에 그리드 생성
 			// 파라메터 : Grid Div ID, 컬럼레이아웃, 그리드속성, 그리드타입(없음 : null or "", 행번호 : number ,체크박스 : check ,라디오 : radio)
-			SAMPLE000.myGridID = KpackageOBJ.auiGrid.create("oAuiGrid_Sample000_01", columnLayout, gridProps, "");
+			SAMPLE000.grid_Sample000_01 = KpackageOBJ.auiGrid.create("oAuiGrid_Sample000_01", columnLayout, gridProps, "");
 			
 			
 			// 클릭 이벤트
-			AUIGrid.bind(SAMPLE000.myGridID, "cellClick", function( event ) {
+			AUIGrid.bind(SAMPLE000.grid_Sample000_01, "cellClick", function( event ) {
 				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " clicked");
 			});
 			
 			// 더블클릭 이벤트 
-			AUIGrid.bind(SAMPLE000.myGridID, "cellDoubleClick", function( event ) {
+			AUIGrid.bind(SAMPLE000.grid_Sample000_01, "cellDoubleClick", function( event ) {
 				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " dbl clicked");
 			});
 		};

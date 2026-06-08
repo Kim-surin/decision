@@ -1939,15 +1939,22 @@ var KpackageOBJ = {
                     }
                 },
                 success: function(result) {
-                    if (useProgress) {
-                        load_BlockUI2(false);
-                    }
-                    if (typeof successHandler == "function") {
-                        successHandler(result);
-                    } else if (typeof successHandler == "string") {
-                        var successHandlerFunction = eval(successHandler);
-                        successHandlerFunction(result);
-                    }
+					if (useProgress) {
+					    load_BlockUI2(false);
+					}
+
+					if (typeof successHandler === "function") {
+					    successHandler(result);
+
+					} else if (typeof successHandler === "string") {
+					    var successHandlerFunction = window[successHandler];
+
+					    if (typeof successHandlerFunction === "function") {
+					        successHandlerFunction(result);
+					    } else {
+					        console.warn("successHandler 함수가 존재하지 않습니다:", successHandler);
+					    }
+					}
                 },
                 error: function(result, a, b, c, d) {
                     //load_BlockUI2(false);
@@ -4462,6 +4469,53 @@ var KpackageOBJ = {
         "remove": function(p_AuiGridId) {
             AUIGrid.destroy("#" + p_AuiGridId);
         },
+		
+		/**
+		 * 그리드에 데이터를 로드 합니다. 
+		 * Auigrid 데이터 조회
+		 * 
+		 * 
+		 */
+		/**
+		 * 그리드에 데이터를 로드 합니다.
+		 * Auigrid 데이터 조회
+		 */
+		"retrieve": function (p_TargetGridId, p_RetrieveUrl, p_Params) {
+
+		    if (!p_TargetGridId || typeof p_TargetGridId !== "string") {
+		        console.warn("[retrieve] p_TargetGridId 값이 올바르지 않습니다.", p_TargetGridId);
+		        return;
+		    }
+
+		    if (!p_RetrieveUrl || typeof p_RetrieveUrl !== "string") {
+		        console.warn("[retrieve] p_RetrieveUrl 값이 올바르지 않습니다.", p_RetrieveUrl);
+		        return;
+		    }
+
+		    if (typeof AUIGrid === "undefined" || typeof AUIGrid.setGridData !== "function") {
+		        console.error("[retrieve] AUIGrid를 사용할 수 없습니다.");
+		        return;
+		    }
+
+		    if (p_Params == null || typeof p_Params !== "object" || $.isEmptyObject(p_Params)) {
+		        p_Params = { dummy: "dummy" };
+		    }
+
+		    KpackageOBJ.ajax.doSubmit(p_RetrieveUrl, p_Params, function (result) {
+		        var gridData = [];
+
+		        if (result && Array.isArray(result.value)) {
+		            gridData = result.value;
+		        } else {
+		            console.warn("[retrieve] result.value가 배열이 아닙니다.", result);
+		        }
+
+		        AUIGrid.setGridData(p_TargetGridId, gridData);
+		    });
+			
+		},
+		
+		
 
         /**
          * 그리드에 출력된 현재 데이터를 추가(added), 삭제(removed), 수정(edited)된 상태와 함께 반환합니다.
@@ -5158,4 +5212,26 @@ function tabClose(contId) {
     var tabBtnId = "tab_" + contId.replace("cont_", "");
     $("#" + tabBtnId).remove();
     $("#" + contId).remove();
+}
+
+function toggleSearchMore(p_Object, p_SearchMoreID){
+	
+	var $btn = $(p_Object);
+	
+	var $searchMore = $('#'+ p_SearchMoreID);
+	
+	
+	if ($searchMore.length === 0) {
+		console.warn("<"+p_SearchMoreID+"> 고급검색조건이 구성되지 않아 작동을 중지합니다.");
+	    return; // 객체 없으면 중단
+	}
+	
+	if ($searchMore.is(':visible')) {
+	    $searchMore.slideUp(300);   // 보이는 상태면 닫기
+		$btn.text("More");
+	} else {
+	    $searchMore.slideDown(300); // 숨김 상태면 열기
+		$btn.text("Close");
+	}
+	
 }

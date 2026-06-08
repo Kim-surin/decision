@@ -84,5 +84,31 @@ public class SpringTestController extends GenericController {
 	public String sample002_view(Model model, HttpSession session) {
 		return "sample/sample-001";
 	}
+	
+	
+	/**
+	 * Sample001 page  조회 기능 샘플
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/sample/retrieveTestSalesMaster")
+	@ResponseBody
+	public Result retrieveTestSalesMaster(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveTestSalesMaster ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveTestSalesMaster(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveTestSalesMaster END");
+		
+		return result;
+	}
 
 }

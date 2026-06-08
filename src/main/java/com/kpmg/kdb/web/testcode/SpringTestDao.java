@@ -20,4 +20,12 @@ public interface SpringTestDao {
     
 	public Map start_TestSql(Map param);
 	
+	
+	/**
+	 * Sample001 page  조회 기능 샘플
+	 * @param param
+	 * @return
+	 */
+	public List retrieveTestSalesMaster(Map param);
+	
 }
