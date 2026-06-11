@@ -46,7 +46,7 @@
 				<div class="col-2 d-sm-flex align-items-center mb-3">
 					<div class="p-2 me-2 me-xxl-3 bg-primary-300 rounded">
 						<span class="peity-bar" 
-						      data-peity="{ &quot;fill&quot;: [&quot;#fff&quot;], &quot;width&quot;: 27, &quot;height&quot;: 27 }" style="display: none;">3,4,3,5,5</span>
+						      data-peity="{ &quot;fill&quot;: [&quot;#fff&quot;], &quot;width&quot;: 27, &quot;height&quot;: 27 }">3,4,3,5,5</span>
 					</div>
 					<div class="d-flex flex-column align-items-start justify-content-center">
 					    <label class="fs-xs mb-0">New Sessions</label>
@@ -56,7 +56,7 @@
 				<div class="col-2 d-sm-flex align-items-center mb-3">
 					<div class="p-2 me-2 me-xxl-3 bg-info-300 rounded">
 						<span class="peity-bar" 
-						      data-peity="{ &quot;fill&quot;: [&quot;#fff&quot;], &quot;width&quot;: 27, &quot;height&quot;: 27 }" style="display: none;">5,3,1,7,9</span>
+						      data-peity="{ &quot;fill&quot;: [&quot;#fff&quot;], &quot;width&quot;: 27, &quot;height&quot;: 27 }">5,3,1,7,9</span>
 					</div>
 					<div class="d-flex flex-column align-items-start justify-content-center">
 					    <label class="fs-xs mb-0">Actual Sessions</label>
@@ -200,6 +200,56 @@
 			</form:form>
 	    </div>
 	    <div class="row">
+	    	<div class="col-7">
+				<div class="ms-auto d-none d-sm-flex align-items-center ">
+	                <div class="d-flex align-items-center">
+	                    <div class="d-none d-md-inline-flex">
+	                        <span class="peity-donut 
+	                        			d-none" data-peity="{ &quot;fill&quot;: [&quot;var(--success-300)&quot;], &quot;height&quot;: 34, &quot;width&quot;: &quot;34&quot; }" style="display: none;">5, 3</span>
+	                    </div>
+	                    <div class="d-inline-flex flex-column justify-content-center ms-2">
+	                        <span class="fw-500 fs-xs d-block">
+	                            <small>조회된 데이터기준</small>
+	                        </span>
+	                        <span class="fw-500 fs-xl d-flex align-items-center text-success"> 50% <svg class="sa-icon sa-bold sa-icon-success ms-1">
+	                                <use href="img/sprite.svg#trending-up"></use>
+	                            </svg>
+	                        </span>
+	                    </div>
+	                </div>
+	                <div class="d-flex align-items-center border-faded border-dashed border-top-0 border-bottom-0 border-end-0 ms-3 ps-3">
+	                    <div class="d-none d-md-inline-flex">
+	                        <span class="peity-line
+	                        			 d-none" data-peity="{ &quot;fill&quot;: [&quot;var(--danger-500)&quot;], &quot;height&quot;: 34, &quot;width&quot;: &quot;34&quot; }" style="display: none;">1,9,3,5,10</span>
+	                    </div>
+	                    <div class="d-inline-flex flex-column justify-content-center ms-2">
+	                        <span class="fw-500 fs-xs d-block">
+	                            <small>Bounce Rate</small>
+	                        </span>
+	                        <span class="fw-500 fs-xl d-flex align-items-center text-danger"> 10% <svg class="sa-icon sa-bold ms-1 sa-icon-danger">
+	                                <use href="img/sprite.svg#trending-down"></use>
+	                            </svg>
+	                        </span>
+	                    </div>
+	                </div>
+	            </div>
+	    	</div>
+	    	<div class="col-5">
+				<div class="frame-wrap">
+				    <div class="demo" style="text-align: right;">
+				    	<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.dialog.open('previewPopup','가운데팝업','/sample-001-pop02',1000,700);;">
+				            가운데 팝업창(드래그 가능)
+				        </button>
+
+				        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.sidepanel.open('aaaa','/sample-001-pop01', '600px');">
+				            우측 팝업창 호출하기 
+				        </button>
+				    </div>
+				</div>
+	    	</div>
+	    </div>
+
+		<div class="row">
 	   		<div class="col-12">
 		        <!-- 에이유아이 그리드가 이곳에 생성됩니다. -->
 		        <div id="oAuiGrid_SAMPLE001_01" style="width:100%;height:480px; margin:0 auto;"></div>
@@ -207,40 +257,36 @@
 	    </div>	
 
 	</div>
-
 </body>
 <script>
 	var SAMPLE001 = new function() {
 
 		// AUIGrid 생성 후 반환 ID
 		this.grid_SAMPLE001_01 = null;
-		this.grid_SAMPLE001_012 = null;
-		this.grid_SAMPLE001_013 = null;
 
 		// 시작점
 		this.Initialize_viewObject = function() {
 			
-			
 			/*우측 상단 차트 생성 */
 			KpackageOBJ.perityChart.create("span.peity-bar", "bar");
+			KpackageOBJ.perityChart.create("span.peity-donut", "donut");
+			KpackageOBJ.perityChart.create("span.peity-line", "line");
 			// AUIGrid 그리드를 생성합니다.
 			SAMPLE001.createAUIGrid();
 			AUIGrid.setGridData(SAMPLE001.grid_SAMPLE001_01, SAMPLE001.data);
 		}
 
-		this.data = [];
-
 		// AUIGrid 를 생성합니다.
 		this.createAUIGrid = function() {
 			// 그리드 칼럼 레이아웃 설정
 			const columnLayout = [ 
-				{ dataField : "sales_no",		headerText : "매출번호",          width : 120},
-				{ dataField : "division_code",	headerText : "플랜트 코드",        width : 140},
-				{ dataField : "company_code", 	headerText : "회사코드",     width : 140},
-				{ dataField : "customer_code", 	headerText : "고객사 코드",     width : 140},
+				{ dataField : "sales_no",		headerText : "매출번호",          width : 120,		filter: { showIcon: true }  },
+				{ dataField : "division_code",	headerText : "플랜트 코드",        width : 140,		filter: { showIcon: true }  },
+				{ dataField : "company_code", 	headerText : "회사코드",     width : 140,		filter: { showIcon: true }  },
+				{ dataField : "customer_code", 	headerText : "고객사 코드",     width : 140,		filter: { showIcon: true }  },
 				{ dataField : "invoice_date",    headerText : "매출일자"
 					,    dataType : "date",    dateInputFormat : "yyyymmdd", 	formatString : "yyyy-mm-dd" 
- 				}
+				,		filter: { showIcon: true }  }
 			];
 
 			// 그리드 속성 설정

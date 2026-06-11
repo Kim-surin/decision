@@ -86,6 +86,16 @@ public class SpringTestController extends GenericController {
 	}
 	
 	
+	@RequestMapping(value = "/sample-001-pop01")
+	public String sample001pop01_view(Model model, HttpSession session) {
+		return "sample/sample-001-pop01";
+	}
+	@RequestMapping(value = "/sample-001-pop02")
+	public String sample001pop02_view(Model model, HttpSession session) {
+		return "sample/sample-001-pop02";
+	}
+	
+	
 	/**
 	 * Sample001 page  조회 기능 샘플
 	 * @param param

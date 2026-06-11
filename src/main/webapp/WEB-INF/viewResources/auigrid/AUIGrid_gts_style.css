@@ -2191,3 +2191,31 @@
 .aui-grid-header-panel .aui-grid-table tr td {
     border-bottom: 2px solid #cfd4da !important;
 }
+
+
+/* 페이징 영역 배경색 */
+.aui-grid-paging-panel{
+	background: #fff;
+}
+
+/* 페이징 버튼 모양 */
+.aui-grid-paging-panel .aui-grid-paging-number{
+	border-radius: 0em;
+}
+
+/* 헤더 정렬 */
+.aui-grid-header-renderer {
+    padding: 0px !important;
+    text-align: center !important;
+    line-height: inherit !important;
+}
+
+/* 필터버튼 설정 */
+.aui-grid-header-filter-icon {
+	/* border-left: 1px solid #c5dbec; 필터버튼이랑 정렬버튼 사이 막대기 표시 */
+    border-left: 0px;  /* 필터버튼이랑 정렬버튼 사이 막대기 표시안함 */
+    border-right: none;
+    background: url(./images/filter_ico.png) 50% 50% no-repeat;
+    box-sizing: content-box;
+    cursor: pointer;
+}

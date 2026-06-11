@@ -2391,147 +2391,330 @@ var KpackageOBJ = {
             }
         },
     }, // Date End
+	
+	sidepanel : {
+		open : function(modalId, url, pWidth){
+			$('#' + modalId).remove();
+			
+			var opener = document.activeElement;
 
-    dialog: {
-        open: function(
-            id,
-            title,
-            url_opts,
-            width,
-            height,
-            closeFunc,
-            modalFlag,
-            openFunc,
-            previewer
-        ) {
-            var resizeyn = false;
-            var closable = true;
-            var lyH = $(window).height();
-            var lyW = $(window).width();
-            var ly = $("#" + id).attr("alt");
-            var barW = $("." + ly).width();
-            var barH = $("." + ly).height();
-            this.createPopupDiv(id);
-            if (width == null || width == "") {
-                width = 400;
-            }
-            if (height == null || height == "") {
-                height = 500;
-            } else {
-                //if (height > (lyH - barH)) height = (lyH - barH) * 0.97;
-                //if (width > (lyW - barW)) width = (lyW - barW) * 0.97
-            }
-            if (oUtil.isNull(modalFlag)) {
-                modalFlag = true;
-            }
-            var params = "";
-            var url = "";
+			var modalHtml = `
+			  <div class="modal fade default-example-modal-end-xl" id="${modalId}" tabindex="-1" role="dialog" aria-labelledby="${modalId}_label">
+			    <div class="modal-dialog modal-dialog-end modal-xl" style="width: ${pWidth}; max-width: ${pWidth};">
+			      <div class="modal-content">
+			        <div class="modal-body p-3">
+			          로딩 중...
+			        </div>
+			      </div>
+			    </div>
+			  </div>
+			`;
 
-            var dialogZindex = $(".ui-dialog")
-                .eq($(".ui-dialog").length - 1)
-                .css("z-index");
-            var overlayZindex = $(".ui-widget-overlay")
-                .eq($(".ui-widget-overlay").length - 1)
-                .css("z-index");
+			$('#backdropDiv_Area').append(modalHtml);
 
-            if (!oUtil.isNull(previewer)) {
-                $("#" + id + "").html(previewer);
-            } else {
-                if (typeof url_opts == "string") {
-                    url = url_opts;
-                } else {
-                    url = url_opts.href;
-                    params = makeStringParameter(url_opts.queryParams, true);
-                }
-                var token = $("meta[name='_csrf']").attr("content");
-                var header = $("meta[name='_csrf_header']").attr("content");
+			var $modalElement = $('#' + modalId);
+			var $modalBody = $modalElement.find('.modal-body');
 
-                var promise = $.ajax({
-                    url: url,
-                    data: params,
-                    type: "post",
-                    beforeSend: function(xhr) {
-                        if (
-                            token != "" &&
-                            header != "" &&
-                            token != undefined &&
-                            header != undefined
-                        ) {
-                            xhr.setRequestHeader(header, token);
-                        }
-                    },
-                });
-                promise.done(function(content) {
-                    $("#" + id + "").append(content);
-                });
-            }
+			$modalBody.load(url, function(response, status, xhr) {
+			  if (status === 'error') {
+			    $modalBody.html(`
+			      <div class="text-danger">
+			        화면을 불러오는 중 오류가 발생했습니다.
+			      </div>
+			    `);
+			  }
 
-            $("#" + id).dialog({
-                title: title,
-                width: width + 10,
-                height: height + 40,
-                resizable: resizeyn,
-                closable: closable,
-                modal: modalFlag,
-                draggable: false,
-                closeOnEscape: false,
-                open: function(event, ui) {
-                    if ($(".ui-dialog").length - 1 == 0) {
-                        dialogZindex = 998;
-                        overlayZindex = 1000;
-                    } else {
-                        dialogZindex = dialogZindex + 3;
-                        overlayZindex = overlayZindex + 3;
-                    }
-                    $(".ui-dialog")
-                        .eq($(".ui-dialog").length - 1)
-                        .css("z-index", dialogZindex);
-                    $(".ui-widget-overlay")
-                        .eq($(".ui-widget-overlay").length - 1)
-                        .css("z-index", overlayZindex);
+			  var modalObject = new bootstrap.Modal($modalElement[0]);
+			  
+			  
+			  // 닫히기 직전에 포커스 제거
+		      $modalElement.on('hide.bs.modal', function () {
+		        if (document.activeElement) {
+		          document.activeElement.blur();
+		        }
+		      });
 
-                    if ($(window).height() < height + 40) {
-                        $(".ui-widget-overlay")
-                            .eq($(".ui-widget-overlay").length - 1)
-                            .css("height", height + 50); //회색배경을 팝업사이즈에 맞춘다.
-                    }
+			  // 모달이 완전히 닫힌 뒤 DOM 제거
+			  $modalElement.on('hidden.bs.modal', function () {
+			    modalObject.dispose();   // Bootstrap 인스턴스 정리
+			    $modalElement.remove();  // DOM 제거
+				
+				if (opener && typeof opener.focus === 'function') {
+					opener.focus();
+				}
+			  });
 
-                    if (!oUtil.isNull(openFunc)) {
-                        var evalFnc = eval(openFunc + "()");
-                        evalFnc;
-                    }
-                    /*$(".ui-dialog[aria-describedby='" + id + "'] .ui-dialog-titlebar-close").prev().prepend("<i class='fa fa-edit'></i>")  타이틀 아이콘 추가 */
-                    $(
-                        ".ui-dialog[aria-describedby='" +
-                        id +
-                        "'] .ui-dialog-titlebar-close"
-                    ).hide(); //기존 버튼 숨김
-                    //$(".ui-dialog[aria-describedby='" + id + "'] .ui-dialog-titlebar").append('<button type="button" onclick="javascript:closeDialog(this);" class="btn_i_popclose">창닫기</button>');
-                    $(
-                        ".ui-dialog[aria-describedby='" + id + "'] .ui-dialog-titlebar"
-                    ).append(
-                        '<a href="javascript:void(0)" class="close" onClick="javascript:KpackageOBJ.dialog.close(\'' +
-                        id +
-                        '\');"><i class="fa fa-times"></i></a>'
-                    );
-                    // escape key maps to keycode '27'
-                    $("#" + id).append(
-                        '<script>$(document).keyup(function(e) {if (e.keyCode == 27) {KpackageOBJ.dialog.close("' +
-                        id +
-                        '");}});</script>'
-                    );
-                },
-                close: function() {
-                    if (!oUtil.isNull(closeFunc)) {
-                        ss;
-                        var evalFnc = eval(closeFunc + "()");
-                        evalFnc;
-                    }
-                },
-            });
-        },
+			  modalObject.show();
+			});
+			
+		}
+		
+	},
+    dialog : {
+		open : function(panelId, panelTitle, url, pWidth, pHeight, closeOnBackdrop){
+			$('#' + panelId).remove();
 
-        close: function(id) {
+			if ($.isNumeric(pWidth)) pWidth = pWidth + 'px';
+			if ($.isNumeric(pHeight)) pHeight = pHeight + 'px';
+			
+			
+			if (typeof closeOnBackdrop === 'undefined' || closeOnBackdrop === null) {
+				closeOnBackdrop = true;
+			}
+
+			var html = `
+			  <div id="${panelId}" class="custom-popup-overlay">
+			    <div class="custom-popup-panel" style="width:${pWidth}; height:${pHeight};">
+			      <div class="custom-popup-header draggable-header">
+			        <h5 class="custom-popup-title" id="${panelId}_label">${panelTitle}</h5>
+			        <button type="button" class="btn-close" aria-label="Close"></button>
+			      </div>
+			      <div class="custom-popup-body">로딩 중...</div>
+			    </div>
+			  </div>
+			`;
+
+			$('#backdropDiv_Area').append(html);
+
+			var $panel = $('#' + panelId);
+			var $popup = $panel.find('.custom-popup-panel');
+			var $body = $panel.find('.custom-popup-body');
+			var $header = $panel.find('.draggable-header');
+
+			$body.load(url, function(response, status, xhr) {
+			  if (status === 'error') {
+			    $body.html('<div class="text-danger">화면을 불러오는 중 오류가 발생했습니다.</div>');
+			  }
+			});
+
+			// 닫기
+			function closePopup() {
+			  $panel.remove();
+			  $(document).off('keydown.' + panelId);
+			  $(document).off('mousemove.' + panelId);
+			  $(document).off('mouseup.' + panelId);
+			}
+
+			$panel.find('.btn-close').on('click', closePopup);
+
+			$panel.on('click', function(e) {
+			  if (closeOnBackdrop && $(e.target).is('.custom-popup-overlay')) {
+			    closePopup();
+			  }
+			});
+
+			$(document).on('keydown.' + panelId, function(e) {
+			  if (e.key === 'Escape') {
+			    closePopup();
+			  }
+			});
+
+			// 드래그
+			var isDragging = false;
+			var startX = 0;
+			var startY = 0;
+			var startLeft = 0;
+			var startTop = 0;
+
+			$header.on('mousedown', function(e) {
+			  if ($(e.target).closest('.btn-close').length) return;
+
+			  isDragging = true;
+
+			  // 가운데 정렬 해제 후 절대 위치로 전환
+			  var rect = $popup[0].getBoundingClientRect();
+			  $popup.addClass('dragging');
+			  $popup.css({
+			    left: rect.left + 'px',
+			    top: rect.top + 'px',
+			    margin: 0,
+			    transform: 'none'
+			  });
+
+			  startX = e.clientX;
+			  startY = e.clientY;
+			  startLeft = rect.left;
+			  startTop = rect.top;
+
+			  $(document).on('mousemove.' + panelId, function(e) {
+			    if (!isDragging) return;
+
+			    var newLeft = startLeft + (e.clientX - startX);
+			    var newTop = startTop + (e.clientY - startY);
+
+			    var maxLeft = $(window).width() - $popup.outerWidth();
+			    var maxTop = $(window).height() - $popup.outerHeight();
+
+			    if (newLeft < 0) newLeft = 0;
+			    if (newTop < 0) newTop = 0;
+			    if (newLeft > maxLeft) newLeft = maxLeft;
+			    if (newTop > maxTop) newTop = maxTop;
+
+			    $popup.css({
+			      left: newLeft + 'px',
+			      top: newTop + 'px'
+			    });
+			  });
+
+			  $(document).on('mouseup.' + panelId, function() {
+			    isDragging = false;
+			    $(document).off('mousemove.' + panelId);
+			    $(document).off('mouseup.' + panelId);
+			  });
+
+			  e.preventDefault();
+			});
+		},
+
+		
+		close: function(panelId) {
+		  var $panel = $('#' + panelId);
+
+		  if ($panel.length > 0) {
+		    $panel.remove();
+		    $(document).off('keydown.' + panelId);
+		    $(document).off('mousemove.' + panelId);
+		    $(document).off('mouseup.' + panelId);
+		  }
+		},
+
+		open_old: function(
+		    id,
+		    title,
+		    url_opts,
+		    width,
+		    height,
+		    closeFunc,
+		    modalFlag,
+		    openFunc,
+		    previewer
+		) {
+		    var resizeyn = false;
+		    var closable = true;
+		    var lyH = $(window).height();
+		    var lyW = $(window).width();
+		    var ly = $("#" + id).attr("alt");
+		    var barW = $("." + ly).width();
+		    var barH = $("." + ly).height();
+		    this.createPopupDiv(id);
+		    if (width == null || width == "") {
+		        width = 400;
+		    }
+		    if (height == null || height == "") {
+		        height = 500;
+		    } else {
+		        //if (height > (lyH - barH)) height = (lyH - barH) * 0.97;
+		        //if (width > (lyW - barW)) width = (lyW - barW) * 0.97
+		    }
+		    if (oUtil.isNull(modalFlag)) {
+		        modalFlag = true;
+		    }
+		    var params = "";
+		    var url = "";
+
+		    var dialogZindex = $(".ui-dialog")
+		        .eq($(".ui-dialog").length - 1)
+		        .css("z-index");
+		    var overlayZindex = $(".ui-widget-overlay")
+		        .eq($(".ui-widget-overlay").length - 1)
+		        .css("z-index");
+
+		    if (!oUtil.isNull(previewer)) {
+		        $("#" + id + "").html(previewer);
+		    } else {
+		        if (typeof url_opts == "string") {
+		            url = url_opts;
+		        } else {
+		            url = url_opts.href;
+		            params = makeStringParameter(url_opts.queryParams, true);
+		        }
+		        var token = $("meta[name='_csrf']").attr("content");
+		        var header = $("meta[name='_csrf_header']").attr("content");
+
+		        var promise = $.ajax({
+		            url: url,
+		            data: params,
+		            type: "post",
+		            beforeSend: function(xhr) {
+		                if (
+		                    token != "" &&
+		                    header != "" &&
+		                    token != undefined &&
+		                    header != undefined
+		                ) {
+		                    xhr.setRequestHeader(header, token);
+		                }
+		            },
+		        });
+		        promise.done(function(content) {
+		            $("#" + id + "").append(content);
+		        });
+		    }
+
+		    $("#" + id).dialog({
+		        title: title,
+		        width: width + 10,
+		        height: height + 40,
+		        resizable: resizeyn,
+		        closable: closable,
+		        modal: modalFlag,
+		        draggable: false,
+		        closeOnEscape: false,
+		        open: function(event, ui) {
+		            if ($(".ui-dialog").length - 1 == 0) {
+		                dialogZindex = 1060;
+		                overlayZindex = 1000;
+		            } else {
+		                dialogZindex = dialogZindex + 3;
+		                overlayZindex = overlayZindex + 3;
+		            }
+		            $(".ui-dialog")
+		                .eq($(".ui-dialog").length - 1)
+		                .css("z-index", dialogZindex);
+		            $(".ui-widget-overlay")
+		                .eq($(".ui-widget-overlay").length - 1)
+		                .css("z-index", overlayZindex);
+
+		            if ($(window).height() < height + 40) {
+		                $(".ui-widget-overlay")
+		                    .eq($(".ui-widget-overlay").length - 1)
+		                    .css("height", height + 50); //회색배경을 팝업사이즈에 맞춘다.
+		            }
+
+		            if (!oUtil.isNull(openFunc)) {
+		                var evalFnc = eval(openFunc + "()");
+		                evalFnc;
+		            }
+		            /*$(".ui-dialog[aria-describedby='" + id + "'] .ui-dialog-titlebar-close").prev().prepend("<i class='fa fa-edit'></i>")  타이틀 아이콘 추가 */
+		            $(
+		                ".ui-dialog[aria-describedby='" +
+		                id +
+		                "'] .ui-dialog-titlebar-close"
+		            ).hide(); //기존 버튼 숨김
+		            //$(".ui-dialog[aria-describedby='" + id + "'] .ui-dialog-titlebar").append('<button type="button" onclick="javascript:closeDialog(this);" class="btn_i_popclose">창닫기</button>');
+		            $(
+		                ".ui-dialog[aria-describedby='" + id + "'] .ui-dialog-titlebar"
+		            ).append(
+		                '<a href="javascript:void(0)" class="close" onClick="javascript:KpackageOBJ.dialog.close(\'' +
+		                id +
+		                '\');"><i class="fa fa-times"></i></a>'
+		            );
+		            // escape key maps to keycode '27'
+		            $("#" + id).append(
+		                '<script>$(document).keyup(function(e) {if (e.keyCode == 27) {KpackageOBJ.dialog.close("' +
+		                id +
+		                '");}});</script>'
+		            );
+		        },
+		        close: function() {
+		            if (!oUtil.isNull(closeFunc)) {
+		                var evalFnc = eval(closeFunc + "()");
+		                evalFnc;
+		            }
+		        },
+		    });
+		},
+        close_old: function(id) {
             $(
                 ".ui-dialog[aria-describedby='" + id + "'] .ui-dialog-titlebar-close"
             ).trigger("click");
@@ -4401,6 +4584,8 @@ var KpackageOBJ = {
 
     "auiGrid": {
         "gridProps": {
+			// select UI 에 출력 시킬 옵션값들 (기본값 : [10, 20, 30, 40, 50])
+			pageRowSelectValues : [50, 100, 150, 200, 250],
             // 편집 가능 여부 (기본값 : false)
             editable: false,
             // 셀 병합 실행
@@ -5216,6 +5401,7 @@ function tabClose(contId) {
 
 function toggleSearchMore(p_Object, p_SearchMoreID){
 	
+	
 	var $btn = $(p_Object);
 	
 	var $searchMore = $('#'+ p_SearchMoreID);
@@ -5235,3 +5421,4 @@ function toggleSearchMore(p_Object, p_SearchMoreID){
 	}
 	
 }
+

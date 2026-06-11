@@ -43,7 +43,7 @@
                             	<input type="hidden" id="ENC_PASSWORD" name="ENC_PASSWORD"/>
                                 <div class="d-grid mb-3">
                                     <label for="COMPANY_CODE" class="form-label">Company</label>
-                                    <input type="text" class="form-control form-control-lg text-white bg-dark border-light border-opacity-25 bg-opacity-25" id="COMPANY_CODE" name="COMPANY_CODE" value="ADMIN1000">
+                                    <input type="text" class="form-control form-control-lg text-white bg-dark border-light border-opacity-25 bg-opacity-25" id="COMPANY_CODE" name="COMPANY_CODE" value="FRT100">
                                 </div>
                                 <div class="divider small text-white opacity-25">And</div>
                                 <div class="mb-3">
