@@ -241,7 +241,7 @@
 				            가운데 팝업창(드래그 가능)
 				        </button>
 
-				        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.sidepanel.open('aaaa','/sample-001-pop01', '600px');">
+				        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.sidepanel.open('aaaa','/sample-001-pop01', '1200px');">
 				            우측 팝업창 호출하기 
 				        </button>
 				    </div>
