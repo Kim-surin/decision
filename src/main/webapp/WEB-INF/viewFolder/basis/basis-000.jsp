@@ -1,365 +1,282 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
-<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<style type="text/css">
-	.form-control {
-	    height: 45px;
-	    padding-left: 25px;
-	}
-</style>
+
+
 </head>
 <body>
 	<div class="content-wrapper">
-	    <div class="main-content layout-trimmed profile-page position-relative sortable-inactive">
-	        <!-- Profile Header Background -->
-	        <div class="profile-page-header-underlay bg-info-gradient bg-info-500"></div>
-	        <!-- Main Profile Content -->
-	        <div class="container-xl position-relative">
-	            <!-- Profile Header Section -->
-	            <div class="profile-page-header rounded-3 body-bg shadow-3 mb-4">
-	                <div class="d-flex flex-column flex-md-row align-items-center position-relative p-4">
-	                    <!-- Profile Info -->
-	                    <div class="profile-page-header-info ms-md-4 text-center text-md-start">
-	                        <h1 class="fs-xxl fw-700 mb-2"><span id="sp_company_name">Company Name</span></h1>
-	                        <p class="text-muted mb-2"><span id="sp_address_name">Address Eng</span></p>
-	                        <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start">
-	                            <span class="badge bg-primary-100 text-primary"><span id="sp_officer_name">sp_officer_name</span></span>
-	                            <span class="badge bg-primary-100 text-primary"><span id="sp_officer_phone">sp_officer_phone</span></span>
-	                            <span class="badge bg-primary-100 text-primary"><span id="sp_officer_email">sp_officer_email</span></span>
+		<div class="row">
+			<div class="content-wrapper col-3">
+				<h1 class="subheader-title mb-1">회사관리</h1>
+				<nav class="app-breadcrumb" aria-label="breadcrumb">
+					<ol class="breadcrumb ms-0 text-muted mb-0">
+						<li class="breadcrumb-item">Home</li>
+						<li class="breadcrumb-item" aria-current="page">기초정보관리</li>
+						<li class="breadcrumb-item active" aria-current="page">회사관리</li>
+					</ol>
+				</nav>
+			</div>
+			<div class="row col-9"></div>
+	    </div>
+	    <div class="row">
+	    	<div class="col-3">
+		    	<div id="panel-4" class="panel panel-icon">
+		    		<div class="panel-container show">
+						<div class="panel-content">
+				            <div class="row">
+	                            <div id="oAuiGrid_BASIS000_01" style="width:90%;height:100%; margin:0 auto;"></div>
 	                        </div>
-	                    </div>
-	                </div>
-	                <!-- Tab pagenation -->
-	                <div class="profile-page-nav border-top">
-	                    <ul class="nav nav-tabs-clean" role="tablist">
-	                        <li class="nav-item" role="presentation">
-	                            <a class="nav-link active" href="#profile-about" data-bs-toggle="tab" aria-selected="false" role="tab" tabindex="-1"><i class="sa sa-map"></i>&nbsp; 회사정보 </a>
-	                        </li>
-	                        <li class="nav-item" role="presentation">
-	                            <a class="nav-link" href="#profile-news" data-bs-toggle="tab" aria-selected="true" role="tab"><i class="sa sa-calculator"></i>&nbsp; Options </a>
-	                        </li>
-	                    </ul>
-	                </div>
-	            </div>
-	            <!-- Content -->
-	            <div class="tab-content">
-	                <!-- Company Information Tab -->
-	
-	                <div class="tab-pane fade active show" id="profile-about" role="tabpanel">
-	                    <div class="row">
-	                        <div class="col-lg-12">
-	                            <!-- About Me Section -->
-	                            <div class="panel mb-12">
-	                                <div class="panel-hdr d-flex justify-content-between align-items-center pe-3">
-	                                    <h2></h2>
-	                                    <button class="btn btn-outline-default btn-xs px-2 waves-effect waves-themed" data-bs-toggle="modal" data-bs-target="#addNewsModal"> Save </button>
-	                                </div>
-	                                <div class="panel-container">
-	                                    <div class="panel-content">
-	                                        <form:form id="SAMPLE000-form" novalidate="novalidate" class="s4-form" onsubmit="return false;" method="post">
-												<div class="row">
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">회사코드</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-pill">회사코드(HR)</label>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-pill">대표자명</label>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">대표자 영문명</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">회사명</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>                                                    
-                                                    <div class="col-lg-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-pill">회사명(영문)</label>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">회사명(로컬)</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-6">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-pill">주소</label>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-6">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-pill">영문주소</label>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-pill">회사전화번호</label>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-pill">회사팩스번호</label>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-pill">담당자 전화번호</label>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">담당자 이메일</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">원산지인증수출자번호</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">수불부 자동생성</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">재고회전기간</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <label class="form-label" for="example-input-square">세번변경 판정만 수행</label>
-                                                            <input type="text" id="example-input-square" class="form-control rounded-pill" placeholder="Square borders">
-                                                        </div>
-                                                    </div>
-                                                </div>
-	                                        </form:form>
-	
-	                                    </div>
-	                                </div>
-	                            </div>
-	                            <!-- Experience Section -->
-	                        </div>
-	                    </div>
-	                </div>
-	                <!-- Options Tab -->
-	                <div class="tab-pane fade" id="profile-news" role="tabpanel">
-	                    <div class="row">
-	                        <div class="col-lg-12">
-	                            <div class="panel mb-12">
-	                                <div class="panel-hdr d-flex justify-content-between align-items-center pe-3">
-	                                    <h2>Options</h2>
-	                                    <button class="btn btn-outline-default btn-xs px-2 waves-effect waves-themed" data-bs-toggle="modal" data-bs-target="#addNewsModal"> Save </button>
-	                                </div>
-	                                <div class="panel-container">
-	                                    <div class="panel-content">
-	                                        <form:form id="SAMPLE000-form" novalidate="novalidate" class="s4-form" onsubmit="return false;" method="post">
-												<div class="row">
-                                                    <div class="col-lg-6">
-                                                        <div class="mb-3">
-                                                        	<h5 class="frame-heading">버퍼설정기준</h5>
-                                                            <div class="frame-wrap demo-radio">
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline1Radio" name="inlineDefaultRadiosExample">
-			                                                        <label class="form-check-label" for="defaultInline1Radio">회사</label>
-			                                                    </div>
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline2Radio" name="inlineDefaultRadiosExample" checked="">
-			                                                        <label class="form-check-label" for="defaultInline2Radio">영업조직</label>
-			                                                    </div>
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline2Radio" name="inlineDefaultRadiosExample" checked="">
-			                                                        <label class="form-check-label" for="defaultInline2Radio">생산플랜트</label>
-			                                                    </div>
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline2Radio" name="inlineDefaultRadiosExample" checked="">
-			                                                        <label class="form-check-label" for="defaultInline2Radio">제품군</label>
-			                                                    </div>
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline2Radio" name="inlineDefaultRadiosExample" checked="">
-			                                                        <label class="form-check-label" for="defaultInline2Radio">FTA 협정</label>
-			                                                    </div>
-			                                                </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <h5 class="frame-heading">수취율 목표</h5>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-3">
-                                                        <div class="mb-3">
-                                                            <h5 class="frame-heading">수불부 참조 기간</h5>
-                                                            <input type="text" id="example-input-pill" class="form-control rounded-pill" placeholder="Rounded pill">
-                                                        </div>
-                                                    </div>                                                      
-                                                    <div class="col-lg-4">
-                                                        <div class="mb-3">
-                                                            <h5 class="frame-heading">확인서 등록 기준</h5>
-                                                            <div class="frame-wrap demo-radio">
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline1Radio" name="inlineDefaultRadiosExample">
-			                                                        <label class="form-check-label" for="defaultInline1Radio">회사</label>
-			                                                    </div>
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline2Radio" name="inlineDefaultRadiosExample" checked="">
-			                                                        <label class="form-check-label" for="defaultInline2Radio">플랜트</label>
-			                                                    </div>
-			                                                </div>
-                                                        </div>
-                                                    </div>
-                                                  
-                                                    <div class="col-lg-4">
-                                                        <div class="mb-3">
-                                                            <h5 class="frame-heading">원산지 판정 방법</h5>
-                                                            <div class="frame-wrap demo-radio">
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline1Radio" name="inlineDefaultRadiosExample">
-			                                                        <label class="form-check-label" for="defaultInline1Radio">재고회전</label>
-			                                                    </div>
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline2Radio" name="inlineDefaultRadiosExample" checked="">
-			                                                        <label class="form-check-label" for="defaultInline2Radio">재고회전비율</label>
-			                                                    </div>
-			                                                </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-lg-4">
-                                                        <div class="mb-3">
-                                                            <h5 class="frame-heading">서명권자 플랜트 여부</h5>
-                                                            <div class="frame-wrap demo-radio">
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline1Radio" name="inlineDefaultRadiosExample">
-			                                                        <label class="form-check-label" for="defaultInline1Radio">Yes</label>
-			                                                    </div>
-			                                                    <div class="form-check form-check-inline">
-			                                                        <input type="radio" class="form-check-input" id="defaultInline2Radio" name="inlineDefaultRadiosExample" checked="">
-			                                                        <label class="form-check-label" for="defaultInline2Radio">No</label>
-			                                                    </div>
-			                                                </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-	                                        </form:form>
-	                                    </div>
-	                                </div>
-	                            </div>
-	                        </div>
-	                    </div>
-	                </div>
-	                <!-- Contact Tab -->
-	            </div>
-	        </div>
+					    </div>		    		
+		    		</div>
+				</div>
+	    	</div>
+	    	<div class="col-9">
+	    		<div class="row">
+	    			<div class="col-6">
+	    				Company Name ( Code )
+	    			</div>
+	    			<div class="frame-wrap col-6">
+					    <div class="demo" style="text-align: right;">
+					        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:;">변경사항 저장</button>
+					    </div>
+					</div>
+	    		</div>
+	    		
+		    	<form:form id="BASIS000-form" class="s4-form" novalidate="novalidate" action="" method="post">
+			    	<div id="panel-4" class="panel panel-icon">
+			    		<div class="panel-container show">
+							<div class="panel-content">
+								<div class="row">
+								    <div class="mb-3 col-3 d-none">
+								        <label class="form-label" for="company_code">회사 코드 <span class="text-danger">*</span></label>
+								        <input type="text" id="company_code" name="company_code" class="form-control" maxlength="20" required>
+								    </div>
+								
+								    <div class="mb-3 col-3 d-none">
+								        <label class="form-label" for="company_name">회사명 <span class="text-danger">*</span></label>
+								        <input type="text" id="company_name" name="company_name" class="form-control" maxlength="200" required>
+								    </div>
+								
+								    <div class="mb-3 col-3 d-none">
+								        <label class="form-label" for="company_name_eng">영문 회사명</label>
+								        <input type="text" id="company_name_eng" name="company_name_eng" class="form-control" maxlength="200">
+								    </div>
+								
+								    <div class="mb-3 col-3 d-none">
+								        <label class="form-label" for="company_name_loc">현지어 회사명</label>
+								        <input type="text" id="company_name_loc" name="company_name_loc" class="form-control" maxlength="200">
+								    </div>
+								
+
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="officer_name">담당자명(대표자명)</label>
+								        <input type="text" id="officer_name" name="officer_name" class="form-control" maxlength="50">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="officer_name_eng">담당자 영문명(영문 대표자명)</label>
+								        <input type="text" id="officer_name_eng" name="officer_name_eng" class="form-control" maxlength="50">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="officer_phone_no">담당자 전화번호</label>
+								        <input type="text" id="officer_phone_no" name="officer_phone_no" class="form-control" maxlength="20">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="officer_email">담당자 이메일</label>
+								        <input type="email" id="officer_email" name="officer_email" class="form-control" maxlength="50">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="business_no">사업자등록번호</label>
+								        <input type="text" id="business_no" name="business_no" class="form-control" maxlength="15">
+								    </div>
+								    								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="com_phone_no">회사 전화번호</label>
+								        <input type="text" id="com_phone_no" name="com_phone_no" class="form-control" maxlength="20">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="com_fax_no">회사 팩스번호</label>
+								        <input type="text" id="com_fax_no" name="com_fax_no" class="form-control" maxlength="20">
+								    </div>
+								
+								    <div class="mb-3 col-3"></div>
+								    
+								    <div class="mb-3 col-1">
+								        <label class="form-label" for="zip_code">우편번호</label>
+								        <input type="text" id="zip_code" name="zip_code" class="form-control" maxlength="7">
+								    </div>					
+								    			
+								    <div class="mb-3 col-5">
+								        <label class="form-label" for="address">주소</label>
+								        <input type="text" id="address" name="address" class="form-control" maxlength="200">
+								    </div>
+								
+								    <div class="mb-3 col-6">
+								        <label class="form-label" for="address_eng">영문 주소</label>
+								        <input type="text" id="address_eng" name="address_eng" class="form-control" maxlength="500">
+								    </div>
+								
+								
+								   
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="com_de_minimis_rate">미소기준 감산 비율 <span class="text-danger">*</span></label>
+								        <input type="number" id="com_de_minimis_rate" name="com_de_minimis_rate" class="form-control" step="0.01" required>
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="com_rvc_rate">부가가치 가산 비율 <span class="text-danger">*</span></label>
+								        <input type="number" id="com_rvc_rate" name="com_rvc_rate" class="form-control" step="0.01" required>
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="inventory_valuation_method">재고평가방법</label>
+								        <input type="text" id="inventory_valuation_method" name="inventory_valuation_method" class="form-control" maxlength="1">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="co_certified_exporter_yn">원산지 인증수출자 여부 <span class="text-danger">*</span></label>
+								        <select id="co_certified_exporter_yn" name="co_certified_exporter_yn" class="form-select" required>
+								            <option value="">선택</option>
+								            <option value="Y">예</option>
+								            <option value="N">아니오</option>
+								        </select>
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="certification_no">원산지 인증수출자 인증번호</label>
+								        <input type="text" id="certification_no" name="certification_no" class="form-control" maxlength="50">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="default_language">사용 언어</label>
+								        <input type="text" id="default_language" name="default_language" class="form-control" maxlength="3">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="certification_type">원산지 인증수출자 인증타입</label>
+								        <select id="certification_type" name="certification_type" class="form-select">
+								            <option value="">선택</option>
+								            <option value="C">사업장별 인증</option>
+								            <option value="I">품목별 인증</option>
+								        </select>
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="material_use_yn">수불부 사용 여부</label>
+								        <select id="material_use_yn" name="material_use_yn" class="form-select">
+								            <option value="">선택</option>
+								            <option value="Y">사용</option>
+								            <option value="N">사용 안함</option>
+								        </select>
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="company_use_yn">회사 사용 여부</label>
+								        <select id="company_use_yn" name="company_use_yn" class="form-select">
+								            <option value="">선택</option>
+								            <option value="Y">사용</option>
+								            <option value="N">사용 안함</option>
+								        </select>
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="basic_aging_period">기초 재고회전 기간</label>
+								        <input type="number" id="basic_aging_period" name="basic_aging_period" class="form-control" value="0">
+								    </div>
+								
+								    <div class="mb-3 col-3">
+								        <label class="form-label" for="ctc_decision_only_yn">세번변경 판정만 수행 여부</label>
+								        <select id="ctc_decision_only_yn" name="ctc_decision_only_yn" class="form-select">
+								            <option value="">선택</option>
+								            <option value="Y">예</option>
+								            <option value="N" selected>아니오</option>
+								        </select>
+								    </div>
+								</div>
+						    </div>		    		
+			    		</div>
+					</div>
+				</form:form>	    	
+	    	</div>
 	    </div>
 	</div>
-<script type="text/javascript">
-	
-	var SAMPLE000 = new function(){
-		
-		// Page Object Initialize
-		this.initialize_Object = function() {
+</body>
+<script>
+	var BASIS000 = new function() {
+
+		// AUIGrid 생성 후 반환 ID
+		this.grid_BASIS000_01 = null;
+
+		// 시작점
+		this.Initialize_viewObject = function() {
 			
+			/*우측 상단 차트 생성 */
+			//KpackageOBJ.perityChart.create("span.peity-bar", "bar");
+			//KpackageOBJ.perityChart.create("span.peity-donut", "donut");
+			//KpackageOBJ.perityChart.create("span.peity-line", "line");
+			// AUIGrid 그리드를 생성합니다.
+			BASIS000.createAUIGrid();
+			//AUIGrid.setGridData(BASIS000.grid_BASIS000_01, BASIS000.data);
 		}
-		
 
-
-		
-		this.initialize_TuiGrid = function() {
-			
-			var colArrayInfo = [
+		// AUIGrid 를 생성합니다.
+		this.createAUIGrid = function() {
+			// 그리드 칼럼 레이아웃 설정
+			const columnLayout = [ 
+				{ dataField : "company_code",	headerText : "회사코드",          width : 120,		filter: { showIcon: true }  },
+				{ dataField : "company_name",	headerText : "회사명",        width : 140,		filter: { showIcon: true }  }
 				
-				{"header" :"플랜트"              ,"name" :"DIVISION_NAME"           ,"width" : 80      ,"align" : "center"    ,"hidden" : false},
-				{"header" :"근거서류번호"        ,"name" :"SUPT_DOC_NO"             ,"width" : 100      ,"align" : "center"    ,"hidden" : false},
-				
-		    ];
-			
-			var tools = [ 
-			     {icon:"none",  title:"상세조회"        ,text:"상세조회"        ,func:"SAMPLE000.openDetailPage"}
-			     ,{icon:"excel", title:"엑셀다운로드"    ,text:"엑셀다운로드"  ,func:"SAMPLE000.excel_SAMPLE000List"}
+			];
 
-			  ];
-			KpackageOBJ.tuiGrid.setButton("oTui_CsPurchase", tools); // Toobar 생성
-			KpackageOBJ.tuiGrid.create("oTui_CsPurchase","/cusven/retrieve_SAMPLE000List", colArrayInfo, null, null, this.oTui_CsPurchase_onDblclick_Handler);
+			// 그리드 속성 설정
+			const gridProps = {
+				//추가속성이 필요한 경우 작성 
+				//editable : true, // 그리드 수정 모드 
+				usePaging: false,   // 페이징 사용
+				pageRowCount: 20,  // 페이지 행 개수 select UI 출력 여부 (기본값 : false)
+				showPageRowSelect: false	// 페이지 카운트 표시 여부				
+			};
+
+			// 실제로 #oAuiGrid_BASIS000_01 에 그리드 생성
+			// 파라메터 : Grid Div ID, 컬럼레이아웃, 그리드속성, 그리드타입(없음 : null or "", 행번호 : number ,체크박스 : check ,라디오 : radio)
+			BASIS000.grid_BASIS000_01 = KpackageOBJ.auiGrid.create("oAuiGrid_BASIS000_01", columnLayout, gridProps, "");
 			
+			
+			// 클릭 이벤트
+			AUIGrid.bind(BASIS000.grid_BASIS000_01, "cellClick", function( event ) {
+				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " clicked");
+			});
+			
+			// 더블클릭 이벤트 
+			AUIGrid.bind(BASIS000.grid_BASIS000_01, "cellDoubleClick", function( event ) {
+				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " dbl clicked");
+			});
+		};
+		
+		this.retrieve_GridData = function(){
+			var params = { 
+				/* 날짜 파라메터 '-' 제거  */
+  				"search_from_date" : KpackageOBJ.object.getFormValue("BASIS000-form", "search_from_date").replace(/-/gi, "")
+				,"search_to_date" : KpackageOBJ.object.getFormValue("BASIS000-form", "search_to_date").replace(/-/gi, "")
+			}
+
+			KpackageOBJ.auiGrid.retrieve(BASIS000.grid_BASIS000_01, "/sample/retrieveTestSalesMaster", params);
 		}
-		
-		this.retrieve_gridData = function() {
-			var param = KpackageOBJ.data.makePostData("SAMPLE000-form");
-			KpackageOBJ.tuiGrid.retrieve("oTui_CsPurchase","", param);
-		}
-		
-		/* Dbl Click Handler */
-		this.oTui_CsPurchase_onDblclick_Handler = function(p_GridId, p_RowKey, p_ColName){
-			SAMPLE000.openDetailPage(p_RowKey);
-		}
-		
-		
-		/** 상세페이지 호출 */
-        this.openDetailPage = function(rowKey){
-            var rowData = KpackageOBJ.tuiGrid.getRowValues("oTui_CsPurchase", rowKey);
-            
-            var getParams = "?DIALOG_ID="           + "dialog_SAMPLE00001"
-                            + "&PGMID="             +  "SAMPLE00001"
-                            + "&P_SUPT_DOC_NO="     +  rowData.SUPT_DOC_NO
-                            + "&P_SUPT_DOC_CODE="   +  rowData.SUPT_DOC_CODE
-                            + "&P_DIVISION_CODE="   +  rowData.DIVISION_CODE
-                            + "&P_SUPT_DATE="       +  rowData.SUPT_DATE
-                            + "&P_ATTRIBUTE01="     +  rowData.ATTRIBUTE01
-                            + "&P_CODE_NM="         +  rowData.CODE_NM
-                            + "&P_ITEM_CNT="        +  rowData.ITEM_CNT
-                            + "&P_SUM_QY="          +  rowData.SUM_QY
-                            + "&P_SUM_AMOUNT="      +  rowData.SUM_AMOUNT
-                            ;
-                            
-            KpackageOBJ.dialog.open("dialog_SAMPLE00001", "고객사 구매확인서 상세", "/cv-00101" + getParams, 1145, 480);
-            
-        }
-	}
-	
+	};
 	
 	$(document).ready(function() {
-		pageSetUp();				// 위젯 기능을 사용하기 위해 필수로 호출 합니다.
-		//SAMPLE000.initialize_Object(); 		// 화면에서 사용하는 Selelect Box, Calendar 등을 생성합니다.
-		//SAMPLE000.initialize_TuiGrid();		 
-		
-		
+		pageSetUp(); // 위젯 기능을 사용하기 위해 필수로 호출 합니다.
+		BASIS000.Initialize_viewObject();
 	});
-	
 </script>
-</body>
+
 </html>

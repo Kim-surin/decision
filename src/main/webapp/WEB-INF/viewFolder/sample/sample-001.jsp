@@ -295,7 +295,9 @@
 				//editable : true, // 그리드 수정 모드 
 				usePaging: true,   // 페이징 사용
 				pageRowCount: 20,  // 페이지 행 개수 select UI 출력 여부 (기본값 : false)
-				showPageRowSelect: true	// 페이지 카운트 표시 여부				
+				showPageRowSelect: true,	// 페이지 카운트 표시 여부				
+				
+				enableFilter: true	// 필터 사용여부
 			};
 
 			// 실제로 #oAuiGrid_SAMPLE001_01 에 그리드 생성

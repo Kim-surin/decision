@@ -4597,7 +4597,7 @@ var KpackageOBJ = {
             // 컨텍스트 메뉴 사용 여부 (기본값 : false)
             useContextMenu: false,
             // 필터 사용 여부 (기본값 : false)
-            enableFilter: true,
+            enableFilter: false,
             // 그룹핑 패널 사용
             useGroupingPanel: false,
             // 상태 칼럼 사용
