@@ -58,5 +58,57 @@ public class BasisController extends GenericController {
 		return "basis/basis-000";
 	}
 	
+	
+	/**
+	 * 회사관리 - 왼쪽 트리 목록 조회
+	 * 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveCompanyDivisionList")
+	@ResponseBody
+	public Result retrieveCompanyDivisionList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveCompanyDivisionList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveCompanyDivisionList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveCompanyDivisionList END");
+		
+		return result;
+	}
+	
+	/**
+	 * 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveCompanyDivisionFormData")
+	@ResponseBody
+	public Result retrieveCompanyDivisionFormData(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveCompanyDivisionList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveCompanyDivisionFormData(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveCompanyDivisionList END");
+		
+		return result;
+	}
+	
 
 }

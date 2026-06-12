@@ -89,7 +89,7 @@
 		                <img src="/rcs/img/kpmg_logo.svg#custom-logo.svg">
 		            </div>
 		            <!-- Collapse icon -->
-		            <button class="collapse-icon me-3 d-none d-lg-inline-flex d-xl-inline-flex d-xxl-inline-flex" data-action="toggle" data-class="set-nav-minified" aria-label="Toggle Navigation Size">
+		            <button class="collapse-icon me-3 d-none d-lg-inline-flex d-xl-inline-flex d-xxl-inline-flex" onclick="setTimeout(function(){ $(window).trigger('resize'); }, 20);" data-action="toggle" data-class="set-nav-minified" aria-label="Toggle Navigation Size">
 		                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 5 8">
 		                    <polygon fill="#878787" points="4.5,1 3.8,0.2 0,4 3.8,7.8 4.5,7 1.5,4" />
 		                </svg>
@@ -347,25 +347,15 @@
 	});
 	/* Toast Grid resize Event Code */
 	$(window).bind('resize', function() {
-		
-		$(".tuigrid-resizable").children().each(function(){ 
-			try{
-				var tgt;
-				if(KpackageOBJ.prototype.regexp_notPaging.test($(this).attr("id"))){
-					tgt = KpackageOBJ.tuiGrid.getGrid($(this).attr("id"));
-					if(tgt != null && $(this).data("fixedHeight") == undefined){
-						tgt.setBodyHeight($(window).height()-$(this).data("minusHeight") || $(window).height() - KpackageOBJ.prototype.minusHeight);
-					}else if(tgt != null && $(this).data("fixedHeight") != undefined){
-						tgt.setBodyHeight($(this).data("fixedHeight"));	
-					}
-					
-				}
-			}catch(e){
-				
-			}
+		try{
+			$('[id^="oAuiGrid"]').each(function () {
+				KpackageOBJ.auiGrid.resize("#" + this.id, 10, 10);
+			    KpackageOBJ.auiGrid.resize("#" + this.id);
+			});
 			
-		});
-		$("#left-panel").css("height", $("#main").height()+40);
+		}catch(e){
+			
+		}
 	}).trigger('resize');
 	/* csrf 보완 코드 */
 	$.ajaxSetup({

@@ -4711,6 +4711,59 @@ var KpackageOBJ = {
         "getGridData": function(p_AuiGridId, p_RowIndex, p_ColName) {
             return AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" });
         },
+		
+		/**
+         * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 모든 셀(또는 행) 아이템을 반환합니다.
+         * 
+         * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
+         */
+        "getSelectRowData": function(p_AuiGridId) {
+			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
+			
+            return rowArray[0]["item"];
+        },
+
+		/**
+		 * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 모든 셀(또는 행) 아이템을 반환합니다.
+		 * 
+		 * 		반환값은 배열로 개별 배열 요소는 다음과 같은 요소를 갖는 Object 입니다.
+		 * 		rowIndex : 행의 인덱스
+		 * 		columnIndex : 칼럼의 인덱스
+		 * 		dataField : 선택 칼럼이 출력하고 있는 그리드 데이터의 필드명
+		 * 		headerText : 선택 칼럼의 헤더 텍스트
+		 * 		editable : 선택 칼럼의 수정 가능 여부
+		 * 		value : 선택 셀의 현재 그리드 값
+		 * 		item : 선택 행 아이템들을 갖는 Object
+		 * 
+		 * Return : 선택된 행과 열에 대한 정보
+		 */
+		"getSelectedItems": function(p_AuiGridId) {
+			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
+			return rowArray[0];
+		},
+		
+		/**
+		 * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 row Index 반환합니다.
+		 * 
+		 * Return : 숫자 행번호 (0부터시작)
+		 */
+		"getSelectRowIndex": function(p_AuiGridId) {
+			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
+						
+			return rowArray[0]["rowIndex"];
+		},
+
+		/**
+		 * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 column의 index 반환합니다.
+		 * 
+		 * Return : 숫자 열번호 (0부터시작)
+		 */
+		"getSelectColIndex": function(p_AuiGridId) {
+			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
+						
+			return rowArray[0]["columnIndex"];
+		},
+		
 
         /**
          * 그리드의 특정 셀의 값을 반환합니다.
@@ -4932,10 +4985,34 @@ var KpackageOBJ = {
             }
 			return AUIGrid.restoreEditedRows(p_AuiGridId, rowIndexes);
 			
-		}
+		},
 		
-		
+		/**
+		 * 그리드의 크기를 변경합니다.
+		 * 
+		 * 파라메터 설명
+		 * 		 width (Number) : 변경시키고자 하는 가로 사이즈
+		 * 		 height (Number) : 변경시키고자 하는 세로 사이즈
+		 * 만약 파라메터 없이 resize 메소드 호출 시 부모 Div의 크기를 다시 계산하여 그에 맞게 사이즈를 변경합니다.
+		 * 부모(조상) Div 가 보이지 않는 상태(display : none)인 경우 부모 Div 의 크기를 알 수 없습니다. 이런 경우 그리드는 기본 크기로 변경 시킵니다.
+		 * 따라서 파라메터 없이 resize 메소드 호출 시는 반드시 부모 Div 가 DOM 영역에서 보여졌을 때 호출해야 합니다.
+		 */
+		"resize" : function(p_AuiGridId, p_Width, p_Height) {
+			if (p_AuiGridId != null && String(p_AuiGridId).trim() !== '') {
+				var hasWidth = p_Width != null && String(p_Width).trim() !== '';
+		        var hasHeight = p_Height != null && String(p_Height).trim() !== '';
 
+		        if (hasWidth && hasHeight) {
+		            AUIGrid.resize(p_AuiGridId, p_Width, p_Height);
+		        } else if (hasWidth) {
+		            AUIGrid.resize(p_AuiGridId, p_Width);
+		        } else if (hasHeight) {
+		            AUIGrid.resize(p_AuiGridId, undefined, p_Height);
+		        } else {
+		            AUIGrid.resize(p_AuiGridId);
+		        }
+			}
+		}
     }
 
 };

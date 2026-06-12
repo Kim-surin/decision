@@ -335,7 +335,7 @@
 	border: none;
 	background: url(./images/arrow-right.png) 50% 50% no-repeat;
 	background-size: 16px;
-	vertical-align: bottom;
+	vertical-align: middle;
 	margin: 0 2px 0 0;
 }
 
@@ -346,7 +346,7 @@
 	border: none;
 	background: url(./images/arrow-downright.png) 50% 50% no-repeat;
 	background-size: 16px;
-	vertical-align: bottom;
+	vertical-align: middle;
 	margin: 0 2px 0 0;
 }
 
@@ -356,7 +356,7 @@
 	height: 16px;
 	background: url(./images/b_folder2.png) 50% 50% no-repeat;
 	background-size: 16px;
-	vertical-align: bottom;
+	vertical-align: middle;
 	margin: 0 2px 0 0;
 }
 
@@ -366,7 +366,7 @@
 	height: 16px;
 	background: url(./images/b_folderopen2.png) 50% 50% no-repeat;
 	background-size: 16px;
-	vertical-align: bottom;
+	vertical-align: middle;
 	margin: 0 2px 0 0;
 }
 
@@ -376,7 +376,7 @@
 	height: 16px;
 	background: url(./images/flat_blue_circle.png) no-repeat;
 	background-size: 16px;
-	vertical-align: bottom;
+	vertical-align: middle;
 	margin: 0 2px 0 4px;
 }
 
