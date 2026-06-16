@@ -185,6 +185,14 @@
 		                        <span class="nav-link-text" data-i18n="">sample-001</span>
 		                    </a>
 		            	</li>
+		            	<li class="nav-item">
+		            		 <a id="nav_sample-001" href="#/sample-002" title="sample-001" >
+		                        <svg class="sa-icon">
+		                            <use href="/rcs/ui5x/img/sprite.svg#monitor"></use>
+		                        </svg>
+		                        <span class="nav-link-text" data-i18n="">ChartUtil API Documentation</span>
+		                    </a>
+		            	</li>
 		            	
 		            	
 		            	<c:forEach items="${sideMenuList}" var="item" varStatus="status">

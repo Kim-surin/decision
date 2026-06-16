@@ -68,7 +68,7 @@ public class SpringTestController extends GenericController {
 	 * @return View Path String
 	 */
 	@RequestMapping(value = "/sample-000")
-	public String sample001_view(Model model, HttpSession session) {
+	public String sample000_view(Model model, HttpSession session) {
 		return "sample/sample-000";
 	}
 	
@@ -81,7 +81,7 @@ public class SpringTestController extends GenericController {
 	 * @return View Path String
 	 */
 	@RequestMapping(value = "/sample-001")
-	public String sample002_view(Model model, HttpSession session) {
+	public String sample001_view(Model model, HttpSession session) {
 		return "sample/sample-001";
 	}
 	
@@ -93,6 +93,18 @@ public class SpringTestController extends GenericController {
 	@RequestMapping(value = "/sample-001-pop02")
 	public String sample001pop02_view(Model model, HttpSession session) {
 		return "sample/sample-001-pop02";
+	}
+	
+	
+	/**
+	 * chart document api
+	 * @param model
+	 * @param session
+	 * @return
+	 */
+	@RequestMapping(value = "/sample-002")
+	public String sample002_view(Model model, HttpSession session) {
+		return "sample/sample-002";
 	}
 	
 	
