@@ -392,9 +392,8 @@
           </tr>
         </table>
 
-        <pre><code>&lt;script src="https://code.jquery.com/jquery-3.6.0.min.js"&gt;&lt;/script&gt;
-&lt;script src="https://cdn.jsdelivr.net/npm/chart.js"&gt;&lt;/script&gt;
-&lt;script src="/js/chart-util.js"&gt;&lt;/script&gt;</code></pre>
+        <pre><code>&lt;script src="/rcs/js/chartjs_v451/chart.js"&gt;&lt;/script&gt;
+&lt;script src="/rcs/js/package.chartjs.utils.js"&gt;&lt;/script&gt;</code></pre>
       </section>
 
       <section class="section" id="basic-usage">
