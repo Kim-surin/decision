@@ -48,7 +48,7 @@
 					</div>
 	    		</div>
 	    		
-		    	<form:form id="BASIS000-form" class="s4-form" novalidate="novalidate" action="" method="post">
+		    	<form:form id="BASIS000-comp-form" class="s4-form" novalidate="novalidate" action="" method="post">
 			    	<div id="panel-4" class="panel panel-icon">
 			    		<div class="panel-container show">
 							<div class="panel-content">
@@ -110,17 +110,17 @@
 								
 								    <div class="mb-2 col-3"></div>
 								    
-								    <div class="mb-2 col-1">
+								    <div class="mb-2 col-2">
 								        <label class="form-label" for="zip_code">우편번호</label>
 								        <input type="text" id="zip_code" name="zip_code" class="form-control" maxlength="7">
 								    </div>					
 								    			
-								    <div class="mb-2 col-5">
+								    <div class="mb-2 col-10">
 								        <label class="form-label" for="address">주소</label>
 								        <input type="text" id="address" name="address" class="form-control" maxlength="200">
 								    </div>
 								
-								    <div class="mb-2 col-6">
+								    <div class="mb-2 col-12">
 								        <label class="form-label" for="address_eng">영문 주소</label>
 								        <input type="text" id="address_eng" name="address_eng" class="form-control" maxlength="500">
 								    </div>
@@ -213,9 +213,9 @@
 	                                            </h4>
 	                                            <div class="d-flex flex-row rounded-top mb-2 align-items-center">
 												    <span class="me-2">
-												        <select id="ctc_decision_only_yn" name="ctc_decision_only_yn" class="form-select">
-												            <option value="COMPANY" selected>회사</option>
-												            <option value="PLANT">플랜트</option>
+												        <select id="bf_company_option" name="bf_company_option" class="form-select">
+												            <option value="COM" selected>회사</option>
+												            <option value="DIV">플랜트</option>
 												            <option value="FTA">협정</option>
 												        </select>
 												    </span>
@@ -233,7 +233,7 @@
 	                                            <div class="row">
 	                                            	<div class="col-12">
 												        <!-- 에이유아이 그리드가 이곳에 생성됩니다. -->
-												        <div id="oAuiGrid_BASIS000_02" style="width:100%;height:300px; margin:0 auto;"></div>
+												        <div id="oAuiGrid_BASIS000_02" style="width:100%;height:270px; margin:0 auto;"></div>
 												    </div>
 	                                            </div>
 	                                            
@@ -321,7 +321,7 @@
 					</div>
 	    		</div>
 	    		
-		    	<form:form id="BASIS000-form" class="s4-form" novalidate="novalidate" action="" method="post">
+		    	<form:form id="BASIS000-div-form" class="s4-form" novalidate="novalidate" action="" method="post">
 			    	<div id="panel-4" class="panel panel-icon">
 			    		<div class="panel-container show">
 							<div class="panel-content">
@@ -414,25 +414,19 @@
 		// 시작점
 		this.Initialize_viewObject = function() {
 			
-			/*우측 상단 차트 생성 */
-			//KpackageOBJ.perityChart.create("span.peity-bar", "bar");
-			//KpackageOBJ.perityChart.create("span.peity-donut", "donut");
-			//KpackageOBJ.perityChart.create("span.peity-line", "line");
-			// AUIGrid 그리드를 생성합니다.
-			BASIS000.createAUIGrid_01();
-			
+			BASIS000.createAUIGrid_01(); // AUIGrid 그리드를 생성합니다.
 			BASIS000.retrieve_GridData_grid_BASIS000_01();
 			
-			BASIS000.createAUIGrid_02();
-			//AUIGrid.setGridData(BASIS000.grid_BASIS000_01, BASIS000.data);
+			BASIS000.createAUIGrid_02(); // AUIGrid 그리드를 생성합니다.
+
 		}
 
 		// AUIGrid 를 생성합니다.
 		this.createAUIGrid_01 = function() {
 			// 그리드 칼럼 레이아웃 설정
 			const columnLayout = [ 
-				{ dataField : "company_code",	headerText : "코드",          width : 120,		filter: { showIcon: true }  },
-				{ dataField : "company_name",	headerText : "이름",        width : 140,		filter: { showIcon: true }  }
+				{ dataField : "company_code",	headerText : "코드",        width : 120},
+				{ dataField : "company_name",	headerText : "이름",        width : 140}
 				
 			];
 
@@ -491,25 +485,66 @@
 				$("#oDivisionLayer").addClass('d-none');
 				$("#oCompanyMgmt_title").html(data["company_name"] + " ("+ data["company_code"] +")");
 				
+				BASIS000.retrieveCompanyDivisionFormData("COMPANY");
 			});
 		};
 		
-		
+	
 		this.retrieveCompanyDivisionFormData = function(pSearchDivCode){
 		
-			if (pSearchDivCode != null && String(pSearchDivCode).trim() !== '') {
+			if (pSearchDivCode == null && String(pSearchDivCode).trim() === '') {
 				return false;
 			}
-			
+
+			var data = KpackageOBJ.auiGrid.getSelectRowData(BASIS000.grid_BASIS000_01);
 			var params = {
 					"search_type" : pSearchDivCode
-					,"p_company_code" : pSearchDivCode
-					,"p_division_code" : pSearchDivCode
-					
+					,"p_param_code" : data["company_code"]	// depth가 2일때는 
 			};
 			
-			KpackageOBJ.ajax.doSubmit("/basis/retrieveCompanyDivisionFormData", param, CV00401.formData_Handler);   
+			KpackageOBJ.ajax.doSubmit("/basis/retrieveCompanyDivisionFormData", params, BASIS000.retrieveCompanyDivisionFormData_Handler);   
 			
+		}
+		
+		this.retrieveCompanyDivisionFormData_Handler = function(result){
+			var data = result.value;
+			var targetFormId = "BASIS000-comp-form";
+			if("COMPANY" == data["search_type"]){
+				targetFormId = "BASIS000-comp-form";
+			}else{
+				targetFormId = "BASIS000-div-form";
+			}
+			KpackageOBJ.data.setFormData(targetFormId, data);
+			
+			//회사버퍼설정 데이터 로드 
+			BASIS000.retrieveBufferDatalist();
+			
+			
+		}
+		
+		this.retrieveBufferDatalist = function(){
+			const bfCompanyOption = KpackageOBJ.object.getFormValue("BASIS000-comp-form", "bf_company_option");
+			
+			if (bfCompanyOption) {
+			    switch (bfCompanyOption) {
+			        case "COM":
+			            console.log("회사 기준 처리");
+			            break;
+			        case "DIV":
+			            console.log("사업부/플랜트 기준 처리");
+			            break;
+			        case "FTA":
+			            console.log("협정 기준 처리");
+			            break;
+			        default:
+			            console.log("정의되지 않은 값:", bfCompanyOption);
+			            break;
+			    }
+			    var parmas = {
+			    		"p_bf_company_option" : bfCompanyOption
+			    };
+			    KpackageOBJ.auiGrid.retrieve(BASIS000.grid_BASIS000_02, "/basis/retrieveBufferDatalist", parmas);
+			}
 		}
 		
 		
@@ -552,6 +587,17 @@
 		this.retrieve_GridData_grid_BASIS000_01 = function(){
 			KpackageOBJ.auiGrid.retrieve(BASIS000.grid_BASIS000_01, "/basis/retrieveCompanyDivisionList");
 		}
+		
+		
+		/* event bind */
+		/*
+		* 회사버퍼 설정 select box 값 변경 
+		*/
+		$("#bf_company_option").on("change", function () {
+			
+			BASIS000.retrieveBufferDatalist();
+			
+		});
 	};
 	
 	$(document).ready(function() {

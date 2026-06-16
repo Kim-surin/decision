@@ -5499,3 +5499,22 @@ function toggleSearchMore(p_Object, p_SearchMoreID){
 	
 }
 
+
+/**
+ * 랜덤으로 실수형태의 값을 리턴
+ * 
+ */
+function randFloat(min, max, fixed) {
+	
+	if (min > max) {
+	    throw new Error("min은 max보다 클 수 없습니다.");
+	}
+
+	if (fixed == null || String(fixed).trim() === "") {
+	    min = Math.ceil(min);
+	    max = Math.floor(max);
+	    return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
+
+	return Number((Math.random() * (max - min) + min).toFixed(fixed));
+}

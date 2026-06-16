@@ -86,14 +86,14 @@ public class BasisController extends GenericController {
 	}
 	
 	/**
-	 * 
+	 * 회사관리 - 회사 또는 플렌트 1건 정보 조회 (폼데이터 용)
 	 * @param param
 	 * @return
 	 */
 	@RequestMapping(value="/basis/retrieveCompanyDivisionFormData")
 	@ResponseBody
 	public Result retrieveCompanyDivisionFormData(@RequestBody Map param) {
-		logger.debug("##### Request Type result Class : " + "retrieveCompanyDivisionList ");
+		logger.debug("##### Request Type result Class : " + "retrieveCompanyDivisionFormData ");
 		Result result = new Result();
 		try {
 			
@@ -105,7 +105,34 @@ public class BasisController extends GenericController {
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
 		}
 
-		logger.debug("##### Request Type result Class : " + "retrieveCompanyDivisionList END");
+		logger.debug("##### Request Type result Class : " + "retrieveCompanyDivisionFormData END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * 회사 버퍼 설정 
+	 * 회사 버퍼  설정값에  따른 해당 데이터 조회 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveBufferDatalist")
+	@ResponseBody
+	public Result retrieveBufferDatalist(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveBufferDatalist ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveBufferDatalist(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveBufferDatalist END");
 		
 		return result;
 	}

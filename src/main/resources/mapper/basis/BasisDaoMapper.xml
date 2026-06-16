@@ -21,14 +21,40 @@
  	
  	
  	<select id="retrieveCompanyFormData" parameterType="HashMap" resultType="HashMap">
-		SELECT
-		    c.company_code,
-		    c.company_name,
-		    d.division_code,
-		    d.division_name
-		FROM company c
-		WHERE c.company_code = #{p_company_code}
-		
+	    SELECT
+	        #{search_type}             AS search_type,
+	        a.company_code             AS company_code,
+	        a.company_name             AS company_name,
+	        a.company_name_eng         AS company_name_eng,
+	        a.company_name_loc         AS company_name_loc,
+	        a.officer_name             AS officer_name,
+	        a.officer_name_eng         AS officer_name_eng,
+	        a.officer_phone_no         AS officer_phone_no,
+	        a.officer_email            AS officer_email,
+	        a.business_no              AS business_no,
+	        a.com_phone_no             AS com_phone_no,
+	        a.com_fax_no               AS com_fax_no,
+	        a.zip_code                 AS zip_code,
+	        a.address                  AS address,
+	        a.address_eng              AS address_eng,
+	        COALESCE(NULLIF(a.company_use_yn, ''), 'Y') AS company_use_yn,
+	        a.ctc_decision_only_yn     AS ctc_decision_only_yn,
+	        a.co_certified_exporter_yn AS co_certified_exporter_yn,
+	        a.certification_type       AS certification_type,
+	        a.certification_no         AS certification_no,
+	        a.material_use_yn          AS material_use_yn,
+	        a.basic_aging_period       AS basic_aging_period,
+	        co_bf.option_value         AS bf_company_option,		
+	        co_ru.option_value         AS ru_company_option
+			
+	    FROM company a
+		LEFT OUTER JOIN company_option co_bf
+		  ON a.company_code = co_bf.company_code
+		 AND co_bf.option_code = 'BF'
+		LEFT OUTER JOIN company_option co_ru
+		  ON a.company_code = co_ru.company_code
+		 AND co_ru.option_code = 'RU'
+	    WHERE a.company_code = #{company_code}
  	</select>
  	
  	
@@ -39,10 +65,37 @@
 		    d.division_code,
 		    d.division_name
 		 FROM division d
-	    WHERE d.company_code = #{p_company_code}
-	      and d.division_code = #{p_division_code}
+	    WHERE d.company_code = #{company_code}
+	      and d.division_code = #{p_param_code}
 		ORDER BY c.company_code, d.division_code
  	</select>
  	
+ 	
+ 	<select id="retrieveBufferFromCompany" parameterType="HashMap" resultType="HashMap">
+		SELECT c.company_code          AS target_code
+		       ,c.company_name         AS target_name
+		       ,c.com_rvc_rate         AS rvc_rate
+		       ,c.com_de_minimis_rate  AS de_minimis_rate	   
+		  FROM company c
+		 WHERE c.company_code = #{company_code}
+ 	</select>
+ 	
+ 	<select id="retrieveBufferFromDivision" parameterType="HashMap" resultType="HashMap">
+		SELECT d.division_code          AS target_code
+		       ,d.division_name         AS target_name
+		       ,d.div_rvc_rate          AS rvc_rate
+		       ,d.div_de_minimis_rate   AS de_minimis_rate	   
+		  FROM division d
+		 WHERE d.company_code = #{company_code}
+	</select>
 	
+	
+	<select id="retrieveBufferFromFTA" parameterType="HashMap" resultType="HashMap">
+		SELECT f.fta_code              AS target_code
+		       ,f.fta_name             AS target_name
+		       ,f.com_rvc_rate         AS rvc_rate
+		       ,f.com_de_minimis_rate  AS de_minimis_rate	   
+		  FROM fta_master f
+		 WHERE f.company_code = #{company_code}
+	</select>
 </mapper>

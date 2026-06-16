@@ -91,7 +91,7 @@ public class BasisService extends GeneralService {
     
     
     /**
-     * 회사관리 - 왼쪽 트리 목록 조회
+     * 회사관리 - 회사 또는 플렌트 1건 정보 조회 (폼데이터 용)
      * @param param
      * @return
      */
@@ -104,14 +104,60 @@ public class BasisService extends GeneralService {
     		
     		
     		if("COMPANY".equalsIgnoreCase((String)param.get("search_type"))) {
+    			param.put("p_param_code", param.get("COMPANY_CODE"));
     			formData = sqlSession.getMapper(BasisDao.class).retrieveCompanyFormData(param);
     		}else {
+    			
+    			param.put("p_param_code", param.get("COMPANY_CODE"));
     			formData = sqlSession.getMapper(BasisDao.class).retrieveDivisionFormData(param);
     		}
     				
     				
     		
     		result.setValue(formData);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    
+    
+    /**
+     * 회사관리 - 회사 또는 플렌트 1건 정보 조회 (폼데이터 용)
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveBufferDatalist(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		List<Map<String, Object>> list = null;
+    		//회사 버퍼 설정 기준 값
+    		String bf_company_option = (String)param.get("p_bf_company_option");
+    		
+    		
+    		if("COM".equalsIgnoreCase(bf_company_option)) {
+
+    			list = sqlSession.getMapper(BasisDao.class).retrieveBufferFromCompany(param);
+    			
+    		}else if("DIV".equalsIgnoreCase(bf_company_option)) {
+    			
+    			list = sqlSession.getMapper(BasisDao.class).retrieveBufferFromDivision(param);
+    			
+    		}else if("FTA".equalsIgnoreCase(bf_company_option)) {
+    			
+    			list = sqlSession.getMapper(BasisDao.class).retrieveBufferFromFTA(param);
+    		}
+    				
+    		result.setValue(list);
     		result.setSuccess(true);
     		result.setMessage(DEFAULT_MESSAGE_OK);
     	} catch (Exception e) {

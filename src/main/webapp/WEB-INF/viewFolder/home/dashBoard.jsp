@@ -10,6 +10,8 @@
     <link rel="stylesheet" type="text/css" media="screen" href="/rcs/js/plugin/apexcharts-2.6.6/dist/apexcharts.css">
     <script src="/rcs/js/plugin/apexcharts-2.6.6/dist/apexcharts.js"></script>
 	<script src="/rcs/js/polyfill.js"></script>
+	<script src="/rcs/js/chartjs_v451/chart.js"></script>
+	<script src="/rcs/js/package.chartjs.utils.js"></script>
 	
 
     
@@ -96,14 +98,31 @@ display: -webkit-box;
             <div class="panel-container show" role="content">
                 <div class="panel-content border-faded border-left-0 border-right-0 border-top-0">
                     <div class="row">
-                        <div class="col-lg-6 col-xl-9" style="padding: 10px; height: 360px; overflow: hidden;">
-                            <div id="MAIN_CHART_DIV" class="position-relative" style="width: 100%">
-                                <div class="custom-control custom-switch position-absolute pos-top pos-left ml-5 mt-3 z-index-cloud"></div>
-                            </div>
+                        <div class="col-3">
+                        	<canvas id="myChart1"></canvas>
                         </div>
-                        <div class="col-lg-3 col-xl-3">
+                        <div class="col-3">
+                        	<canvas id="myChart2"></canvas>
+                        </div>
+                        <div class="col-3">
+                        	<canvas id="myChart3"></canvas>
+                        </div>
+                        <div class="col-3">
+                        	<canvas id="myChart4"></canvas>
+                        </div>
+                        <div class="col-3">
+                        	<canvas id="myChart5"></canvas>
+                        </div>
+                        <div class="col-3">
+                        	<canvas id="myChart6"></canvas>
+                        </div>
+                        <div class="col-3">
+                        	<canvas id="floatingBarChart"></canvas>
+                        </div>
+                        <div class="col-3">
+                        	<canvas id="myChart8"></canvas>
+                        </div>
                         
-                        </div>
                     </div>
                 </div>
             </div>
@@ -112,22 +131,184 @@ display: -webkit-box;
 </div><!-- row End -->
 
 
-	<script>
+<script>
 	
-	var HOME_DASHBOARD = new function() {
 
-	    this.initPage = function() {
+var HOME_DASHBOARD = new function () {
 
-	    }
+    /**
+     * 페이지 초기화
+     * ------------------------------------------------------------
+     * [용도]
+     * - 화면 진입 시 차트 생성
+     */
+    this.initPage = function () {
+        this.createBasicCharts();
+        this.createParsingChart();
+        this.createMixedChart();
+        this.createFloatingBarChart();
+        this.bindEvents();
+    };
 
-	}
+    /**
+     * 기본 차트(doughnut, bar, pie, line) 생성
+     * ------------------------------------------------------------
+     * [용도]
+     * - 동일한 data 구조를 이용해 여러 타입 차트를 생성
+     */
+    this.createBasicCharts = function () {
+        var data = {
+            labels: ['Red', 'Blue', 'Yellow'],
+            datasets: [{
+                label: 'My First Dataset',
+                data: [300, 50, 100],
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)'
+                ],
+                hoverOffset: 4
+            }]
+        };
 
+        ChartUtil.createDoughnut("myChart1", data);
+        ChartUtil.createBar("myChart2", data);
+        ChartUtil.createPie("myChart3", data);
+        ChartUtil.createLine("myChart4", data);
+    };
 
-	$(document).ready(function() {
-	    pageSetUp(); // 위젯 기능을 사용하기 위해 필수로 호출 합니다.
-	    HOME_DASHBOARD.initPage();
+    /**
+     * parsing 기반 bar chart 생성
+     * ------------------------------------------------------------
+     * [용도]
+     * - object 배열을 parsing 방식으로 dataset 구성
+     */
+    this.createParsingChart = function () {
+        var rows = [
+            { x: 'Jan', net: 100, cogs: 50, gm: 50 },
+            { x: 'Feb', net: 120, cogs: 55, gm: 75 }
+        ];
 
-	});
-	</script>
+        var chartData = ChartUtil.adapter.toParsingDatasets(rows, "x", [
+            { key: "net", label: "Net sales" },
+            { key: "cogs", label: "Cost of goods sold" },
+            { key: "gm", label: "Gross margin" }
+        ]);
+
+        ChartUtil.createBar("myChart5", chartData);
+    };
+
+    /**
+     * mixed chart 생성
+     * ------------------------------------------------------------
+     * [용도]
+     * - bar + line 혼합 차트 생성
+     */
+    this.createMixedChart = function () {
+        ChartUtil.createMixed("myChart6", {
+            type: "bar",
+            data: {
+                labels: ['January', 'February', 'March', 'April'],
+                datasets: [
+                    {
+                        label: 'Bar Dataset',
+                        data: [10, 20, 30, 40],
+                        order: 2
+                    },
+                    {
+                        label: 'Line Dataset',
+                        data: [10, 10, 30, 20],
+                        type: 'line',
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+    };
+
+    /**
+     * floating bar chart 생성
+     * ------------------------------------------------------------
+     * [용도]
+     * - helper를 이용해 범위형 데이터 생성 후 floating bar 생성
+     */
+    this.createFloatingBarChart = function () {
+        var labels = ['A', 'B', 'C', 'D', 'E', 'F'];
+        var result = ChartUtil.helper.createFloatingRangeData(6, -100, 50, 100);
+
+        ChartUtil.createFloatingBar("floatingBarChart", labels, result, {
+            scales: {
+                y: {
+                    min: -100,
+                    max: 100
+                }
+            }
+        });
+    };
+
+    /**
+     * 차트 이벤트 바인딩
+     * ------------------------------------------------------------
+     * [용도]
+     * - 차트 클릭/hover 이벤트 처리
+     */
+    this.bindEvents = function () {
+
+        // 예시: bar 차트 클릭 이벤트
+        ChartUtil.bindClickEvent("myChart2", function (result, evt) {
+            if (!result) return;
+
+            console.log("[myChart2 click]");
+            console.log("datasetLabel :", result.datasetLabel);
+            console.log("label :", result.label);
+            console.log("value :", result.value);
+        });
+
+        // 예시: mixed chart 더블클릭 이벤트
+        ChartUtil.bindDblClickEvent("myChart6", function (result, evt) {
+            if (!result) return;
+
+            console.log("[myChart6 dblclick]");
+            console.log("datasetLabel :", result.datasetLabel);
+            console.log("label :", result.label);
+            console.log("value :", result.value);
+        });
+
+        // 예시: floating bar hover 이벤트
+        ChartUtil.bindHoverEvent("floatingBarChart", function (result, evt) {
+            var canvas = document.getElementById("floatingBarChart");
+
+            if (result) {
+                canvas.style.cursor = "pointer";
+            } else {
+                canvas.style.cursor = "default";
+            }
+        });
+
+        // 예시: floating bar 클릭
+        ChartUtil.bindClickEvent("floatingBarChart", function (result, evt) {
+            if (!result) return;
+
+            console.log("[floatingBarChart click]");
+            console.log("label :", result.label);
+            console.log("start :", result.value[0]);
+            console.log("end :", result.value[1]);
+        });
+    };
+};
+
+$(document).ready(function () {
+    pageSetUp(); // 위젯 기능을 사용하기 위해 필수 호출
+    HOME_DASHBOARD.initPage();
+});
+</script>
 </body>
 </html>

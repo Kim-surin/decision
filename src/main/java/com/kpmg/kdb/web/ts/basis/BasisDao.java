@@ -30,16 +30,40 @@ public interface BasisDao {
 	
 	
 	/**
-	 * 회사관리 - 회사 정보
+	 * 회사관리 - 회사  1건 정보 조회 (폼데이터 용)
 	 * @param param
 	 * @return
 	 */
 	public Map retrieveCompanyFormData(Map param);
 	
 	/**
-	 * 회사관리 - 플렌트 정보
+	 * 회사관리 - 플렌트 1건 정보 조회 (폼데이터 용)
 	 * @param param
 	 * @return
 	 */
 	public Map retrieveDivisionFormData(Map param);
+	
+	
+	/**
+	 * 회사관리 - 회사 버퍼 설정 - 회사 버퍼 설정 기준 값 :  회사
+	 * @param param
+	 * @return
+	 */
+	public List retrieveBufferFromCompany(Map param);
+	
+	
+	/**
+	 * 회사관리 - 회사 버퍼 설정 - 회사 버퍼 설정 기준 값 :  플랜트
+	 * @param param
+	 * @return
+	 */
+	public List retrieveBufferFromDivision(Map param);
+	
+	
+	/**
+	 * 회사관리 - 회사 버퍼 설정 - 회사 버퍼 설정 기준 값 :  협정
+	 * @param param
+	 * @return
+	 */
+	public List retrieveBufferFromFTA(Map param);
 }
