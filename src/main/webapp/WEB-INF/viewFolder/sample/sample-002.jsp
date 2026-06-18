@@ -269,8 +269,9 @@
     code {
       font-family: Consolas, monospace;
       background : #000 !important;
+      color: #FFF;
     }
-
+    
     .jsdoc {
       background: #0b1220;
       color: #dbeafe;
@@ -301,6 +302,8 @@
         padding: 18px;
       }
     }
+    
+    
   </style>
 </head>
 <body>
