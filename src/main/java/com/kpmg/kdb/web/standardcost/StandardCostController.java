@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.poledger;
+package com.kpmg.kdb.web.standardcost;
 
 import javax.servlet.http.HttpSession;
 
@@ -11,25 +11,25 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
+import com.kpmg.kdb.web.standardcost.dto.StandardCostRequestDto;
 
 @Controller
-public class PoledgerController extends GenericController {
+public class StandardCostController extends GenericController {
 	@Autowired
-	protected PoledgerService poledgerService;
+	protected StandardCostService standatdCostService;
 
-	@RequestMapping(value = "/origin/compliance/poledger/poledger")
-	public String poledger_view(Model model, HttpSession session) {
-		return "poledger/poledger_view";
+	@RequestMapping(value = "/origin/compliance/standardCost/standardCost")
+	public String standardCost_view(Model model, HttpSession session) {
+		return "standardcost/standardCost_view";
 	}
 
-	@RequestMapping(value = "/origin/compliance/poledger/poledgerList")
+	@RequestMapping(value = "/origin/compliance/standardCost/standardCostList")
 	@ResponseBody
-	public Result poledger_list(@RequestBody PoLedgerRequestDto param) throws Exception {
+	public Result standardCost_list(@RequestBody StandardCostRequestDto param) throws Exception {
 		Result result;
 
 		try {
-			result = poledgerService.retrievePoledger(param);
+			result = standatdCostService.retrieveStandardCost(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

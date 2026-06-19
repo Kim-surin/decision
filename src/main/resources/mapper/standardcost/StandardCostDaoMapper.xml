@@ -1,0 +1,35 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.standardcost.StandardCostDao">
+    <select id="retrieveStandardCost" parameterType="HashMap" resultType="HashMap">
+       SELECT *
+       FROM (
+	       SELECT IM.ITEM_CODE
+		       , IM.ITEM_NAME
+		       , DV.DIVISION_CODE
+		       , DV.DIVISION_NAME
+		       , SC.APPLY_DATE
+		       , SC.END_DATE
+		       , SC.STANDARD_COST_AMOUNT
+	       FROM STANDARD_COST SC
+			INNER JOIN ITEM_MST IM
+				ON IM.ITEM_CODE = SC.ITEM_CODE
+				AND IM.COMPANY_CODE = SC.COMPANY_CODE
+			 INNER JOIN DIVISION DV
+	       		ON SC.DIVISION_CODE = DV.DIVISION_CODE
+				AND SC.COMPANY_CODE = DV.COMPANY_CODE
+				AND DV.STATUS = 'Y'
+			WHERE SC.COMPANY_CODE = #{company_code}			
+		)
+		WHERE 1=1
+		<if test="search_date != null">			
+				AND #{search_date} BETWEEN APPLY_DATE AND END_DATE
+		</if>	
+		<if test="item != null">
+				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' )
+		</if>	
+		<if test="division_code != null">
+				AND DIVISION_CODE = #{division_code}
+		</if>
+    </select>
+</mapper>

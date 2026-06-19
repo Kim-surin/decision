@@ -1,9 +1,10 @@
 package com.kpmg.kdb.web.poledger;
 
 import java.util.List;
-import java.util.Map;
+
+import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
+import com.kpmg.kdb.web.poledger.dto.PoLedgerResponseDto;
 
 public interface PoledgerDao {
-    public List retrievPoledger(Map<String, Object> param);
-    public List poLedgerDtlList(Map<String, Object> param);
+	public List<PoLedgerResponseDto> retrievePoledger(PoLedgerRequestDto param);
 }
