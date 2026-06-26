@@ -1,5 +1,5 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -43,7 +43,7 @@
 	    			</div>
 	    			<div class="frame-wrap col-6">
 					    <div class="demo" style="text-align: right;">
-					        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:;">변경사항 저장</button>
+					        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:BASIS000.updateCompanyDivisionFormData('COMPANY');">변경사항 저장</button>
 					    </div>
 					</div>
 	    		</div>
@@ -143,7 +143,11 @@
 								        </select>
 								    </div>
 								</div>
+								
 								<div class="row  mt-3">
+									<hr class="col-5" style="border-bottom: 1px dashed rgba(0, 0, 0, 0.7);">
+									<h5 class="col-2 text-center"> 회사 옵션 설정 </h5>
+									<hr class="col-5" style="border-bottom: 1px dashed rgba(0, 0, 0, 0.7);">
 	                                <div class="col-auto ">
 	                                    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
 	                                        <a class="nav-link d-flex align-items-center active" id="v-pills-home-tab" data-bs-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true" tabindex="-1">
@@ -200,7 +204,7 @@
 														    </div>
 														    <div class="col-3" style="margin-top: 24px;">
 														    	<div class="demo" style="text-align: left;">
-															        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:;">인증수출자 정보 저장</button>
+															        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:BASIS000.updateCertificationInfo();">인증수출자 정보 저장</button>
 															    </div>
 														    </div>
 	                                                	</div>
@@ -224,8 +228,8 @@
 												        회사, 플렌트, 협정별 판정시 사용되는 버퍼를 설정할 수 있습니다.
 												    </div>
 												
-												    <div class="ms-auto text-end">
-												        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed">
+												    <div class="ms-auto text-end">												        
+												    	<button type="button" onclick="javascript:BASIS000.updateCompanyBuffer()" class="btn btn-sm btn-secondary waves-effect waves-themed">
 												            버퍼 저장
 												        </button>
 												    </div>
@@ -265,7 +269,7 @@
 														    </div>
 														    <div class="col-3">
 														    	<div class="demo" style="text-align: left;margin-top: 24px;">
-															        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:;">수불부 정보 저장</button>
+															        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:BASIS000.updateCompanyMaOption();">수불부 정보 저장</button>
 															    </div>
 														    </div>
 	                                                	</div>
@@ -293,7 +297,7 @@
 														    </div>
 														    <div class="col-3">
 														    	<div class="demo" style="text-align: left;margin-top: 24px;">
-															        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:;">확인서 등록기준 저장</button>
+															        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:BASIS000.updateCompanyRuOption();">확인서 등록기준 저장</button>
 															    </div>
 														    </div>
 														</div>
@@ -316,7 +320,7 @@
 	    			</div>
 	    			<div class="frame-wrap col-6">
 					    <div class="demo" style="text-align: right;">
-					        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:;">변경사항 저장</button>
+					        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:BASIS000.updateCompanyDivisionFormData('DIVISION');">변경사항 저장</button>
 					    </div>
 					</div>
 	    		</div>
@@ -353,12 +357,12 @@
 								    								
 								    <div class="mb-2 col-4">
 								        <label class="form-label" for="com_phone_no">회사 전화번호</label>
-								        <input type="text" id="com_phone_no" name="com_phone_no" class="form-control" maxlength="20">
+								        <input type="text" id="division_phone_no" name="division_phone_no" class="form-control" maxlength="20">
 								    </div>
 								
 								    <div class="mb-2 col-4">
 								        <label class="form-label" for="com_fax_no">회사 팩스번호</label>
-								        <input type="text" id="com_fax_no" name="com_fax_no" class="form-control" maxlength="20">
+								        <input type="text" id="division_fax_no" name="division_fax_no" class="form-control" maxlength="20">
 								    </div>
 								    
 								    <div class="mb-2 col-4">
@@ -387,15 +391,12 @@
 								
 								    <div class="mb-2 col-3">
 								        <label class="form-label" for="company_use_yn">플랜트 사용 여부</label>
-								        <select id="company_use_yn" name="company_use_yn" class="form-select">
+								        <select id="status" name="status" class="form-select">
 								            <option value="Y">사용</option>
 								            <option value="N">사용 안함</option>
 								        </select>
 								    </div>
-								
-								    
 								</div>
-								
 						    </div>		    		
 			    		</div>
 					</div>
@@ -462,17 +463,15 @@
 					$("#oDivisionLayer").addClass('d-none');
 					
 					$("#oCompanyMgmt_title").html(data["company_name"] + " ("+ data["company_code"] +")");
+					BASIS000.retrieveCompanyDivisionFormData("COMPANY");
 				}else{
 					$("#oCompanyLayer").addClass('d-none');
 					$("#oDivisionLayer").removeClass('d-none');
 					
 					
 					$("#oDvisionMgmt_title").html("플렌트 : " + data["company_name"] + " ("+ data["company_code"] +")");
+					BASIS000.retrieveCompanyDivisionFormData("DIVISION");
 				}
-				
-				
-				
-				
 				
 				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " dbl clicked");
 			});
@@ -495,7 +494,6 @@
 			if (pSearchDivCode == null && String(pSearchDivCode).trim() === '') {
 				return false;
 			}
-
 			var data = KpackageOBJ.auiGrid.getSelectRowData(BASIS000.grid_BASIS000_01);
 			var params = {
 					"search_type" : pSearchDivCode
@@ -518,8 +516,31 @@
 			
 			//회사버퍼설정 데이터 로드 
 			BASIS000.retrieveBufferDatalist();
+		}
+		
+		this.updateCompanyDivisionFormData = function(pSearchDivCode){
 			
+			if (pSearchDivCode == null && String(pSearchDivCode).trim() === '') {
+				return false;
+			}
+			var params = null;
 			
+			if("COMPANY" == pSearchDivCode){
+				params = KpackageOBJ.data.makePostData("BASIS000-comp-form");	
+			}else{
+				params = KpackageOBJ.data.makePostData("BASIS000-div-form");
+			}
+			
+			params["search_type"] = pSearchDivCode;
+
+			
+			KpackageOBJ.ajax.doSubmit("/basis/updateCompanyDivisionFormData", params, BASIS000.commonActionResult_CallbackHandler);   
+			
+		}
+		
+		this.commonActionResult_CallbackHandler = function(result){
+			var data = result.value;
+			alert(result.message);
 		}
 		
 		this.retrieveBufferDatalist = function(){
@@ -552,7 +573,7 @@
 			// 그리드 칼럼 레이아웃 설정
 			const columnLayout = [ 
 				{ dataField : "target_code",		headerText : "TARGET_CODE",		width : 120, visible : false},
-				{ dataField : "target_name",		headerText : "버퍼 대상",			width : 120,		filter: { showIcon: true }  },
+				{ dataField : "target_name",		headerText : "버퍼 대상",			width : 120,		filter: { showIcon: true } , editable:false },
 				{ dataField : "rvc_rate",			headerText : "부가가치율 버퍼(%)",  width : 140},
 				{ dataField : "de_minimis_rate",	headerText : "미소기준 버퍼(%)",	width : 140}
 				
@@ -561,7 +582,7 @@
 			// 그리드 속성 설정
 			const gridProps = {
 				//추가속성이 필요한 경우 작성 
-				//editable : true, // 그리드 수정 모드 
+				editable : true, // 그리드 수정 모드 
 				usePaging: false,   // 페이징 사용
 				pageRowCount: 20,  // 페이지 행 개수 select UI 출력 여부 (기본값 : false)
 				showPageRowSelect: false,	// 페이지 카운트 표시 여부
@@ -588,16 +609,68 @@
 			KpackageOBJ.auiGrid.retrieve(BASIS000.grid_BASIS000_01, "/basis/retrieveCompanyDivisionList");
 		}
 		
+		/*인증수출자 정보 저장*/
+		this.updateCertificationInfo = function(){
+			var params = KpackageOBJ.data.makePostData("BASIS000-comp-form");
+			
+			KpackageOBJ.ajax.doSubmit("/basis/updateCertificationInfo", params, BASIS000.commonActionResult_CallbackHandler);
+			
+		}
 		
-		/* event bind */
-		/*
-		* 회사버퍼 설정 select box 값 변경 
-		*/
+		/*회사버퍼 정보 저장*/
+		this.updateCompanyBuffer = function(){
+			
+			var bufferOptionType = KpackageOBJ.object.getFormValue("BASIS000-comp-form", "bf_company_option");
+			var bufferSettingValue = KpackageOBJ.auiGrid.getGridData(BASIS000.grid_BASIS000_02);
+			
+			var params = {
+					"bf_company_option" : bufferOptionType
+					,"buffer_setting_value" : bufferSettingValue  // Option Value Grid Data List
+			};
+			
+			KpackageOBJ.ajax.doSubmit("/basis/updateCompanyBuffer", params, BASIS000.commonActionResult_CallbackHandler);
+			
+		}
+		
+		/*수불부 설정 정보 저장*/
+		this.updateCompanyMaOption = function(){
+			
+			var materialUseYn = KpackageOBJ.object.getFormValue("BASIS000-comp-form", "material_use_yn");
+			var params = {
+					"material_use_yn" : materialUseYn
+					,"option_value" : KpackageOBJ.object.getFormValue("BASIS000-comp-form", "basic_aging_period")
+					,"option_code" : "MA"
+			};
+			
+			KpackageOBJ.ajax.doSubmit("/basis/updateCompanyMaOption", params, BASIS000.commonActionResult_CallbackHandler);
+			
+		}
+		
+		/*확인서 등록 기준 정보 저장*/
+		this.updateCompanyRuOption = function(){
+			
+			var ruCompanyOption = KpackageOBJ.object.getFormValue("BASIS000-comp-form", "ru_company_option");
+			var params = {
+					"option_value" : ruCompanyOption
+					,"option_code" : "RU"
+			};
+			
+			KpackageOBJ.ajax.doSubmit("/basis/updateCompanyRuOption", params, BASIS000.commonActionResult_CallbackHandler);
+			
+		}
+		
+		
+		/**
+ 		 * event bind 
+		 * 회사버퍼 설정 select box 값 변경 
+		 */
 		$("#bf_company_option").on("change", function () {
 			
 			BASIS000.retrieveBufferDatalist();
 			
 		});
+		
+		
 	};
 	
 	$(document).ready(function() {

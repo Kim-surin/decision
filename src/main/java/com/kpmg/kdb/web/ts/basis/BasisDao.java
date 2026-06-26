@@ -66,4 +66,89 @@ public interface BasisDao {
 	 * @return
 	 */
 	public List retrieveBufferFromFTA(Map param);
+	
+	
+	/**
+	 * 회사관리 - 회사 기본정보 저장
+	 * @param param
+	 * @return
+	 */
+	public int updateCompanyFormData(Map param);
+	
+	
+	/**
+	 * 회사관리 - 플랜트 기본정보 저장
+	 * @param param
+	 * @return
+	 */
+	public int updateDivisionFormData(Map param);
+	
+	/**
+	 * 회사관리 - 인증수출자 정보 저장
+	 * @param param
+	 * @return
+	 */
+	public int updateCertificationInfo(Map param);
+	
+	
+	/**
+	 * 회사관리 - 수불부 사용 여부 옵션 정보 저장
+	 * @param param
+	 * @return
+	 */
+	public int updateCompanyMaOption(Map param);
+	
+	/**
+	 * 회사관리 - 회사버퍼 옵션 정보 저장
+	 * @param param
+	 * @return
+	 */
+	public int updateCompanyOptionValue(Map param);
+	
+	/**
+	 * 회사관리 - 회사버퍼 정보 저장
+	 * @param param
+	 * @return
+	 */
+	public int updateCompanyBuffer(Map param);
+	
+	/**
+	 * 회사관리 - 플랜트 버퍼 정보 저장
+	 * @param param
+	 * @return
+	 */
+	public int updateDivisionBuffer(Map param);
+	
+	/**
+	 * 회사관리 - FTA 협정 버퍼 정보 저장
+	 * @param param
+	 * @return
+	 */
+	public int updateAgreementBuffer(Map param);
+	
+	
+	/**
+	 * 사용자관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveUserinfoList(Map param);
+	
+	
+	/**
+	 * 서명파일 이미지 조회 img src 용도 
+	 * @param param
+	 * @return
+	 */
+	public Map getSignatureByUserId(Map param);
+	
+	
+	/**
+	 * 사용자관리 - 사용자 상세
+	 * @param param
+	 * @return
+	 */
+	public Map retrieveUserinfoDetail(Map param);
 }
+
+

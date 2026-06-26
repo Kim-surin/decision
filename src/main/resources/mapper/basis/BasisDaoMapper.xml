@@ -43,9 +43,9 @@
 	        a.certification_type       AS certification_type,
 	        a.certification_no         AS certification_no,
 	        a.material_use_yn          AS material_use_yn,
-	        a.basic_aging_period       AS basic_aging_period,
-	        co_bf.option_value         AS bf_company_option,		
-	        co_ru.option_value         AS ru_company_option
+	        co_bf.option_value         AS bf_company_option,
+	        co_ru.option_value         AS ru_company_option,
+	        co_ma.option_value         AS basic_aging_period
 			
 	    FROM company a
 		LEFT OUTER JOIN company_option co_bf
@@ -54,22 +54,91 @@
 		LEFT OUTER JOIN company_option co_ru
 		  ON a.company_code = co_ru.company_code
 		 AND co_ru.option_code = 'RU'
+		LEFT OUTER JOIN company_option co_ma
+		  ON a.company_code = co_ma.company_code
+		 AND co_ma.option_code = 'MA'
 	    WHERE a.company_code = #{company_code}
  	</select>
  	
  	
- 	<select id="retrieveDivisionFormData" parameterType="HashMap" resultType="HashMap">
-		SELECT
-		    c.company_code,
-		    c.company_name,
-		    d.division_code,
-		    d.division_name
-		 FROM division d
-	    WHERE d.company_code = #{company_code}
-	      and d.division_code = #{p_param_code}
-		ORDER BY c.company_code, d.division_code
- 	</select>
+ 	<update id="updateCompanyFormData" parameterType="HashMap">
+	    UPDATE company
+	    SET
+	        company_name         = #{company_name},
+	        company_name_eng     = #{company_name_eng},
+	        company_name_loc     = #{company_name_loc},
+	        officer_name         = #{officer_name},
+	        officer_name_eng     = #{officer_name_eng},
+	        officer_phone_no     = #{officer_phone_no},
+	        officer_email        = #{officer_email},
+	        business_no          = #{business_no},
+	        com_phone_no         = #{com_phone_no},
+	        com_fax_no           = #{com_fax_no},
+	        zip_code             = #{zip_code},
+	        address              = #{address},
+	        address_eng          = #{address_eng},
+	        company_use_yn       = #{company_use_yn},
+	        ctc_decision_only_yn = #{ctc_decision_only_yn},
+	        update_date          = CURRENT_TIMESTAMP,
+	        update_by            = #{update_by}
+	    WHERE company_code = #{company_code}
+ 	</update>
  	
+ 	
+ 	 <update id="updateCertificationInfo" parameterType="HashMap">
+	    UPDATE company
+	    SET
+			co_certified_exporter_yn = #{co_certified_exporter_yn},
+			certification_type       = #{certification_type},
+			certification_no         = #{certification_no},
+	        update_date          = CURRENT_TIMESTAMP,
+	        update_by            = #{update_by}
+	    WHERE company_code = #{company_code}
+ 	</update>
+ 	
+ 	
+ 	<select id="retrieveDivisionFormData" parameterType="HashMap" resultType="HashMap">
+	    SELECT
+	        #{search_type}             AS search_type,
+	        d.company_code,
+	        d.division_code,
+	        d.division_name,
+	        d.division_name_eng,
+	        d.business_no,
+	        d.division_phone_no,
+	        d.division_fax_no,
+	        d.division_type,
+	        d.zip_code,
+	        d.address,
+	        d.address_eng,
+	        d.status,
+	        d.create_date,
+	        d.create_by,
+	        d.update_date,
+	        d.update_by
+	    FROM division d
+	    WHERE d.company_code = #{company_code}
+	      AND d.division_code = #{p_param_code}
+ 	</select>
+
+	<update id="updateDivisionFormData" parameterType="HashMap">
+	    UPDATE division
+	    SET
+	        division_name     = #{division_name},
+	        division_name_eng = #{division_name_eng},
+	        business_no       = #{business_no},
+	        division_phone_no = #{division_phone_no},
+	        division_fax_no   = #{division_fax_no},
+	        division_type     = #{division_type},
+	        zip_code          = #{zip_code},
+	        address           = #{address},
+	        address_eng       = #{address_eng},
+	        status            = #{status},
+	        update_date       = CURRENT_TIMESTAMP,
+	        update_by         = #{update_by}
+	    WHERE company_code = #{company_code}
+	      AND division_code = #{division_code}
+	</update> 	
  	
  	<select id="retrieveBufferFromCompany" parameterType="HashMap" resultType="HashMap">
 		SELECT c.company_code          AS target_code
@@ -97,5 +166,118 @@
 		       ,f.com_de_minimis_rate  AS de_minimis_rate	   
 		  FROM fta_master f
 		 WHERE f.company_code = #{company_code}
+	</select>
+	
+	
+ 	 <update id="updateCompanyMaOption" parameterType="HashMap">
+	    UPDATE company
+	    SET
+			material_use_yn = #{material_use_yn},
+	        update_date          = CURRENT_TIMESTAMP,
+	        update_by            = #{update_by}
+	    WHERE company_code = #{company_code}
+ 	</update>
+	
+	<update id="updateCompanyOptionValue" parameterType="HashMap">
+
+		UPDATE company_option
+		   SET option_value = #{option_value}
+		 WHERE company_code = #{company_code}
+		   AND option_code = #{option_code}
+	
+	</update>
+	
+	<update id="updateCompanyBuffer" parameterType="HashMap">
+		UPDATE company
+		   SET com_de_minimis_rate = ${de_minimis_rate}
+		       ,com_rvc_rate = ${rvc_rate}
+		 WHERE company_code = #{company_code}
+	</update>
+	
+	<update id="updateDivisionBuffer" parameterType="HashMap">
+		UPDATE division
+		   SET div_de_minimis_rate = ${de_minimis_rate}
+		       ,div_rvc_rate = ${rvc_rate}
+		 WHERE company_code = #{company_code}
+		   AND division_code = #{target_code}
+	</update>
+	
+	<update id="updateAgreementBuffer" parameterType="HashMap">
+		UPDATE fta_master
+		   SET com_de_minimis_rate = ${de_minimis_rate}
+		       ,com_rvc_rate = ${rvc_rate}
+		 WHERE company_code = #{company_code}
+		   AND fta_code = #{target_code}
+	</update>
+	
+	
+	<select id="getSignatureByUserId" parameterType="HashMap" resultType="HashMap">
+		SELECT sign_file_name, real_file
+		  FROM signature 
+		 WHERE company_code = 'FRT100' 
+		   AND emp_no = '20130929'
+		   AND end_date is null
+	     LIMIT 1
+	</select>
+	
+	<select id="retrieveUserinfoList" parameterType="HashMap" resultType="HashMap">
+		SELECT a.user_id
+		       , a.company_code
+			   , a.dept_name
+			   , a.emp_no
+			   , a.name_kor
+			   , a.name_eng
+			   , a.name_local
+			   , a.position_name
+			   , a.position_name_eng
+			   , a.email
+			   , a.cell_phone_no
+			   , a.office_phone_no
+			   , a.fax_no
+			   , a.status
+			   , a.default_language
+			   , b.sign_file_name
+			   , start_date
+			   , COALESCE(end_date, '99991231') AS end_date
+			   , CASE WHEN b.emp_no IS NULL THEN 'N' ELSE 'Y' END AS signature_yn
+			   , CASE WHEN b.emp_no IS NULL THEN '' ELSE '서명권자' END AS signature_text
+			FROM user_info a
+		    LEFT OUTER JOIN signature b
+		      ON a.company_code = b.company_code
+			 AND a.emp_no = b.emp_no
+			 AND b.end_date is null
+		   WHERE a.company_code =  #{company_code}
+	</select>
+	
+	
+	<select id="retrieveUserinfoDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT a.user_id
+		       , a.company_code
+			   , a.dept_name
+			   , a.emp_no
+			   , a.name_kor
+			   , a.name_eng
+			   , a.name_local
+			   , a.position_name
+			   , a.position_name_eng
+			   , a.email
+			   , a.cell_phone_no
+			   , a.office_phone_no
+			   , a.fax_no
+			   , a.status
+			   , a.default_language
+			   , b.sign_file_name
+			   , start_date
+			   , NVL(end_date, '99991231') AS end_date
+			   , CASE WHEN b.emp_no IS NULL THEN 'N' ELSE 'Y' END AS signature_yn
+			   , CASE WHEN b.emp_no IS NULL THEN '' ELSE '서명권자' END AS signature_text
+			FROM user_info a
+		    LEFT OUTER JOIN signature b
+		      ON a.company_code = b.company_code
+			 AND a.emp_no = b.emp_no
+			 AND b.end_date is null
+		   WHERE a.company_code =  #{company_code}
+		     AND a.user_id = #{user_id}
+  	       LIMIT 1
 	</select>
 </mapper>
