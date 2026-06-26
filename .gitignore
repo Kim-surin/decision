@@ -1,4 +1,7 @@
 /target/
 
 # configuration
- .classpath
+.settings/
+.project
+.classpath
+target/
