@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.poledger;
+package com.kpmg.kdb.web.standardcost;
 
 import java.util.List;
 
@@ -6,16 +6,17 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerResponseDto;
+import com.kpmg.kdb.web.standardcost.dto.StandardCostRequestDto;
+import com.kpmg.kdb.web.standardcost.dto.StandardCostResponseDto;
 
 @Service
-public class PoledgerService extends GeneralService {
-	public Result retrievePoledger(PoLedgerRequestDto param) throws Exception {
+public class StandardCostService extends GeneralService {
+	public Result retrieveStandardCost(StandardCostRequestDto param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<PoLedgerResponseDto> list = sqlSession.getMapper(PoledgerDao.class).retrievePoledger(param);
+			List<StandardCostResponseDto> list = sqlSession.getMapper(StandardCostDao.class)
+					.retrieveStandardCost(param);
 
 			result.setValue(list);
 			result.setSuccess(true);

@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.poledger;
+package com.kpmg.kdb.web.materialinv;
 
 import java.util.List;
 
@@ -6,16 +6,16 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerResponseDto;
+import com.kpmg.kdb.web.materialinv.dto.MaterialInvRequestDto;
+import com.kpmg.kdb.web.materialinv.dto.MaterialInvResponseDto;
 
 @Service
-public class PoledgerService extends GeneralService {
-	public Result retrievePoledger(PoLedgerRequestDto param) throws Exception {
+public class MaterialInvService extends GeneralService {
+	public Result retrieveMaterialInv(MaterialInvRequestDto param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<PoLedgerResponseDto> list = sqlSession.getMapper(PoledgerDao.class).retrievePoledger(param);
+			List<MaterialInvResponseDto> list = sqlSession.getMapper(MaterialInvDao.class).retrieveMaterialInv(param);
 
 			result.setValue(list);
 			result.setSuccess(true);

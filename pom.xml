@@ -419,7 +419,15 @@
 		    <scope>system</scope>
 		    <systemPath>${basedir}/src/main/webapp/WEB-INF/lib/json-20240303.jar</systemPath>
 		</dependency>
-
+		<dependency>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-starter-aop</artifactId>
+	    </dependency>
+	    <dependency>
+		    <groupId>org.projectlombok</groupId>
+		    <artifactId>lombok</artifactId>
+		    <optional>true</optional>
+		</dependency>
 	</dependencies>
 
 	<build>

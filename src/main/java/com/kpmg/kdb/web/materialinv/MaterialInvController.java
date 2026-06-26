@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.poledger;
+package com.kpmg.kdb.web.materialinv;
 
 import javax.servlet.http.HttpSession;
 
@@ -11,25 +11,25 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
+import com.kpmg.kdb.web.materialinv.dto.MaterialInvRequestDto;
 
 @Controller
-public class PoledgerController extends GenericController {
+public class MaterialInvController extends GenericController {
 	@Autowired
-	protected PoledgerService poledgerService;
+	protected MaterialInvService materialInvService;
 
-	@RequestMapping(value = "/origin/compliance/poledger/poledger")
-	public String poledger_view(Model model, HttpSession session) {
-		return "poledger/poledger_view";
+	@RequestMapping(value = "/origin/compliance/materialinv/materialInv")
+	public String materialInv_view(Model model, HttpSession session) {
+		return "materialinv/materialInv_view";
 	}
 
-	@RequestMapping(value = "/origin/compliance/poledger/poledgerList")
+	@RequestMapping(value = "/origin/compliance/materialinv/materialInvList")
 	@ResponseBody
-	public Result poledger_list(@RequestBody PoLedgerRequestDto param) throws Exception {
+	public Result materialInv_list(@RequestBody MaterialInvRequestDto param) throws Exception {
 		Result result;
 
 		try {
-			result = poledgerService.retrievePoledger(param);
+			result = materialInvService.retrieveMaterialInv(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
