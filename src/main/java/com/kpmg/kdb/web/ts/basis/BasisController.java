@@ -21,7 +21,7 @@ import com.kpmg.kdb.core.generic.GenericController;
  * BasisController.class
  *
  * @since 2025.04
- * @author D.Catddddddddddddddddddddddddddsaf a
+ * @author D.Cat
  *
  *         기초정보 관리 구현 클래스
  *
