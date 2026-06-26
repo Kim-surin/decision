@@ -115,7 +115,7 @@
 					this.grid_poledger = null;
 
 					this.Initialize_viewObject = function () {
-						POLEDGERVIEW.createAUIGrid();
+						POLEDGERVIEW.createAUIGrid(); 
 						AUIGrid.setGridData(POLEDGERVIEW.grid_poledger, POLEDGERVIEW.data);
 					}
 
