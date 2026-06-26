@@ -1,30 +1,36 @@
 package com.kpmg.kdb.web.poledger;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerResponseDto;
 
 @Service
 public class PoledgerService extends GeneralService {
-	public Result retrievePoledger(PoLedgerRequestDto param) throws Exception {
-		Result result = new Result();
+	public List retrievPoledger(Map<String, Object> param) throws Exception {
+		List data = new ArrayList<Map>();
 
 		try {
-			List<PoLedgerResponseDto> list = sqlSession.getMapper(PoledgerDao.class).retrievePoledger(param);
-
-			result.setValue(list);
-			result.setSuccess(true);
-			result.setMessage(DEFAULT_MESSAGE_OK);
+			data = sqlSession.getMapper(PoledgerDao.class).retrievPoledger(param);
 		} catch (Exception e) {
-			e.printStackTrace();
-			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+
 		}
 
-		return result;
+		return data;
 	}
+	
+	 public List poLedgerDtlList(Map<String, Object> param) throws Exception {
+		List data = new ArrayList<Map>();
+
+    	try {
+    		data = sqlSession.getMapper(PoledgerDao.class).poLedgerDtlList(param);
+    	} catch (Exception e) {
+    		
+    	}
+    	
+    	return data;
+    }
 }
