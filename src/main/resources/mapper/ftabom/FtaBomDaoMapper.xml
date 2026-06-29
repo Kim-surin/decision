@@ -36,21 +36,20 @@
     <select id="retrieveftaBomDetail" parameterType="HashMap" resultType="HashMap">
        SELECT *
        FROM (
-	       SELECT 
-				, IM.ITEM_CODE 		
+	       SELECT IM.ITEM_CODE 		
 				, IM.ITEM_NAME 	
 				, IM.UNIT	
 				, FBD.HS_CODE
 				, FBD.INPUT_QTY
 	       FROM FTA_BOM_DTL FBD
 	       INNER JOIN DIVISION DV
-	       		ON DV.DIVISION_CODE = FBM.DIVISION_CODE
-				AND DV.COMPANY_CODE = FBM.COMPANY_CODE
+	       		ON DV.DIVISION_CODE = FBD.DIVISION_CODE
+				AND DV.COMPANY_CODE = FBD.COMPANY_CODE
 				AND DV.STATUS = 'Y'
 			INNER JOIN ITEM_MST IM
-				ON IM.ITEM_CODE = FBM.PRODUCT_CODE
-				AND IM.COMPANY_CODE = FBM.COMPANY_CODE
-			WHERE FBM.COMPANY_CODE = #{company_code}	
+				ON IM.ITEM_CODE = FBD.PRODUCT_CODE
+				AND IM.COMPANY_CODE = FBD.COMPANY_CODE
+			WHERE FBD.COMPANY_CODE = #{company_code}	
 			<if test="yyyymm != null">
 					AND FBD.YYYYMM = #{yyyymm}
 			</if>	

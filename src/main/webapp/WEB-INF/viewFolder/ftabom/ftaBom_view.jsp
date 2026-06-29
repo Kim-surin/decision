@@ -92,17 +92,21 @@
 						FTABOMVIEW.createAUIGrid();
 						AUIGrid.setGridData(FTABOMVIEW.grid_FTABOM_MST, FTABOMVIEW.data);
 						AUIGrid.setGridData(FTABOMVIEW.grid_FTABOM_DTL, FTABOMVIEW.data);
+
+						AUIGrid.bind(FTABOMVIEW.grid_FTABOM_MST, "cellClick", function(event) {
+							FTABOMVIEW.retrieve_GridDtlData(event.item);
+						});
 					}
 
 					this.data = [];
 
 					this.createAUIGrid = function () {
 						const columnLayoutMst = [
-							{dataField: "yyymm", headerText: "기준년월", width: 120},
-							{dataField: "division_name", headerText: "플랜트", width: 120},
-							{dataField: "product_code", headerText: "제품코드", width: 200},
-							{dataField: "product_name", headerText: "제품명", width: 200},
-							{dataField: "hs_code", headerText: "HS코드", width: 200}
+							{dataField: "yyyymm", headerText: "기준년월", width: 150},
+							{dataField: "division_name", headerText: "플랜트", width: 200},
+							{dataField: "product_code", headerText: "제품코드", width: 400},
+							{dataField: "product_name", headerText: "제품명", width: 800},
+							{dataField: "hs_code", headerText: "HS코드", width: 100}
 						];
 
 						const gridPropsMst = {
@@ -114,11 +118,11 @@
 						FTABOMVIEW.grid_FTABOM_MST = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_MASTER", columnLayoutMst, gridPropsMst, "");
 
 						const columnLayoutDtl = [
-							{dataField: "yyymm", headerText: "기준년월", width: 120},
-							{dataField: "division_name", headerText: "플랜트", width: 120},
-							{dataField: "product_code", headerText: "제품코드", width: 200},
-							{dataField: "product_name", headerText: "제품명", width: 200},
-							{dataField: "hs_code", headerText: "HS코드", width: 200}
+							{dataField: "item_code", headerText: "자재코드", width: 200},
+							{dataField: "item_name", headerText: "자재명", width: 200},
+							{dataField: "unit", headerText: "단위", width: 100},
+							{dataField: "hs_code", headerText: "HS코드", width: 100},
+							{dataField: "input_qty", headerText: "사용수량", width: 100}
 						];
 
 						const gridPropsDtl = {
@@ -152,6 +156,16 @@
 						}
 
 						KpackageOBJ.auiGrid.retrieve(FTABOMVIEW.grid_FTABOM_MST, "/origin/compliance/ftaBom/ftaBomMasterList", params);
+					}
+
+					this.retrieve_GridDtlData = function (mst) {
+						var params = {
+							yyyymm: mst.yyyymm,
+							product_code: mst.product_code,
+							division_code: mst.division_code
+						};
+						
+						KpackageOBJ.auiGrid.retrieve(FTABOMVIEW.grid_FTABOM_DTL, "/origin/compliance/ftaBom/ftaBomDetailList", params);
 					}
 				}
 
