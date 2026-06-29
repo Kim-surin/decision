@@ -357,7 +357,7 @@ public class BasisController extends GenericController {
 	 * @author D.Cat
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/basis/basis00101")
+	@RequestMapping(value = "/basis/userSignatureDetail_pop")
 	public String basis00101_view(@RequestParam Map param, Model model, HttpSession session) {
 		
 		model.addAllAttributes(param);
