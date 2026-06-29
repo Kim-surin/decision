@@ -1,0 +1,53 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.sales.SalesDao">
+    <select id="retrieveSales" parameterType="HashMap" resultType="HashMap">
+       SELECT *
+       FROM (
+	       SELECT SM.INVOICE_NO
+				, DV.DIVISION_NAME
+				, IM.ITEM_CODE 		AS PRODUCT_CODE
+				, IM.ITEM_NAME 		AS PRODUCT_NAME
+				, C.CUSTOMER_CODE
+				, C.CUSTOMER_NAME
+				, SD.UNIT_PRICE
+				, SD.QUANTITY
+				, SD.AMOUNT
+				, SM.INVOICE_DATE
+				, SM.EXPORT_FLAG
+	       FROM SALES_MST SM
+	       INNER JOIN SALES_DTL SD
+	       		ON SM.COMPANY_CODE = SD.COMPANY_CODE
+				AND SM.SALES_NO = SD.SALES_NO
+	       INNER JOIN DIVISION DV
+	       		ON DV.DIVISION_CODE = SM.DIVISION_CODE
+				AND DV.COMPANY_CODE = SM.COMPANY_CODE
+				AND DV.STATUS = 'Y'
+			INNER JOIN CUSTOMER C
+				ON C.CUSTOMER_CODE = SM.CUSTOMER_CODE
+			    AND C.COMPANY_CODE = SM.COMPANY_CODE
+			INNER JOIN ITEM_MST IM
+				ON IM.ITEM_CODE = SD.PRODUCT_CODE
+				AND IM.COMPANY_CODE = SD.COMPANY_CODE
+			WHERE SM.COMPANY_CODE = #{company_code}			
+		)
+		WHERE 1=1
+		<if test="from_date != null and from_date != ''">
+				<if test="to_date != null and to_date != ''">
+				AND INVOICE_DATE BETWEEN #{from_date} AND #{to_date}
+				</if>
+		</if>	
+		<if test="product != null">
+				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' )
+		</if>
+		<if test="division_code != null">
+				AND DIVISION_CODE = #{division_code}
+		</if>
+		<if test="customer_code != null">
+				AND CUSTOMER_CODE = #{customer_code}
+		</if>
+		<if test="export_flag != null">
+				AND EXPORT_FLAG = #{export_flag}
+		</if>
+    </select>
+</mapper>

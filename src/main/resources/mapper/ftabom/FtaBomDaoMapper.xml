@@ -1,0 +1,67 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.ftabom.FtaBomDao">
+    <select id="retrieveftaBomMaster" parameterType="HashMap" resultType="HashMap">
+       SELECT *
+       FROM (
+	       SELECT FBM.YYYYMM
+				, DV.DIVISION_NAME
+				, IM.ITEM_CODE 		AS PRODUCT_CODE
+				, IM.ITEM_NAME 		AS PRODUCT_NAME
+				, FBM.HS_CODE
+	       FROM FTA_BOM_MST FBM
+	       INNER JOIN DIVISION DV
+	       		ON DV.DIVISION_CODE = FBM.DIVISION_CODE
+				AND DV.COMPANY_CODE = FBM.COMPANY_CODE
+				AND DV.STATUS = 'Y'
+			INNER JOIN ITEM_MST IM
+				ON IM.ITEM_CODE = FBM.PRODUCT_CODE
+				AND IM.COMPANY_CODE = FBM.COMPANY_CODE
+			WHERE FBM.COMPANY_CODE = #{company_code}			
+		)
+		WHERE 1=1
+		<if test="from_date != null and from_date != ''">
+				<if test="to_date != null and to_date != ''">
+				AND YYYYMM BETWEEN #{from_date} AND #{to_date}
+				</if>
+		</if>	
+		<if test="product != null">
+				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' )
+		</if>
+		<if test="division_code != null">
+				AND DIVISION_CODE = #{division_code}
+		</if>
+    </select>
+
+    <select id="retrieveftaBomDetail" parameterType="HashMap" resultType="HashMap">
+       SELECT *
+       FROM (
+	       SELECT 
+				, IM.ITEM_CODE 		
+				, IM.ITEM_NAME 	
+				, IM.UNIT	
+				, FBD.HS_CODE
+				, FBD.INPUT_QTY
+	       FROM FTA_BOM_DTL FBD
+	       INNER JOIN DIVISION DV
+	       		ON DV.DIVISION_CODE = FBM.DIVISION_CODE
+				AND DV.COMPANY_CODE = FBM.COMPANY_CODE
+				AND DV.STATUS = 'Y'
+			INNER JOIN ITEM_MST IM
+				ON IM.ITEM_CODE = FBM.PRODUCT_CODE
+				AND IM.COMPANY_CODE = FBM.COMPANY_CODE
+			WHERE FBM.COMPANY_CODE = #{company_code}	
+			<if test="yyyymm != null">
+					AND FBD.YYYYMM = #{yyyymm}
+			</if>	
+			<if test="product_code != null">
+					AND FBD.PRODUCT_CODE = #{product_code}
+			</if>	
+			<if test="division_code != null">
+					AND FBD.DIVISION_CODE = #{division_code}
+			</if>	
+		)
+		WHERE 1=1
+		
+    </select>
+</mapper>
