@@ -14,12 +14,8 @@ public class BaseRequestDto {
 	private String create_by;
 	private String update_by;
 	private String division_code;
-
 	private String default_language;
-	private String userId;
 
-	private String page;
-	private String rows;
 
 	public String getCompanyCode() {
 		return company_code;
@@ -51,5 +47,13 @@ public class BaseRequestDto {
 
 	public String getDivisionCode() {
 		return division_code;
+	}
+	
+	public void setDefaultLanguage(String defaultLanguage) {
+		this.default_language = defaultLanguage;
+	}
+
+	public String getDefaultLanguage() {
+		return default_language;
 	}
 }

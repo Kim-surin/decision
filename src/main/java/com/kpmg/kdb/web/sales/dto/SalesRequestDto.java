@@ -22,8 +22,8 @@ public class SalesRequestDto extends BaseRequestDto {
 	String product;
 
 	// 고객사
-	@JsonProperty("customer_code")
-	String customer_code;
+	@JsonProperty("customer")
+	String customer;
 
 	// 플랜트
 	@JsonProperty("division_code")

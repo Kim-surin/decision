@@ -15,9 +15,11 @@
 		       , PL.WAREHOUSING_QTY
 		       , PL.UNIT_PRICE
 		       , PL.WAREHOUSING_TYPE
+		       , GET_CODE_NAME(PL.WAREHOUSING_TYPE, 'WT', PL.COMPANY_CODE, #{default_language}) AS  WAREHOUSING_TYPE_NAME
 		       , COALESCE(COO_CERTIFY_YN, 'N') AS COO_CERTIFY_YN
 		       , DV.DIVISION_NAME
 		       , DV.DIVISION_CODE
+		       , V.MAIL_SEND_YN
 	       FROM PO_LEDGER PL
 	       INNER JOIN DIVISION DV
 	       		ON PL.DIVISION_CODE = DV.DIVISION_CODE
@@ -58,6 +60,9 @@
 		</if>
 		<if test="warehousing_type != null">
 				AND WAREHOUSING_TYPE = #{warehousing_type}
+		</if>
+		<if test="mail_send_yn != null">
+				AND MAIL_SEND_YN = #{mail_send_yn}
 		</if>
     </select>
 </mapper>

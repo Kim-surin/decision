@@ -63,6 +63,11 @@ public class SessionInjectionAspect {
 				if (divisionCode == null || divisionCode.isBlank()) {
 					dto.setDivisionCode((String) userSession.get("division_code"));
 				}
+				
+				String defaultLanguage = dto.getDefaultLanguage();
+				if (defaultLanguage == null || defaultLanguage.isBlank()) {
+					dto.setDefaultLanguage((String) userSession.get("default_language"));
+				}
 			}
 		}
 	}

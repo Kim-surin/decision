@@ -32,4 +32,8 @@ public class PoLedgerRequestDto extends BaseRequestDto {
 	// 입고구분
 	@JsonProperty("warehousing_type")
 	String warehousing_type;
+
+	// 집중관리 협력사
+	@JsonProperty("mail_send_yn")
+	String mail_send_yn;
 }

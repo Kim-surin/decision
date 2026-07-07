@@ -10,11 +10,13 @@
 				, IM.ITEM_NAME 		AS PRODUCT_NAME
 				, C.CUSTOMER_CODE
 				, C.CUSTOMER_NAME
+				, NVL(CM.CUSTOMER_ITEM_NAME, SD.CUSTOMER_ITEM_CODE) AS CUSTOMER_ITEM_CODE
 				, SD.UNIT_PRICE
 				, SD.QUANTITY
 				, SD.AMOUNT
 				, SM.INVOICE_DATE
-				, SM.EXPORT_FLAG
+				, SM.EXPORT_FLAG 
+				, CASE SM.EXPORT_FLAG WHEN 'D' THEN '내수' WHEN 'E' THEN '수출' ELSE SM.EXPORT_FLAG END EXPORT_FLAG_NAME
 	       FROM SALES_MST SM
 	       INNER JOIN SALES_DTL SD
 	       		ON SM.COMPANY_CODE = SD.COMPANY_CODE
@@ -26,10 +28,16 @@
 			INNER JOIN CUSTOMER C
 				ON C.CUSTOMER_CODE = SM.CUSTOMER_CODE
 			    AND C.COMPANY_CODE = SM.COMPANY_CODE
+			LEFT OUTER JOIN CUSTOMER_MODEL CM
+	            ON CM.COMPANY_CODE = SD.COMPANY_CODE
+	            AND CM.DIVISION_CODE = SD.DIVISION_CODE
+	            AND CM.CUSTOMER_CODE = SD.DELIVERY_CUSTOMER_CODE
+	            AND CM.ITEM_CODE = SD.PRODUCT_CODE
 			INNER JOIN ITEM_MST IM
 				ON IM.ITEM_CODE = SD.PRODUCT_CODE
 				AND IM.COMPANY_CODE = SD.COMPANY_CODE
 			WHERE SM.COMPANY_CODE = #{company_code}			
+			AND SM.VIRTUAL_YN = 'N'
 		)
 		WHERE 1=1
 		<if test="from_date != null and from_date != ''">
@@ -43,8 +51,8 @@
 		<if test="division_code != null">
 				AND DIVISION_CODE = #{division_code}
 		</if>
-		<if test="customer_code != null">
-				AND CUSTOMER_CODE = #{customer_code}
+		<if test="customer != null">
+				AND (CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
 		</if>
 		<if test="export_flag != null">
 				AND EXPORT_FLAG = #{export_flag}

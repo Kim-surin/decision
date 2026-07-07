@@ -37,6 +37,24 @@
 		   AND C.COMPANY_CODE = #{COMPANY_CODE}
 		ORDER  BY SORT_NO ASC
 	</select>
+	
+	<select id="retrieveCodeCombo" parameterType="HashMap" resultType="HashMap">
+		SELECT '' CODE
+		       ,'전체' NAME
+		       ,'000' SORT_NO
+		 UNION ALL
+		SELECT CD.CODE AS CODE
+		      ,CASE #{default_language} WHEN 'KOR' THEN CD.CODE_NAME WHEN 'ENG' THEN CD.CODE_NAME_ENG ELSE CD.CODE_NAME_LOC END AS NAME
+		      ,SORT_NO AS SORT_NO
+		  FROM CODE_MST CM
+		  	JOIN CODE_DTL CD
+		  	ON CM.COMPANY_CODE = CD.COMPANY_CODE
+			AND CM.CATEGORY = CD.CATEGORY
+		 WHERE CD.DELETE_YN = 'N'
+		   AND CM.COMPANY_CODE = #{company_code}
+		   AND CM.CATEGORY = #{category}
+		ORDER  BY SORT_NO ASC
+	</select>
     
 </mapper>
  

@@ -1,0 +1,14 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.division.DivisionDao">
+	<select id="retrieveDevision" parameterType="HashMap" resultType="HashMap">
+		SELECT DV.DIVISION_CODE
+			, CASE #{default_language} WHEN 'KOR' THEN DIVISION_NAME WHEN 'ENG' THEN DIVISION_NAME_ENG END AS DIVISION_NAME
+		FROM DIVISION DV
+		WHERE DV.COMPANY_CODE = #{company_code}
+		AND DV.STATUS = 'Y'
+		AND DV.DIVISION_GROUP_CODE = '00'
+       	AND (DV.DIVISION_TYPE = 'A' OR DV.DIVISION_TYPE = 'P')
+       	ORDER BY DIVISION_CODE
+	</select>
+</mapper>
