@@ -77,15 +77,15 @@
 					</div>
 					<div class="row">
 						<div class="col-12">
-							<div id="oAuiGrid_FTABOM_MASTER" style="width:100%;height:480px; margin:0 auto;"></div>
+							<div id="oAuiGrid_FTABOM_MASTER" style="width:100%;height:300px; margin:0 auto;"></div>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col-8">
-							<div id="oAuiGrid_FTABOM_DETAIL" style="width:100%;height:480px; margin:0 auto;"></div>
+							<div id="oAuiGrid_FTABOM_DETAIL" style="width:100%;height:300px; margin:0 auto;"></div>
 						</div>
 						<div class="col-4">
-							<div id="oAuiGrid_FTABOM_DETAIL_CUSTOMER" style="width:100%;height:480px; margin:0 auto;">
+							<div id="oAuiGrid_FTABOM_DETAIL_CUSTOMER" style="width:100%;height:300px; margin:0 auto;">
 							</div>
 						</div>
 					</div>
@@ -99,29 +99,25 @@
 
 						this.Initialize_viewObject = function () {
 							FTABOMVIEW.createAUIGrid();
-							AUIGrid.setGridData(FTABOMVIEW.grid_FTABOM_MST, FTABOMVIEW.data);
-							AUIGrid.setGridData(FTABOMVIEW.grid_FTABOM_DTL, FTABOMVIEW.data);
-
 							AUIGrid.bind(FTABOMVIEW.grid_FTABOM_MST, "cellClick", function (event) {
 								FTABOMVIEW.retrieve_GridDtlData(event.item);
 							});
 						}
-
-						this.data = [];
 
 						this.createAUIGrid = function () {
 							const columnLayoutMst = [
 								{dataField: "yyyymm", headerText: "기준년월", width: 150},
 								{dataField: "division_name", headerText: "플랜트", width: 200},
 								{dataField: "product_code", headerText: "제품코드", width: 400},
-								{dataField: "product_name", headerText: "제품명", width: 800},
+								{dataField: "product_name", headerText: "제품명", width: 400},
 								{dataField: "hs_code", headerText: "HS코드", width: 100}
 							];
 
 							const gridPropsMst = {
-								//추가속성이 필요한 경우 작성 
-								//editable : true,  // 그리드 수정 모드 
-
+								usePaging: true,
+								pageRowCount: 50,
+								showPageRowSelect: true,
+								enableFilter: true
 							};
 
 							FTABOMVIEW.grid_FTABOM_MST = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_MASTER", columnLayoutMst, gridPropsMst, "");
@@ -135,9 +131,10 @@
 							];
 
 							const gridPropsDtl = {
-								//추가속성이 필요한 경우 작성 
-								//editable : true,  // 그리드 수정 모드 
-
+								usePaging: true,
+								pageRowCount: 50,
+								showPageRowSelect: true,
+								enableFilter: true
 							};
 
 							FTABOMVIEW.grid_FTABOM_DTL = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_DETAIL", columnLayoutDtl, gridPropsDtl, "");
@@ -147,13 +144,13 @@
 							];
 
 							const gridPropsDtlCustomer = {
-								//추가속성이 필요한 경우 작성 
-								//editable : true,  // 그리드 수정 모드 
-
+								usePaging: true,
+								pageRowCount: 50,
+								showPageRowSelect: true,
+								enableFilter: true
 							};
 
 							FTABOMVIEW.grid_FTABOM_DTL_CUSTOMER = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_DETAIL_CUSTOMER", columnLayoutDtlCustomer, gridPropsDtlCustomer, "");
-							
 						}
 
 						this.retrieve_GridData = function () {
@@ -166,6 +163,7 @@
 							}
 
 							KpackageOBJ.auiGrid.retrieve(FTABOMVIEW.grid_FTABOM_MST, "/origin/compliance/ftaBom/ftaBomMasterList", params);
+							AUIGrid.setGridData(FTABOMVIEW.grid_FTABOM_DTL, []);
 						}
 
 						this.retrieve_GridDtlData = function (mst) {

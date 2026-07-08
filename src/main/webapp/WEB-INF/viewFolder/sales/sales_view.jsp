@@ -103,7 +103,7 @@
 					<div class="row">
 						<div class="col-12">
 							<!-- 에이유아이 그리드가 이곳에 생성됩니다. -->
-							<div id="oAuiGrid_SALES" style="width:100%;height:480px; margin:0 auto;"></div>
+							<div id="oAuiGrid_SALES" style="width:100%;height:700px; margin:0 auto;"></div>
 						</div>
 					</div>
 				</div>
@@ -124,8 +124,9 @@
 								{dataField: "invoice_no", headerText: "인보이스번호", width: 120},
 								{dataField: "division_name", headerText: "플랜트", width: 120, filter: {showIcon: true}},
 								{dataField: "product_code", headerText: "제품코드", width: 200, filter: {showIcon: true}},
-								{dataField: "product_name", headerText: "제품명", width: 200, filter: {showIcon: true}},
-								{dataField: "customer_name", headerText: "고객사", width: 200, filter: {showIcon: true}},
+								{dataField: "product_name", headerText: "제품명", width: 250, filter: {showIcon: true}},
+								{dataField: "customer_code", headerText: "고객사코드", width: 200, filter: {showIcon: true}},
+								{dataField: "customer_name", headerText: "고객사명", width: 200, filter: {showIcon: true}},
 								{dataField: "customer_item_code", headerText: "고객사 품번", width: 200, filter: {showIcon: true}},
 								{
 									dataField: "unit_price", headerText: "단가", width: 100
@@ -158,11 +159,11 @@
 									}
 								},
 								{
-									dataField: "invoice_date", headerText: "매출일", width: 150
+									dataField: "invoice_date", headerText: "매출일", width: 100
 									, dataType: "date", dateInputFormat: "yyyymmdd", formatString: "yyyy-mm-dd"
 									, filter: {showIcon: true}
 								},
-								{dataField: "export_flag_name", headerText: "내수/수출", width: 100, filter: {showIcon: true}}
+								{dataField: "export_flag_name", headerText: "내수/수출", filter: {showIcon: true}}
 							];
 
 							const gridProps = {

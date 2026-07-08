@@ -5,6 +5,7 @@
        SELECT *
        FROM (
 	       SELECT FBM.YYYYMM
+	       		, DV.DIVISION_CODE
 				, DV.DIVISION_NAME
 				, IM.ITEM_CODE 		AS PRODUCT_CODE
 				, IM.ITEM_NAME 		AS PRODUCT_NAME
@@ -31,6 +32,7 @@
 		<if test="division_code != null">
 				AND DIVISION_CODE = #{division_code}
 		</if>
+		ORDER BY YYYYMM, DIVISION_CODE, PRODUCT_CODE
     </select>
 
     <select id="retrieveftaBomDetail" parameterType="HashMap" resultType="HashMap">

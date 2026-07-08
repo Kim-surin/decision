@@ -114,7 +114,7 @@
 					</div>
 					<div class="row">
 						<div class="col-12">
-							<div id="oAuiGrid_poledger" style="width:100%;height:480px; margin:0 auto;"></div>
+							<div id="oAuiGrid_poledger" style="width:100%;height:700px; margin:0 auto;"></div>
 						</div>
 					</div>
 				</div>

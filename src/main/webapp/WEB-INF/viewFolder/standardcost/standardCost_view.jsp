@@ -75,7 +75,7 @@
 					<div class="row">
 						<div class="col-12">
 							<!-- 에이유아이 그리드가 이곳에 생성됩니다. -->
-							<div id="oAuiGrid_STANDARDCOST" style="width:100%;height:480px; margin:0 auto;"></div>
+							<div id="oAuiGrid_STANDARDCOST" style="width:100%;height:700px; margin:0 auto;"></div>
 						</div>
 					</div>
 				</div>
