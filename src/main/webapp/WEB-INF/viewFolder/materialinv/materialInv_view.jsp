@@ -252,9 +252,7 @@
 
 					}
 
-
 					$(document).ready(function () {
-						pageSetUp();
 						MATERIALINVVIEW.Initialize_viewObject();
 					});
 

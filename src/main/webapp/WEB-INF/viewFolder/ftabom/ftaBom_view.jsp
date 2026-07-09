@@ -66,7 +66,7 @@
 
 											<div class="col">
 												<button type="button"
-													onclick="javascript:FTABOMVIEW.retrieve_GridData();"
+													onclick="javascript:FTABOMVIEW.retrieve_GridMstData();"
 													class="btn btn-sm btn-search search-more waves-effect waves-themed">Search</button>
 											</div>
 										</div>
@@ -77,15 +77,15 @@
 					</div>
 					<div class="row">
 						<div class="col-12">
-							<div id="oAuiGrid_FTABOM_MASTER" style="width:100%;height:300px; margin:0 auto;"></div>
+							<div id="oAuiGrid_FTABOM_MASTER" style="width:100%;height:290px; margin:0 auto;"></div>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col-8">
-							<div id="oAuiGrid_FTABOM_DETAIL" style="width:100%;height:300px; margin:0 auto;"></div>
+							<div id="oAuiGrid_FTABOM_DETAIL" style="width:100%;height:290px; margin:0 auto;"></div>
 						</div>
 						<div class="col-4">
-							<div id="oAuiGrid_FTABOM_DETAIL_CUSTOMER" style="width:100%;height:300px; margin:0 auto;">
+							<div id="oAuiGrid_FTABOM_DETAIL_VENDOR" style="width:100%;height:290px; margin:0 auto;">
 							</div>
 						</div>
 					</div>
@@ -95,22 +95,26 @@
 					var FTABOMVIEW = new function () {
 						this.grid_FTABOM_MST = null;
 						this.grid_FTABOM_DTL = null;
-						this.grid_FTABOM_DTL_CUSTOMER = null;
+						this.grid_FTABOM_DTL_VENDOR = null;
 
 						this.Initialize_viewObject = function () {
 							FTABOMVIEW.createAUIGrid();
 							AUIGrid.bind(FTABOMVIEW.grid_FTABOM_MST, "cellClick", function (event) {
 								FTABOMVIEW.retrieve_GridDtlData(event.item);
 							});
+
+							AUIGrid.bind(FTABOMVIEW.grid_FTABOM_DTL, "cellClick", function (event) {
+								FTABOMVIEW.retrieve_GridDtlVendorData(event.item);
+							});
 						}
 
 						this.createAUIGrid = function () {
 							const columnLayoutMst = [
-								{dataField: "yyyymm", headerText: "기준년월", width: 150},
-								{dataField: "division_name", headerText: "플랜트", width: 200},
-								{dataField: "product_code", headerText: "제품코드", width: 400},
-								{dataField: "product_name", headerText: "제품명", width: 400},
-								{dataField: "hs_code", headerText: "HS코드", width: 100}
+								{dataField: "yyyymm", headerText: "기준년월", width: 150, filter: {showIcon: true}},
+								{dataField: "division_name", headerText: "플랜트", width: 200, filter: {showIcon: true}},
+								{dataField: "product_code", headerText: "제품코드", width: 400, filter: {showIcon: true}},
+								{dataField: "product_name", headerText: "제품명", width: 500, filter: {showIcon: true}},
+								{dataField: "hs_code", headerText: "HS코드", width: 150, filter: {showIcon: true}}
 							];
 
 							const gridPropsMst = {
@@ -123,11 +127,12 @@
 							FTABOMVIEW.grid_FTABOM_MST = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_MASTER", columnLayoutMst, gridPropsMst, "");
 
 							const columnLayoutDtl = [
-								{dataField: "item_code", headerText: "자재코드", width: 200},
-								{dataField: "item_name", headerText: "자재명", width: 200},
-								{dataField: "unit", headerText: "단위", width: 100},
-								{dataField: "hs_code", headerText: "HS코드", width: 100},
-								{dataField: "input_qty", headerText: "사용수량", width: 100}
+								{dataField: "yyyymm", headerText: "기준년월", width: 0, visible: false},
+								{dataField: "item_code", headerText: "자재코드", width: 300, filter: {showIcon: true}},
+								{dataField: "item_name", headerText: "자재명", width: 350, filter: {showIcon: true}},
+								{dataField: "unit", headerText: "단위", width: 100, filter: {showIcon: true}},
+								{dataField: "hs_code", headerText: "HS코드", width: 150, filter: {showIcon: true}},
+								{dataField: "req_qty", headerText: "사용수량", width: 100}
 							];
 
 							const gridPropsDtl = {
@@ -140,7 +145,13 @@
 							FTABOMVIEW.grid_FTABOM_DTL = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_DETAIL", columnLayoutDtl, gridPropsDtl, "");
 
 							const columnLayoutDtlCustomer = [
-								{dataField: "customer_name", headerText: "구매업체", width: 120}
+								{dataField: "vendor_code", headerText: "공급업체코드", width: 150, filter: {showIcon: true}},
+								{dataField: "vendor_name", headerText: "공급업체명", width: 200, filter: {showIcon: true}},
+								{
+									dataField: "last_warehousing_date", headerText: "마지막 입고일자", width: 120
+									, dataType: "date", dateInputFormat: "yyyymmdd", formatString: "yyyy-mm-dd"
+									, filter: {showIcon: true}
+								},
 							];
 
 							const gridPropsDtlCustomer = {
@@ -150,10 +161,10 @@
 								enableFilter: true
 							};
 
-							FTABOMVIEW.grid_FTABOM_DTL_CUSTOMER = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_DETAIL_CUSTOMER", columnLayoutDtlCustomer, gridPropsDtlCustomer, "");
+							FTABOMVIEW.grid_FTABOM_DTL_VENDOR = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_DETAIL_VENDOR", columnLayoutDtlCustomer, gridPropsDtlCustomer, "");
 						}
 
-						this.retrieve_GridData = function () {
+						this.retrieve_GridMstData = function () {
 							var params = {
 								/* 날짜 파라메터 '-' 제거  */
 								"from_date": KpackageOBJ.object.getFormValue("FTABOM-form", "from_date").replace(/-/gi, "")
@@ -164,6 +175,7 @@
 
 							KpackageOBJ.auiGrid.retrieve(FTABOMVIEW.grid_FTABOM_MST, "/origin/compliance/ftaBom/ftaBomMasterList", params);
 							AUIGrid.setGridData(FTABOMVIEW.grid_FTABOM_DTL, []);
+							AUIGrid.setGridData(FTABOMVIEW.grid_FTABOM_DTL_VENDOR, []);
 						}
 
 						this.retrieve_GridDtlData = function (mst) {
@@ -175,11 +187,18 @@
 
 							KpackageOBJ.auiGrid.retrieve(FTABOMVIEW.grid_FTABOM_DTL, "/origin/compliance/ftaBom/ftaBomDetailList", params);
 						}
+
+						this.retrieve_GridDtlVendorData = function (dtl) {
+							var params = {
+								yyyymm: dtl.yyyymm,
+								item_code: dtl.item_code
+							};
+
+							KpackageOBJ.auiGrid.retrieve(FTABOMVIEW.grid_FTABOM_DTL_VENDOR, "/origin/compliance/ftaBom/ftaBomDetailVendorList", params);
+						}
 					}
 
-
 					$(document).ready(function () {
-						pageSetUp();
 						FTABOMVIEW.Initialize_viewObject();
 					});
 

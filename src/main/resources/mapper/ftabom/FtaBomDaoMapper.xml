@@ -38,18 +38,19 @@
     <select id="retrieveftaBomDetail" parameterType="HashMap" resultType="HashMap">
        SELECT *
        FROM (
-	       SELECT IM.ITEM_CODE 		
+	       SELECT FBD.YYYYMM
+	       		, IM.ITEM_CODE 		
 				, IM.ITEM_NAME 	
 				, IM.UNIT	
 				, FBD.HS_CODE
-				, FBD.INPUT_QTY
+				, FBD.REQ_QTY
 	       FROM FTA_BOM_DTL FBD
 	       INNER JOIN DIVISION DV
 	       		ON DV.DIVISION_CODE = FBD.DIVISION_CODE
 				AND DV.COMPANY_CODE = FBD.COMPANY_CODE
 				AND DV.STATUS = 'Y'
 			INNER JOIN ITEM_MST IM
-				ON IM.ITEM_CODE = FBD.PRODUCT_CODE
+				ON IM.ITEM_CODE = FBD.ITEM_CODE
 				AND IM.COMPANY_CODE = FBD.COMPANY_CODE
 			WHERE FBD.COMPANY_CODE = #{company_code}	
 			<if test="yyyymm != null">
@@ -63,6 +64,26 @@
 			</if>	
 		)
 		WHERE 1=1
-		
+    </select>
+    
+    <select id="retrieveftaBomDetailVendor" parameterType="HashMap" resultType="HashMap">
+    SELECT PL.*, V.VENDOR_NAME
+    FROM (
+	    SELECT PL.VENDOR_CODE
+	    	, PL.COMPANY_CODE
+	    	, MAX(PL.WAREHOUSING_DATE) AS LAST_WAREHOUSING_DATE
+	    FROM PO_LEDGER PL
+	    WHERE PL.COMPANY_CODE = #{company_code}	
+	    <if test="item_code != null">
+			AND PL.ITEM_CODE = #{item_code}
+		</if>
+		<if test="yyyymm != null">
+			AND PL.WAREHOUSING_DATE BETWEEN to_char(TO_DATE(#{yyyymm}, 'YYYYMM') - INTERVAL '6 month', 'YYYYMM') AND #{yyyymm} 
+		</if>
+	    GROUP BY PL.COMPANY_CODE, PL.VENDOR_CODE
+    ) PL 
+     INNER JOIN VENDOR V
+	    	ON PL.COMPANY_CODE = V.COMPANY_CODE
+	    	AND PL.VENDOR_CODE = V.VENDOR_CODE
     </select>
 </mapper>

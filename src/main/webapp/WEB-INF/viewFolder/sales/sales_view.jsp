@@ -173,7 +173,6 @@
 								enableFilter: true
 							};
 
-
 							SALESVIEW.grid_SALES = KpackageOBJ.auiGrid.create("oAuiGrid_SALES", columnLayout, gridProps, "");
 						}
 
@@ -192,9 +191,7 @@
 						}
 					}
 
-
 					$(document).ready(function () {
-						pageSetUp(); // [TODO] 무슨 용도인지 확인	
 						SALESVIEW.Initialize_viewObject();
 					});
 

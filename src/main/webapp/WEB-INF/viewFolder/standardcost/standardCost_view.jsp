@@ -139,9 +139,7 @@
 
 					}
 
-
 					$(document).ready(function () {
-						pageSetUp();
 						STANDARDCOSTVIEW.Initialize_viewObject();
 					});
 

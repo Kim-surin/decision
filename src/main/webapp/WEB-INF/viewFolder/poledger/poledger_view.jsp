@@ -137,8 +137,8 @@
 								{dataField: "order_no", headerText: "발주번호", width: 140},
 								{dataField: "vendor_code", headerText: "협력사코드", width: 150, filter: {showIcon: true}},
 								{dataField: "vendor_name", headerText: "협력사명", width: 150, filter: {showIcon: true}},
-								{dataField: "item_code", headerText: "자재코드", width: 250,  filter: {showIcon: true}},
-								{dataField: "item_name", headerText: "자재명", width: 250,  filter: {showIcon: true}},
+								{dataField: "item_code", headerText: "자재코드", width: 250, filter: {showIcon: true}},
+								{dataField: "item_name", headerText: "자재명", width: 250, filter: {showIcon: true}},
 								{
 									dataField: "warehousing_amount", headerText: "입고금액", width: 150
 									, dataType: "numeric", style: ""
@@ -201,17 +201,7 @@
 
 
 					$(document).ready(function () {
-						pageSetUp(); // [TODO] 무슨 용도인지 확인	
 						POLEDGERVIEW.Initialize_viewObject();
-
-						// [TODO] 공통 페이지로 분리
-						$("#searchKeyword").on("keydown", function (event) {
-							if (event.key === "Enter" || event.keyCode === 13) {
-								event.preventDefault();
-								POLEDGERVIEW.retrieve_GridData();
-							}
-						});
-
 					});
 
 				</script>

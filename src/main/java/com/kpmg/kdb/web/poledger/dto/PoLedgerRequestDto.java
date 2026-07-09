@@ -24,7 +24,7 @@ public class PoLedgerRequestDto extends BaseRequestDto {
 	// 확인서 수취여부
 	@JsonProperty("coo_certify_yn")
 	String coo_certify_yn;
-
+	
 	// 플랜트
 	@JsonProperty("division_code")
 	String division_code;

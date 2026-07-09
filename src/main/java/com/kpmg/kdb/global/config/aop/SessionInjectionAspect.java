@@ -51,18 +51,19 @@ public class SessionInjectionAspect {
 
 				String createBy = dto.getCreateBy();
 				if (createBy == null || createBy.isBlank()) {
-					dto.setCreateBy((String) userSession.get("create_by"));
+					dto.setCreateBy((String) userSession.get("user_id"));
 				}
 
 				String updateBy = dto.getUpdateBy();
 				if (updateBy == null || updateBy.isBlank()) {
-					dto.setUpdateBy((String) userSession.get("update_by"));
+					dto.setUpdateBy((String) userSession.get("user_id"));
 				}
 
-				String divisionCode = dto.getDivisionCode();
-				if (divisionCode == null || divisionCode.isBlank()) {
-					dto.setDivisionCode((String) userSession.get("division_code"));
-				}
+				/*
+				 * String divisionCode = dto.getDivisionCode(); if (divisionCode == null ||
+				 * divisionCode.isBlank()) { dto.setDivisionCode((String)
+				 * userSession.get("division_code")); }
+				 */
 				
 				String defaultLanguage = dto.getDefaultLanguage();
 				if (defaultLanguage == null || defaultLanguage.isBlank()) {

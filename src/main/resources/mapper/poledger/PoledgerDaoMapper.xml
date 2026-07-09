@@ -1,7 +1,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.kpmg.kdb.web.poledger.PoledgerDao">
-    <select id="retrievePoledger" parameterType="HashMap" resultType="HashMap">
+    <select id="retrievePoledger" parameterType="com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto" resultType="HashMap">
        SELECT *
        FROM (
 	       SELECT PL.WAREHOUSING_NO

@@ -8,6 +8,7 @@ import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailRequestDto;
 import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailResponseDto;
+import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailVendorRequestDto;
 import com.kpmg.kdb.web.ftabom.dto.FtaBomMasterRequestDto;
 import com.kpmg.kdb.web.ftabom.dto.FtaBomMasterResponseDto;
 
@@ -35,6 +36,23 @@ public class FtaBomService extends GeneralService {
 
 		try {
 			List<FtaBomDetailResponseDto> list = sqlSession.getMapper(FtaBomDao.class).retrieveftaBomDetail(param);
+
+			result.setValue(list);
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+	
+	public Result retrieveftaBomDetailVendor(FtaBomDetailVendorRequestDto param) throws Exception {
+		Result result = new Result();
+
+		try {
+			List<FtaBomDetailResponseDto> list = sqlSession.getMapper(FtaBomDao.class).retrieveftaBomDetailVendor(param);
 
 			result.setValue(list);
 			result.setSuccess(true);

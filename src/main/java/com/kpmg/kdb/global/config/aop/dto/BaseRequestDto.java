@@ -10,10 +10,10 @@ import lombok.Setter;
 @Setter
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class BaseRequestDto {
-	public String company_code;
+	private String company_code;
 	private String create_by;
 	private String update_by;
-	private String division_code;
+	//private String division_code;
 	private String default_language;
 
 
@@ -41,13 +41,12 @@ public class BaseRequestDto {
 		return update_by;
 	}
 
-	public void setDivisionCode(String divisionCode) {
-		this.division_code = divisionCode;
-	}
-
-	public String getDivisionCode() {
-		return division_code;
-	}
+	/*
+	 * public void setDivisionCode(String divisionCode) { this.division_code =
+	 * divisionCode; }
+	 * 
+	 * public String getDivisionCode() { return division_code; }
+	 */
 	
 	public void setDefaultLanguage(String defaultLanguage) {
 		this.default_language = defaultLanguage;
