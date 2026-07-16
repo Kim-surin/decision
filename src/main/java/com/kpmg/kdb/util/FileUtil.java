@@ -1,5 +1,6 @@
 package com.kpmg.kdb.util;
 
+import java.awt.image.BufferedImage;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -23,19 +23,18 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import javax.imageio.ImageIO;
 import javax.servlet.ServletContext;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.kpmg.kdb.configuration.ConstantBox;
 import com.kpmg.kdb.core.code.PropertiesConfigurator;
 import com.kpmg.kdb.core.code.PropertiesConfiguratorFactory;
 import com.kpmg.kdb.schedule.quartz.job.ApplicationConstants;
-
 
 
 public class FileUtil {
@@ -57,6 +56,19 @@ public class FileUtil {
 	
 
 	
+    private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/gif",
+            "image/bmp",
+            "image/webp"
+    );
+	
+    
+    private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(
+            "jpg", "jpeg", "png", "gif", "bmp", "webp"
+    );
 	
     private static class FileExtensionFilter implements FilenameFilter {
     	
@@ -986,5 +998,42 @@ public class FileUtil {
 		return bytesArray;
 
 	}
+    
+    
+    public static boolean isImageFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return false;
+        }
+
+        // 1. Content-Type 체크
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            return false;
+        }
+
+        // 2. 확장자 체크
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !hasAllowedExtension(originalFilename)) {
+            return false;
+        }
+
+        // 3. 실제 이미지 여부 체크
+        try {
+            BufferedImage image = ImageIO.read(file.getInputStream());
+            return image != null;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private static boolean hasAllowedExtension(String filename) {
+        int idx = filename.lastIndexOf(".");
+        if (idx < 0) {
+            return false;
+        }
+
+        String ext = filename.substring(idx + 1).toLowerCase();
+        return ALLOWED_EXTENSIONS.contains(ext);
+    }
 
 }

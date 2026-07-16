@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.kpmg.kdb.core.form.GridOutputData;
@@ -390,5 +393,58 @@ public class BasisController extends GenericController {
 		
 		return result;
 	}
-
+	/**
+	 * 사용자관리 - 서명권자 정보
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveSignatureInfo")
+	@ResponseBody
+	public Result retrieveSignatureInfo(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveSignatureInfo ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveSignatureInfo(super.extendsMap(param));
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+		
+		logger.debug("##### Request Type result Class : " + "retrieveSignatureInfo END");
+		
+		return result;
+	}
+	
+	
+	
+	/**
+	 * 수입 데이터 엑셀 업로드
+	 * @param param
+	 * @param files
+	 * @param request
+	 * @param mReq
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value="/basis/saveUserSignatureInfo", method = {RequestMethod.POST})
+	@ResponseBody
+	public Result uploadImportExcelProcess(@RequestParam Map param,  @RequestParam("file1") MultipartFile files, HttpServletRequest request, MultipartHttpServletRequest mReq) throws Exception {
+		Result rs = new Result();
+		
+		try {
+			param.put("WORK_TYPE", "IMP");
+			//rs = service.uploadImportExportExcelProcess(super.extendsMap(param), files);
+			rs = service.saveUserSignatureInfo(super.extendsMap(param), files);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			rs = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+		return rs;
+	}
+	
 }

@@ -8,9 +8,15 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.util.ExcelUtil;
+import com.kpmg.kdb.util.FileUtil;
+import com.kpmg.kdb.util.StringUtil;
+import com.kpmg.kdb.web.refundbasis.RefundBasisDao;
 import com.kpmg.kdb.web.testcode.SpringTestDao;
 
 
@@ -424,4 +430,135 @@ public class BasisService extends GeneralService {
     	return result;
     }
         
+    
+    /**
+     * 사용자관리 - 서명권자 정보
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveSignatureInfo(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		Map<String, Object> resultMap = sqlSession.getMapper(BasisDao.class).retrieveSignatureInfo(param);
+    		//회사 버퍼 설정 기준 값
+    		result.setValue(resultMap);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+	 * 엑셀업로드 여러달 업로드 가능한 버전
+	 * @param param
+	 * @param file
+	 * @return
+	 */
+	@Transactional
+    public Result saveUserSignatureInfo(Map<String, Object> param, MultipartFile file) {
+		
+		Result result = new Result();
+		
+		try {
+			
+			String userId = param.get("user_id") == null ? "" : String.valueOf(param.get("user_id")).trim();
+	        String empNo = param.get("emp_no") == null ? "" : String.valueOf(param.get("emp_no")).trim();
+	        String password = param.get("password") == null ? "" : String.valueOf(param.get("password")).trim();
+	        String passwordConfirm = param.get("password_confirm") == null ? "" : String.valueOf(param.get("password_confirm")).trim();
+	        String signFileName = "";
+	        String signFilePath = "";
+
+	        
+	        // 필수값 체크
+	        if (userId.isEmpty()) {
+	            throw new IllegalArgumentException("사용자ID는 필수입니다.");
+	        }
+
+	        if (empNo.isEmpty()) {
+	            throw new IllegalArgumentException("사원번호는 필수입니다.");
+	        }
+
+	        // 사용자 신규/수정 판별
+	        int userCnt = sqlSession.getMapper(BasisDao.class).selectUserCount(param);
+	        boolean isNewUser = (userCnt == 0);
+
+	     // 비밀번호 체크
+	        if (isNewUser) {
+	            if (password.isEmpty()) {
+	                throw new IllegalArgumentException("신규 사용자는 비밀번호가 필수입니다.");
+	            }
+	            if (passwordConfirm.isEmpty()) {
+	                throw new IllegalArgumentException("비밀번호 확인은 필수입니다.");
+	            }
+	            if (!password.equals(passwordConfirm)) {
+	                throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+	            }
+	        } else {
+	            if (!password.isEmpty() || !passwordConfirm.isEmpty()) {
+	                if (!password.equals(passwordConfirm)) {
+	                    throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+	                }
+	            }
+	        }
+	        
+	        if (isNewUser) {
+	        	
+	            sqlSession.getMapper(BasisDao.class).insertUserInfo(param);
+	        } else {
+	        	sqlSession.getMapper(BasisDao.class).updateUserInfo(param);
+	        }
+	        
+	        
+	        // 서명권자 신규/수정 판별
+	        int signatureCount = sqlSession.getMapper(BasisDao.class).selectSignatureCount(param);
+	        boolean isNewSignature = (signatureCount == 0);
+
+	        
+	        param.put("signature_name", param.get("name_kor"));
+	        param.put("department_name", param.get("dept_name"));
+	        param.put("position"       , param.get("position_name"));
+	        
+	        if(isNewSignature) {
+	        	int nextSeq = sqlSession.getMapper(BasisDao.class).selectNextSignatureSeq(param);
+	        	param.put("seq", nextSeq);
+	        	sqlSession.getMapper(BasisDao.class).insertSignatureInfo(param);
+	        }else {
+	        	sqlSession.getMapper(BasisDao.class).updateSignatureInfo(param);
+	        }
+	        
+	        // 2. 파일이 있을 때만 signature 저장
+	        if (file != null && !file.isEmpty()) {
+
+	            if (!FileUtil.isImageFile(file)) {
+	                throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+	            }
+	            param.put("sign_file_name", file.getOriginalFilename());
+	            param.put("real_file", file.getBytes());
+	            //이미지만 별도 처리
+	            sqlSession.getMapper(BasisDao.class).updateSignatureImage(param);
+	        }
+	       
+	        result.setSuccess(true);
+	        result.setMessage("저장되었습니다.");
+	        
+		} catch (IllegalArgumentException e) {
+	        result.setSuccess(false);
+	        result.setMessage(e.getMessage());
+	        return result;
+	    } catch (Exception e) {
+	        result.setSuccess(false);
+	        result.setMessage("저장 처리 중 오류가 발생했습니다.");
+	        throw new RuntimeException(e);
+	    }
+		
+		return result;
+	}
 }

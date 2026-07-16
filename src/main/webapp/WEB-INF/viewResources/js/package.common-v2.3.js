@@ -1820,28 +1820,55 @@ var KpackageOBJ = {
             return gpData;
         },
 
-        setFormData: function(ofmId, jsondata) {
-            if (!oUtil.isNull(ofmId)) {
-                for (var property in jsondata) {
-                    var value = jsondata[property];
-                    var objId = property.toString();
-                    //라디오 박스 체크
-                    if ($("#" + ofmId + " input[name=" + objId + "]:radio").length > 0) {
-                        $(
-                            "#" +
-                            ofmId +
-                            " input[name=" +
-                            objId +
-                            "]:radio:input[value=" +
-                            value +
-                            "]"
-                        ).attr("checked", true);
-                    } else {
-                        $("#" + ofmId + " [name=" + objId + "]").val(value);
-                    }
-                }
-            }
-        },
+		setFormData: function(ofmId, jsondata) {
+		    if (!oUtil.isNull(ofmId)) {
+		        for (var property in jsondata) {
+		            var value = jsondata[property];
+		            var objId = property.toString();
+		            var $target = $("#" + ofmId + " [name=" + objId + "]");
+
+		            // 라디오 박스 체크
+		            if ($("#" + ofmId + " input[name=" + objId + "]:radio").length > 0) {
+		                $("#" + ofmId + " input[name=" + objId + "]:radio:input[value=" + value + "]").attr("checked", true);
+		            }
+		            // date / month 타입 처리
+		            else if ($target.length > 0 && ($target.attr("type") === "date" || $target.attr("type") === "month")) {
+		                var inputType = $target.attr("type");
+		                var formattedValue = "";
+
+		                if (!oUtil.isNull(value)) {
+		                    var strValue = String(value).trim();
+
+		                    if (inputType === "date") {
+		                        // 20260601 -> 2026-06-01
+		                        if (/^\d{8}$/.test(strValue)) {
+		                            formattedValue = strValue.substring(0, 4) + "-" + strValue.substring(4, 6) + "-" + strValue.substring(6, 8);
+		                        }
+		                        // 2026-06-01, 2026-06-01 10:20:30, 2026-06-01T10:20:30
+		                        else if (/^\d{4}-\d{2}-\d{2}/.test(strValue)) {
+		                            formattedValue = strValue.substring(0, 10);
+		                        }
+		                    } else if (inputType === "month") {
+		                        // 202606 -> 2026-06
+		                        if (/^\d{6}$/.test(strValue)) {
+		                            formattedValue = strValue.substring(0, 4) + "-" + strValue.substring(4, 6);
+		                        }
+		                        // 2026-06, 2026-06-01, 2026-06-01 10:20:30
+		                        else if (/^\d{4}-\d{2}/.test(strValue)) {
+		                            formattedValue = strValue.substring(0, 7);
+		                        }
+		                    }
+		                }
+
+		                $target.val(formattedValue);
+		            }
+		            // 일반 input/select/textarea 처리
+		            else {
+		                $target.val(value);
+		            }
+		        }
+		    }
+		},
         makeGetData: function(ofmId) {
             var returnParam = "";
             var getFormData = $("#" + ofmId).serializeArray();

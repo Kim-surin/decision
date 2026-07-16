@@ -330,7 +330,7 @@
                         + '                    <span class="profile-image d-block " style="background-size: cover;"><i class="sa sa-profile userinfo-photo-icon"></i></span>'
                         + '                </span>'
 		        	    + '                <div class="info-card-text flex-grow-1">'
-		        	    + '                    <a href="javascript:BASIS0001.openUserDeail(\'' + userId + '\');" class="fs-xl text-truncate text-truncate-lg">'
+		        	    + '                    <a href="javascript:BASIS001.openUserDeail(\'' + userId + '\');" class="fs-xl text-truncate text-truncate-lg">'
 		        	    + '                        [' + userId + '] - ' + nameKor + '(' + empNo + ')'
 		        	    + '                    </a>'
 		        	    + '                    <span class="d-block text-truncate text-truncate-lg">' + positionName + '</span>'

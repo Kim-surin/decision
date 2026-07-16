@@ -217,11 +217,12 @@
 		 WHERE company_code = 'FRT100' 
 		   AND emp_no = '20130929'
 		   AND end_date is null
+		 ORDER BY update_date DESC
 	     LIMIT 1
 	</select>
 	
 	<select id="retrieveUserinfoList" parameterType="HashMap" resultType="HashMap">
-		SELECT a.user_id
+		SELECT DISTINCT a.user_id
 		       , a.company_code
 			   , a.dept_name
 			   , a.emp_no
@@ -237,7 +238,6 @@
 			   , a.status
 			   , a.default_language
 			   , b.sign_file_name
-			   , start_date
 			   , COALESCE(end_date, '99991231') AS end_date
 			   , CASE WHEN b.emp_no IS NULL THEN 'N' ELSE 'Y' END AS signature_yn
 			   , CASE WHEN b.emp_no IS NULL THEN '' ELSE '서명권자' END AS signature_text
@@ -266,6 +266,7 @@
 			   , a.fax_no
 			   , a.status
 			   , a.default_language
+			   , b.seq
 			   , b.sign_file_name
 			   , start_date
 			   , NVL(end_date, '99991231') AS end_date
@@ -275,9 +276,183 @@
 		    LEFT OUTER JOIN signature b
 		      ON a.company_code = b.company_code
 			 AND a.emp_no = b.emp_no
-			 AND b.end_date is null
 		   WHERE a.company_code =  #{company_code}
-		     AND a.user_id = #{user_id}
+		     AND a.user_id = #{param_user_id}
+		   ORDER BY b.update_date DESC
   	       LIMIT 1
 	</select>
+	
+	<select id="retrieveSignatureInfo" parameterType="HashMap" resultType="HashMap">
+		SELECT a.seq
+		       ,a.start_date
+		       ,a.end_Date
+			   ,a.remark
+			   ,a.division_code
+		  FROM signature a
+		 WHERE a.company_code = #{company_code}
+		   AND a.seq = ${seq}
+	</select>
+	
+	<select id="selectUserCount" parameterType="map" resultType="int">
+	    SELECT COUNT(*)
+	      FROM user_info
+	     WHERE user_id = #{user_id}
+	</select>
+	
+	
+	<!-- 사용자 신규 저장시 존재여부 체크 -->
+    <select id="selectSignatureCount" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+          FROM signature
+         WHERE seq = ${seq}
+    </select>
+    
+     <insert id="insertUserInfo" parameterType="map">
+        INSERT INTO user_info
+        (
+            user_id,
+            emp_no,
+            name_kor,
+            name_eng,
+            password,
+            dept_name,
+            position_name,
+            position_name_eng,
+            email,
+            office_phone_no,
+            cell_phone_no,
+            fax_no,
+            default_language,
+            status,
+            create_date,
+            create_by,
+            update_date,
+            update_by
+        )
+        VALUES
+        (
+            #{user_id},
+            #{emp_no},
+            #{name_kor},
+            #{name_eng},
+            #{password},
+            #{dept_name},
+            #{position_name},
+            #{position_name_eng},
+            #{email},
+            #{office_phone_no},
+            #{cell_phone_no},
+            #{fax_no},
+            #{default_language},
+            #{status},
+            NOW(),
+            #{create_by},
+            NOW(),
+            #{update_by}
+        )
+    </insert>
+
+    <!-- 사용자 수정 -->
+    <update id="updateUserInfo" parameterType="map">
+        UPDATE user_info
+           SET emp_no            = #{emp_no},
+               name_kor          = #{name_kor},
+               name_eng          = #{name_eng},
+               dept_name         = #{dept_name},
+               position_name     = #{position_name},
+               position_name_eng = #{position_name_eng},
+               email             = #{email},
+               office_phone_no   = #{office_phone_no},
+               cell_phone_no     = #{cell_phone_no},
+               fax_no            = #{fax_no},
+               default_language  = #{default_language},
+               status            = #{status},
+               update_date       = NOW(),
+               update_by         = #{update_by}
+        <if test="password != null and password != ''">
+             , password = #{password}
+        </if>
+         WHERE user_id = #{user_id}
+    </update>
+
+    <!-- 다음 seq 조회 -->
+    <select id="selectNextSignatureSeq" resultType="int">
+        SELECT COALESCE(MAX(seq), 0) + 1
+          FROM signature
+    </select>
+
+    <!-- 서명 신규 저장 -->
+    <insert id="insertSignatureInfo" parameterType="map">
+        INSERT INTO signature
+        (
+            seq,
+            company_code,
+            department_code,
+            division_code,
+            start_date,
+            end_date,
+            remark,
+            department_name,
+            signature_name,
+            "position",
+            emp_no,
+            product_line,
+            sign_file_name,
+            sign_file_path,
+            create_date,
+            create_by,
+            update_date,
+            update_by,
+            real_file
+        )
+        VALUES
+        (
+            ${seq},
+            #{company_code},
+            #{department_code},
+            #{division_code},
+            #{start_date},
+            #{end_date},
+            #{remark},
+            #{department_name},
+            #{signature_name},
+            #{position},
+            #{emp_no},
+            #{product_line},
+            #{sign_file_name},
+            #{sign_file_path},
+            NOW(),
+            #{create_by},
+            NOW(),
+            #{update_by},
+            #{real_file,jdbcType=BINARY}
+        )
+    </insert>
+
+    <!-- 서명 수정 -->
+    <update id="updateSignatureInfo" parameterType="map">
+        UPDATE signature
+           SET company_code    = #{company_code},
+               department_code = #{department_code},
+               division_code   = #{division_code},
+               start_date      = replace(#{start_date},'-', ''),
+               end_date        = replace(#{end_date},'-', ''),
+               remark          = #{remark},
+               department_name = #{department_name},
+               signature_name  = #{signature_name},
+               "position"      = #{position},
+               product_line    = #{product_line},
+               update_date     = NOW(),
+               update_by       = #{update_by}
+         WHERE seq = ${seq}
+    </update>
+    
+        <update id="updateSignatureImage" parameterType="map">
+        UPDATE signature
+           SET real_file    = #{real_file,jdbcType=BINARY},
+               sign_file_name = #{sign_file_name}
+         WHERE seq = ${seq}
+    </update>
+	
+	
 </mapper>

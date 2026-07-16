@@ -149,6 +149,30 @@ public interface BasisDao {
 	 * @return
 	 */
 	public Map retrieveUserinfoDetail(Map param);
+	
+	/**
+	 * 사용자관리 - 서명권자 정보
+	 * @param param
+	 * @return
+	 */
+	public Map retrieveSignatureInfo(Map param);
+	
+	
+	int selectUserCount(Map<String, Object> param);
+	
+	
+	int insertUserInfo(Map<String, Object> param);
+	int updateUserInfo(Map<String, Object> param);
+	int selectSignatureCount(Map<String, Object> param);
+	
+	
+	int insertSignatureInfo(Map<String, Object> param);
+	int updateSignatureInfo(Map<String, Object> param);
+	
+	int updateSignatureImage(Map<String, Object> param);
+	int selectNextSignatureSeq(Map<String, Object> param);
+	
+	
 }
 
 
