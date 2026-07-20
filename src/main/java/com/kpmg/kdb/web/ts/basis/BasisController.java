@@ -320,38 +320,39 @@ public class BasisController extends GenericController {
 	 * @param userId
 	 * @return
 	 */
-    @GetMapping("/basis/signature/{empno}")
-    public ResponseEntity<byte[]> viewSignatureImageByUserId(@PathVariable("empno") String userId) {
-    	
-    	Map defaultMap = new HashMap();
-    	
-    	defaultMap.put("empno", userId);
-    	
-        Map signature = service.getSignatureByUserId(super.extendsMap(defaultMap));
+	@GetMapping("/basis/signature/{empno}")
+	@ResponseBody
+	public ResponseEntity<byte[]> viewSignatureImageByUserId(@PathVariable("empno") String userId) {
 
-        if (signature == null || signature.get("real_file") == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        String contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-        String fileName = (String) signature.get("sigh_file_name");
+	    Map<String, Object> defaultMap = new HashMap<>();
+	    defaultMap.put("empno", userId);
 
-        byte[] realFile = (byte[]) signature.get("real_file");
-        
-        if (fileName != null) {
-            String lowerFileName = fileName.toLowerCase();
-            if (lowerFileName.endsWith(".png")) {
-                contentType = MediaType.IMAGE_PNG_VALUE;
-            } else if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) {
-                contentType = MediaType.IMAGE_JPEG_VALUE;
-            } else if (lowerFileName.endsWith(".gif")) {
-                contentType = MediaType.IMAGE_GIF_VALUE;
-            }
-        }
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE)
-                .body(realFile);
-    }
+	    Map<String, Object> signature = service.getSignatureByUserId(super.extendsMap(defaultMap));
+
+	    if (signature == null || signature.get("real_file") == null) {
+	        return ResponseEntity.notFound().build();
+	    }
+
+	    String fileName = (String) signature.get("sign_file_name");
+	    byte[] realFile = (byte[]) signature.get("real_file");
+
+	    MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+
+	    if (fileName != null) {
+	        String lowerFileName = fileName.toLowerCase();
+	        if (lowerFileName.endsWith(".png")) {
+	            mediaType = MediaType.IMAGE_PNG;
+	        } else if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) {
+	            mediaType = MediaType.IMAGE_JPEG;
+	        } else if (lowerFileName.endsWith(".gif")) {
+	            mediaType = MediaType.IMAGE_GIF;
+	        }
+	    }
+
+	    return ResponseEntity.ok()
+	            .contentType(mediaType)
+	            .body(realFile);
+	}
 	
     
 	/**

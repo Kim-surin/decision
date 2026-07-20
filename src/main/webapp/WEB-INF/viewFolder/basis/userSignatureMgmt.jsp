@@ -356,7 +356,7 @@
 		        	    + '                    </a>'
 		        	    + '                </div>'
 		        	    + '                <div class="signature-box">'
-		        	    + '                    <img src="/basis/signature/' + empNo + '" alt="signature" onerror="this.style.display=\'none\';">'
+		        	    + '                    <img src="/basis/signature/' + empNo + '" alt="signature" onerror="this.style.display=\'none\';" style="width: 49px;">'
 		        	    + '                </div>'
 		        	    + '            </div>'
 		        	    + '        </div>'
