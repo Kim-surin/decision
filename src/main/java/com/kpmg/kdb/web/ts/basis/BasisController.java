@@ -322,10 +322,10 @@ public class BasisController extends GenericController {
 	 */
 	@GetMapping("/basis/signature/{empno}")
 	@ResponseBody
-	public ResponseEntity<byte[]> viewSignatureImageByUserId(@PathVariable("empno") String userId) {
+	public ResponseEntity<byte[]> viewSignatureImageByUserId(@PathVariable("empno") String emp_no) {
 
 	    Map<String, Object> defaultMap = new HashMap<>();
-	    defaultMap.put("empno", userId);
+	    defaultMap.put("emp_no", emp_no);
 
 	    Map<String, Object> signature = service.getSignatureByUserId(super.extendsMap(defaultMap));
 
@@ -422,7 +422,7 @@ public class BasisController extends GenericController {
 	
 	
 	/**
-	 * 수입 데이터 엑셀 업로드
+	 * 서명권자 이미지 미리보기 
 	 * @param param
 	 * @param files
 	 * @param request
@@ -433,12 +433,10 @@ public class BasisController extends GenericController {
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value="/basis/saveUserSignatureInfo", method = {RequestMethod.POST})
 	@ResponseBody
-	public Result uploadImportExcelProcess(@RequestParam Map param,  @RequestParam("file1") MultipartFile files, HttpServletRequest request, MultipartHttpServletRequest mReq) throws Exception {
+	public Result uploadImportExcelProcess(@RequestParam Map param,  @RequestParam(value = "file1", required = false) MultipartFile files, HttpServletRequest request, MultipartHttpServletRequest mReq) throws Exception {
 		Result rs = new Result();
 		
 		try {
-			param.put("WORK_TYPE", "IMP");
-			//rs = service.uploadImportExportExcelProcess(super.extendsMap(param), files);
 			rs = service.saveUserSignatureInfo(super.extendsMap(param), files);
 			
 		} catch (Exception e) {
@@ -446,6 +444,58 @@ public class BasisController extends GenericController {
 			rs = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
 		}
 		return rs;
+	}
+	
+	
+	/**
+	 * 사용자 중복 체크
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/checkDuplicateUserId")
+	@ResponseBody
+	public Result checkDuplicateUserId(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "checkDuplicateUserId ");
+		Result result = new Result();
+		try {
+			
+			result = service.checkDuplicateUserId(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "checkDuplicateUserId END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * 서명권자 해지
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/cancelUserSignatureInfo")
+	@ResponseBody
+	public Result cancelUserSignatureInfo(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "cancelUserSignatureInfo ");
+		Result result = new Result();
+		try {
+			
+			result = service.cancelUserSignatureInfo(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "cancelUserSignatureInfo END");
+		
+		return result;
 	}
 	
 }

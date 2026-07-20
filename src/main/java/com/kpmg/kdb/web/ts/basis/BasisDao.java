@@ -171,8 +171,22 @@ public interface BasisDao {
 	
 	int updateSignatureImage(Map<String, Object> param);
 	int selectNextSignatureSeq(Map<String, Object> param);
+
 	
 	
+	/**
+	 * 사용자관리 - 서명권자 중복 체크
+	 * @param param
+	 * @return
+	 */
+	public int checkDuplicateUserId(Map param);
+	
+	/**
+	 * 사용자관리 - 서명권자 해지
+	 * @param param
+	 * @return
+	 */
+	public int cancelUserSignatureInfo(Map param);
 }
 
 

@@ -473,6 +473,9 @@ public class BasisService extends GeneralService {
 	        String empNo = param.get("emp_no") == null ? "" : String.valueOf(param.get("emp_no")).trim();
 	        String password = param.get("password") == null ? "" : String.valueOf(param.get("password")).trim();
 	        String passwordConfirm = param.get("password_confirm") == null ? "" : String.valueOf(param.get("password_confirm")).trim();
+	        
+	        String seq = param.get("seq") == null ? "" : String.valueOf(param.get("seq")).trim();
+	        
 	        String signFileName = "";
 	        String signFilePath = "";
 
@@ -510,42 +513,24 @@ public class BasisService extends GeneralService {
 	        }
 	        
 	        if (isNewUser) {
-	        	
 	            sqlSession.getMapper(BasisDao.class).insertUserInfo(param);
 	        } else {
 	        	sqlSession.getMapper(BasisDao.class).updateUserInfo(param);
 	        }
 	        
 	        
-	        // 서명권자 신규/수정 판별
-	        int signatureCount = sqlSession.getMapper(BasisDao.class).selectSignatureCount(param);
-	        boolean isNewSignature = (signatureCount == 0);
+	        // 4. 서명 처리 여부 판단
+	        boolean hasSignatureSection = hasSignatureData(param, file);
+	        
+	        if (hasSignatureSection) {
+	        	// 5. 서명 신규/수정 저장
+	            saveSignature(param, seq);
 
-	        
-	        param.put("signature_name", param.get("name_kor"));
-	        param.put("department_name", param.get("dept_name"));
-	        param.put("position"       , param.get("position_name"));
-	        
-	        if(isNewSignature) {
-	        	int nextSeq = sqlSession.getMapper(BasisDao.class).selectNextSignatureSeq(param);
-	        	param.put("seq", nextSeq);
-	        	sqlSession.getMapper(BasisDao.class).insertSignatureInfo(param);
-	        }else {
-	        	sqlSession.getMapper(BasisDao.class).updateSignatureInfo(param);
-	        }
-	        
-	        // 2. 파일이 있을 때만 signature 저장
-	        if (file != null && !file.isEmpty()) {
-
-	            if (!FileUtil.isImageFile(file)) {
-	                throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+	            // 6. 파일이 있으면 이미지 업데이트
+	            if (file != null && !file.isEmpty()) {
+	                saveSignatureFile(param, file);
 	            }
-	            param.put("sign_file_name", file.getOriginalFilename());
-	            param.put("real_file", file.getBytes());
-	            //이미지만 별도 처리
-	            sqlSession.getMapper(BasisDao.class).updateSignatureImage(param);
 	        }
-	       
 	        result.setSuccess(true);
 	        result.setMessage("저장되었습니다.");
 	        
@@ -561,4 +546,104 @@ public class BasisService extends GeneralService {
 		
 		return result;
 	}
+	
+	private boolean hasSignatureData(Map<String, Object> param, MultipartFile file) {
+	    String seq = param.get("seq") == null ? "" : String.valueOf(param.get("seq")).trim();
+	    String startDate = param.get("start_date") == null ? "" : String.valueOf(param.get("start_date")).trim();
+	    String endDate = param.get("end_Date") == null ? "" : String.valueOf(param.get("end_Date")).trim();
+	    String remark = param.get("remark") == null ? "" : String.valueOf(param.get("remark")).trim();
+
+	    return !seq.isEmpty()
+	            || !startDate.isEmpty()
+	            || !endDate.isEmpty()
+	            || !remark.isEmpty()
+	            || (file != null && !file.isEmpty());
+	}
+	
+	private void saveSignature(Map<String, Object> param, String seq) {
+	    param.put("signature_name", param.get("name_kor"));
+	    param.put("department_name", param.get("dept_name"));
+	    param.put("position", param.get("position_name"));
+
+	    int signatureCount = 0;
+	    if (!seq.isEmpty()) {
+	        signatureCount = sqlSession.getMapper(BasisDao.class).selectSignatureCount(param);
+	    }
+
+	    boolean isNewSignature = (signatureCount == 0);
+
+	    if (isNewSignature) {
+	        int nextSeq = sqlSession.getMapper(BasisDao.class).selectNextSignatureSeq(param);
+	        param.put("seq", nextSeq);
+	        sqlSession.getMapper(BasisDao.class).insertSignatureInfo(param);
+	    } else {
+	        sqlSession.getMapper(BasisDao.class).updateSignatureInfo(param);
+	    }
+	}
+	
+	private void saveSignatureFile(Map<String, Object> param, MultipartFile file) throws Exception {
+	    if (!FileUtil.isImageFile(file)) {
+	        throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+	    }
+
+	    param.put("sign_file_name", file.getOriginalFilename());
+	    param.put("real_file", file.getBytes());
+
+	    sqlSession.getMapper(BasisDao.class).updateSignatureImage(param);
+	}
+	
+	/**
+	 * 사용자 중복 체크
+	 * @param param
+	 * @return
+	 */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result checkDuplicateUserId(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		int userCount = sqlSession.getMapper(BasisDao.class).checkDuplicateUserId(param);
+    		//회사 버퍼 설정 기준 값
+    		result.setValue(userCount);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 서명권자 해지
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result cancelUserSignatureInfo(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		int resultCount = sqlSession.getMapper(BasisDao.class).cancelUserSignatureInfo(param);
+    		//회사 버퍼 설정 기준 값
+    		result.setValue(resultCount);
+    		if(resultCount > 0) {
+        		result.setSuccess(true);
+        		result.setMessage(DEFAULT_MESSAGE_OK);    			
+    		}else {
+        		result.setSuccess(false);
+        		result.setMessage(DEFAULT_MESSAGE_ERROR);
+    		}
+
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
 }

@@ -5,6 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<script src="/rcs/js/security/encrypt.js"></script>
 </head>
 <body>
     <div class="modal-header">
@@ -17,7 +18,7 @@
     </div>
 
     <div class="modal-body">
-        <form:form id="BASIS00101-form" class="s4-form" novalidate="novalidate" action="" method="post">
+        <form:form id="BASIS00101-form" class="s4-form" novalidate="novalidate" action="" method="post" enctype="multipart/form-data">
             <input type="hidden" id="dialog_id" name="dialog_id" value="${dialog_id}"/>
             <input type="hidden" id="opener_pgm_id" name="opener_pgm_id" value="${opener_pgm_id}"/>
             <input type="hidden" id="param_user_id" name="param_user_id" value="${param_user_id}"/>
@@ -35,14 +36,15 @@
                                     style="height: 35px;"
                                     onclick="javascript:BASIS00101.checkDuplicateUserId();">중복확인</button>
                         </div>
-                        <small class="text-muted">신규 등록 시 반드시 중복확인을 하셔야 합니다.</small>
+                        <small id="dup_check_no" class="text-muted">신규 등록 시 반드시 중복확인을 하셔야 합니다.</small>
+                        <small id="dup_check_ok" class="text-muted" style="display: none;color: blue !important;">사용가능한 ID 입니다.</small>
+                        
                     </div>
 
                     <!-- 사원번호 -->
                     <div class="col-md-6">
                         <label class="form-label fw-bold" for="emp_no">사원번호</label>
-                        <input type="text" class="form-control" id="emp_no" name="emp_no"
-                               onchange="javascript:BASIS00101.changeSignaturePreview();">
+                        <input type="text" class="form-control" id="emp_no" name="emp_no">
                     </div>
 
                     <!-- 사용자명 -->
@@ -149,8 +151,8 @@
 
                     <!-- 해지일자 -->
                     <div class="col-md-4">
-                        <label class="form-label fw-bold" for="end_Date">해지일자</label>
-                        <input type="date" class="form-control" id="end_Date" name="end_Date">
+                        <label class="form-label fw-bold" for="end_date">해지일자</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date">
                     </div>
 
                     <!-- 플랜트 -->
@@ -186,7 +188,7 @@
                         <div class="row">
                             <!-- 서명파일명 -->
                             <div class="col-md-9">
-                                <label class="form-label fw-bold" for="sign_file_name">서명파일명</label>
+                                <label id="label_sign_file_name"class="form-label fw-bold" for="sign_file_name">서명파일명</label>
                                 <input type="text" class="form-control" id="sign_file_name" name="sign_file_name" readonly>
                             </div>
 
@@ -215,9 +217,7 @@
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" onclick="javascript:BASIS00101.saveUserSignatureInfo();">Save changes</button>
-        <button type="button" class="btn btn-danger me-auto" id="btn_cancel_signature"
-            style="display: none;"
-            onclick="javascript:BASIS00101.cancelSignature();">
+        <button type="button" class="btn btn-danger" id="btn_cancel_signature" style="display: none;" onclick="javascript:BASIS00101.cancelSignature();">
         서명권자 해지
     </button>
     </div>
@@ -244,12 +244,21 @@ var BASIS00101 = new function() {
                 BASIS00101.setCreateMode();
             }
 
-            if (!oUtil.isNull(data.sign_file_name)) {
-                BASIS00101.retrieveSignatureInfoDetail();
-            } else {
-                BASIS00101.changeSignaturePreview();
+            if (!oUtil.isNull(data.seq)) {  // 서명권자 정보가 있으면
+            	BASIS00101.retrieveSignatureInfoDetail();
+            } else {  // 서명권자가 없으면
+            	BASIS00101.changeSignaturePreview();
+                // 서명권자 해지 버튼 숨김
                 BASIS00101.hideCancelSignatureButton();
+                $("#label_sign_file_name").hide();
+                $("#sign_file_name").hide();
+                $("#toggle_sign_file_btn").hide();
+                $("#file1_wrap").show();
             }
+            
+            
+            
+            
         });
     };
 
@@ -264,7 +273,7 @@ var BASIS00101 = new function() {
     
     this.cancelSignature = function() {
         var empNo = $("#emp_no").val().trim();
-        var endDate = $("#end_Date").val().trim();
+        var endDate = $("#end_date").val().trim();
         var remark = $("#remark").val().trim();
         var signSeq = $("#seq").val();
 
@@ -280,7 +289,7 @@ var BASIS00101 = new function() {
 
         if (oUtil.isNull(endDate)) {
             alert("해지일자를 입력해주세요.");
-            $("#end_Date").focus();
+            $("#end_date").focus();
             return;
         }
 
@@ -302,18 +311,9 @@ var BASIS00101 = new function() {
             if(result.success){
             	alert("서명권자 해지가 완료되었습니다.");	
             	
-
-                $("#sign_file_name").val("");
                 $("#file1").val("");
                 $("#file1_wrap").hide();
-                $("#toggle_sign_file_btn").text("서명파일 변경");
-
-                $("#signature_preview").attr("src", "").hide();
-                $("#signature_empty").show();
-
-                $("#seq").val("");
-
-                BASIS00101.hideCancelSignatureButton();
+                $("#toggle_sign_file_btn").hide()
                 
             }else{
             	alert("서명권자 해지 중 오류가 발생했습니다.");
@@ -358,15 +358,18 @@ var BASIS00101 = new function() {
 
     this.retrieveSignatureInfoDetail = function() {
         var params = KpackageOBJ.data.makePostData("BASIS00101-form");
+        if(!oUtil.isNull(params["seq"])){
+        	KpackageOBJ.ajax.doSubmit("/basis/retrieveSignatureInfo", params, (result) => {
+                var data = result.value || {};
+                KpackageOBJ.data.setFormData("BASIS00101-form", data);
 
-        KpackageOBJ.ajax.doSubmit("/basis/retrieveSignatureInfo", params, (result) => {
-            var data = result.value || {};
-            KpackageOBJ.data.setFormData("BASIS00101-form", data);
-
-            if (!oUtil.isNull($("#emp_no").val())) {
-                BASIS00101.changeSignaturePreview();
-            }
-        });
+                if (!oUtil.isNull($("#seq").val())) {
+                    BASIS00101.changeSignaturePreview();
+                    BASIS00101.showCancelSignatureButton();
+                }
+            });	
+        }
+        
     };
 
     this.saveUserSignatureInfo = function() {
@@ -383,6 +386,8 @@ var BASIS00101 = new function() {
         var password = $("#password").val();
         var passwordConfirm = $("#password_confirm").val();
         var signFile = $("#file1")[0] ? $("#file1")[0].files[0] : null;
+        
+        var start_date = $("#start_date").val().trim();
 
         if (!isEditMode && $("#user_id").data("dup-checked") !== "Y") {
             alert("사용자ID 중복확인을 해주세요.");
@@ -454,32 +459,36 @@ var BASIS00101 = new function() {
                 $("#file1").val("");
                 return;
             }
-        }
-
-        var formData = new FormData($form[0]);
-
-        $.ajax({
-            url: "/basis/saveUserSignatureInfo",
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(result) {
-                alert("저장되었습니다.");
-
-                $("#user_id").prop("readonly", true);
-                $("#emp_no").prop("readonly", true);
-                $("#btn_check_dup").hide();
-                $("#user_id").data("dup-checked", "Y");
-
-                BASIS00101.changeSignaturePreview();
-            },
-            error: function() {
-                alert("저장 중 오류가 발생했습니다.");
+            if (oUtil.isNull(start_date)) {
+            	alert("서명권자 등록시에는 지정일자는 필수 입력항목 입니다. ");
+                $("#start_date").focus();
+                return;
             }
-        });
-    };
+        }
+        //aes256
+        KpackageOBJ.object.setFormValue("BASIS00101-form", "password", encryptStr(password));
+        KpackageOBJ.object.setFormValue("BASIS00101-form", "password_confirm", encryptStr(passwordConfirm));
+		
 
+		KpackageOBJ.ajax.doFormSubmit("BASIS00101-form", "/basis/saveUserSignatureInfo", (result) => {
+			alert(result.message);
+			if(result.success){
+				
+				KpackageOBJ.object.setFormValue("BASIS00101-form", "password", "");
+		        KpackageOBJ.object.setFormValue("BASIS00101-form", "password_confirm", "");
+		        
+		        
+	            $("#user_id").prop("readonly", true);
+	            $("#emp_no").prop("readonly", true);
+	            $("#btn_check_dup").hide();
+	            $("#user_id").data("dup-checked", "Y");
+	            BASIS00101.changeSignaturePreview();  
+	            // 부모페이지
+	            BASIS001.retrieveUserInfoList();
+			}
+		});
+    };
+    
     this.checkDuplicateUserId = function() {
         var userId = $("#user_id").val().trim();
 
@@ -492,30 +501,35 @@ var BASIS00101 = new function() {
             $("#user_id").focus();
             return;
         }
-
-        $.ajax({
-            url: "/basis/checkDuplicateUserId",
-            type: "POST",
-            data: { user_id: userId },
-            success: function(result) {
-                if (result.duplicateYn === "Y") {
-                    alert("이미 사용중인 사용자ID입니다.");
-                    $("#user_id").data("dup-checked", "N");
-                    $("#user_id").focus();
-                } else {
-                    alert("사용 가능한 사용자ID입니다.");
-                    $("#user_id").data("dup-checked", "Y");
-                }
-            },
-            error: function() {
-                alert("중복확인 중 오류가 발생했습니다.");
+        
+        var params = {
+        		check_user_id : KpackageOBJ.object.getFormValue("BASIS00101-form", "user_id")  
+        }
+        
+        
+        KpackageOBJ.ajax.doSubmit("/basis/checkDuplicateUserId", params, (result) => {
+            var data = result.value;
+            
+            if(data == 0){
+            	$("#user_id").data("dup-checked", "Y");
+            	$("#dup_check_no").hide();
+                $("#dup_check_ok").show();
+            }else{
+            	alert("이미 사용중인 사용자ID입니다.");
+            	$("#dup_check_no").show();
+                $("#dup_check_ok").hide();
+                $("#user_id").data("dup-checked", "N");
+                $("#user_id").focus();
             }
         });
+
     };
 
     this.resetDuplicateCheck = function() {
         if (!$("#user_id").prop("readonly")) {
             $("#user_id").data("dup-checked", "N");
+            $("#dup_check_no").show();
+            $("#dup_check_ok").hide();
         }
     };
 
@@ -537,9 +551,9 @@ var BASIS00101 = new function() {
     };
 
     this.changeSignaturePreview = function() {
-        const empNo = $("#emp_no").val().trim();
-        const $img = $("#signature_preview");
-        const $empty = $("#signature_empty");
+        var empNo = $("#emp_no").val().trim();
+        var $img = $("#signature_preview");
+        var $empty = $("#signature_empty");
 
         if (empNo === "") {
             $img.attr("src", "").hide();
@@ -547,7 +561,7 @@ var BASIS00101 = new function() {
             return;
         }
 
-        const imageUrl = BASIS00101.getSignatureImageUrl(empNo);
+        var imageUrl = BASIS00101.getSignatureImageUrl(empNo);
 
         $img.off("error").on("error", function() {
             $img.attr("src", "").hide();
@@ -559,9 +573,9 @@ var BASIS00101 = new function() {
     };
 
     this.previewUploadedSignature = function(input) {
-        const file = input.files[0];
-        const $img = $("#signature_preview");
-        const $empty = $("#signature_empty");
+        var file = input.files[0];
+        var $img = $("#signature_preview");
+        var $empty = $("#signature_empty");
 
         if (!file) {
             BASIS00101.restoreOriginalSignaturePreview();
@@ -575,7 +589,7 @@ var BASIS00101 = new function() {
             return;
         }
 
-        const reader = new FileReader();
+        var reader = new FileReader();
         reader.onload = function(e) {
             $img.attr("src", e.target.result).show();
             $empty.hide();
@@ -586,9 +600,9 @@ var BASIS00101 = new function() {
     };
 
     this.restoreOriginalSignaturePreview = function() {
-        const empNo = $("#emp_no").val().trim();
-        const $img = $("#signature_preview");
-        const $empty = $("#signature_empty");
+        var empNo = $("#emp_no").val().trim();
+        var $img = $("#signature_preview");
+        var $empty = $("#signature_empty");
 
         if (empNo === "") {
             $img.attr("src", "").hide();
@@ -596,7 +610,7 @@ var BASIS00101 = new function() {
             return;
         }
 
-        const imageUrl = BASIS00101.getSignatureImageUrl(empNo);
+        var imageUrl = BASIS00101.getSignatureImageUrl(empNo);
 
         $img.off("error").on("error", function() {
             $img.attr("src", "").hide();
@@ -608,9 +622,9 @@ var BASIS00101 = new function() {
     };
 
     this.toggleSignFileUpload = function(button) {
-        const $uploadWrap = $("#file1_wrap");
-        const $signFileUpload = $("#file1");
-        const $button = $(button);
+        var $uploadWrap = $("#file1_wrap");
+        var $signFileUpload = $("#file1");
+        var $button = $(button);
 
         if ($uploadWrap.is(":visible")) {
             $uploadWrap.hide();

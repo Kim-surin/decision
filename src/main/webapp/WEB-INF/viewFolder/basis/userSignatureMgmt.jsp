@@ -152,6 +152,10 @@
 		// 시작점
 		this.Initialize_viewObject = function() {
 
+			BASIS001.retrieveUserInfoList();
+		}
+		
+		this.retrieveUserInfoList = function(){
 			var params = {
 					"dummy" : "dummy"
 			};
@@ -434,7 +438,10 @@
 		}
 		
 		this.openNewUser = function(){
-			alert(1);
+			var getParams = "?dialog_id="           + "userInfoDetail_Dialog"
+			 + "&opener_pgm_id="    +  "BASIS001"
+
+			KpackageOBJ.sidepanel.open('userInfoDetail_Dialog','/basis/userSignatureDetail_pop' + getParams, '1200px');
 		}
 		
 		

@@ -214,8 +214,8 @@
 	<select id="getSignatureByUserId" parameterType="HashMap" resultType="HashMap">
 		SELECT sign_file_name, real_file
 		  FROM signature 
-		 WHERE company_code = 'FRT100' 
-		   AND emp_no = '20130929'
+		 WHERE company_code = #{company_code}
+		   AND emp_no = #{emp_no}
 		   AND end_date is null
 		 ORDER BY update_date DESC
 	     LIMIT 1
@@ -293,7 +293,7 @@
 		   AND a.seq = ${seq}
 	</select>
 	
-	<select id="selectUserCount" parameterType="map" resultType="int">
+	<select id="selectUserCount"  parameterType="HashMap" resultType="int">
 	    SELECT COUNT(*)
 	      FROM user_info
 	     WHERE user_id = #{user_id}
@@ -301,59 +301,68 @@
 	
 	
 	<!-- 사용자 신규 저장시 존재여부 체크 -->
-    <select id="selectSignatureCount" parameterType="map" resultType="int">
+    <select id="selectSignatureCount"  parameterType="HashMap" resultType="int">
         SELECT COUNT(*)
           FROM signature
          WHERE seq = ${seq}
     </select>
     
-     <insert id="insertUserInfo" parameterType="map">
-        INSERT INTO user_info
-        (
-            user_id,
-            emp_no,
-            name_kor,
-            name_eng,
-            password,
-            dept_name,
-            position_name,
-            position_name_eng,
-            email,
-            office_phone_no,
-            cell_phone_no,
-            fax_no,
-            default_language,
-            status,
-            create_date,
-            create_by,
-            update_date,
-            update_by
-        )
-        VALUES
-        (
-            #{user_id},
-            #{emp_no},
-            #{name_kor},
-            #{name_eng},
-            #{password},
-            #{dept_name},
-            #{position_name},
-            #{position_name_eng},
-            #{email},
-            #{office_phone_no},
-            #{cell_phone_no},
-            #{fax_no},
-            #{default_language},
-            #{status},
-            NOW(),
-            #{create_by},
-            NOW(),
-            #{update_by}
-        )
+     <insert id="insertUserInfo"  parameterType="HashMap">
+		INSERT INTO public.user_info (
+		      user_id
+		    , company_code
+		    , division_code
+		    , dept_name
+		    , password
+		    , emp_no
+		    , name_kor
+		    , name_eng
+		    , name_local
+		    , position_name
+		    , position_name_eng
+		    , email
+		    , cell_phone_no
+		    , office_phone_no
+		    , fax_no
+		    , status
+		    , user_auth
+		    , default_language
+		    , sso_yn
+		    , create_date
+		    , create_by
+		    , update_date
+		    , update_by
+		    , work_yyyy_mm
+		) VALUES (
+		      #{user_id}
+		    , #{company_code}
+		    , #{division_code}
+		    , #{dept_name}
+		    , #{password}
+		    , #{emp_no}
+		    , #{name_kor}
+		    , #{name_eng}
+		    , #{name_local}
+		    , #{position_name}
+		    , #{position_name_eng}
+		    , #{email}
+		    , #{cell_phone_no}
+		    , #{office_phone_no}
+		    , #{fax_no}
+		    , #{status}
+		    , #{user_auth}
+		    , #{default_language}
+		    , #{sso_yn}
+		    , now()
+		    , #{create_by}
+		    , now()
+		    , #{update_by}
+		    , to_char(current_date, 'YYYY-MM')
+		)
     </insert>
 
     <!-- 사용자 수정 -->
-    <update id="updateUserInfo" parameterType="map">
+    <update id="updateUserInfo"  parameterType="HashMap">
         UPDATE user_info
            SET emp_no            = #{emp_no},
                name_kor          = #{name_kor},
@@ -382,7 +391,7 @@
     </select>
 
     <!-- 서명 신규 저장 -->
-    <insert id="insertSignatureInfo" parameterType="map">
+    <insert id="insertSignatureInfo"  parameterType="HashMap">
         INSERT INTO signature
         (
             seq,
@@ -411,8 +420,8 @@
             #{company_code},
             #{department_code},
             #{division_code},
-            #{start_date},
-            #{end_date},
+            replace(#{start_date},'-', ''),
+            replace(#{end_date},'-', ''),
             #{remark},
             #{department_name},
             #{signature_name},
@@ -420,7 +429,7 @@
             #{emp_no},
             #{product_line},
             #{sign_file_name},
-            #{sign_file_path},
+            'DB',
             NOW(),
             #{create_by},
             NOW(),
@@ -430,14 +439,12 @@
     </insert>
 
     <!-- 서명 수정 -->
-    <update id="updateSignatureInfo" parameterType="map">
+    <update id="updateSignatureInfo"  parameterType="HashMap">
         UPDATE signature
            SET company_code    = #{company_code},
                department_code = #{department_code},
                division_code   = #{division_code},
                start_date      = replace(#{start_date},'-', ''),
-               end_date        = replace(#{end_date},'-', ''),
-               remark          = #{remark},
                department_name = #{department_name},
                signature_name  = #{signature_name},
                "position"      = #{position},
@@ -447,12 +454,29 @@
          WHERE seq = ${seq}
     </update>
     
-        <update id="updateSignatureImage" parameterType="map">
+    <update id="updateSignatureImage"  parameterType="HashMap">
         UPDATE signature
            SET real_file    = #{real_file,jdbcType=BINARY},
                sign_file_name = #{sign_file_name}
          WHERE seq = ${seq}
     </update>
+    
+    
+    <select id="checkDuplicateUserId" resultType="int">
+        SELECT count(*)
+          FROM user_info a
+         WHERE a.company_code = #{company_code}
+           AND a.user_id = #{check_user_id}
+    </select>
+    
 	
+	<update id="cancelUserSignatureInfo"  parameterType="HashMap">
+        UPDATE signature
+           SET end_date        = replace(#{end_date},'-', ''),
+               remark          = #{remark},
+               update_date     = NOW(),
+               update_by       = #{update_by}
+         WHERE seq = ${seq}
+    </update>
 	
 </mapper>

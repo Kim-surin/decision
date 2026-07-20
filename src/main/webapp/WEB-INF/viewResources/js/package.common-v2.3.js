@@ -2421,6 +2421,10 @@ var KpackageOBJ = {
 	
 	sidepanel : {
 		open : function(modalId, url, pWidth){
+			
+			if ($("#"+ modalId).length > 0) {
+				return;
+			}
 			$('#' + modalId).remove();
 			
 			var opener = document.activeElement;
