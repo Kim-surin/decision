@@ -294,14 +294,29 @@ function changImage(obj, path) {
 }
 
 function getMaxDataLength(data, textId) {
-    var maxData = data[0][textId].length;
+    if (!Array.isArray(data) || data.length === 0) {
+        return 0;
+    }
+
+    var maxData = 0;
+
     for (var i = 0; i < data.length; i++) {
-        var char = data[i][textId];
+        var item = data[i] || {};
+        var char = item[textId];
+
+        if (char === null || char === undefined) {
+            char = "";
+        } else {
+            char = String(char);
+        }
+
         var size = getStringPixelWidth(char);
-        if (maxData < size) {
+
+        if (size > maxData) {
             maxData = size;
         }
     }
+
     return maxData;
 }
 
