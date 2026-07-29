@@ -1,0 +1,141 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.originbasis.ItemPriceDao">
+	<!--
+		레거시 FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 이관.
+		- ADD_MONTHS/TO_CHAR/TO_DATE 등 Oracle 날짜 함수는 제거하고, 조회 기간(YYYYMM/YYYYMMDD 범위)은
+		  ItemPriceService 에서 java.time 으로 계산하여 단순 문자열 파라미터로 전달한다.
+		- 단가 계산(CASE WHEN 우선순위 등)은 SQL이 아닌 MaterialBalanceTierRow 에서 Java로 수행한다.
+		- ROWNUM = 1 은 사용하지 않고 ORDER BY + 애플리케이션에서 첫 행 선택으로 대체한다.
+	-->
+
+	<select id="selectOwnDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
+		SELECT ML.YYYYMM          AS yyyymm
+		      ,ML.DIVISION_CODE   AS divisionCode
+		      ,ML.ISSUE_AMOUNT    AS issueAmount
+		      ,ML.ISSUE_QTY       AS issueQty
+		      ,ML.INVENTORY_AMOUNT AS inventoryAmount
+		      ,ML.INVENTORY_QTY   AS inventoryQty
+		      ,ML.EXTRA_ISSUE_AMOUNT AS extraIssueAmount
+		      ,ML.EXTRA_ISSUE_QTY AS extraIssueQty
+		FROM   MATERIAL_INV_BAL ML
+		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+		AND    ML.ITEM_CODE = #{c.itemCode}
+		AND    ML.DIVISION_CODE = #{c.divisionCode}
+		AND    ML.COMPANY_CODE = #{c.companyCode}
+	</select>
+
+	<select id="selectOtherDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
+		SELECT ML.YYYYMM          AS yyyymm
+		      ,ML.DIVISION_CODE   AS divisionCode
+		      ,ML.ISSUE_AMOUNT    AS issueAmount
+		      ,ML.ISSUE_QTY       AS issueQty
+		      ,ML.INVENTORY_AMOUNT AS inventoryAmount
+		      ,ML.INVENTORY_QTY   AS inventoryQty
+		      ,ML.EXTRA_ISSUE_AMOUNT AS extraIssueAmount
+		      ,ML.EXTRA_ISSUE_QTY AS extraIssueQty
+		FROM   MATERIAL_INV_BAL ML
+		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+		AND    ML.ITEM_CODE = #{c.itemCode}
+		AND    ML.COMPANY_CODE = #{c.companyCode}
+		ORDER  BY ML.DIVISION_CODE
+	</select>
+
+	<select id="selectOwnDivisionBalanceForNote" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
+		SELECT ML.YYYYMM          AS yyyymm
+		      ,ML.DIVISION_CODE   AS divisionCode
+		      ,ML.ISSUE_AMOUNT    AS issueAmount
+		      ,ML.ISSUE_QTY       AS issueQty
+		      ,ML.INVENTORY_AMOUNT AS inventoryAmount
+		      ,ML.INVENTORY_QTY   AS inventoryQty
+		      ,ML.EXTRA_ISSUE_AMOUNT AS extraIssueAmount
+		      ,ML.EXTRA_ISSUE_QTY AS extraIssueQty
+		FROM   MATERIAL_INV_BAL ML
+		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY + ML2.INVENTORY_QTY) > 0)
+		AND    ML.ITEM_CODE = #{c.itemCode}
+		AND    ML.DIVISION_CODE = #{c.divisionCode}
+		AND    ML.COMPANY_CODE = #{c.companyCode}
+	</select>
+
+	<select id="selectOtherDivisionBalanceForNote" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
+		SELECT ML.YYYYMM          AS yyyymm
+		      ,ML.DIVISION_CODE   AS divisionCode
+		      ,ML.ISSUE_AMOUNT    AS issueAmount
+		      ,ML.ISSUE_QTY       AS issueQty
+		      ,ML.INVENTORY_AMOUNT AS inventoryAmount
+		      ,ML.INVENTORY_QTY   AS inventoryQty
+		      ,ML.EXTRA_ISSUE_AMOUNT AS extraIssueAmount
+		      ,ML.EXTRA_ISSUE_QTY AS extraIssueQty
+		FROM   MATERIAL_INV_BAL ML
+		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY + ML2.INVENTORY_QTY) > 0)
+		AND    ML.ITEM_CODE = #{c.itemCode}
+		AND    ML.COMPANY_CODE = #{c.companyCode}
+		ORDER  BY ML.DIVISION_CODE
+	</select>
+
+	<!-- 두 함수 공용: 최근 구매단가(PO_LEDGER). 원본의 WAREHOUSING_DATE DESC, WAREHOUSING_NO DESC 정렬을 그대로 유지 -->
+	<select id="selectRecentPurchasePrice" resultType="com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow">
+		SELECT PL.UNIT_PRICE       AS unitPrice
+		      ,PL.WAREHOUSING_DATE AS warehousingDate
+		      ,PL.DIVISION_CODE    AS divisionCode
+		      ,PL.VENDOR_CODE      AS vendorCode
+		FROM   PO_LEDGER PL
+		WHERE  PL.COMPANY_CODE = #{c.companyCode}
+		AND    PL.DIVISION_CODE = #{c.divisionCode}
+		AND    PL.ITEM_CODE = #{c.itemCode}
+		AND    PL.UNIT_PRICE > 0
+		AND    PL.WAREHOUSING_DATE BETWEEN #{fromYyyyMmdd} AND #{toYyyyMmdd}
+		ORDER  BY PL.WAREHOUSING_DATE DESC, PL.WAREHOUSING_NO DESC
+	</select>
+
+	<!--
+		두 함수 공용(4단계, division 필터 있음). 원본은 두 함수의 STANDARD_COST_AMOUNT != 0 필터 유무가 달랐으나,
+		두 호출부 모두 결과값을 사용하기 전에 "금액 > 0" 을 재검증하므로(ItemPriceService) 필터 유무가 최종
+		결과에 영향을 주지 않는다. ORDER BY APPLY_DATE DESC 는 원본에 없던 명시적 정렬을 추가해 결정론적으로 만든 것.
+	-->
+	<select id="selectStandardCostByDivision" resultType="com.kpmg.kdb.web.originbasis.dto.StandardCostRow">
+		SELECT SC.STANDARD_COST_AMOUNT AS standardCostAmount
+		      ,SC.APPLY_DATE          AS applyDate
+		      ,SC.DIVISION_CODE       AS divisionCode
+		FROM   STANDARD_COST SC
+		WHERE  SC.COMPANY_CODE = #{c.companyCode}
+		AND    SC.DIVISION_CODE = #{c.divisionCode}
+		AND    SC.ITEM_CODE = #{c.itemCode}
+		AND    #{c.resolvedBaseDate} BETWEEN SC.APPLY_DATE AND COALESCE(SC.END_DATE, '99991231')
+		ORDER  BY SC.APPLY_DATE DESC
+	</select>
+
+	<!-- FC10_GET_ITEM_PRICE 전용 최종 fallback(division 필터 없음). NOTE 함수에는 대응 단계가 없다 -->
+	<select id="selectStandardCostAnyDivision" resultType="com.kpmg.kdb.web.originbasis.dto.StandardCostRow">
+		SELECT SC.STANDARD_COST_AMOUNT AS standardCostAmount
+		      ,SC.APPLY_DATE          AS applyDate
+		      ,SC.DIVISION_CODE       AS divisionCode
+		FROM   STANDARD_COST SC
+		WHERE  SC.COMPANY_CODE = #{c.companyCode}
+		AND    SC.ITEM_CODE = #{c.itemCode}
+		AND    #{c.resolvedBaseDate} BETWEEN SC.APPLY_DATE AND COALESCE(SC.END_DATE, '99991231')
+		ORDER  BY SC.APPLY_DATE DESC
+	</select>
+</mapper>
