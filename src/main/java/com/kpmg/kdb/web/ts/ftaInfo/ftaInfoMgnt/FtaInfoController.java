@@ -42,7 +42,7 @@ public class FtaInfoController extends GenericController {
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/ftaInfo")
+	@RequestMapping(value = "/origin/ftaInfo/ftaInfoMgnt")
 	public String ftaInfo_view(Model model, HttpSession session) {
 		return "ftaInfo/ftaInfoMgnt";
 	}
