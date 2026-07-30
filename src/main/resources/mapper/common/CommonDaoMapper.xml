@@ -5,19 +5,21 @@
     
 	<select id="retrieveComCdList" parameterType="HashMap" resultType="HashMap">
 		<if test="OPTION_ALL == 'Y'.toString()">
-		SELECT '' CODE
-		      ,'선택' NAME
-		      ,0 SORT_NO
+		SELECT #{CATEGORY} AS CATEGORY
+		     , '' CODE
+		     , '선택' CODE_NAME
+		     , 0 SORT_NO
 		  FROM DUAL
 		 UNION ALL
 		</if>
-		SELECT C.CODE_CD CODE
-		      ,'['||C.CODE_CD||'] '||C.CODE_NM NAME
-		      ,C.SORT_NO
-		  FROM COM_CD C
-		 WHERE C.CATEGORY_CD = #{CATEGORY_CD}
+		SELECT C.CATEGORY
+		     , C.CODE
+		     , C.CODE_NAME
+		  FROM CODE_DTL C
+		 WHERE C.CATEGORY = #{CATEGORY}
 		   AND C.USING_YN = 'Y'
-		ORDER  BY SORT_NO ASC
+		   AND C.COMPANY_CODE = #{company_code}
+      ORDER BY SORT_NO ASC
 	</select>
 	
 	

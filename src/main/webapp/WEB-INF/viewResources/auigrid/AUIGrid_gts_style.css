@@ -635,7 +635,7 @@
 
 /* 소프트 모드 삭제한 행 스타일*/
 .aui-grid-row-soft-removed-marker {
-	color: #aaa !important;
+	color: #f00 !important;
 	text-decoration: line-through !important;
 }
 
@@ -2026,7 +2026,7 @@
   background: #fff !important;
   color: #212529 !important;
   font-weight: 700 !important;
-  text-align: left !important;
+  text-align: center !important;
   border-top: none !important;
   border-left: none !important;
   border-right: none !important;

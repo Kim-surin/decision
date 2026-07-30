@@ -2520,6 +2520,10 @@ var KpackageOBJ = {
 
 			// 닫기
 			function closePopup() {
+				
+			  // AUIGrid 필터 팝업 닫기
+    		  $('.aui-grid-filter-popup-layer').hide();	
+				
 			  $panel.remove();
 			  $(document).off('keydown.' + panelId);
 			  $(document).off('mousemove.' + panelId);
@@ -4740,8 +4744,20 @@ var KpackageOBJ = {
          * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
          */
         "getGridData": function(p_AuiGridId, p_RowIndex, p_ColName) {
-            return AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" });
+            return  AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" });
         },
+        
+        
+        /**
+         * 그리드에서 수정된 데이터만 선별해서 가져온다.
+         * 
+         * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
+         */
+        "getGridCudData": function(p_AuiGridId) {
+       		return  AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" }).filter(item => item.state != null);
+        },
+        
+        
 		
 		/**
          * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 모든 셀(또는 행) 아이템을 반환합니다.
@@ -4815,6 +4831,16 @@ var KpackageOBJ = {
         "getCheckedRowItems": function(p_AuiGridId) {
             return AUIGrid.getCheckedRowItems(p_AuiGridId);
         },
+
+
+        /**
+         * 엑스트라 행 체크박스가 설정된 경우 체크박스로 체크된 모든 행의 아이템을 반환합니다.
+         * Return : (Array) 체크된 행 아이템 배열
+             */
+        "getCheckedRowItemsAll": function(p_AuiGridId) {
+            return AUIGrid.getCheckedRowItemsAll(p_AuiGridId);
+        },
+
 
 
         /**
@@ -4973,6 +4999,16 @@ var KpackageOBJ = {
 			return AUIGrid.removeRowByRowId(p_AuiGridId, p_DeleteTargetRowId);
 			
         },
+        	
+       /**
+		 * 체크박스 엑스트라 렌더러를 사용한 경우 체크박스에 체크된 행(들)을 그리드에서 삭제 처리 합니다.
+		 * 
+		 */
+        "removeCheckedRows": function(p_AuiGridId) {
+			return AUIGrid.removeCheckedRows(p_AuiGridId);
+        },
+        
+        
 		/**
 		 * 그리드의 행을 수정한 해당 행 전체 셀 값을 수정 취소(복구) 합니다.
 		 * 수정 취소(복구)는 최초 그리드에 삽입된 행의 셀 값들로 되돌립니다.
@@ -5043,7 +5079,31 @@ var KpackageOBJ = {
 		            AUIGrid.resize(p_AuiGridId);
 		        }
 			}
+		},
+		
+		/**
+		 * 그리드 데이터의 필드들 중 빈값(undefined, null, "")에 해당되는 값이 있는지 검사합니다.
+		 * 
+		 * 파라메터 설명
+		 * 		 requireFields (String or Array) : 필수로 값이 있어야 하는 dataField 들. 즉, 모두 값이 채워 졌는지 체크 하고자 하는 dataField
+		 * 		 message (String) : 빈값, null 이 존재할 때 적용 시킬 toast alert 메세지. message 파라메터를 설정하지 않으면 toast 는 출력되지 않음.
+		 */
+		"validateGridData" : function(p_AuiGridId, requireFields , message ) {
+			return AUIGrid.validateGridData(p_AuiGridId, requireFields , message);
+		},
+		
+		/**
+		 * 행 인덱스(rowIndex)에 맞는 행 아이템이 추가된 행인지 여부를 반환합니다. 
+		 * 
+		 * 파라메터 설명
+		 * 		rowIndex : (Number) 행 인덱스
+		 */
+		"isAddedByRowIndex" : function(p_AuiGridId, rowIndex) {
+			return AUIGrid.isAddedByRowIndex(p_AuiGridId, rowIndex);
 		}
+
+		
+		
     }
 
 };
