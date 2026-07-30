@@ -389,7 +389,7 @@
 									KpackageOBJ.object.setFormValue("ftaInfo-form", "popParam", JSON.stringify(event.item));
 									
 									
-									KpackageOBJ.dialog.open('ftaNationPopup','협정별 국가지정 팝업','/origin/basis/ftaInfo/ftaNation',1000,700);
+									KpackageOBJ.dialog.open('ftaNationPopup','협정별 국가지정 팝업','/origin/ftaInfo/ftaNation',1000,700);
 								}
 							});
 
@@ -402,7 +402,7 @@
 								"searchCountry": KpackageOBJ.object.getFormValue("ftaInfo-form", "searchCountry")
 							}
 							
-							KpackageOBJ.auiGrid.retrieve(FTA_INFO.gridId, "/origin/basis/ftaInfo/retrieveFtaInfoList", params);
+							KpackageOBJ.auiGrid.retrieve(FTA_INFO.gridId, "/origin/ftaInfo/retrieveFtaInfoList", params);
 						}
 
 						// 행추가
@@ -443,7 +443,7 @@
 								var params = {
 										"SAVE_LIST" : data
 								};
-								KpackageOBJ.ajax.doSubmit("/origin/basis/ftaInfo/saveFtaInfoList", params, FTA_INFO.fnSaveCallBack);
+								KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/saveFtaInfoList", params, FTA_INFO.fnSaveCallBack);
 							}
 
 						}

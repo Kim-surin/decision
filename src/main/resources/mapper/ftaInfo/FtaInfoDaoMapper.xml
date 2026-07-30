@@ -2,7 +2,7 @@
 <!-- mapper DTD 선언 -->
 <!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
-<mapper namespace="com.kpmg.kdb.web.ts.basis.ftaInfo.FtaInfoDao">
+<mapper namespace="com.kpmg.kdb.web.ts.ftaInfo.FtaInfoDao">
 	
  	<select id="retrieveFtaInfoList" parameterType="HashMap" resultType="HashMap">
 		SELECT FTA_CODE

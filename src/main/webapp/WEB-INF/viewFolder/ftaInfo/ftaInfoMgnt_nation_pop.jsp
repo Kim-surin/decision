@@ -146,11 +146,11 @@
 		};
 		
 		this.retrieve_LeftGridData = function(){
-			KpackageOBJ.auiGrid.retrieve(FTA_NATION.gridIdL, "/origin/basis/ftaInfo/ftaNation/retrieveFtaNationAllList", FTA_NATION.state["params"]);
+			KpackageOBJ.auiGrid.retrieve(FTA_NATION.gridIdL, "/origin/ftaInfo/ftaNation/retrieveFtaNationAllList", FTA_NATION.state["params"]);
 		};
 		
 		this.retrieve_RightGridData = function(){
-			KpackageOBJ.auiGrid.retrieve(FTA_NATION.gridIdR, "/origin/basis/ftaInfo/ftaNation/retrieveFtaNationApplyList", FTA_NATION.state["params"]);
+			KpackageOBJ.auiGrid.retrieve(FTA_NATION.gridIdR, "/origin/ftaInfo/ftaNation/retrieveFtaNationApplyList", FTA_NATION.state["params"]);
 		};
 		
 		this.fnTransferRight = function() {
@@ -188,7 +188,7 @@
 				var params = FTA_NATION.state["params"];
 				params["SAVE_LIST"] = data;
 
-				KpackageOBJ.ajax.doSubmit("/origin/basis/ftaInfo/saveFtaNationList", params, FTA_NATION.fnSaveCallBack);
+				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/saveFtaNationList", params, FTA_NATION.fnSaveCallBack);
 			}
 
 		}

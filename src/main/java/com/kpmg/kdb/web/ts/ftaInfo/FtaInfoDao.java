@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.ts.basis.ftaInfo;
+package com.kpmg.kdb.web.ts.ftaInfo;
 
 import java.util.List;
 import java.util.Map;

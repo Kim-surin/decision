@@ -1,39 +1,20 @@
-package com.kpmg.kdb.web.ts.basis.ftaInfo;
+package com.kpmg.kdb.web.ts.ftaInfo;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
-import org.springframework.web.servlet.ModelAndView;
 
-import com.kpmg.kdb.core.form.GridOutputData;
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.util.RestfulClientUtil;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
 
 /*******************************************************************************************
  *
@@ -41,7 +22,7 @@ import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
  *
  * @since 2026.07
  *
- *         기초정보 관리 > FTA 협정정보관리 구현 클래스
+ *         FTA 정보 관리 > FTA 협정 정보 관리
  *
  ********************************************************************************************/
 
@@ -56,24 +37,24 @@ public class FtaInfoController extends GenericController {
 	protected FtaInfoService ftaInfoservice;
 
 	/**
-	 * 기초정보관리 > FTA RULE 관리 > FTA 협정 정보 관리
+	 * FTA 정보 관리 > FTA 협정 정보 관리
 	 * 
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/basis/ftaInfo")
+	@RequestMapping(value = "/origin/ftaInfo")
 	public String ftaInfo_view(Model model, HttpSession session) {
-		return "basis/ftaInfo/ftaInfoMgnt";
+		return "ftaInfo/ftaInfoMgnt";
 	}
 	
 
 	/**
-	 *  기초정보관리 > FTA RULE 관리 > FTA 협정 정보 관리 > 리스트 조회
+	 *  FTA 정보 관리 > FTA 협정 정보 관리 > 리스트 조회
 	 * 
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/basis/ftaInfo/retrieveFtaInfoList")
+	@RequestMapping(value="/origin/ftaInfo/retrieveFtaInfoList")
 	@ResponseBody
 	public Result retrieveCompanyDivisionFormData(@RequestBody Map param) {
 		Result result = new Result();
@@ -92,12 +73,12 @@ public class FtaInfoController extends GenericController {
 	}
 	
 	/**
-	 *  기초정보관리 > FTA RULE 관리 > FTA 협정 정보 관리 > 리스트 저장
+	 *  FTA 정보 관리 > FTA 협정 정보 관리 > 리스트 저장
 	 * 
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/basis/ftaInfo/saveFtaInfoList")
+	@RequestMapping(value="/origin/ftaInfo/saveFtaInfoList")
 	@ResponseBody
 	public Result saveFtaInfoList(@RequestBody Map param) {
 		Result result = new Result();
@@ -117,24 +98,24 @@ public class FtaInfoController extends GenericController {
 	
 	
 	/**
-	 * 기초정보관리 > FTA RULE 관리 > FTA 협정 정보 관리 > 협정국가 지정 팝업
+	 *FTA 정보 관리 > FTA 협정 정보 관리 > 협정국가 지정 팝업
 	 * 
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/basis/ftaInfo/ftaNation")
+	@RequestMapping(value = "/origin/ftaInfo/ftaNation")
 	public String sample001pop02_view(Model model, HttpSession session) {
-		return "basis/ftaInfo/ftaInfoMgnt_nation_pop";
+		return "ftaInfo/ftaInfoMgnt_nation_pop";
 	}
 	
 
 	/**
-	 *  기초정보관리 > FTA RULE 관리 > FTA 협정 정보 관리 > 협정국가 지정 팝업 > 좌측 그리드 리스트 조회
+	 *  FTA 정보 관리 > FTA 협정 정보 관리 > 협정국가 지정 팝업 > 좌측 그리드 리스트 조회
 	 * 
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/basis/ftaInfo/ftaNation/retrieveFtaNationAllList")
+	@RequestMapping(value="/origin/ftaInfo/ftaNation/retrieveFtaNationAllList")
 	@ResponseBody
 	public Result retrieveFtaNationAllList(@RequestBody Map param) {
 		Result result = new Result();
@@ -155,12 +136,12 @@ public class FtaInfoController extends GenericController {
 	
 
 	/**
-	 *  기초정보관리 > FTA RULE 관리 > FTA 협정 정보 관리 > 협정국가 지정 팝업 > 우측 그리드 리스트 조회
+	 *  FTA 정보 관리 > FTA 협정 정보 관리 > 협정국가 지정 팝업 > 우측 그리드 리스트 조회
 	 * 
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/basis/ftaInfo/ftaNation/retrieveFtaNationApplyList")
+	@RequestMapping(value="/origin/ftaInfo/ftaNation/retrieveFtaNationApplyList")
 	@ResponseBody
 	public Result retrieveFtaNationApplyList(@RequestBody Map param) {
 		Result result = new Result();
@@ -180,12 +161,12 @@ public class FtaInfoController extends GenericController {
 	
 
 	/**
-	 *  기초정보관리 > FTA RULE 관리 > FTA 협정 정보 관리 > 협정국가 지정 팝업 > 우측 그리드 리스트 저장
+	 *  FTA 정보 관리 > FTA 협정 정보 관리 > 협정국가 지정 팝업 > 우측 그리드 리스트 저장
 	 * 
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/basis/ftaInfo/saveFtaNationList")
+	@RequestMapping(value="/origin/ftaInfo/saveFtaNationList")
 	@ResponseBody
 	public Result saveFtaNationList(@RequestBody Map param) {
 		Result result = new Result();
