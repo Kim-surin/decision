@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.ftaInfo.hsCode.HsCodeDao">
+	
+ 	<select id="retrieveHsCodeList" parameterType="HashMap" resultType="HashMap">
+		SELECT HS_CODE
+		     , HS_CODE_NAME
+			 , HS_CODE_DESC
+			 , PARENT_HS_CODE
+		  FROM HS_CODE
+		 WHERE DELETE_YN ='N'
+		  <if test="searchHsCode != null and searchHsCode != ''">
+	  	   AND HS_CODE LIKE CONCAT(#{searchHsCode}, '%')
+   		</if>
+      ORDER BY HS_CODE 
+ 	</select>
+
+	<select id="retrieveHsCodePsrList" parameterType="HashMap" resultType="HashMap">
+		SELECT DISTINCT
+               HC.HS_CODE
+             , FR.HS_CODE_SUB_CATEGORY
+             , FR.RULE_DESCRIPTION
+             , FR.RULE_CONTENTS_N
+             , FR.RULE_CONTENTS
+             , FM.FTA_CODE
+             , FM.FTA_NAME
+             , FR.RULE_SEQ
+             , FR.CTH_RULE
+             , FR.DE_MINIMIS_RATE / 100 DE_MINIMIS_RATE
+             , CASE WHEN FR.BD_RULE IS NOT NULL THEN 'BD'
+                    WHEN FR.BU_RULE IS NOT NULL THEN 'BU'
+                    WHEN FR.NC_RULE IS NOT NULL THEN 'NC'
+                    WHEN FR.FTA_CODE = 'PKRZZ' THEN 'B'  -- APTA 일경우 B로 표기
+                    WHEN FR.MC_RULE IS NOT NULL THEN 'MC'
+                    ELSE NULL
+                    END RVC_CODE
+             , CASE WHEN FR.BD_RULE IS NOT NULL THEN FR.BD_RULE / 100
+                    WHEN FR.BU_RULE IS NOT NULL THEN FR.BU_RULE / 100
+                    WHEN FR.NC_RULE IS NOT NULL THEN FR.NC_RULE / 100
+                    WHEN FR.MC_RULE IS NOT NULL THEN FR.MC_RULE / 100
+                    ELSE NULL
+                    END RVC_RATE
+              , FE.EXCLUSION_RULE_DESCRIPTION EXCLUSION_DESCRIPTION
+           FROM FTA_RULE FR
+     LEFT OUTER JOIN FTA_EXCLUSION_RULE FE
+             ON FE.FTA_CODE = FR.FTA_CODE
+            AND FE.HS_CODE = FR.HS_CODE
+            AND FE.RULE_SEQ = FR.RULE_SEQ
+          INNER JOIN HS_CODE HC
+             ON FR.HS_CODE = SUBSTR(HC.HS_CODE, 1, LENGTH(FR.HS_CODE))
+          INNER JOIN FTA_MASTER FM
+			 ON FM.FTA_CODE = FR.FTA_CODE
+          WHERE HC.HS_CODE = #{selHsCode}
+       ORDER BY HC.HS_CODE, FM.FTA_CODE, FR.HS_CODE_SUB_CATEGORY,FR.RULE_SEQ, FR.CTH_RULE
+ 	</select>
+ 	
+</mapper>

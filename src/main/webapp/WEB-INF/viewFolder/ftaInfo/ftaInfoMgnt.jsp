@@ -53,7 +53,7 @@
 		</div>
 		<div class="row">
 			<div class="col-12">
-				<div class="frame-wrap" style="display:flex; align-items: center;">
+				<div class="d-flex frame-wrap" style="align-items: center;">
 					<div class="demo" style="margin-left: auto;">
 						<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="FTA_INFO.fnAddRow()">
 							행추가
@@ -70,7 +70,7 @@
 		</div>
 		<div class="row">
 			<div class="col-12">
-				<div id="oAuiGrid_ftaInfo" style="width:100%;height:600px; margin:0 auto;"></div>
+				<div id="oAuiGrid_ftaInfo" class="w-full" style="height:600px; margin:0 auto;"></div>
 			</div>
 		</div>
 	</div>
@@ -114,7 +114,6 @@
 					
 		this.Initialize_viewObject = function () {
 			FTA_INFO.createAUIGrid();
-			AUIGrid.setGridData(FTA_INFO.grid_ftaInfo, FTA_INFO.state['data']);
 			FTA_INFO.retrieve_GridData();
 		}
 						

@@ -14,9 +14,9 @@
 		<div class="modal-body">
 			<div class="row">
 				<div class="col-12 dual-grid-wrap">
-					<div style="width:44%;height:500px;" >
-						<div class="subheader-title" style="margin-bottom:5px"><label>협정 추가 가능 국가 목록</label></div>
-						<div id="oAuiGrid_nationL" style="width:100%; height:100%"></div>
+					<div class="w-45 h-full" >
+						<div class="grid-title mb-1">협정 추가 가능 국가 목록</div>
+						<div id="oAuiGrid_nationL" class="w-100 h-100"></div>
 					</div>
 					<div class="col-2 transfer-btn-area">
 				        <button class="btn btn-primary mb-2" onclick="FTA_NATION.fnTransferRight()">
@@ -27,9 +27,9 @@
 				            &lt;
 				        </button> 
 				    </div>
-				    <div style="width:44%;height:500px;">
-				    	<div class="subheader-title" style="margin-bottom:5px"><label>협정 국가 목록</label></div>
-						<div id="oAuiGrid_nationR" style="width:100%; height:100%"></div>
+				    <div class="w-45 h-full" >
+				    	<div class="grid-title mb-1">협정 국가 목록</div>
+						<div id="oAuiGrid_nationR" class="w-100 h-100"></div>
 					</div>
 				</div>
 			</div>		

@@ -56,7 +56,7 @@ public class FtaInfoController extends GenericController {
 	 */
 	@RequestMapping(value="/origin/ftaInfo/retrieveFtaInfoList")
 	@ResponseBody
-	public Result retrieveCompanyDivisionFormData(@RequestBody Map param) {
+	public Result retrieveFtaInfoList(@RequestBody Map param) {
 		Result result = new Result();
 		try {
 			
