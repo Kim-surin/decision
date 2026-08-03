@@ -5904,7 +5904,14 @@ function checkURL(e) {
             $("#" + pageLayerId)
                 .css({ opacity: "0.0" })
                 .delay(50)
-                .animate({ opacity: "1.0" }, 300);
+                .animate({ opacity: "1.0" }, 300, function () {
+			        $("#" + pageLayerId)
+			            .find("[id*='oAuiGrid']")
+			            .each(function () {
+			                KpackageOBJ.auiGrid.resize("#" + this.id);
+            });
+
+    });
 
             return false;
         }
@@ -6031,7 +6038,14 @@ function tabChange(thisObj, contId) {
     $("#" + contId)
         .css({ opacity: "0.0" })
         .delay(50)
-        .animate({ opacity: "1.0" }, 300);
+        .animate({ opacity: "1.0" }, 300,  function () {
+                // 현재 탭 안에 있는 AUIGrid만 resize
+                $("#" + contId)
+                    .find("[id*='oAuiGrid']")
+                    .each(function () {
+                        KpackageOBJ.auiGrid.resize("#" + this.id);
+                    });
+            });
 }
 
 function tabClose(contId) {

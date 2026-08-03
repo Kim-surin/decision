@@ -72,7 +72,7 @@
 		</div>
 		<div class="row">
 			<div class="col-12">
-				<div id="oAuiGrid_ftaInfo" class="w-full" style="height:600px; margin:0 auto;"></div>
+				<div id="oAuiGrid_ftaIncoterms" class="w-full" style="height:600px; margin:0 auto;"></div>
 			</div>
 		</div>
 	</div>
@@ -419,7 +419,7 @@
 			};
 
 
-			FTA_INCOTERMS.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_ftaInfo", columnLayout, gridProps, "check");
+			FTA_INCOTERMS.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_ftaIncoterms", columnLayout, gridProps, "check");
 			
 			//Year Picker가 정상적으로 뜨지 않아서 CUSTOM으로 생성
 			AUIGrid.bind(FTA_INCOTERMS.gridId, "cellClick", function (event) {

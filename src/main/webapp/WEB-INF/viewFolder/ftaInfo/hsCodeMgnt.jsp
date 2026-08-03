@@ -58,7 +58,7 @@
 				<div id="oAuiGrid_leftGrid" class="w-100 h-95" ></div>
 			</div>
 			<div class="right-grid-area h-full" >
-				<div class="w-100" >
+				<div class="w-100 h-full" >
 			    	<div class="grid-title mb-1">HS 코드 정보</div>
 			    	<div class="detail-card mb-3">
 			    		<div class="detail-card-row">
