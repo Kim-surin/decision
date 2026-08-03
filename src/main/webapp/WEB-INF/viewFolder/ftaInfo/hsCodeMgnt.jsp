@@ -20,7 +20,7 @@
 			</div>
 		</div>
 		<div class="row">
-			<form:form id="HS_CODE_MGNT-form" class="s4-form" novalidate="novalidate" onsubmit="HS_CODE_MGNT.retrieve_leftGridData(); return false;">
+			<form:form id="HSCODE_MGNT-form" class="s4-form" novalidate="novalidate" onsubmit="HSCODE_MGNT.retrieve_leftGridData(); return false;">
 				<input type="hidden" id="popParam"/>
 				<div id="panel-4" class="panel panel-icon">
 					<div class="panel-container show">
@@ -42,7 +42,7 @@
 								</div>
 								<div class="col">
 									<button type="button"
-										onclick="javascript:HS_CODE_MGNT.retrieve_leftGridData();"
+										onclick="javascript:HSCODE_MGNT.retrieve_leftGridData();"
 										class="btn btn-sm btn-search search-no-more waves-effect waves-themed">Search</button>
 								</div>
 							</div>
@@ -85,7 +85,7 @@
 
 <script type="text/javascript">
 
-	var HS_CODE_MGNT = new function () {
+	var HSCODE_MGNT = new function () {
 		this.gridIdL = null;
 		this.gridIdR = null;
 		this.state = {
@@ -94,8 +94,8 @@
 		
 	
 		this.Initialize_viewObject = function () {
-			HS_CODE_MGNT.createAUIGrid();
-		    HS_CODE_MGNT.retrieve_leftGridData();
+			HSCODE_MGNT.createAUIGrid();
+		    HSCODE_MGNT.retrieve_leftGridData();
 		}
 		
 		
@@ -157,19 +157,19 @@
 			};
 
 
-			HS_CODE_MGNT.gridIdL = KpackageOBJ.auiGrid.create("oAuiGrid_hsCodeMgnt_L", leftGridColumnLayout, gridProps, "");
-			HS_CODE_MGNT.gridIdR = KpackageOBJ.auiGrid.create("oAuiGrid_hsCodeMgnt_R", rightGridColumnLayout, gridProps, "");
+			HSCODE_MGNT.gridIdL = KpackageOBJ.auiGrid.create("oAuiGrid_hsCodeMgnt_L", leftGridColumnLayout, gridProps, "");
+			HSCODE_MGNT.gridIdR = KpackageOBJ.auiGrid.create("oAuiGrid_hsCodeMgnt_R", rightGridColumnLayout, gridProps, "");
 			
 			
 			//좌측GRID 이벤트 추가
 			
-			AUIGrid.bind(HS_CODE_MGNT.gridIdL, "selectionChange", function( event ) {
-				HS_CODE_MGNT.state['masterRow'] = event.selectedItems[0].item;
+			AUIGrid.bind(HSCODE_MGNT.gridIdL, "selectionChange", function( event ) {
+				HSCODE_MGNT.state['masterRow'] = event.selectedItems[0].item;
 				
-				$("#selHsCode").text(HS_CODE_MGNT.state['masterRow']['hs_code']);
-				$("#selHsCodeName").text(HS_CODE_MGNT.state['masterRow']['hs_code_name']);
-				$("#selHsCodeDesc").text(HS_CODE_MGNT.state['masterRow']['hs_code_desc']);
-				HS_CODE_MGNT.retrieve_rightGridData();
+				$("#selHsCode").text(HSCODE_MGNT.state['masterRow']['hs_code']);
+				$("#selHsCodeName").text(HSCODE_MGNT.state['masterRow']['hs_code_name']);
+				$("#selHsCodeDesc").text(HSCODE_MGNT.state['masterRow']['hs_code_desc']);
+				HSCODE_MGNT.retrieve_rightGridData();
 			});
 			
 			
@@ -177,29 +177,29 @@
 
 		//좌측그리드 조회
 		this.retrieve_leftGridData = function () {
-			KpackageOBJ.auiGrid.clearGridData(HS_CODE_MGNT.gridIdR);
+			KpackageOBJ.auiGrid.clearGridData(HSCODE_MGNT.gridIdR);
 			
 			
 			var params = {
-				"searchHsCode": KpackageOBJ.object.getFormValue("HS_CODE_MGNT-form", "searchHsCode")
+				"searchHsCode": KpackageOBJ.object.getFormValue("HSCODE_MGNT-form", "searchHsCode")
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(HS_CODE_MGNT.gridIdL, "/origin/ftaInfo/retrieveHsCodeList", params);
+			KpackageOBJ.auiGrid.retrieve(HSCODE_MGNT.gridIdL, "/origin/ftaInfo/retrieveHsCodeList", params);
 		}
 		
 		//우측그리드 조회
 		this.retrieve_rightGridData = function () {
 			var params = {
-				"selHsCode": HS_CODE_MGNT.state['masterRow']['hs_code']
+				"selHsCode": HSCODE_MGNT.state['masterRow']['hs_code']
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(HS_CODE_MGNT.gridIdR, "/origin/ftaInfo/retrieveHsCodePsrList", params);
+			KpackageOBJ.auiGrid.retrieve(HSCODE_MGNT.gridIdR, "/origin/ftaInfo/retrieveHsCodePsrList", params);
 		}
 	}
 
 
 	$(document).ready(function () {
-		HS_CODE_MGNT.Initialize_viewObject();
+		HSCODE_MGNT.Initialize_viewObject();
 
 	});
 
