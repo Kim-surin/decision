@@ -1,0 +1,157 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.coodecision.CooDecisionSupportDao">
+
+	<!-- ===================== GET_BUFFER ===================== -->
+
+	<select id="selectBufferOptionValue" resultType="string">
+		SELECT OPTION_VALUE
+		FROM   COMPANY_OPTION
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    OPTION_CODE = 'BF'
+	</select>
+
+	<select id="selectCompanyBuffer" resultType="com.kpmg.kdb.web.coodecision.dto.BufferRates">
+		SELECT COM_RVC_RATE        AS rvcRate
+		      ,COM_DE_MINIMIS_RATE AS deMinimisRate
+		FROM   COMPANY
+		WHERE  COMPANY_CODE = #{companyCode}
+	</select>
+
+	<select id="selectDivisionBuffer" resultType="com.kpmg.kdb.web.coodecision.dto.BufferRates">
+		SELECT DIV_RVC_RATE        AS rvcRate
+		      ,DIV_DE_MINIMIS_RATE AS deMinimisRate
+		FROM   DIVISION
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    DIVISION_CODE = #{divisionCode}
+	</select>
+
+	<select id="selectProductLineBuffer" resultType="com.kpmg.kdb.web.coodecision.dto.BufferRates">
+		SELECT PL.PRD_RVC_RATE        AS rvcRate
+		      ,PL.PRD_DE_MINIMIS_RATE AS deMinimisRate
+		FROM   PRODUCT_LINE PL
+		      ,ITEM_MST     ID
+		WHERE  ID.COMPANY_CODE = #{companyCode}
+		AND    ID.ITEM_CODE = #{productCode}
+		AND    ID.PRODUCT_CODE = PL.PRODUCT_CODE
+		AND    ID.COMPANY_CODE = PL.COMPANY_CODE
+	</select>
+
+	<select id="selectFtaBuffer" resultType="com.kpmg.kdb.web.coodecision.dto.BufferRates">
+		SELECT COM_RVC_RATE        AS rvcRate
+		      ,COM_DE_MINIMIS_RATE AS deMinimisRate
+		FROM   FTA_MASTER
+		WHERE  FTA_CODE = #{ftaCode}
+	</select>
+
+	<!-- ===================== GET_MP_ITEM ===================== -->
+
+	<select id="selectMinimalProcessItemCount" resultType="long">
+		SELECT COUNT(1)
+		FROM   SALES_MST SM
+		INNER  JOIN SALES_DTL SD
+		ON     SD.SALES_NO = SM.SALES_NO
+		AND    SD.COMPANY_CODE = SM.COMPANY_CODE
+		AND    SD.DIVISION_CODE = SM.DIVISION_CODE
+		INNER  JOIN MINIMAL_PROCESS_ITEM MP
+		ON     MP.COMPANY_CODE = SD.COMPANY_CODE
+		AND    MP.DIVISION_CODE = SD.DIVISION_CODE
+		AND    MP.ITEM_CODE = SD.PRODUCT_CODE
+		AND    SM.INVOICE_DATE BETWEEN MP.APPLY_DATE AND MP.END_DATE
+		WHERE  SM.COMPANY_CODE = #{companyCode}
+		AND    SM.DIVISION_CODE = #{divisionCode}
+		AND    SM.SALES_NO = #{salesNo}
+		AND    SD.SALES_SEQ = #{salesSeq}
+	</select>
+
+	<!-- ===================== GET_RCEP_NATION / GET_RCEP_RVC_NATION 공용 ===================== -->
+
+	<select id="selectFtaApplyNations" resultType="string">
+		SELECT NATION_CODE
+		FROM   FTA_APPLY_NATION
+		WHERE  FTA_CODE = #{ftaCode}
+	</select>
+
+	<!-- ===================== INSERT_FRD_PROCESS ===================== -->
+
+	<select id="selectNextFcrResultSeq" resultType="long">
+		SELECT FCR_RESULT_SEQ_S.NEXTVAL
+	</select>
+
+	<insert id="insertFcrResult" parameterType="com.kpmg.kdb.web.coodecision.dto.FcrResultRecord">
+		INSERT INTO FCR_RESULT
+			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
+			 RVC_RATE, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE, CREATE_BY, UPDATE_DATE,
+			 UPDATE_BY, SP_COO_YN, WO_COO_YN, CTC_YN, FTA_DE_MINIMIS_YN, COMPANY_DE_MINIMIS_YN,
+			 FTA_RVC_YN, COMPANY_RVC_YN, EXCLUSION_YN, EXCLUSION_CONDITION, CTC_RESULT_RATE,
+			 CTC_FTA_RESULT_RATE, CTC_COMPANY_RESULT_RATE, RVC_RESULT_RATE, RVC_FTA_RESULT_RATE,
+			 RVC_COMPANY_RESULT_RATE, RCEP_COO_NATION)
+		VALUES
+			(#{seq}, #{salesNo}, #{salesSeq}, #{ftaCode}, #{divisionCode}, #{companyCode}, #{hsCode},
+			 #{productCode}, #{standard}, #{ruleSeq}, #{ruleCode}, #{ftaCooYn}, #{companyCooYn},
+			 #{bufferOption}, #{deMinimisRate}, #{rvcRate}, #{status}, #{errorCode}, #{errorMsg},
+			 #{deleteYn}, CURRENT_TIMESTAMP, #{createBy}, CURRENT_TIMESTAMP, #{updateBy}, #{spCooYn},
+			 #{woCooYn}, #{ctcYn}, #{ftaDeMinimisYn}, #{companyDeMinimisYn}, #{ftaRvcYn}, #{companyRvcYn},
+			 #{exclusionYn}, #{exclusionCondition}, #{ctcResultRate}, #{ctcFtaResultRate},
+			 #{ctcCompanyResultRate}, #{rvcResultRate}, #{rvcFtaResultRate}, #{rvcCompanyResultRate},
+			 #{rcepCooNation})
+	</insert>
+
+	<!-- ===================== UPDATE_FRM_PROCEDURE ===================== -->
+
+	<sql id="fcrResultColumns">
+		SEQ AS seq, SALES_NO AS salesNo, SALES_SEQ AS salesSeq, FTA_CODE AS ftaCode,
+		DIVISION_CODE AS divisionCode, COMPANY_CODE AS companyCode, HS_CODE AS hsCode,
+		PRODUCT_CODE AS productCode, STANDARD AS standard, RULE_SEQ AS ruleSeq, RULE_CODE AS ruleCode,
+		FTA_COO_YN AS ftaCooYn, COMPANY_COO_YN AS companyCooYn, BUFFER_OPTION AS bufferOption,
+		DE_MINIMIS_RATE AS deMinimisRate, RVC_RATE AS rvcRate, STATUS AS status, ERROR_CODE AS errorCode,
+		ERROR_MSG AS errorMsg, SP_COO_YN AS spCooYn, WO_COO_YN AS woCooYn, CTC_YN AS ctcYn,
+		FTA_DE_MINIMIS_YN AS ftaDeMinimisYn, COMPANY_DE_MINIMIS_YN AS companyDeMinimisYn,
+		FTA_RVC_YN AS ftaRvcYn, COMPANY_RVC_YN AS companyRvcYn, EXCLUSION_YN AS exclusionYn,
+		EXCLUSION_CONDITION AS exclusionCondition, CTC_RESULT_RATE AS ctcResultRate,
+		CTC_FTA_RESULT_RATE AS ctcFtaResultRate, CTC_COMPANY_RESULT_RATE AS ctcCompanyResultRate,
+		RVC_RESULT_RATE AS rvcResultRate, RVC_FTA_RESULT_RATE AS rvcFtaResultRate,
+		RVC_COMPANY_RESULT_RATE AS rvcCompanyResultRate, RCEP_COO_NATION AS rcepCooNation
+	</sql>
+
+	<!--
+		원본은 ROWNUM = 1 만 사용하고 별도 정렬 기준이 없어(임의의 한 행) 그대로 이관한다.
+		ROWNUM 대신 목록을 반환하고 애플리케이션에서 첫 행만 사용해 동일하게 동작시킨다(DB 이식성).
+	-->
+	<select id="selectOwnCooFcrResult" resultType="com.kpmg.kdb.web.coodecision.dto.FcrResultRecord">
+		SELECT <include refid="fcrResultColumns"/>
+		FROM   FCR_RESULT FRD
+		WHERE  FRD.SALES_NO = #{salesNo}
+		AND    FRD.SALES_SEQ = #{salesSeq}
+		AND    FRD.FTA_CODE = #{ftaCode}
+		AND    FRD.DIVISION_CODE = #{divisionCode}
+		AND    FRD.COMPANY_CODE = #{companyCode}
+		AND    FRD.COMPANY_COO_YN = 'Y'
+	</select>
+
+	<select id="selectNonCooFcrResult" resultType="com.kpmg.kdb.web.coodecision.dto.FcrResultRecord">
+		SELECT <include refid="fcrResultColumns"/>
+		FROM   FCR_RESULT FRD
+		WHERE  FRD.SALES_NO = #{salesNo}
+		AND    FRD.SALES_SEQ = #{salesSeq}
+		AND    FRD.FTA_CODE = #{ftaCode}
+		AND    FRD.DIVISION_CODE = #{divisionCode}
+		AND    FRD.COMPANY_CODE = #{companyCode}
+		AND    FRD.COMPANY_COO_YN = 'N'
+		AND    FRD.STATUS = 'N'
+	</select>
+
+	<update id="updateFcrMstDecisionResult">
+		UPDATE FCR_MST
+		SET    RULE_CONTENTS   = #{ruleContents}
+		      ,FTA_COO_YN      = #{ftaCooYn}
+		      ,COMPANY_COO_YN  = #{companyCooYn}
+		      ,RCEP_COO_NATION = #{rcepCooNation}
+		WHERE  SALES_NO = #{salesNo}
+		AND    SALES_SEQ = #{salesSeq}
+		AND    FTA_CODE = #{ftaCode}
+		AND    DIVISION_CODE = #{divisionCode}
+		AND    COMPANY_CODE = #{companyCode}
+	</update>
+</mapper>
