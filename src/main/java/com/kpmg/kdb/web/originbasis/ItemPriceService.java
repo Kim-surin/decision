@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -41,31 +40,30 @@ public class ItemPriceService extends GeneralService {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
 
-			BigDecimal price = firstNonZero(dao.selectOwnDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm),
+			BigDecimal price = priceIfPositive(dao.selectOwnDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm),
 					MaterialBalanceTierRow::calculatePriceForPrice);
 			if (price != null) {
 				return price;
 			}
 
-			price = firstNonZero(dao.selectOtherDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm),
+			price = priceIfPositive(dao.selectOtherDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm),
 					MaterialBalanceTierRow::calculatePriceForPrice);
 			if (price != null) {
 				return price;
 			}
 
-			price = firstNonZero(dao.selectRecentPurchasePrice(criteria, window.fromYyyyMmdd, window.toYyyyMmdd),
+			price = priceIfPositive(dao.selectRecentPurchasePrice(criteria, window.fromYyyyMmdd, window.toYyyyMmdd),
 					PoLedgerPriceRow::getUnitPrice);
 			if (price != null) {
 				return price;
 			}
 
-			price = firstNonZero(dao.selectStandardCostByDivision(criteria), StandardCostRow::getStandardCostAmount);
+			price = priceIfPositive(dao.selectStandardCostByDivision(criteria), StandardCostRow::getStandardCostAmount);
 			if (price != null) {
 				return price;
 			}
 
-			price = firstNonZero(dao.selectStandardCostAnyDivision(criteria), StandardCostRow::getStandardCostAmount);
-			return price;
+			return priceIfPositive(dao.selectStandardCostAnyDivision(criteria), StandardCostRow::getStandardCostAmount);
 		} catch (Exception e) {
 			// 원본 EXCEPTION WHEN OTHERS THEN RETURN NULL; 과 동일
 			logger.error("재료비 조회 실패. criteria={}", criteria, e);
@@ -80,24 +78,24 @@ public class ItemPriceService extends GeneralService {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
 
-			List<MaterialBalanceTierRow> own = dao.selectOwnDivisionBalanceForNote(criteria, window.fromYyyyMm, window.toYyyyMm);
-			if (!own.isEmpty() && isPositive(own.get(0).calculatePriceForNote())) {
-				return own.get(0).buildPriceNoteText();
+			MaterialBalanceTierRow own = dao.selectOwnDivisionBalanceForNote(criteria, window.fromYyyyMm, window.toYyyyMm);
+			if (own != null && isPositive(own.calculatePriceForNote())) {
+				return own.buildPriceNoteText();
 			}
 
-			List<MaterialBalanceTierRow> other = dao.selectOtherDivisionBalanceForNote(criteria, window.fromYyyyMm, window.toYyyyMm);
-			if (!other.isEmpty() && isPositive(other.get(0).calculatePriceForNote())) {
-				return other.get(0).buildPriceNoteText();
+			MaterialBalanceTierRow other = dao.selectOtherDivisionBalanceForNote(criteria, window.fromYyyyMm, window.toYyyyMm);
+			if (other != null && isPositive(other.calculatePriceForNote())) {
+				return other.buildPriceNoteText();
 			}
 
-			List<PoLedgerPriceRow> purchase = dao.selectRecentPurchasePrice(criteria, window.fromYyyyMmdd, window.toYyyyMmdd);
-			if (!purchase.isEmpty() && isPositive(purchase.get(0).getUnitPrice())) {
-				return purchase.get(0).buildPriceNoteText();
+			PoLedgerPriceRow purchase = dao.selectRecentPurchasePrice(criteria, window.fromYyyyMmdd, window.toYyyyMmdd);
+			if (purchase != null && isPositive(purchase.getUnitPrice())) {
+				return purchase.buildPriceNoteText();
 			}
 
-			List<StandardCostRow> standard = dao.selectStandardCostByDivision(criteria);
-			if (!standard.isEmpty() && isPositive(standard.get(0).getStandardCostAmount())) {
-				return standard.get(0).buildPriceNoteText();
+			StandardCostRow standard = dao.selectStandardCostByDivision(criteria);
+			if (standard != null && isPositive(standard.getStandardCostAmount())) {
+				return standard.buildPriceNoteText();
 			}
 
 			// 원본에는 division 필터 없는 4b 단계가 존재하지 않는다(FC10_GET_ITEM_PRICE 에만 있음)
@@ -113,11 +111,11 @@ public class ItemPriceService extends GeneralService {
 		return companySettingService.getIntSettingValue(criteria.getCompanyCode(), "MA", 12);
 	}
 
-	private static <T> BigDecimal firstNonZero(List<T> rows, java.util.function.Function<T, BigDecimal> priceFn) {
-		if (rows.isEmpty()) {
+	private static <T> BigDecimal priceIfPositive(T row, java.util.function.Function<T, BigDecimal> priceFn) {
+		if (row == null) {
 			return null;
 		}
-		BigDecimal price = priceFn.apply(rows.get(0));
+		BigDecimal price = priceFn.apply(row);
 		return isPositive(price) ? price : null;
 	}
 

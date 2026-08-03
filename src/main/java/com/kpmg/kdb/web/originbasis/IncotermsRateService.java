@@ -1,7 +1,6 @@
 package com.kpmg.kdb.web.originbasis;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -27,12 +26,11 @@ public class IncotermsRateService extends GeneralService {
 			+ "+ #criteria.toIncotermsCode")
 	public BigDecimal calculateChangeRate(IncotermsChangeRateCriteria criteria) {
 		try {
-			List<IncotermsRateRow> rows = sqlSession.getMapper(IncotermsRateDao.class).selectIncotermsInfo(criteria);
-			if (rows.isEmpty()) {
+			IncotermsRateRow row = sqlSession.getMapper(IncotermsRateDao.class).selectIncotermsInfo(criteria);
+			if (row == null) {
 				return BigDecimal.ONE;
 			}
 
-			IncotermsRateRow row = rows.get(0);
 			IncotermsCode fromCode = IncotermsCode.fromCode(criteria.getFromIncotermsCode());
 			IncotermsCode toCode = IncotermsCode.fromCode(criteria.getToIncotermsCode());
 

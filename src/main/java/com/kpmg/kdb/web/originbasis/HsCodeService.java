@@ -1,7 +1,5 @@
 package com.kpmg.kdb.web.originbasis;
 
-import java.util.List;
-
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -24,14 +22,12 @@ public class HsCodeService extends GeneralService {
 			+ "+ #criteria.ftaCode + ':' + #criteria.resolvedBaseDate")
 	public String resolveHsCode(HsCodeCriteria criteria) {
 		try {
-			List<HsCodeCandidateRow> candidates = sqlSession.getMapper(HsCodeDao.class)
-					.selectHsCodeCandidates(criteria);
-
-			if (candidates.isEmpty()) {
+			HsCodeCandidateRow candidate = sqlSession.getMapper(HsCodeDao.class).selectHsCodeCandidates(criteria);
+			if (candidate == null) {
 				return "";
 			}
 
-			String hsCode = candidates.get(0).resolvePriorityHsCode();
+			String hsCode = candidate.resolvePriorityHsCode();
 			return hsCode == null ? "" : hsCode;
 		} catch (Exception e) {
 			// 원본 EXCEPTION WHEN OTHERS THEN RETURN(''); 과 동일하게 조회 실패 시 빈 문자열 반환

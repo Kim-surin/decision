@@ -6,7 +6,8 @@
 		- DECODE(...) 컬럼 피벗은 제거하고 전체 요율 컬럼을 반환한다 (선택은 Java IncotermsCode 에서 수행).
 		- 원본은 "STD_YYYY 이하 중 최댓값"을 구하는 상관 서브쿼리를 사용했으나, 바깥 WHERE 절과 동일한
 		  DIVISION_CODE/INCOTERMS_TYPE/NATION_CODE 로 이미 좁혀져 있어 ORDER BY DESC 로 대체 가능하다.
-		  (ROWNUM 도 제거 - 첫 행 선택은 애플리케이션에서 수행)
+		- Oracle 전용 ROWNUM 대신 ANSI 표준 FETCH FIRST 1 ROW ONLY 로 DB에서 1건만 잘라 전송한다
+		  (연차가 쌓일수록 STD_YYYY 이력이 늘어나는 테이블이라 LIMIT 없이는 매번 더 많은 행을 읽게 된다).
 	-->
 	<select id="selectIncotermsInfo" parameterType="com.kpmg.kdb.web.originbasis.dto.IncotermsChangeRateCriteria"
 		resultType="com.kpmg.kdb.web.originbasis.dto.IncotermsRateRow">
@@ -29,5 +30,6 @@
 		AND    FII.NATION_CODE = #{nationCode}
 		AND    FII.STD_YYYY &lt;= #{stdYyyy}
 		ORDER  BY FII.STD_YYYY DESC
+		FETCH FIRST 1 ROW ONLY
 	</select>
 </mapper>

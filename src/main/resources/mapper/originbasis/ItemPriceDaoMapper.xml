@@ -6,7 +6,9 @@
 		- ADD_MONTHS/TO_CHAR/TO_DATE 등 Oracle 날짜 함수는 제거하고, 조회 기간(YYYYMM/YYYYMMDD 범위)은
 		  ItemPriceService 에서 java.time 으로 계산하여 단순 문자열 파라미터로 전달한다.
 		- 단가 계산(CASE WHEN 우선순위 등)은 SQL이 아닌 MaterialBalanceTierRow 에서 Java로 수행한다.
-		- ROWNUM = 1 은 사용하지 않고 ORDER BY + 애플리케이션에서 첫 행 선택으로 대체한다.
+		- Oracle 전용 ROWNUM = 1 대신 ANSI 표준 FETCH FIRST 1 ROW ONLY 를 사용해 DB에서 1건만
+		  잘라 전송한다. 특히 selectRecentPurchasePrice 는 원본에 없던 제약이 없으면 조회기간(최대
+		  12개월) 내 구매이력이 많을수록 불필요하게 많은 행을 읽어오게 되므로 반드시 필요하다.
 	-->
 
 	<select id="selectOwnDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
@@ -29,6 +31,7 @@
 		AND    ML.ITEM_CODE = #{c.itemCode}
 		AND    ML.DIVISION_CODE = #{c.divisionCode}
 		AND    ML.COMPANY_CODE = #{c.companyCode}
+		FETCH FIRST 1 ROW ONLY
 	</select>
 
 	<select id="selectOtherDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
@@ -50,6 +53,7 @@
 		AND    ML.ITEM_CODE = #{c.itemCode}
 		AND    ML.COMPANY_CODE = #{c.companyCode}
 		ORDER  BY ML.DIVISION_CODE
+		FETCH FIRST 1 ROW ONLY
 	</select>
 
 	<select id="selectOwnDivisionBalanceForNote" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
@@ -72,6 +76,7 @@
 		AND    ML.ITEM_CODE = #{c.itemCode}
 		AND    ML.DIVISION_CODE = #{c.divisionCode}
 		AND    ML.COMPANY_CODE = #{c.companyCode}
+		FETCH FIRST 1 ROW ONLY
 	</select>
 
 	<select id="selectOtherDivisionBalanceForNote" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
@@ -93,6 +98,7 @@
 		AND    ML.ITEM_CODE = #{c.itemCode}
 		AND    ML.COMPANY_CODE = #{c.companyCode}
 		ORDER  BY ML.DIVISION_CODE
+		FETCH FIRST 1 ROW ONLY
 	</select>
 
 	<!-- 두 함수 공용: 최근 구매단가(PO_LEDGER). 원본의 WAREHOUSING_DATE DESC, WAREHOUSING_NO DESC 정렬을 그대로 유지 -->
@@ -108,6 +114,7 @@
 		AND    PL.UNIT_PRICE > 0
 		AND    PL.WAREHOUSING_DATE BETWEEN #{fromYyyyMmdd} AND #{toYyyyMmdd}
 		ORDER  BY PL.WAREHOUSING_DATE DESC, PL.WAREHOUSING_NO DESC
+		FETCH FIRST 1 ROW ONLY
 	</select>
 
 	<!--
@@ -125,6 +132,7 @@
 		AND    SC.ITEM_CODE = #{c.itemCode}
 		AND    #{c.resolvedBaseDate} BETWEEN SC.APPLY_DATE AND COALESCE(SC.END_DATE, '99991231')
 		ORDER  BY SC.APPLY_DATE DESC
+		FETCH FIRST 1 ROW ONLY
 	</select>
 
 	<!-- FC10_GET_ITEM_PRICE 전용 최종 fallback(division 필터 없음). NOTE 함수에는 대응 단계가 없다 -->
@@ -137,5 +145,6 @@
 		AND    SC.ITEM_CODE = #{c.itemCode}
 		AND    #{c.resolvedBaseDate} BETWEEN SC.APPLY_DATE AND COALESCE(SC.END_DATE, '99991231')
 		ORDER  BY SC.APPLY_DATE DESC
+		FETCH FIRST 1 ROW ONLY
 	</select>
 </mapper>
