@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.ftaInfo.ftaIncoterms.FtaIncotermsDao">
+	
+ 	<select id="retrieveFtaIncotermsList" parameterType="HashMap" resultType="HashMap">
+		SELECT A.STD_YYYY                  
+             , A.DIVISION_CODE            
+             , A.INCOTERMS_TYPE           
+             , A.NATION_CODE               
+             , B.CODE_NAME AS NATION_NAME
+             , A.EXW_RATE                  
+             , A.FCA_RATE                  
+             , A.FAS_RATE                  
+             , A.FOB_RATE                  
+             , A.CFR_RATE                  
+             , A.CIF_RATE                
+             , A.CPT_RATE                  
+             , A.CIP_RATE               
+             , A.DAP_RATE
+             , A.DPU_RATE                
+             , A.DDP_RATE                 
+          FROM FTA_INCOTERMS_INFO A
+    LEFT OUTER JOIN CODE_DTL B
+            ON B.CODE = A.NATION_CODE
+           AND B.COMPANY_CODE = A.COMPANY_CODE
+           AND B.CATEGORY = 'NA'
+         WHERE A.COMPANY_CODE = #{company_code}
+           AND A.STD_YYYY = #{searchStdYyyy}
+      ORDER BY A.DIVISION_CODE, A.NATION_CODE 
+ 	</select>
+ 	
+	<select id="retrieveFtaIncoterms" parameterType="HashMap" resultType="Integer">
+		SELECT COUNT(*)
+          FROM FTA_INCOTERMS_INFO A
+         WHERE A.COMPANY_CODE = #{company_code}
+           AND A.STD_YYYY = #{std_yyyy}
+           AND A.DIVISION_CODE = #{division_code}
+           AND A.INCOTERMS_TYPE = #{incoterms_type}
+           AND A.NATION_CODE = #{nation_code}      
+ 	</select>
+ 	
+ 	<insert id="insertFtaIncoterms">
+ 		INSERT INTO FTA_INCOTERMS_INFO
+ 		( COMPANY_CODE
+ 		, STD_YYYY                  
+        , DIVISION_CODE            
+        , INCOTERMS_TYPE           
+        , NATION_CODE               
+        , EXW_RATE                  
+        , FCA_RATE                  
+        , FAS_RATE                  
+        , FOB_RATE                  
+        , CFR_RATE                  
+        , CIF_RATE                
+        , CPT_RATE                  
+        , CIP_RATE               
+        , DAP_RATE
+        , DPU_RATE                
+        , DDP_RATE
+        , CREATE_DATE
+        , CREATE_BY
+        , UPDATE_DATE
+        , UPDATE_BY    
+ 		)
+ 		VALUES
+ 		( #{company_code}
+ 		, #{std_yyyy}                  
+        , #{division_code}            
+        , #{incoterms_type}           
+        , #{nation_code}               
+        , #{exw_rate}                  
+        , #{fca_rate}                  
+        , #{fas_rate}                  
+        , #{fob_rate}                  
+        , #{cfr_rate}                  
+        , #{cif_rate}                
+        , #{cpt_rate}                  
+        , #{cip_rate}               
+        , #{dap_rate}
+        , #{dpu_rate}               
+        , #{ddp_rate}
+        , NOW()
+        , #{update_by}
+        , NOW()
+        , #{update_by} 
+ 		)
+ 	</insert>
+ 	
+ 	<update id="updateFtaIncoterms">
+ 		UPDATE FTA_INCOTERMS_INFO
+ 		   SET EXW_RATE =  #{exw_rate}                  
+             , FCA_RATE =  #{fca_rate}                 
+             , FAS_RATE =  #{fas_rate}                  
+             , FOB_RATE =  #{fob_rate}                  
+             , CFR_RATE =  #{cfr_rate}                 
+             , CIF_RATE =  #{cif_rate}               
+             , CPT_RATE =  #{cpt_rate}                 
+             , CIP_RATE =  #{cip_rate}              
+             , DAP_RATE =  #{dap_rate}
+             , DPU_RATE =  #{dpu_rate}               
+             , DDP_RATE =  #{ddp_rate} 
+             , UPDATE_DATE = NOW()
+        	 , UPDATE_BY = #{update_by}
+         WHERE COMPANY_CODE = #{company_code}
+           AND STD_YYYY = #{std_yyyy}
+           AND DIVISION_CODE = #{division_code}
+           AND INCOTERMS_TYPE = #{incoterms_type}
+           AND NATION_CODE = #{nation_code}          
+ 	</update>
+ 	
+ 	<delete id="deleteFtaIncoterms">
+ 		DELETE FROM FTA_INCOTERMS_INFO
+ 		WHERE COMPANY_CODE = #{company_code}
+          AND STD_YYYY = #{std_yyyy}
+          AND DIVISION_CODE = #{division_code}
+          AND INCOTERMS_TYPE = #{incoterms_type}
+          AND NATION_CODE = #{nation_code}       	
+ 	</delete>
+</mapper>

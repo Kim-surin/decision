@@ -1499,6 +1499,452 @@ var KpackageOBJ = {
             });
         },
     }, // selectbox End
+    
+	yearPicker: {
+	
+	    create: function (objId, startYear, endYear, value) {
+	
+	        var $input = $("#" + objId);
+	
+	        if (!$input.length) {
+	            return;
+	        }
+	
+	        var currentYear = new Date().getFullYear();
+	
+	        if (oUtil.isNull(startYear)) {
+	            startYear = currentYear - 10;
+	        }
+	
+	        if (oUtil.isNull(endYear)) {
+	            endYear = currentYear + 10;
+	        }
+	
+	        /*
+	         * value가 넘어온 경우에만 input에 기본값 설정
+	         */
+	        if (
+	            oUtil.isNull($input.val()) &&
+	            !oUtil.isNull(value)
+	        ) {
+	            $input.val(value);
+	        }
+	
+	        $input
+	            .attr("readonly", true)
+	            .off("click.yearPicker")
+	            .on("click.yearPicker", function (event) {
+	
+	                event.preventDefault();
+	                event.stopPropagation();
+	
+	                var inputElement = this;
+	
+	                KpackageOBJ.yearPicker.open(
+	                    inputElement,
+	                    startYear,
+	                    endYear,
+	                    $(inputElement).val(),
+	                    function (year) {
+	                        $(inputElement)
+	                            .val(year)
+	                            .trigger("change");
+	                    }
+	                );
+	            });
+	    },
+	
+	
+	    open: function (
+	        target,
+	        startYear,
+	        endYear,
+	        selectedValue,
+	        callback
+	    ) {
+	
+	        var currentYear = new Date().getFullYear();
+	
+	        if (oUtil.isNull(startYear)) {
+	            startYear = currentYear - 10;
+	        }
+	
+	        if (oUtil.isNull(endYear)) {
+	            endYear = currentYear + 10;
+	        }
+	
+	        startYear = Number(startYear);
+	        endYear = Number(endYear);
+	
+	        /*
+	         * 선택값은 값이 있는 경우에만 숫자로 변환
+	         */
+	        if (!oUtil.isNull(selectedValue)) {
+	            selectedValue = Number(
+	                String(selectedValue).substring(0, 4)
+	            );
+	        } else {
+	            selectedValue = null;
+	        }
+	
+	        /*
+	         * 기존에 열려 있는 연도 팝업 제거
+	         */
+	        $(".custom-year-picker").remove();
+	
+	        var pickerId =
+	            "yearPicker_" +
+	            new Date().getTime() +
+	            "_" +
+	            Math.floor(Math.random() * 1000);
+	
+	        var $popup = $(
+	            '<div id="' + pickerId + '" ' +
+	                 'class="custom-year-picker">' +
+	
+	                '<div class="custom-year-picker-header">' +
+	
+	                    '<button type="button" ' +
+	                            'class="year-prev-btn">' +
+	                        '&lt;' +
+	                    '</button>' +
+	
+	                    '<span class="year-range-title"></span>' +
+	
+	                    '<button type="button" ' +
+	                            'class="year-next-btn">' +
+	                        '&gt;' +
+	                    '</button>' +
+	
+	                '</div>' +
+	
+	                '<div class="custom-year-picker-body"></div>' +
+	
+	            '</div>'
+	        );
+	
+	        /*
+	         * CSS에 display:none이 있어도 보이도록 강제 설정
+	         */
+	        $popup.css({
+	            display: "block",
+	            position: "absolute",
+	            zIndex: 999999
+	        });
+	
+	        $("body").append($popup);
+	
+	        var pageSize = 12;
+	        var columnCount = 4;
+	
+	        /*
+	         * 선택된 값이 있으면 선택값 기준 페이지
+	         * 없으면 시작 연도 기준 페이지
+	         */
+	        var baseYear =
+	            selectedValue !== null
+	                ? selectedValue
+	                : startYear;
+	
+	        var pageStartYear =
+	            Math.floor(baseYear / pageSize) * pageSize;
+	
+	
+	        function renderYears() {
+	
+	            var $body =
+	                $popup.find(".custom-year-picker-body");
+	
+	            $body.empty();
+	
+	            $body.css({
+	                display: "grid",
+	                gridTemplateColumns:
+	                    "repeat(" + columnCount + ", 1fr)"
+	            });
+	
+	            $popup
+	                .find(".year-range-title")
+	                .text(
+	                    pageStartYear +
+	                    " - " +
+	                    (pageStartYear + pageSize - 1)
+	                );
+	
+	            for (
+	                var year = pageStartYear;
+	                year < pageStartYear + pageSize;
+	                year++
+	            ) {
+	
+	                /*
+	                 * 반복문 안에서 클릭 연도를 보존하기 위해
+	                 * 별도 함수로 생성
+	                 */
+	                createYearButton(year);
+	            }
+	        }
+	
+	
+	        function createYearButton(year) {
+	
+	            var $button = $("<button>", {
+	                type: "button",
+	                text: year,
+	                class: "year-item"
+	            });
+	
+	            if (
+	                selectedValue !== null &&
+	                selectedValue === year
+	            ) {
+	                $button.addClass("selected");
+	            }
+	
+	            if (
+	                year < startYear ||
+	                year > endYear
+	            ) {
+	                $button.prop("disabled", true);
+	            }
+	
+	            $button.on("click", function (event) {
+	
+	                event.preventDefault();
+	                event.stopPropagation();
+	
+	                if ($button.prop("disabled")) {
+	                    return;
+	                }
+	
+	                if ($.isFunction(callback)) {
+	                    callback(year);
+	                }
+	
+	                closePopup();
+	            });
+	
+	            $popup
+	                .find(".custom-year-picker-body")
+	                .append($button);
+	        }
+	
+	
+	        function closePopup() {
+	
+	            $(document).off(
+	                "mousedown." + pickerId
+	            );
+	
+	            $(window).off(
+	                "resize." + pickerId +
+	                " scroll." + pickerId
+	            );
+	
+	            $popup.remove();
+	        }
+	
+	
+	        /*
+	         * 좌표 객체로 호출한 경우
+	         * AUIGrid에서 사용
+	         */
+	        if (
+	            target &&
+	            typeof target === "object" &&
+	            target.pageX !== undefined &&
+	            target.pageY !== undefined
+	        ) {
+	
+	            $popup.css({
+	                left: Number(target.pageX),
+	                top: Number(target.pageY) + 5
+	            });
+	
+	        } else {
+	
+	            /*
+	             * 일반 input DOM으로 호출한 경우
+	             */
+	            var $target = $(target);
+	
+	            if (!$target.length) {
+	                closePopup();
+	                return;
+	            }
+	
+	            var offset = $target.offset();
+	
+	            if (!offset) {
+	                closePopup();
+	                return;
+	            }
+	
+	            $popup.css({
+	                left: offset.left,
+	                top:
+	                    offset.top +
+	                    $target.outerHeight() +
+	                    5,
+	                minWidth: $target.outerWidth()
+	            });
+	        }
+	
+	
+	        renderYears();
+	
+	
+	        /*
+	         * 팝업 내부 클릭 시 닫히지 않게 처리
+	         */
+	        $popup.on(
+	            "mousedown.yearPicker click.yearPicker",
+	            function (event) {
+	                event.stopPropagation();
+	            }
+	        );
+	
+	
+	        $popup
+	            .find(".year-prev-btn")
+	            .on("click", function (event) {
+	
+	                event.preventDefault();
+	                event.stopPropagation();
+	
+	                pageStartYear -= pageSize;
+	
+	                renderYears();
+	            });
+	
+	
+	        $popup
+	            .find(".year-next-btn")
+	            .on("click", function (event) {
+	
+	                event.preventDefault();
+	                event.stopPropagation();
+	
+	                pageStartYear += pageSize;
+	
+	                renderYears();
+	            });
+	
+	
+	        /*
+	         * 팝업을 연 클릭 이벤트가 종료된 다음
+	         * 외부 클릭 이벤트 등록
+	         */
+	        setTimeout(function () {
+	
+	            $(document).on(
+	                "mousedown." + pickerId,
+	                function (event) {
+	
+	                    if (
+	                        $(event.target).closest(
+	                            "#" + pickerId
+	                        ).length
+	                    ) {
+	                        return;
+	                    }
+	
+	                    closePopup();
+	                }
+	            );
+	
+	        }, 0);
+	
+	
+	        /*
+	         * 화면이 움직이면 팝업 종료
+	         */
+	        $(window).on(
+	            "resize." + pickerId +
+	            " scroll." + pickerId,
+	            function () {
+	                closePopup();
+	            }
+	        );
+	    },
+	
+	
+	    getValue: function (objId) {
+	        return $("#" + objId).val();
+	    },
+	
+	
+	    setValue: function (objId, yearValue) {
+	
+	        /*
+	         * 기존 코드의 .val(value)는
+	         * value 변수가 선언되지 않아 오류 발생
+	         */
+	        var $input = $("#" + objId);
+	
+	        if (!$input.length) {
+	            return;
+	        }
+	
+	        if (oUtil.isNull(yearValue)) {
+	            $input
+	                .val("")
+	                .trigger("change");
+	
+	            return;
+	        }
+	
+	        var year =
+	            String(yearValue).substring(0, 4);
+	
+	        $input
+	            .val(year)
+	            .trigger("change");
+	    },
+	
+	    close: function () {
+
+		    $(".custom-year-picker").remove();
+		
+		    $(document).off(".yearPickerPopup");
+		    $(window).off(".yearPickerPopup");
+		},
+	
+	    disable: function (objId, disabled) {
+	
+	        if (oUtil.isNull(disabled)) {
+	            disabled = true;
+	        }
+	
+	        var $input =
+	            $("#" + objId);
+	
+	        $input.prop("disabled", disabled);
+	
+	        if (disabled) {
+	            $(".custom-year-picker").remove();
+	        }
+	    },
+	
+	
+	    destroy: function (objId) {
+	
+	        var $input =
+	            $("#" + objId);
+	
+	        $input.off(".yearPicker");
+	
+	        $(".custom-year-picker").remove();
+	    },
+	
+	
+	    _getPageStartYear: function (
+	        year,
+	        pageSize
+	    ) {
+	        return Math.floor(year / pageSize) * pageSize;
+	    }
+	},
 
     monthPicker: {
         create: function(ofmId, objId, startYear) {
@@ -4618,7 +5064,7 @@ var KpackageOBJ = {
     /************************************************ */
 
     "auiGrid": {
-        "gridProps": {
+		"gridProps": {
 			// select UI 에 출력 시킬 옵션값들 (기본값 : [10, 20, 30, 40, 50])
 			pageRowSelectValues : [50, 100, 150, 200, 250],
             // 편집 가능 여부 (기본값 : false)
@@ -4684,7 +5130,15 @@ var KpackageOBJ = {
             return AUIGrid.create("#" + p_AuiGridId, p_ColumnLayout, final_GridProps);
 
 
-        },
+        },  
+        /**
+		 * 그리드 데이터를 모두 초기화하여 빈 그리드로 만듭니다.
+		 * Auigrid 데이터 조회
+		 * 
+		 */ 
+        "clearGridData" : function(p_TargetGridId) {
+	   		AUIGrid.clearGridData(p_TargetGridId);
+		},
 
         "remove": function(p_AuiGridId) {
             AUIGrid.destroy("#" + p_AuiGridId);
@@ -5100,9 +5554,32 @@ var KpackageOBJ = {
 		 */
 		"isAddedByRowIndex" : function(p_AuiGridId, rowIndex) {
 			return AUIGrid.isAddedByRowIndex(p_AuiGridId, rowIndex);
-		}
+		},
 
+		/**
+		 * 그리드의 특정 셀의 값을 변경합니다.
+		 * 
+		 * 파라메터 설명
+		 * 	rowIndex : (Number) 행 인덱스
+		 * 	colField : dataField or columnIndex(String or Number) : 변경하고자 하는 칼럼의 dataField 또는 칼럼 인덱스
+		 *  value (Object) : 변경하고자 하는 값
+		 */
+		"setCellValue" : function(p_AuiGridId, rowIndex , colField, value){
+			return AUIGrid.setCellValue(p_AuiGridId, rowIndex, colField, value);
+		},
 		
+		
+		/**
+		 * 그리드 데이터를 설정합니다. 그리드 데이터는 반드시 배열요소가 Object 인 배열(Array) 여야 합니다.
+		 * 
+		 * 파라메터 설명
+		 * 	data (Array) : 그리드가 표현할 데이터 배열
+		 */
+		"setGridData" : function(p_AuiGridId, data){
+			AUIGrid.setGridData(p_AuiGridId, data);
+		}
+		
+		 
 		
     }
 
@@ -5609,3 +6086,5 @@ function randFloat(min, max, fixed) {
 
 	return Number((Math.random() * (max - min) + min).toFixed(fixed));
 }
+
+

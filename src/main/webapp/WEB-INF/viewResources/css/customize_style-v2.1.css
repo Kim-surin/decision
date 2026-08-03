@@ -1110,6 +1110,123 @@ table.table-bordered td:last-child, table.table-bordered th:last-child{
     overflow-x: hidden;
 }
 
+/**********************************************************************************************************
+YEAR PICKER
+***********************************************************************************************************/
+
+.year-picker-input {
+    width: 100%;
+    height: 34px;
+    padding: 0 36px 0 12px;
+    border: 1px solid #d6dde8;
+    border-radius: 6px;
+    background:
+        #fff
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236b778c' stroke-width='2'%3E%3Crect x='3' y='4' width='18' height='17' rx='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E")
+        no-repeat right 10px center;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.year-picker-input:focus {
+    border-color: #5687d8;
+    box-shadow: 0 0 0 2px rgba(86, 135, 216, 0.13);
+}
+
+.custom-year-picker {
+    position: absolute;
+    display: none;
+    width: 260px;
+    padding: 12px;
+    border: 1px solid #d9e0ea;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(33, 47, 69, 0.16);
+    box-sizing: border-box;
+    z-index: 99999;
+}
+
+.custom-year-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 34px;
+    margin-bottom: 10px;
+}
+
+.year-range-title {
+    color: #26364d;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.year-page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #64748b;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.year-page-btn:hover {
+    background: #f1f5f9;
+    color: #3268b2;
+}
+
+.custom-year-picker-body {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.year-item {
+    height: 34px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: #fff;
+    color: #344054;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.year-item:hover {
+    border-color: #b9cff0;
+    background: #edf4ff;
+    color: #2862ad;
+}
+
+.year-item.current {
+    border-color: #9abbe9;
+    color: #2862ad;
+    font-weight: 600;
+}
+
+.year-item.selected {
+    border-color: #3e73bd;
+    background: #3e73bd;
+    color: #fff;
+    font-weight: 600;
+}
+
+.year-item:disabled {
+    background: #f8fafc;
+    color: #c4cad3;
+    cursor: not-allowed;
+}
+
+/**********************************************************************************************************
+Bootstrap CSS Style Add
 /**********************************************************************************************************/
 
 /* Width */

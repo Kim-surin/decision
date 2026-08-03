@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.commonPop.CommonPopDao">
+	
+ 	<select id="retrieveComCodeList" parameterType="HashMap" resultType="HashMap">
+		 SELECT M.CATEGORY
+		      , M.CATEGORY_NAME
+		      , D.CODE
+		      , D.CODE_NAME
+		   FROM CODE_MST M
+		  INNER JOIN CODE_DTL D
+		     ON M.CATEGORY = D.CATEGORY
+			AND M.COMPANY_CODE = D.COMPANY_CODE
+		  WHERE M.COMPANY_CODE = #{company_code}
+		    AND M.CATEGORY = #{searchText}
+			AND D.DELETE_YN = 'N'
+	   ORDER BY D.SORT_NO 
+		 
+ 	</select>
+ 	
+ 		
+ 	<select id="retrieveComNationList" parameterType="HashMap" resultType="HashMap">
+		 SELECT M.CATEGORY
+		      , M.CATEGORY_NAME
+		      , D.CODE
+		      , D.CODE_NAME
+		   FROM CODE_MST M
+		  INNER JOIN CODE_DTL D
+		     ON M.CATEGORY = D.CATEGORY
+			AND M.COMPANY_CODE = D.COMPANY_CODE
+		  WHERE M.COMPANY_CODE = #{company_code}
+		    AND M.CATEGORY = 'NA'
+	  		<if test="searchText != null and searchText != ''">
+			AND (D.CODE LIKE CONCAT(#{searchText} , '%') OR D.CODE_NAME LIKE CONCAT(#{searchText} , '%'))
+		    </if>
+			AND D.DELETE_YN = 'N'
+	   ORDER BY D.SORT_NO 
+		 
+ 	</select>
+ 	
+ 	<select id="retrieveComDivisionList" parameterType="HashMap" resultType="HashMap">
+		 SELECT D.DIVISION_CODE AS CODE
+		      , D.DIVISION_NAME AS NAME
+		   FROM DIVISION D
+		 WHERE D.COMPANY_CODE = #{company_code}
+		    <if test="searchText != null and searchText != ''">
+			AND (D.DIVISION_CODE LIKE CONCAT(#{searchText} , '%') OR D.DIVISION_NAME LIKE CONCAT(#{searchText} , '%'))
+		    </if>
+			AND D.STATUS = 'Y'
+	   ORDER BY D.DIVISION_CODE 
+		 
+ 	</select>
+ 	
+</mapper>

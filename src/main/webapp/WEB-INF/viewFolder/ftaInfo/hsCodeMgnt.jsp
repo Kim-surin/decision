@@ -177,6 +177,9 @@
 
 		//좌측그리드 조회
 		this.retrieve_leftGridData = function () {
+			KpackageOBJ.auiGrid.clearGridData(FTA_HSCODE.gridIdR);
+			
+			
 			var params = {
 				"searchHsCode": KpackageOBJ.object.getFormValue("FTA_HSCODE-form", "searchHsCode")
 			}
