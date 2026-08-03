@@ -20,7 +20,7 @@
 			</div>
 		</div>
 		<div class="row">
-			<form:form id="FTA_HSCODE-form" class="s4-form" novalidate="novalidate" onsubmit="FTA_HSCODE.retrieve_leftGridData(); return false;">
+			<form:form id="HS_CODE_MGNT-form" class="s4-form" novalidate="novalidate" onsubmit="HS_CODE_MGNT.retrieve_leftGridData(); return false;">
 				<input type="hidden" id="popParam"/>
 				<div id="panel-4" class="panel panel-icon">
 					<div class="panel-container show">
@@ -42,7 +42,7 @@
 								</div>
 								<div class="col">
 									<button type="button"
-										onclick="javascript:FTA_HSCODE.retrieve_leftGridData();"
+										onclick="javascript:HS_CODE_MGNT.retrieve_leftGridData();"
 										class="btn btn-sm btn-search search-no-more waves-effect waves-themed">Search</button>
 								</div>
 							</div>
@@ -55,10 +55,10 @@
 		<div class="d-flex col-12 dual-grid-wrap" style="height: calc(100vh - 450px);" >
 			<div class="w-30 left-grid-area h-full" >
 				<div class="grid-title mb-2"><label>HS 코드 목록</label></div>
-				<div id="oAuiGrid_leftGrid" class="w-100 h-95" ></div>
+				<div id="oAuiGrid_hsCodeMgnt_L" class="w-100 h-95" ></div>
 			</div>
 			<div class="right-grid-area h-full" >
-				<div class="w-100 h-full" >
+				<div class="w-100" >
 			    	<div class="grid-title mb-1">HS 코드 정보</div>
 			    	<div class="detail-card mb-3">
 			    		<div class="detail-card-row">
@@ -75,7 +75,7 @@
 						</div>
 			    	</div>
 			    	<div class="subheader-title mb-1"><label>FTA 원산지 결정기준</label></div>
-			    	<div id="oAuiGrid_rightGrid" class="w-100 h-95"></div>
+			    	<div id="oAuiGrid_hsCodeMgnt_R" class="w-100 h-95"></div>
 					
 				</div>
 			</div>
@@ -85,7 +85,7 @@
 
 <script type="text/javascript">
 
-	var FTA_HSCODE = new function () {
+	var HS_CODE_MGNT = new function () {
 		this.gridIdL = null;
 		this.gridIdR = null;
 		this.state = {
@@ -94,8 +94,8 @@
 		
 	
 		this.Initialize_viewObject = function () {
-			FTA_HSCODE.createAUIGrid();
-		    FTA_HSCODE.retrieve_leftGridData();
+			HS_CODE_MGNT.createAUIGrid();
+		    HS_CODE_MGNT.retrieve_leftGridData();
 		}
 		
 		
@@ -157,19 +157,19 @@
 			};
 
 
-			FTA_HSCODE.gridIdL = KpackageOBJ.auiGrid.create("oAuiGrid_leftGrid", leftGridColumnLayout, gridProps, "");
-			FTA_HSCODE.gridIdR = KpackageOBJ.auiGrid.create("oAuiGrid_rightGrid", rightGridColumnLayout, gridProps, "");
+			HS_CODE_MGNT.gridIdL = KpackageOBJ.auiGrid.create("oAuiGrid_hsCodeMgnt_L", leftGridColumnLayout, gridProps, "");
+			HS_CODE_MGNT.gridIdR = KpackageOBJ.auiGrid.create("oAuiGrid_hsCodeMgnt_R", rightGridColumnLayout, gridProps, "");
 			
 			
 			//좌측GRID 이벤트 추가
 			
-			AUIGrid.bind(FTA_HSCODE.gridIdL, "selectionChange", function( event ) {
-				FTA_HSCODE.state['masterRow'] = event.selectedItems[0].item;
+			AUIGrid.bind(HS_CODE_MGNT.gridIdL, "selectionChange", function( event ) {
+				HS_CODE_MGNT.state['masterRow'] = event.selectedItems[0].item;
 				
-				$("#selHsCode").text(FTA_HSCODE.state['masterRow']['hs_code']);
-				$("#selHsCodeName").text(FTA_HSCODE.state['masterRow']['hs_code_name']);
-				$("#selHsCodeDesc").text(FTA_HSCODE.state['masterRow']['hs_code_desc']);
-				FTA_HSCODE.retrieve_rightGridData();
+				$("#selHsCode").text(HS_CODE_MGNT.state['masterRow']['hs_code']);
+				$("#selHsCodeName").text(HS_CODE_MGNT.state['masterRow']['hs_code_name']);
+				$("#selHsCodeDesc").text(HS_CODE_MGNT.state['masterRow']['hs_code_desc']);
+				HS_CODE_MGNT.retrieve_rightGridData();
 			});
 			
 			
@@ -177,29 +177,29 @@
 
 		//좌측그리드 조회
 		this.retrieve_leftGridData = function () {
-			KpackageOBJ.auiGrid.clearGridData(FTA_HSCODE.gridIdR);
+			KpackageOBJ.auiGrid.clearGridData(HS_CODE_MGNT.gridIdR);
 			
 			
 			var params = {
-				"searchHsCode": KpackageOBJ.object.getFormValue("FTA_HSCODE-form", "searchHsCode")
+				"searchHsCode": KpackageOBJ.object.getFormValue("HS_CODE_MGNT-form", "searchHsCode")
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(FTA_HSCODE.gridIdL, "/origin/ftaInfo/retrieveHsCodeList", params);
+			KpackageOBJ.auiGrid.retrieve(HS_CODE_MGNT.gridIdL, "/origin/ftaInfo/retrieveHsCodeList", params);
 		}
 		
 		//우측그리드 조회
 		this.retrieve_rightGridData = function () {
 			var params = {
-				"selHsCode": FTA_HSCODE.state['masterRow']['hs_code']
+				"selHsCode": HS_CODE_MGNT.state['masterRow']['hs_code']
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(FTA_HSCODE.gridIdR, "/origin/ftaInfo/retrieveHsCodePsrList", params);
+			KpackageOBJ.auiGrid.retrieve(HS_CODE_MGNT.gridIdR, "/origin/ftaInfo/retrieveHsCodePsrList", params);
 		}
 	}
 
 
 	$(document).ready(function () {
-		FTA_HSCODE.Initialize_viewObject();
+		HS_CODE_MGNT.Initialize_viewObject();
 
 	});
 

@@ -43,7 +43,7 @@ public class HsCodeController extends GenericController {
 	 * @return View Path String
 	 */
 	@RequestMapping(value = "/origin/ftaInfo/hsCodeMgnt")
-	public String ftaInfo_view(Model model, HttpSession session) {
+	public String hsCodeMgnt_view(Model model, HttpSession session) {
 		return "ftaInfo/hsCodeMgnt";
 	}
 	
