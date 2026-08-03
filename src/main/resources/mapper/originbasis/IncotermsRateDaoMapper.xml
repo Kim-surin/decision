@@ -21,8 +21,7 @@
 		      ,FII.CPT_RATE  AS cptRate
 		      ,FII.CIP_RATE  AS cipRate
 		      ,FII.DAP_RATE  AS dapRate
-		      ,FII.DAT_RATE  AS datRate
-		      ,FII.DDU_RATE  AS dduRate
+		      ,FII.DPU_RATE  AS dpuRate
 		      ,FII.DDP_RATE  AS ddpRate
 		FROM   FTA_INCOTERMS_INFO FII
 		WHERE  FII.DIVISION_CODE = #{divisionCode}

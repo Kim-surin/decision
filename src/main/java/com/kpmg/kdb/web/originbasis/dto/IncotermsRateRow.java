@@ -20,8 +20,7 @@ public class IncotermsRateRow {
 		CPT(IncotermsRateRow::getCptRate),
 		CIP(IncotermsRateRow::getCipRate),
 		DAP(IncotermsRateRow::getDapRate),
-		DAT(IncotermsRateRow::getDatRate),
-		DDU(IncotermsRateRow::getDduRate),
+		DPU(IncotermsRateRow::getDpuRate),
 		DDP(IncotermsRateRow::getDdpRate);
 
 		private final Function<IncotermsRateRow, BigDecimal> extractor;
@@ -57,8 +56,7 @@ public class IncotermsRateRow {
 	private BigDecimal cptRate;
 	private BigDecimal cipRate;
 	private BigDecimal dapRate;
-	private BigDecimal datRate;
-	private BigDecimal dduRate;
+	private BigDecimal dpuRate;
 	private BigDecimal ddpRate;
 
 	public String getStdYyyy() {
@@ -141,20 +139,12 @@ public class IncotermsRateRow {
 		this.dapRate = dapRate;
 	}
 
-	public BigDecimal getDatRate() {
-		return datRate;
+	public BigDecimal getDpuRate() {
+		return dpuRate;
 	}
 
-	public void setDatRate(BigDecimal datRate) {
-		this.datRate = datRate;
-	}
-
-	public BigDecimal getDduRate() {
-		return dduRate;
-	}
-
-	public void setDduRate(BigDecimal dduRate) {
-		this.dduRate = dduRate;
+	public void setDpuRate(BigDecimal dpuRate) {
+		this.dpuRate = dpuRate;
 	}
 
 	public BigDecimal getDdpRate() {
