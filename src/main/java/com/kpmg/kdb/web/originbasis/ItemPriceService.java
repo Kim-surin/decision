@@ -6,7 +6,6 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
@@ -33,8 +32,6 @@ public class ItemPriceService extends GeneralService {
 	@Autowired
 	private CompanySettingService companySettingService;
 
-	@Cacheable(cacheNames = "itemPrice", key = "#criteria.companyCode + ':' + #criteria.divisionCode + ':' "
-			+ "+ #criteria.itemCode + ':' + #criteria.resolvedBaseDate")
 	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria) {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
@@ -71,8 +68,6 @@ public class ItemPriceService extends GeneralService {
 		}
 	}
 
-	@Cacheable(cacheNames = "itemPriceNote", key = "#criteria.companyCode + ':' + #criteria.divisionCode + ':' "
-			+ "+ #criteria.itemCode + ':' + #criteria.resolvedBaseDate")
 	public String resolveItemPriceNote(ItemPriceCriteria criteria) {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);

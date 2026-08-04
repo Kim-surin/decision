@@ -2,7 +2,6 @@ package com.kpmg.kdb.web.originbasis;
 
 import java.math.BigDecimal;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
@@ -21,9 +20,6 @@ public class IncotermsRateService extends GeneralService {
 
 	private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
 
-	@Cacheable(cacheNames = "incotermsRate", key = "#criteria.stdYyyy + ':' + #criteria.divisionCode + ':' "
-			+ "+ #criteria.exportFlag + ':' + #criteria.nationCode + ':' + #criteria.fromIncotermsCode + ':' "
-			+ "+ #criteria.toIncotermsCode")
 	public BigDecimal calculateChangeRate(IncotermsChangeRateCriteria criteria) {
 		try {
 			IncotermsRateRow row = sqlSession.getMapper(IncotermsRateDao.class).selectIncotermsInfo(criteria);

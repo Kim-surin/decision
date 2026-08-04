@@ -11,10 +11,11 @@ import org.springframework.context.annotation.Configuration;
 public class CacheConfig {
 	@Bean
 	public CacheManager cacheManager() {
-		// 원산지판정 기초자료(Layer 3) 조회 결과 캐시.
-		// 대량 배치 처리 중 동일 (회사/사업장/품목/기준일) 조합이 반복 조회되는 것을 막기 위해 사용한다.
-		CaffeineCacheManager cacheManager = new CaffeineCacheManager("division", "companySetting", "hsCode",
-				"incotermsRate", "itemPrice", "itemPriceNote", "itemOriginRate");
+		// companySetting: 법인별 설정값(FC01_GET_COMPANY_SETING_VALUE 대체)은 값의 종류가 적고
+		// 배치 전체에서 반복 조회되므로 캐시를 유지한다.
+		// HS코드/인코텀즈환산율/재료비/원산지비율 캐시는 (회사/사업장/품목/기준일) 조합이 대량 배치에서
+		// 사실상 매번 달라져 캐시 적중률이 낮고 힙 메모리만 계속 쌓이는 문제가 있어 제거했다.
+		CaffeineCacheManager cacheManager = new CaffeineCacheManager("division", "companySetting");
 		return cacheManager;
 	}
 }

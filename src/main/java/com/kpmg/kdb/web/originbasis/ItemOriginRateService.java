@@ -8,7 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
@@ -36,8 +35,6 @@ public class ItemOriginRateService extends GeneralService {
 	@Autowired
 	private CompanySettingService companySettingService;
 
-	@Cacheable(cacheNames = "itemOriginRate", key = "#criteria.companyCode + ':' + #criteria.divisionCode + ':' "
-			+ "+ #criteria.itemCode + ':' + #criteria.ftaCode + ':' + #criteria.resolvedBaseDate")
 	public BigDecimal resolveOriginRate(ItemOriginRateCriteria criteria) {
 		try {
 			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
