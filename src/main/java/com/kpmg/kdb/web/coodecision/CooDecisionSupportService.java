@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
@@ -34,6 +35,9 @@ public class CooDecisionSupportService extends GeneralService {
 	/** GET_RCEP_RVC_NATION 의 로컬 상수(원본 V_COMPANY_RVC_RATE := 20). RCEP BD20 기준이며 회사버퍼율과 무관 */
 	private static final BigDecimal RCEP_BD20_THRESHOLD = BigDecimal.valueOf(20);
 
+	@Autowired
+	private CooDecisionReferenceDataService referenceDataService;
+
 	/**
 	 * 레거시 GET_BUFFER 이관. COMPANY_OPTION.OPTION_CODE='BF' 산정기준에 따라
 	 * 회사/사업부/제품군/FTA 4개 소스 중 하나에서 RVC·미소기준 버퍼율을 조회해 컨텍스트에 채운다.
@@ -41,16 +45,14 @@ public class CooDecisionSupportService extends GeneralService {
 	public void loadBuffer(CooDecisionContext ctx, String companyCode, String divisionCode, String ftaCode,
 			String productCode) {
 		try {
-			CooDecisionSupportDao dao = sqlSession.getMapper(CooDecisionSupportDao.class);
-
-			String optionValue = dao.selectBufferOptionValue(companyCode);
+			String optionValue = referenceDataService.getBufferOptionValue(companyCode);
 			ctx.setOptionValue(optionValue);
 
 			BufferRates rates = switch (optionValue == null ? "" : optionValue) {
-				case "COM" -> dao.selectCompanyBuffer(companyCode);
-				case "DIV" -> dao.selectDivisionBuffer(companyCode, divisionCode);
-				case "PRD" -> dao.selectProductLineBuffer(companyCode, productCode);
-				case "FTA" -> dao.selectFtaBuffer(ftaCode);
+				case "COM" -> referenceDataService.getCompanyBuffer(companyCode);
+				case "DIV" -> referenceDataService.getDivisionBuffer(companyCode, divisionCode);
+				case "PRD" -> sqlSession.getMapper(CooDecisionSupportDao.class).selectProductLineBuffer(companyCode, productCode);
+				case "FTA" -> referenceDataService.getFtaBuffer(ftaCode);
 				default -> null;
 			};
 
@@ -86,8 +88,7 @@ public class CooDecisionSupportService extends GeneralService {
 			throw new IllegalStateException("RCEP 원산지 판정 대상 자재(FCR_INFO_TEMP)가 없습니다.");
 		}
 
-		Set<String> applyNations = new HashSet<>(
-				sqlSession.getMapper(CooDecisionSupportDao.class).selectFtaApplyNations(ctx.getFmList().getFtaCode()));
+		Set<String> applyNations = new HashSet<>(referenceDataService.getFtaApplyNations(ctx.getFmList().getFtaCode()));
 
 		long itemCnt = rows.size();
 		long krCnt = rows.stream().filter(FcrInfoRow::isKoreaOrigin).count();
@@ -125,8 +126,7 @@ public class CooDecisionSupportService extends GeneralService {
 
 		ctx.setRcepKrYn(rvcRate.compareTo(RCEP_BD20_THRESHOLD) >= 0 ? "Y" : "N");
 
-		Set<String> applyNations = new HashSet<>(
-				sqlSession.getMapper(CooDecisionSupportDao.class).selectFtaApplyNations(ctx.getFmList().getFtaCode()));
+		Set<String> applyNations = new HashSet<>(referenceDataService.getFtaApplyNations(ctx.getFmList().getFtaCode()));
 
 		Map<String, BigDecimal> inareaAmountByNation = rows.stream()
 				.filter(r -> r.getCooNation() != null)
