@@ -28,7 +28,7 @@
 			<div class="row h-full">
 				<div class="col-12 dual-grid-wrap">
 					<div class="w-full h-full" >
-						<div id="oAuiGrid_comNation" class="w-100 h-95"></div>
+						<div id="oAuiGrid_comDivision" class="w-100 h-95"></div>
 					</div>
 				</div>
 			</div>		
@@ -66,7 +66,6 @@
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
-				  , editable: false
 				},
 				{
 					dataField: "code_name"
@@ -74,21 +73,19 @@
 				  , width: 200
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
-				  , editable: false
 				},
 			];
 			
 			const gridProps = {
 					usePaging: false,
 					enableFilter: true,
-					editable:true,
 					fillColumnSizeMode:true,
 					showStateColumn:false,
 					selectionMode : "singleRow",
 				};
 			
 			
-			COM_DIVISION_POPUP.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_comNation", columnLayout, gridProps, "radio");
+			COM_DIVISION_POPUP.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_comDivision", columnLayout, gridProps, "radio");
 			
 			AUIGrid.bind(COM_DIVISION_POPUP.gridId, "cellDoubleClick", function (event) {
 				COM_DIVISION_POPUP.selectData(event.item)
@@ -167,7 +164,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(COM_DIVISION_POPUP.gridId);
 			
 			if(data.length === 0){
-				alert("선택된 데이터가 없습니다.");
+				KpackageOBJ.object.alert("선택된 데이터가 없습니다.");
 				return;
 			}
 			

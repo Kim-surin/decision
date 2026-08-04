@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.ftaInfo.hsCodeByNation.HsCodeByNationDao">
+	
+ 	<select id="retrieveNationIncludeRcepCntList" parameterType="HashMap" resultType="HashMap">
+		SELECT NATION_CODE
+		     , NATION_NAME
+			 , FTA_HS_CNT
+			 , RCEP_CNT
+		  FROM ( SELECT D.CODE AS NATION_CODE
+				      , D.CODE_NAME AS NATION_NAME
+				      , (SELECT COUNT(*) AS FTA_HS_CNT
+				           FROM FTA_HS_CODE FHC
+				          WHERE FHC.COMPANY_CODE = D.COMPANY_CODE
+				            AND FHC.NATION_CODE = D.CODE
+				            <if test="searchItemCode != null and searchItemCod != ''">
+				            AND FHC.ITEM_CODE LIKE CONCAT('%',#{searchItemCode} ,'%')
+				            </if>
+				            <if test="searchHsCode != null and searchHsCode != ''">
+				            AND FHC.FTA_HS_CODE LIKE CONCAT(#{searchHsCode} ,'%')
+				            </if> 
+				        ) AS FTA_HS_CNT
+				      , (SELECT COUNT(*) AS RCEP_CNT
+				           FROM TARIFF_DIFFERENTIALS TDC
+				          WHERE TDC.NATION_CODE = D.CODE
+				            <if test="searchHsCode != null and searchHsCode != ''">
+				            AND TDC.HS_CODE LIKE CONCAT(#{searchHsCode} ,'%')
+				            </if>   
+				        ) AS RCEP_CNT
+				   FROM CODE_MST M
+				  INNER JOIN CODE_DTL D
+				     ON M.CATEGORY = D.CATEGORY
+					AND M.COMPANY_CODE = D.COMPANY_CODE
+				  WHERE M.COMPANY_CODE = #{company_code}
+				    AND M.CATEGORY = 'NA'
+					AND D.DELETE_YN = 'N'
+	  				<if test="searchHsCode != null and searchHsCode != ''">
+	  				AND (EXISTS (SELECT 1
+					              FROM FTA_HS_CODE FH
+					             WHERE FH.COMPANY_CODE = D.COMPANY_CODE
+					               AND FH.NATION_CODE = D.CODE
+					               AND FH.FTA_HS_CODE LIKE CONCAT(#{searchHsCode} ,'%')) 	
+	  				  OR EXISTS (SELECT 1
+					              FROM TARIFF_DIFFERENTIALS TD
+					             WHERE TD.NATION_CODE = D.CODE
+					               AND TD.HS_CODE LIKE CONCAT(#{searchHsCode} ,'%')) 	
+	  				     )
+					</if>
+					<if test="searchItemCode != null and searchItemCode != ''">
+					AND EXISTS (SELECT 1
+					              FROM FTA_HS_CODE FH
+					             WHERE FH.COMPANY_CODE = D.COMPANY_CODE
+					               AND FH.NATION_CODE = D.CODE
+					               AND FH.ITEM_CODE LIKE CONCAT('%',#{searchItemCode} ,'%')) 
+					</if>
+					
+			   ) TA
+		ORDER BY TA.FTA_HS_CNT DESC, TA.RCEP_CNT DESC, TA.NATION_CODE 
+ 	</select>
+
+	<select id="retrieveHsCodeByNationList" parameterType="HashMap" resultType="HashMap">
+		SELECT A.NATION_CODE
+		     , A.ITEM_CODE
+			 , B.ITEM_NAME
+		  	 , B.HS_CODE
+		 	 , A.FTA_HS_CODE
+		 	 , A.REMARKS
+		  FROM FTA_HS_CODE A
+		 INNER JOIN ITEM_MST B
+		    ON A.COMPANY_CODE= B.COMPANY_CODE
+		   AND A.ITEM_CODE = B.ITEM_CODE
+		 WHERE A.COMPANY_CODE = #{company_code}
+		   AND A.NATION_CODE = #{nationCode}
+		  <if test="searchItemCode != null and searchItemCode != ''">
+		   AND A.ITEM_CODE LIKE CONCAT('%',#{searchItemCode} ,'%')
+		  </if> 
+		  <if test="searchHsCode != null and searchHsCode != ''">
+		   AND A.FTA_HS_CODE LIKE CONCAT('%',#{searchHsCode} ,'%')
+		  </if> 
+	  ORDER BY A.ITEM_CODE
+	</select>
+ 	
+ 	
+ 	<select id="retrieveHsCodeRcepList" parameterType="HashMap" resultType="HashMap">
+		SELECT A.FTA_CODE
+		     , F.FTA_NAME
+		     , A.NATION_CODE
+		     , A.HS_CODE
+		     , A.APPLY_DATE
+		     , A.END_DATE
+		  FROM TARIFF_DIFFERENTIALS A
+		 INNER JOIN FTA_MASTER F
+		    ON A.FTA_CODE = F.FTA_CODE
+		   AND F.COMPANY_CODE = #{company_code}
+		 WHERE A.NATION_CODE = #{nationCode}
+		  <if test="searchHsCode != null and searchHsCode != ''">
+		   AND A.HS_CODE LIKE CONCAT('%',#{searchHsCode} ,'%')
+		  </if> 
+	  ORDER BY A.FTA_CODE, A.HS_CODE
+ 	</select>
+ 	
+	<select id="retrieveHsCodeByNationCnt" parameterType="HashMap" resultType="Integer">
+ 		SELECT COUNT(*)
+ 		  FROM FTA_HS_CODE
+ 		 WHERE ITEM_CODE = #{item_code}
+ 		   AND COMPANY_CODE = #{company_code}
+ 		   AND NATION_CODE = #{nation_code}
+ 		   AND FTA_HS_CODE = #{fta_hs_code}
+ 	</select>
+ 	
+ 	<insert id="insertHsCodeByNation">
+	 	INSERT INTO FTA_HS_CODE
+	 	(ITEM_CODE, COMPANY_CODE, NATION_CODE, FTA_HS_CODE, REMARKS, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY)
+		VALUES
+		(#{item_code}, #{company_code}, #{nation_code}, #{fta_hs_code}, #{remarks}, NOW(), #{update_by}, NOW(), #{update_by})
+ 	</insert>
+ 	
+ 	<update id="updateHsCodeByNation">
+ 	   UPDATE FTA_HS_CODE
+ 		  SET REMARKS = #{remarks}
+ 		    , UPDATE_DATE = NOW()
+ 		    , UPDATE_BY = #{update_by}
+ 		WHERE ITEM_CODE = #{item_code}
+ 		  AND COMPANY_CODE = #{company_code}
+ 		  AND NATION_CODE = #{nation_code}
+ 		  AND FTA_HS_CODE = #{fta_hs_code}
+ 	</update>
+ 	
+ 	<delete id="deleteHsCodeByNation">
+ 		DELETE FROM FTA_HS_CODE
+ 		 WHERE ITEM_CODE = #{item_code}
+ 		   AND COMPANY_CODE = #{company_code}
+ 		   AND NATION_CODE = #{nation_code}
+ 		   AND FTA_HS_CODE = #{fta_hs_code}
+ 	</delete>
+ 	
+ 	<select id="retrieveHsCodeRcepListCnt" parameterType="HashMap" resultType="Integer">
+	   SELECT COUNT(*) 
+	     FROM TARIFF_DIFFERENTIALS
+ 		WHERE FTA_CODE = #{fta_code}
+ 		  AND NATION_CODE = #{nation_code}
+ 		  AND HS_CODE = #{hs_code}
+ 	</select>
+ 	
+ 	 	
+ 	<insert id="insertHsCodeRcepList">
+		INSERT INTO TARIFF_DIFFERENTIALS
+		(FTA_CODE, NATION_CODE, HS_CODE, APPLY_DATE, END_DATE, REMARK, ATTRIBUTE01, ATTRIBUTE02, ATTRIBUTE03, ATTRIBUTE04, ATTRIBUTE05, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY)
+		VALUES 
+		(#{fta_code}, #{nation_code}, #{hs_code}, #{apply_date}, #{end_date}, NULL, NULL, NULL, NULL, NULL, NULL, NOW(), #{update_by}, NOW(), #{update_by})
+ 	</insert>
+ 	
+ 	<update id="updateHsCodeRcepList">
+ 		UPDATE TARIFF_DIFFERENTIALS
+ 		   SET APPLY_DATE = #{apply_date}
+ 		     , END_DATE = #{end_date}
+ 		     , UPDATE_DATE = NOW()
+ 		     , UPDATE_BY = #{update_by}
+ 		 WHERE FTA_CODE = #{fta_code}
+ 		   AND NATION_CODE = #{nation_code}
+ 		   AND HS_CODE = #{hs_code}
+ 	</update>
+ 	
+ 	<delete id="deleteHsCodeRcepList">
+ 		DELETE FROM TARIFF_DIFFERENTIALS
+ 		WHERE FTA_CODE = #{fta_code}
+ 		  AND NATION_CODE = #{nation_code}
+ 		  AND HS_CODE = #{hs_code}
+ 	</delete>
+ 	
+ 	
+ 	
+</mapper>

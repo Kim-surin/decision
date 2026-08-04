@@ -37,12 +37,11 @@
 		    </if>
 			AND D.DELETE_YN = 'N'
 	   ORDER BY D.SORT_NO 
-		 
  	</select>
  	
  	<select id="retrieveComDivisionList" parameterType="HashMap" resultType="HashMap">
 		 SELECT D.DIVISION_CODE AS CODE
-		      , D.DIVISION_NAME AS NAME
+		      , D.DIVISION_NAME AS CODE_NAME
 		   FROM DIVISION D
 		 WHERE D.COMPANY_CODE = #{company_code}
 		    <if test="searchText != null and searchText != ''">
@@ -50,7 +49,20 @@
 		    </if>
 			AND D.STATUS = 'Y'
 	   ORDER BY D.DIVISION_CODE 
-		 
+ 	</select>
+ 	
+ 	
+	<select id="retrieveComItemList" parameterType="HashMap" resultType="HashMap">
+		SELECT ITEM_CODE AS CODE
+		     , ITEM_NAME AS CODE_NAME
+			 , HS_CODE
+		  FROM ITEM_MST 
+		 WHERE COMPANY_CODE = #{company_code}
+		   AND DELETE_YN = 'N'
+		   <if test="searchText != null and searchText != ''">
+		   AND (ITEM_CODE LIKE CONCAT(#{searchText} , '%') OR ITEM_NAME LIKE CONCAT(#{searchText} , '%'))
+		   </if>
+	  ORDER BY ITEM_CODE
  	</select>
  	
 </mapper>

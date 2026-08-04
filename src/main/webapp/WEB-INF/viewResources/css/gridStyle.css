@@ -28,3 +28,10 @@
     cursor: pointer;   
 }
 
+.aui-grid .aui-grid-icon-renderer .aui-img {
+    position: absolute !important;
+    top: 50% !important;
+    right: 4px !important;
+    transform: translateY(-50%);
+}
+

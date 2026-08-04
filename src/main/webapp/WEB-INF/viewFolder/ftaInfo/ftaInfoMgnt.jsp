@@ -410,15 +410,15 @@
 			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_INFO.gridId, ["fta_code", "fta_name", "effect_date","fta_status","co_issue_flag","de_minimis_rate","rvc_rate","delete_yn","inkoterms_type","cover_yn"], "해당 값은 필수 입력값입니다.")
 							
 			if(data.length === 0){
-				alert("저장할 데이터가 없습니다.");
+				KpackageOBJ.object.alert("저장할 데이터가 없습니다.");
 				return;
 			}
 							
-			if (!confirm("저장하시겠습니까?")) {
-            	return;
-        	}	
-							
 			if(isValid){
+				if (!confirm("저장하시겠습니까?")) {
+	            	return;
+	        	}
+				
 				var params = {
 					"SAVE_LIST" : data
 				};
@@ -430,10 +430,10 @@
 		//저장 콜백
 		this.fnSaveCallBack = function(res) {
 			if(res.success){
-				alert("저장되었습니다.");
+				KpackageOBJ.object.alert("저장되었습니다.");
 				FTA_INFO.retrieve_GridData();
 			}else{
-				alert(res.message);
+				KpackageOBJ.object.alert(res.message);
 			}
 		}
 	}

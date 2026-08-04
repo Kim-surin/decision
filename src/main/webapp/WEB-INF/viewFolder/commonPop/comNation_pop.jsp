@@ -66,7 +66,6 @@
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
-				  , editable: false
 				},
 				{
 					dataField: "code_name"
@@ -74,14 +73,12 @@
 				  , width: 200
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
-				  , editable: false
 				},
 			];
 			
 			const gridProps = {
 					usePaging: false,
 					enableFilter: true,
-					editable:true,
 					fillColumnSizeMode:true,
 					showStateColumn:false,
 					selectionMode : "singleRow",
@@ -167,7 +164,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(COM_NATION_POPUP.gridId);
 			
 			if(data.length === 0){
-				alert("선택된 데이터가 없습니다.");
+				KpackageOBJ.object.alert("선택된 데이터가 없습니다.");
 				return;
 			}
 			

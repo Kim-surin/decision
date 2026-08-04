@@ -56,4 +56,5 @@
        ORDER BY HC.HS_CODE, FM.FTA_CODE, FR.HS_CODE_SUB_CATEGORY,FR.RULE_SEQ, FR.CTH_RULE
  	</select>
  	
+ 	
 </mapper>

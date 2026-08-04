@@ -142,4 +142,40 @@ public class CommonPopController extends GenericController {
 		
 		return result;
 	}
+	
+
+	/**
+	 * 공통 팝업 - 자재코드 조회
+	 * 
+	 * @author osw
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/origin/commonPop/comItem")
+	public String comItem_view(Model model, HttpSession session) {
+		return "commonPop/comItem_pop";
+	}
+	
+	/**
+	 *  공통 팝업 - 자재코드 리스트 조회
+	 * 
+	 * @author osw
+	 * @return 
+	 */
+	@RequestMapping(value="/origin/commonPop/retrieveComItemList")
+	@ResponseBody
+	public Result retrieveComItemList(@RequestBody Map param) {
+		Result result = new Result();
+		try {
+			
+			result = commonPopService.retrieveComItemList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		
+		return result;
+	}
 }

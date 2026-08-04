@@ -157,7 +157,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTA_NATION.gridIdL);
 			
 			if (data.length <= 0) {
-				alert('체크된 내역이 없습니다.');
+				KpackageOBJ.object.alert('체크된 내역이 없습니다.');
 				return;
 			}
 			
@@ -169,7 +169,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTA_NATION.gridIdR);
 			
 			if (data.length <= 0) {
-				alert('체크된 내역이 없습니다.');
+				KpackageOBJ.object.alert('체크된 내역이 없습니다.');
 				return;
 			}
 			KpackageOBJ.auiGrid.addRow(FTA_NATION.gridIdL, data, "last");
@@ -180,11 +180,13 @@
 			const data = KpackageOBJ.auiGrid.getGridData(FTA_NATION.gridIdR);  //전체 삭제후 INSERT이므로 전처데이터
 			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_NATION.gridIdR, ["effect_date"], "해당 값은 필수 입력값입니다.")
 		
-			if (!confirm("저장하시겠습니까?")) {
-				return;
-			}	
 
 			if(isValid){
+
+				if (!confirm("저장하시겠습니까?")) {
+					return;
+				}	
+				
 				var params = FTA_NATION.state["params"];
 				params["SAVE_LIST"] = data;
 
@@ -195,12 +197,12 @@
 		
 		this.fnSaveCallBack = function(res) {
 			if(res.success){
-				alert("저장되었습니다.");
+				KpackageOBJ.object.alert("저장되었습니다.");
 				FTA_NATION.retrieve_LeftGridData();
 				FTA_NATION.retrieve_RightGridData();
 				FTA_INFO.retrieve_GridData();
 			}else{
-				alert(res.message);
+				KpackageOBJ.object.alert(res.message);
 			}
 		}
 	

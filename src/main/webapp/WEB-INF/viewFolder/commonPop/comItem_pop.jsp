@@ -8,17 +8,17 @@
 
 </head>
 <body>
-	<form:form id="comCodePop-form" class="s4-form h-full" novalidate="novalidate" onsubmit="return false;">
+	<form:form id="comItemPop-form" class="s4-form h-full" novalidate="novalidate" onsubmit="return false;">
 		<div class="modal-header h-10">
 			<div class="row h-full w-full">
 				<div class="d-flex mb-3 w-full" style="vertical-align:middle">
 					<label class="form-label w-30 p-2" for="example-input-border">코드/명</label>
 					<input type="text" id="searchText"  
 					       class="form-control" 
-					       onkeydown="if(event.key==='Enter'){COM_CODE_POPUP.retrieve_GridData(); return false;}"
+					       onkeydown="if(event.key==='Enter'){COM_ITEM_POPUP.retrieve_GridData(); return false;}"
 					        >
 					<button type="button" 
-					        onclick="javascript:COM_CODE_POPUP.retrieve_GridData();" style="margin-left:10px;"
+					        onclick="javascript:COM_ITEM_POPUP.retrieve_GridData();" style="margin-left:10px;"
 							class="btn btn-sm btn-search search-no-more waves-effect waves-themed w-10 h-80">Search</button>
 								
 				</div>
@@ -28,19 +28,19 @@
 			<div class="row h-full">
 				<div class="col-12 dual-grid-wrap">
 					<div class="w-full h-full" >
-						<div id="oAuiGrid_comCode" class="w-100 h-95"></div>
+						<div id="oAuiGrid_comItem" class="w-100 h-95"></div>
 					</div>
 				</div>
 			</div>		
 		</div>
 		<div class="modal-footer h-10">
-			<button type="button" class="btn btn-primary" style="margin-right:5px;" onClick="COM_CODE_POPUP.fnSelect()">Select</button>
+			<button type="button" class="btn btn-primary" style="margin-right:5px;"  onClick="COM_ITEM_POPUP.fnSelectCode()">Select</button>
 		</div>
 	</form:form>
 
 </body>
 <script>
-	var COM_CODE_POPUP = new function() {
+	var COM_ITEM_POPUP = new function() {
 		this.gridId = "";
 		
 		this.state = {
@@ -50,10 +50,10 @@
 		// 시작점
 		this.Initialize_viewObject = function() {
 			const popupConfig = parent.commonPopupParam;
-			COM_CODE_POPUP.state['params'] = parent.commonPopupParam['data'];
-			KpackageOBJ.object.setFormValue("comCodePop-form", "searchText", COM_CODE_POPUP.state['params']['searchText']);
-			COM_CODE_POPUP.createAUIGrid();
-			COM_CODE_POPUP.retrieve_data();
+			COM_ITEM_POPUP.state['params'] = parent.commonPopupParam['data'];
+			KpackageOBJ.object.setFormValue("comItemPop-form", "searchText", COM_ITEM_POPUP.state['params']['searchText']);
+			COM_ITEM_POPUP.createAUIGrid();
+			COM_ITEM_POPUP.retrieve_data();
 		}
 
 
@@ -63,7 +63,7 @@
 				{
 					dataField: "code"
 				  , headerText: "코드"
-				  , width: 100
+				  , width: 150
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
@@ -74,6 +74,13 @@
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
 				},
+				{
+					dataField: "hs_code"
+				  , headerText: "HS코드"
+				  , width: 100
+				  , style: "grid-center-text"
+				  , filter: {showIcon: true}
+				},
 			];
 			
 			const gridProps = {
@@ -82,14 +89,13 @@
 					fillColumnSizeMode:true,
 					showStateColumn:false,
 					selectionMode : "singleRow",
-					rowCheckToRadio : true,
 				};
 			
 			
-			COM_CODE_POPUP.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_comCode", columnLayout, gridProps, "radio");
+			COM_ITEM_POPUP.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_comItem", columnLayout, gridProps, "radio");
 			
-			AUIGrid.bind(COM_CODE_POPUP.gridId, "cellDoubleClick", function (event) {
-				COM_CODE_POPUP.selectData(event.item)
+			AUIGrid.bind(COM_ITEM_POPUP.gridId, "cellDoubleClick", function (event) {
+				COM_ITEM_POPUP.selectData(event.item)
 			});
 			
 			
@@ -97,31 +103,31 @@
 		
 		this.retrieve_GridData = function(){
 			const params = {
-				"searchText" : KpackageOBJ.object.getFormValue("comCodePop-form", "searchText")
+				"searchText" : KpackageOBJ.object.getFormValue("comItemPop-form", "searchText")
 			};
 			
-			KpackageOBJ.auiGrid.retrieve(COM_CODE_POPUP.gridId, "/origin/commonPop/retrieveComCodeList", params);
+			KpackageOBJ.auiGrid.retrieve(COM_ITEM_POPUP.gridId, "/origin/commonPop/retrieveComItemList", params);
 		};
 		
 		this.retrieve_data = function(){
 			const params = {
-				"searchText" : KpackageOBJ.object.getFormValue("comCodePop-form", "searchText")
+				"searchText" : KpackageOBJ.object.getFormValue("comItemPop-form", "searchText")
 			};
 			
-			KpackageOBJ.ajax.doSubmit("/origin/commonPop/retrieveComCodeList", params, COM_NATION_POPUP.retrieve_dataCallback);
-			
+			KpackageOBJ.ajax.doSubmit("/origin/commonPop/retrieveComItemList", params, COM_ITEM_POPUP.retrieve_dataCallback);
 		};
 		
 		this.retrieve_dataCallback = function(res){
 			if(res.success){
 				if(res.value.length === 1){
-					COM_NATION_POPUP.selectData(res.value[0]);
+					COM_ITEM_POPUP.selectData(res.value[0]);
 				}else{
-					KpackageOBJ.auiGrid.setGridData(COM_NATION_POPUP.gridId, res.value);
+					KpackageOBJ.auiGrid.setGridData(COM_ITEM_POPUP.gridId, res.value);
 				}
 			}
 		
 		};
+		
 		
 		this.selectData = function (selectedData) {
 
@@ -156,26 +162,27 @@
 		    selectedData['rowIndex'] = parent.commonPopupParam["rowIndex"];
 		    fn.call(target, selectedData);
 
+		    
+		    
 		    KpackageOBJ.dialog.close("commonPop");
 		};
 		
 		this.fnSelectCode = function() {
-			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(COM_CODE_POPUP.gridId);
-			
+			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(COM_ITEM_POPUP.gridId);
 			
 			if(data.length === 0){
 				KpackageOBJ.object.alert("선택된 데이터가 없습니다.");
 				return;
 			}
 			
-			COM_CODE_POPUP.selectData(data[0]);		
+			COM_ITEM_POPUP.selectData(data[0]);		
 		}
 		
 	};
 	
 	$(document).ready(function() {
 		pageSetUp(); // 위젯 기능을 사용하기 위해 필수로 호출 합니다.
-		COM_CODE_POPUP.Initialize_viewObject();
+		COM_ITEM_POPUP.Initialize_viewObject();
 	});
 </script>
 </html>
