@@ -115,13 +115,13 @@
 			masterRow : {}	
 		};
 		
-	
+		//View Object Init
 		this.Initialize_viewObject = function () {
 			HSCODE_BY_NATION.createAUIGrid();
 		    HSCODE_BY_NATION.retrieve_leftGridData();
 		}
 		
-		
+		//Grid Init
 		this.createAUIGrid = function () {
 			
 			const leftGridColumnLayout = [

@@ -90,16 +90,18 @@
 			COMMON_EF_LIST : [],     //내수/수출
 		};
 						
+		// List Data Init
 		this.Initialize_listObject = function () {
 			FTA_INCOTERMS.state['comCdLoadCount'] = 0;
 			
 			FTA_INCOTERMS.list['CATEGIRIES'].forEach(function (category) {
 				const sParam = { CATEGORY: category };
-				KpackageOBJ.ajax.doSubmit("/common/retrieveComCdList", sParam, function (res) {FTA_INCOTERMS.callback_retrieveComCdList(res, category);});
+				KpackageOBJ.ajax.doSubmit("/common/retrieveComCdList", sParam, function (res) {FTA_INCOTERMS.Initialize_listObjectCallback(res, category);});
 			});
 		};
-						
-		this.callback_retrieveComCdList = function (res, category) {
+		
+		// List Data Init Callback				
+		this.Initialize_listObjectCallback = function (res, category) {
 			var data = res.value;
 			FTA_INCOTERMS.list['COMMON_' + category + '_LIST'] = data;
 							
@@ -111,15 +113,16 @@
 			}
 		};
 					
+		//View Object CallBack
 		this.Initialize_viewObject = function () {
-
 			//연도 달력 CREATE
-			KpackageOBJ.yearPicker.create( "searchStdYyyy", 2000 , "",  new Date().getFullYear());
+			KpackageOBJ.yearPicker.create( "searchStdYyyy", 1900 , "",  new Date().getFullYear());
 
 			FTA_INCOTERMS.createAUIGrid();
 			FTA_INCOTERMS.retrieve_GridData();
 		}
-						
+		
+		//GRID INIT
 		this.createAUIGrid = function () {
 			const columnLayout = [
 				{
@@ -447,6 +450,7 @@
 			    }
 			});
 			
+			// GRID 이벤트 바인드
 			AUIGrid.bind(FTA_INCOTERMS.gridId, "cellEditBegin", function (event) {
 				const disableCol = ["std_yyyy", "division_code", "incoterms_type"]
 				

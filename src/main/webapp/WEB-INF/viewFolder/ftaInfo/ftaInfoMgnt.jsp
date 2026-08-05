@@ -91,16 +91,18 @@
 			COMMON_YN_LIST : [],  //Y/N
 		};
 						
+		//List Data Init
 		this.Initialize_listObject = function () {
 			FTA_INFO.state['comCdLoadCount'] = 0;
 			
 			FTA_INFO.list['CATEGIRIES'].forEach(function (category) {
 				const sParam = { CATEGORY: category };
-				KpackageOBJ.ajax.doSubmit("/common/retrieveComCdList", sParam, function (res) {FTA_INFO.callback_retrieveComCdList(res, category);});
+				KpackageOBJ.ajax.doSubmit("/common/retrieveComCdList", sParam, function (res) {FTA_INFO.Initialize_listObjectCallback(res, category);});
 			});
 		};
 						
-		this.callback_retrieveComCdList = function (res, category) {
+		//List Data Init Callback
+		this.Initialize_listObjectCallback = function (res, category) {
 			var data = res.value;
 			FTA_INFO.list['COMMON_' + category + '_LIST'] = data;
 							
@@ -112,11 +114,13 @@
 			}
 		};
 					
+		//View Obejct Init
 		this.Initialize_viewObject = function () {
 			FTA_INFO.createAUIGrid();
 			FTA_INFO.retrieve_GridData();
 		}
-						
+		
+		//Grid Init
 		this.createAUIGrid = function () {
 			const columnLayout = [
 				{
@@ -358,7 +362,7 @@
 
 			FTA_INFO.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_ftaInfo", columnLayout, gridProps, "check");
 			
-			//GRID 수정전 이벤트
+			//GRID 이벤트 바인드
 			AUIGrid.bind(FTA_INFO.gridId, "cellEditBegin", function(event) {
 				if(event.dataField === "fta_code"){
 					if(!KpackageOBJ.auiGrid.isAddedByRowIndex(FTA_INFO.gridId,event.rowIndex)){
@@ -367,7 +371,6 @@
 				}
 			});
 							
-			//그리드 클릭 이벤트 
 			AUIGrid.bind(FTA_INFO.gridId, "cellClick", function(event) {
 				if(event.dataField === "fta_apply_cnt"){
 					KpackageOBJ.object.setFormValue("ftaInfo-form", "popParam", JSON.stringify(event.item));

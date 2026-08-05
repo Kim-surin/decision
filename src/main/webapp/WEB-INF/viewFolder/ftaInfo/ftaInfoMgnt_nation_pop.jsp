@@ -9,7 +9,7 @@
 <body>
 	<form:form id="ftaNation-form" class="s4-form" novalidate="novalidate" onsubmit="return false;">
 		<div class="modal-header" style="">
-			<button type="button" class="btn btn-primary" style="margin-left: auto;" onclick="FTA_NATION.fnSave()" >저장</button>
+			<button type="button" class="btn btn-primary" style="margin-left: auto;" onclick="FTAINFO_NATION.fnSave()" >저장</button>
 		</div>
 		<div class="modal-body">
 			<div class="row">
@@ -19,11 +19,11 @@
 						<div id="oAuiGrid_nationL" class="w-100 h-100"></div>
 					</div>
 					<div class="col-2 transfer-btn-area">
-				        <button class="btn btn-primary mb-2" onclick="FTA_NATION.fnTransferRight()">
+				        <button class="btn btn-primary mb-2" onclick="FTAINFO_NATION.fnTransferRight()">
 				            &gt;
 				        </button>
 				
-				        <button class="btn btn-primary" onclick="FTA_NATION.fnTransferLeft()">
+				        <button class="btn btn-primary" onclick="FTAINFO_NATION.fnTransferLeft()">
 				            &lt;
 				        </button> 
 				    </div>
@@ -37,7 +37,7 @@
 	</form:form>
 </body>
 <script>
-	var FTA_NATION = new function() {
+	var FTAINFO_NATION = new function() {
 		this.gridIdL = "";
 		this.gridIdR = "";
 		
@@ -45,15 +45,15 @@
 			params : {}
 		}
 		
-		// 시작점
+		// View Object Init
 		this.Initialize_viewObject = function() {
-			FTA_NATION.createAUIGrid();
-			FTA_NATION.retrieve_LeftGridData();
-			FTA_NATION.retrieve_RightGridData();
+			FTAINFO_NATION.createAUIGrid();
+			FTAINFO_NATION.retrieve_LeftGridData();
+			FTAINFO_NATION.retrieve_RightGridData();
 		}
 
 
-		// AUIGrid 를 생성합니다.
+		// Grid Init
 		this.createAUIGrid = function() {
 			const leftGridColumnLayout = [
 				{
@@ -141,44 +141,24 @@
 				};
 			
 			
-			FTA_NATION.gridIdL = KpackageOBJ.auiGrid.create("oAuiGrid_nationL", leftGridColumnLayout, gridProps, "check");
-			FTA_NATION.gridIdR = KpackageOBJ.auiGrid.create("oAuiGrid_nationR", rightGridColumnLayout, gridProps, "check");
+			FTAINFO_NATION.gridIdL = KpackageOBJ.auiGrid.create("oAuiGrid_nationL", leftGridColumnLayout, gridProps, "check");
+			FTAINFO_NATION.gridIdR = KpackageOBJ.auiGrid.create("oAuiGrid_nationR", rightGridColumnLayout, gridProps, "check");
 		};
 		
+		//좌측 그리드 조회
 		this.retrieve_LeftGridData = function(){
-			KpackageOBJ.auiGrid.retrieve(FTA_NATION.gridIdL, "/origin/ftaInfo/ftaNation/retrieveFtaNationAllList", FTA_NATION.state["params"]);
+			KpackageOBJ.auiGrid.retrieve(FTAINFO_NATION.gridIdL, "/origin/ftaInfo/ftaNation/retrieveFtaNationAllList", FTAINFO_NATION.state["params"]);
 		};
 		
+		//우측 그리드 조회
 		this.retrieve_RightGridData = function(){
-			KpackageOBJ.auiGrid.retrieve(FTA_NATION.gridIdR, "/origin/ftaInfo/ftaNation/retrieveFtaNationApplyList", FTA_NATION.state["params"]);
+			KpackageOBJ.auiGrid.retrieve(FTAINFO_NATION.gridIdR, "/origin/ftaInfo/ftaNation/retrieveFtaNationApplyList", FTAINFO_NATION.state["params"]);
 		};
 		
-		this.fnTransferRight = function() {
-			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTA_NATION.gridIdL);
-			
-			if (data.length <= 0) {
-				KpackageOBJ.object.alert('체크된 내역이 없습니다.');
-				return;
-			}
-			
-			KpackageOBJ.auiGrid.addRow(FTA_NATION.gridIdR, data, "last");
-			KpackageOBJ.auiGrid.removeCheckedRows(FTA_NATION.gridIdL);
-		};
-
-		this.fnTransferLeft = function() {
-			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTA_NATION.gridIdR);
-			
-			if (data.length <= 0) {
-				KpackageOBJ.object.alert('체크된 내역이 없습니다.');
-				return;
-			}
-			KpackageOBJ.auiGrid.addRow(FTA_NATION.gridIdL, data, "last");
-			KpackageOBJ.auiGrid.removeCheckedRows(FTA_NATION.gridIdR);
-		};
-		
+		//오측 그리드 저장
 		this.fnSave = function() {
-			const data = KpackageOBJ.auiGrid.getGridData(FTA_NATION.gridIdR);  //전체 삭제후 INSERT이므로 전처데이터
-			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_NATION.gridIdR, ["effect_date"], "해당 값은 필수 입력값입니다.")
+			const data = KpackageOBJ.auiGrid.getGridData(FTAINFO_NATION.gridIdR);  //전체 삭제후 INSERT이므로 전처데이터
+			const isValid = KpackageOBJ.auiGrid.validateGridData(FTAINFO_NATION.gridIdR, ["effect_date"], "해당 값은 필수 입력값입니다.")
 		
 
 			if(isValid){
@@ -187,33 +167,60 @@
 					return;
 				}	
 				
-				var params = FTA_NATION.state["params"];
+				var params = FTAINFO_NATION.state["params"];
 				params["SAVE_LIST"] = data;
 
-				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/saveFtaNationList", params, FTA_NATION.fnSaveCallBack);
+				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/saveFtaNationList", params, FTAINFO_NATION.fnSaveCallBack);
 			}
 
 		}
 		
+		//우측 그리드 저장 콜백
 		this.fnSaveCallBack = function(res) {
 			if(res.success){
 				KpackageOBJ.object.alert("저장되었습니다.");
-				FTA_NATION.retrieve_LeftGridData();
-				FTA_NATION.retrieve_RightGridData();
+				FTAINFO_NATION.retrieve_LeftGridData();
+				FTAINFO_NATION.retrieve_RightGridData();
 				FTA_INFO.retrieve_GridData();
 			}else{
 				KpackageOBJ.object.alert(res.message);
 			}
 		}
+		
+		//우측 이동버튼(>)
+		this.fnTransferRight = function() {
+			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTAINFO_NATION.gridIdL);
+			
+			if (data.length <= 0) {
+				KpackageOBJ.object.alert('체크된 내역이 없습니다.');
+				return;
+			}
+			
+			KpackageOBJ.auiGrid.addRow(FTAINFO_NATION.gridIdR, data, "last");
+			KpackageOBJ.auiGrid.removeCheckedRows(FTAINFO_NATION.gridIdL);
+		};
+
+		//좌측 이동버튼(>)
+		this.fnTransferLeft = function() {
+			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTAINFO_NATION.gridIdR);
+			
+			if (data.length <= 0) {
+				KpackageOBJ.object.alert('체크된 내역이 없습니다.');
+				return;
+			}
+			KpackageOBJ.auiGrid.addRow(FTAINFO_NATION.gridIdL, data, "last");
+			KpackageOBJ.auiGrid.removeCheckedRows(FTAINFO_NATION.gridIdR);
+		};
+		
 	
 		
 	};
 	
 	$(document).ready(function() {
 		const newObj = JSON.parse(KpackageOBJ.object.getFormValue("ftaInfo-form", "popParam"));
-		FTA_NATION.state["params"] = JSON.parse(KpackageOBJ.object.getFormValue("ftaInfo-form", "popParam"));
+		FTAINFO_NATION.state["params"] = JSON.parse(KpackageOBJ.object.getFormValue("ftaInfo-form", "popParam"));
 		pageSetUp(); // 위젯 기능을 사용하기 위해 필수로 호출 합니다.
-		FTA_NATION.Initialize_viewObject();
+		FTAINFO_NATION.Initialize_viewObject();
 	});
 </script>
 <style>

@@ -92,13 +92,13 @@
 			masterRow : {}	
 		};
 		
-	
+		//View Object Init
 		this.Initialize_viewObject = function () {
 			HSCODE_MGNT.createAUIGrid();
 		    HSCODE_MGNT.retrieve_leftGridData();
 		}
 		
-		
+		// Grid Init
 		this.createAUIGrid = function () {
 			
 			const leftGridColumnLayout = [
@@ -161,8 +161,7 @@
 			HSCODE_MGNT.gridIdR = KpackageOBJ.auiGrid.create("oAuiGrid_hsCodeMgnt_R", rightGridColumnLayout, gridProps, "");
 			
 			
-			//좌측GRID 이벤트 추가
-			
+			// 좌측 GRID 이벤트 바인드
 			AUIGrid.bind(HSCODE_MGNT.gridIdL, "selectionChange", function( event ) {
 				HSCODE_MGNT.state['masterRow'] = event.selectedItems[0].item;
 				
