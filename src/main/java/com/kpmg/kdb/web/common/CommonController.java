@@ -134,7 +134,7 @@ public class CommonController extends GenericController {
 			rs.setValue(service.retrievePlantCombo(super.extendsMap(param)));
 			rs.setSuccess(true);
 		} catch (Exception e) {
-			
+			e.printStackTrace();
 			rs = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
 		}
 		return rs;

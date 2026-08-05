@@ -187,6 +187,23 @@ public interface BasisDao {
 	 * @return
 	 */
 	public int cancelUserSignatureInfo(Map param);
+	
+	
+	/**
+	 * 자재관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveItemList(Map param);
+	
+	
+	/**
+	 * 사용자관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveMissingHsCodeCount(Map param);
+	
 }
 
 

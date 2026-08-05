@@ -216,7 +216,6 @@
 		  FROM signature 
 		 WHERE company_code = #{company_code}
 		   AND emp_no = #{emp_no}
-		   AND end_date is null
 		 ORDER BY update_date DESC
 	     LIMIT 1
 	</select>
@@ -478,5 +477,114 @@
                update_by       = #{update_by}
          WHERE seq = ${seq}
     </update>
-	
+    
+    
+	<select id="retrieveItemList" parameterType="map" resultType="map">
+	    SELECT 
+	        im.item_code,
+	        case #{lang}
+	            when 'KOR' then im.item_name
+	            when 'ENG' then im.item_name_eng
+	        end
+	        || case when im.spec is null then '' else '/' end
+	        || coalesce(im.spec, '') as name_spec,
+	        im.hs_code,
+	        im.item_desc,
+	        im.unit,
+	        im.weight,
+	        case id.mail_send_yn
+	            when 'Y' then 'YES'
+	            else 'NO'
+	        end as mail_send_yn,
+	        case im.process_gubun
+	            when 'Y' then 'YES'
+	            else 'NO'
+	        end as process_gubun,
+	        case #{lang}
+	            when 'KOR' then cd.code_name
+	            when 'ENG' then cd.code_name_eng
+	            when 'LOC' then cd.code_name_loc
+	        end as assets_type,
+	        di.division_code,
+	        case #{lang}
+	            when 'KOR' then di.division_name
+	            when 'ENG' then di.division_name_eng
+	        end as division_name,
+	        case #{lang}
+	            when 'KOR' then pl.product_name
+	            when 'ENG' then pl.product_name_eng
+	        end as product_name,
+	        id.importance_mgt_yn
+	    FROM item_mst im
+	    JOIN item_dtl id
+	        on im.item_code = id.item_code
+	       and im.company_code = id.company_code
+	    JOIN division di
+	        on id.division_code = di.division_code
+	       and id.company_code = di.company_code
+	    LEFT JOIN product_line pl
+	        on im.company_code = pl.company_code
+	       and im.product_code = pl.product_code
+	    LEFT JOIN code_dtl cd
+	        on id.company_code = cd.company_code
+	       and id.assets_type = cd.code
+	       and cd.category = 'AT'
+	    WHERE im.delete_yn = 'N'
+	      AND im.company_code = #{company_code}
+	  <if test="search_division_code != null and search_division_code != ''">
+          AND di.division_code = #{search_division_code}
+      </if>
+
+      <if test="hs_code_missing_yn != null and hs_code_missing_yn == 'YY'">
+          AND (im.hs_code IS NULL OR TRIM(im.hs_code) = '')
+      </if>
+
+      <if test="serch_keyword != null and serch_keyword != '' and search_item != null and search_item != ''">
+          <choose>
+              <when test="search_item == 'ITEM_CODE'">
+                  AND UPPER(im.item_code) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+              </when>
+              <when test="search_item == 'ITEM_NAME'">
+                  AND (
+                      UPPER(im.item_name) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+                      OR UPPER(im.item_name_eng) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+                  )
+              </when>
+              <when test="search_item == 'HS_CODE'">
+                  AND UPPER(im.hs_code) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+              </when>
+          </choose>
+      </if>
+	    ORDER by im.item_code, di.division_code
+	</select>
+
+
+	<select id="retrieveMissingHsCodeCount" parameterType="map" resultType="map">
+		select
+		    count(*) filter (where hs_code is not null and trim(hs_code) != '') as hs_code_exists_count,
+		    count(*) filter (where hs_code is null or trim(hs_code) = '') as hs_code_missing_count
+		from (
+		    select distinct
+		        im.item_code,
+		        im.hs_code
+		    from item_mst im
+		    join item_dtl id
+		        on im.item_code = id.item_code
+		       and im.company_code = id.company_code
+		    join division di
+		        on id.division_code = di.division_code
+		       and id.company_code = di.company_code
+		    left join product_line pl
+		        on im.company_code = pl.company_code
+		       and im.product_code = pl.product_code
+		    left join code_dtl cd
+		        on id.company_code = cd.company_code
+		       and id.assets_type = cd.code
+		       and cd.category = 'AT'
+		     where im.delete_yn = 'N'
+		       and im.company_code = #{company_code}
+		) t
+	</select>
+
+
 </mapper>

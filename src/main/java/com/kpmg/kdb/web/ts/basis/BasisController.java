@@ -498,4 +498,68 @@ public class BasisController extends GenericController {
 		return result;
 	}
 	
+	
+	
+	/**
+	 * 기초정보관리 > 자재관리
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/basis/itemList")
+	public String basis002_view(Model model, HttpSession session) {
+		return "basis/itemList";
+	}
+	
+	/**
+	 * 자재관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveItemList")
+	@ResponseBody
+	public Result retrieveItemList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveItemList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveItemList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveItemList END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * HS CODE 누락 비율 chart UPDATE 용 데이터 조회 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveMissingHsCodeCount")
+	@ResponseBody
+	public Result retrieveMissingHsCodeCount(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveMissingHsCodeCount ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveMissingHsCodeCount(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveMissingHsCodeCount END");
+		
+		return result;
+	}
+	
 }

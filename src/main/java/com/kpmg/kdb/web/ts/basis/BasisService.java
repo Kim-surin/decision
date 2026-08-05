@@ -646,4 +646,53 @@ public class BasisService extends GeneralService {
     	
     	return result;
     }
+    
+    
+    /**
+	 * 자재관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveItemList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveItemList(param);
+    		
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 회사관리 - 회사 또는 플렌트 1건 정보 조회 (폼데이터 용)
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveMissingHsCodeCount(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveMissingHsCodeCount(param);
+    		//회사 버퍼 설정 기준 값
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
 }
