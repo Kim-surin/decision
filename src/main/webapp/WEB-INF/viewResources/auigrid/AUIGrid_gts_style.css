@@ -1,5 +1,5 @@
-@charset "UTF-8"; 
-/* 그리드 메인 외곽 DIV  */
+@charset "UTF-8";
+/* 그리드 메인 외곽 DIV */
 .aui-grid {
 	font-family: 'Malgun Gothic', '맑은 고딕', AppleSDGothicNeo-Light, sans-serif;
 	font-size: 12px;
@@ -856,18 +856,20 @@
 
 /* 헤더 필터 아이콘 스타일 */
 .aui-grid-header-filter-icon {
-	border-left: 1px solid #c5dbec;
+	border-left: 0px solid #c5dbec;
 	border-right: none;
-	background: url(./images/filter_ico.png) 50% 50% no-repeat;
+	/* background: url(./images/filter_ico.png) 50% 50% no-repeat; */
+	background: url(./images/gts_filter_off.svg) 50% 50% no-repeat;
 	box-sizing: content-box;
 	cursor: pointer;
 }
 
 /* 현재 필터링 된 상태 아이콘 스타일 */
 .aui-grid-header-filter-icon-filtered {
-	border-left: 1px solid #22741c;
+	border-left: 0px solid #22741c;
 	border-right: none;
-	background: #22741c url(./images/filter_ico.png) 50% 50% no-repeat;
+	/* background: #22741c url(./images/filter_ico.png) 50% 50% no-repeat; */
+	background: url(./images/gts_filter_on.svg) 50% 50% no-repeat;
 	box-sizing: content-box;
 	cursor: pointer;
 }
@@ -2205,7 +2207,7 @@
 	/* border-left: 1px solid #c5dbec; 필터버튼이랑 정렬버튼 사이 막대기 표시 */
     border-left: 0px;  /* 필터버튼이랑 정렬버튼 사이 막대기 표시안함 */
     border-right: none;
-    background: url(./images/filter_ico.png) 50% 50% no-repeat;
+    background: url(./images/gts_filter_off.svg) 50% 50% no-repeat;
     box-sizing: content-box;
     cursor: pointer;
 }
