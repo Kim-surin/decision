@@ -108,7 +108,10 @@
  	</update>
  	
 	<delete id="deleteFtaInfoList">
- 		DELETE FROM FTA_MASTER
+ 	   UPDATE FTA_MASTER
+ 		  SET DELETE_YN = 'Y'
+ 		    , UPDATE_DATE = NOW()
+ 		    , UPDATE_BY = #{update_by}
  		WHERE COMPANY_CODE = #{company_code}
  		  AND FTA_CODE = #{fta_code}
  	</delete>

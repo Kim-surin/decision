@@ -65,4 +65,37 @@
 	  ORDER BY ITEM_CODE
  	</select>
  	
+ 	<select id="retrieveComHsCodePopList" parameterType="HashMap" resultType="HashMap">
+		SELECT HS_CODE AS CODE
+		     , HS_CODE_NAME AS CODE_NAME
+		  FROM HS_CODE
+		 WHERE DELETE_YN ='N'
+		   <if test="searchText != null and searchText != ''">
+		   AND (HS_CODE LIKE CONCAT(#{searchText} , '%') OR HS_CODE_NAME LIKE CONCAT(#{searchText} , '%'))
+		   </if>
+	  ORDER BY HS_CODE
+ 	</select>
+ 	
+	<select id="retrieveComFtaCodePopList" parameterType="HashMap" resultType="HashMap">
+		SELECT F.FTA_CODE AS CODE
+		     , F.FTA_NAME AS CODE_NAME
+		     , F.EFFECT_DATE
+		  FROM FTA_MASTER F
+		 WHERE F.COMPANY_CODE = 'FRT100'
+		   AND F.DELETE_YN  = 'N'
+		   <if test="searchText != null and searchText != ''">
+		   AND (F.FTA_CODE LIKE CONCAT(#{searchText} , '%') OR F.FTA_NAME LIKE CONCAT(#{searchText} , '%'))
+		   </if>
+		   <if test="searchEffectDate != null and searchEffectDate != ''">
+		   AND F.EFFECT_DATE <![CDATA[ <= ]]> #{searchEffectDate}
+		   </if>
+		   <if test='searchNation!= null and searchNation != "" and searchNation != "KR"'>
+		   AND EXISTS (SELECT 1
+		   				 FROM FTA_APPLY_NATION T
+		   				WHERE T.FTA_CODE = F.FTA_CODE
+		   				  AND T.NATION_CODE = #{searchNation} ) 
+		   </if>
+	  ORDER BY FTA_CODE
+ 	</select>
+ 	
 </mapper>

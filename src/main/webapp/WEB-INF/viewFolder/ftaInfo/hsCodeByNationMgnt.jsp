@@ -175,9 +175,9 @@
 	                      }
 	                  },
 	                  onClick: (e) => {
-	                	  HSCODE_BY_NATION.fnOpenCompop("item_code");
+	                	  HSCODE_BY_NATION.fnOpenCompop("top_item_code");
 	                  },
-	            },
+	            	},
 				},
 				{
 					dataField: "item_name"
@@ -208,6 +208,22 @@
 						autoThousandSeparator: false, // 천단위 구분자 삽입 여부
 						maxlength : 6
 					}
+				  , renderer: {
+					  type: 'IconRenderer',
+	                  iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
+	                  iconHeight: 16,
+	                  iconPosition: 'aisleRight', // 아이콘 위치
+	                  iconFunction: function (rowIndex, columnIndex, value, item) {
+	                	  if (!KpackageOBJ.auiGrid.isAddedByRowIndex(HSCODE_BY_NATION.gridIdRT, rowIndex)) {
+	                		  return null;
+	                      } else {
+	                    	  return "/rcs/auigrid/images/icon-search.png";
+	                      }
+	                  },
+	                  onClick: (e) => {
+	                	  HSCODE_BY_NATION.fnOpenCompop("top_hs_code");
+	                  },
+	            	},
 				},
 				{
 					dataField: "remarks"
@@ -225,6 +241,22 @@
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
+				  , renderer: {
+					  type: 'IconRenderer',
+	                  iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
+	                  iconHeight: 16,
+	                  iconPosition: 'aisleRight', // 아이콘 위치
+	                  iconFunction: function (rowIndex, columnIndex, value, item) {
+	                	  if (!KpackageOBJ.auiGrid.isAddedByRowIndex(HSCODE_BY_NATION.gridIdRB, rowIndex)) {
+	                		  return null;
+	                      } else {
+	                    	  return "/rcs/auigrid/images/icon-search.png";
+	                      }
+	                  },
+	                  onClick: (e) => {
+	                	  HSCODE_BY_NATION.fnOpenCompop("bottom_fta_code");
+	                  },
+	            	},
 				},
 				{
 					dataField: "fta_name"
@@ -246,6 +278,22 @@
 						autoThousandSeparator: false, // 천단위 구분자 삽입 여부
 						maxlength : 6
 					}
+				  , renderer: {
+					  type: 'IconRenderer',
+	                  iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
+	                  iconHeight: 16,
+	                  iconPosition: 'aisleRight', // 아이콘 위치
+	                  iconFunction: function (rowIndex, columnIndex, value, item) {
+	                	  if (!KpackageOBJ.auiGrid.isAddedByRowIndex(HSCODE_BY_NATION.gridIdRB, rowIndex)) {
+	                		  return null;
+	                      } else {
+	                    	  return "/rcs/auigrid/images/icon-search.png";
+	                      }
+	                  },
+	                  onClick: (e) => {
+	                	  HSCODE_BY_NATION.fnOpenCompop("bottom_hs_code");
+	                  },
+	            	},
 				},
 				{
 					dataField: "apply_date"
@@ -358,20 +406,37 @@
 			});
 			
 			AUIGrid.bind(HSCODE_BY_NATION.gridIdRT, "cellEditEnd", function (event) {
-				 if(event.dataField === "item_code"){
-					 HSCODE_BY_NATION.fnOpenCompop("item_code");
-			    }
+				if(!oUtil.isNull(event.value)){
+					if(event.dataField === "item_code"){
+						 HSCODE_BY_NATION.fnOpenCompop("top_item_code");
+				    }else if(event.dataField === "fta_hs_code"){
+				    	 HSCODE_BY_NATION.fnOpenCompop("top_hs_code");
+				    }
+				}
+
 			});
 
 			//우측 BOTTOM GRID 이벤트 추가 
 			AUIGrid.bind(HSCODE_BY_NATION.gridIdRB, "cellEditBegin", function( event ) {
-				const disableCol = ["hs_code"]
+				const disableCol = ["fta_code", "hs_code"]
 				
 				if (disableCol.includes(event.dataField)) {
 				 	if (!KpackageOBJ.auiGrid.isAddedByRowIndex(HSCODE_BY_NATION.gridIdRB, event.rowIndex)) {
 						return false;						 
 					}
 			    }
+			});
+			
+
+			AUIGrid.bind(HSCODE_BY_NATION.gridIdRB, "cellEditEnd", function (event) {
+				if(!oUtil.isNull(event.value)){
+					if(event.dataField === "bottom_fta_code"){
+						 HSCODE_BY_NATION.fnOpenCompop("bottom_fta_code");
+				    }else if(event.dataField === "bottom_hs_code"){
+				    	 HSCODE_BY_NATION.fnOpenCompop("bottom_hs_code");
+				    }
+				}
+
 			});
 			
 		}
@@ -417,20 +482,48 @@
 		
 		//곧통팝업 오픈
 		this.fnOpenCompop = function(popGubn) {
-			const selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRT)[0];
+			let selRowIndex = 0;
 			let popParam = {};
 			let callbackFunc ="";	
 			let popUrl = "";
 			let popTitle = "";
 			
-			if(popGubn === "item_code"){
+			if(popGubn === "top_item_code"){
+				selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRT)[0];
 				popUrl = "/origin/commonPop/comItem";
 				popTitle = "자재코드 조회";
 				popParam = {
 		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRT, selRowIndex, "item_code")
 		    	}
-				callbackFunc =  "HSCODE_BY_NATION.setComItemPopupData";
+				callbackFunc =  "HSCODE_BY_NATION.setComItemPopupTopGridData";
+		    } else if(popGubn === "top_hs_code"){
+		    	selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRT)[0];
+				popUrl = "/origin/commonPop/comHsCode";
+				popTitle = "HS코드 조회";
+				popParam = {
+		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRT, selRowIndex, "fta_hs_code")
+		    	}
+				callbackFunc =  "HSCODE_BY_NATION.setComHsCodePopupTopGridData";
+		    } else if(popGubn === "bottom_hs_code"){
+		    	selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRB)[0];
+		    	popUrl = "/origin/commonPop/comHsCode";
+				popTitle = "HS코드 조회";
+				popParam = {
+		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "hs_code")
+		    	}
+				callbackFunc =  "HSCODE_BY_NATION.setComHsCodePopupBottomGridData";
+		    } else if(popGubn === "bottom_fta_code"){
+		    	selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRB)[0];
+		    	popUrl = "/origin/commonPop/comFtaCode";
+				popTitle = "FTA코드 조회";
+				popParam = {
+		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "fta_code"),
+		    			"searchNation" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "nation_code"),
+		    			"searchNationView" : true
+		    	}
+				callbackFunc =  "HSCODE_BY_NATION.setComFtaCodePopupBottomGridData";
 		    }
+			
 			
 			window.commonPopupParam = {
 	    			rowIndex : selRowIndex,
@@ -441,12 +534,30 @@
 	    	KpackageOBJ.dialog.open('commonPop',popTitle,popUrl,1000,700);
 		};
 		
-		//국가코드 팝업 세팅
-	    this.setComItemPopupData = function(selectedData) {
+		//상단그리드 - 국가코드 팝업 세팅
+	    this.setComItemPopupTopGridData = function(selectedData) {
 			KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, selectedData["rowIndex"], "item_code", selectedData["code"]);
 	    	KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, selectedData["rowIndex"], "item_name", selectedData["code_name"]);
 	    	KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, selectedData["rowIndex"], "hs_code", selectedData["hs_code"]);
 	    };
+	    
+	    //상단그리드 - 국가별 HS코드 세팅
+	    this.setComHsCodePopupTopGridData = function(selectedData) {
+			KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, selectedData["rowIndex"], "fta_hs_code", selectedData["code"]);
+	    };
+	    
+	    //하단그리드 - HS코드 세팅
+	    this.setComHsCodePopupBottomGridData = function(selectedData) {
+			KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRB, selectedData["rowIndex"], "hs_code", selectedData["code"]);
+	    };
+	    
+	    //하단그리드 - FTA코드 세팅
+	    this.setComFtaCodePopupBottomGridData = function(selectedData) {
+	    	KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRB, selectedData["rowIndex"], "fta_code", selectedData["code"]);
+			KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRB, selectedData["rowIndex"], "fta_name", selectedData["code_name"]);
+	    };
+	    
+	    
 	    
 	    //상단 행추가
 	    this.fnGridRTAddRow = function() {
@@ -538,12 +649,12 @@
 				KpackageOBJ.object.alert("저장할 데이터가 없습니다.");
 				return;
 			}
-							
-			if (!confirm("저장하시겠습니까?")) {
-            	return;
-        	}	
 
 			if(isValid){
+				if (!confirm("저장하시겠습니까?")) {
+	            	return;
+	        	}	
+				
 				var params = {
 					"SAVE_LIST" : data
 				};

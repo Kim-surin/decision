@@ -103,4 +103,49 @@ public class CommonPopService extends GeneralService {
     	
     	return result;
     }
+    
+    /**
+     *  공통 팝업 -  HS코드 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveComHsCodePopList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		result.setValue(sqlSession.getMapper(CommonPopDao.class).retrieveComHsCodePopList(param));
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    /**
+     *  공통 팝업 -  FTA코드 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveComFtaCodePopList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		result.setValue(sqlSession.getMapper(CommonPopDao.class).retrieveComFtaCodePopList(param));
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    
 }

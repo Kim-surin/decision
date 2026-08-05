@@ -178,4 +178,74 @@ public class CommonPopController extends GenericController {
 		
 		return result;
 	}
+	
+	/**
+	 * 공통 팝업 - HS코드 조회
+	 * 
+	 * @author osw
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/origin/commonPop/comHsCode")
+	public String comHsCode_view(Model model, HttpSession session) {
+		return "commonPop/comHsCode_pop";
+	}
+	
+	/**
+	 *  공통 팝업 - HS 조회
+	 * 
+	 * @author osw
+	 * @return 
+	 */
+	@RequestMapping(value="/origin/commonPop/retrieveComHsCodePopList")
+	@ResponseBody
+	public Result retrieveComHsCodePopList(@RequestBody Map param) {
+		Result result = new Result();
+		try {
+			
+			result = commonPopService.retrieveComHsCodePopList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		
+		return result;
+	}
+	
+	/**
+	 * 공통 팝업 - FTA 코드 조회
+	 * 
+	 * @author osw
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/origin/commonPop/comFtaCode")
+	public String comFtaCode_view(Model model, HttpSession session) {
+		return "commonPop/comFtaCode_pop";
+	}
+	
+	/**
+	 *  공통 팝업 - FTA 조회
+	 * 
+	 * @author osw
+	 * @return 
+	 */
+	@RequestMapping(value="/origin/commonPop/retrieveComFtaCodePopList")
+	@ResponseBody
+	public Result retrieveComFtaCodePopList(@RequestBody Map param) {
+		Result result = new Result();
+		try {
+			
+			result = commonPopService.retrieveComFtaCodePopList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		
+		return result;
+	}
 }

@@ -9,12 +9,12 @@
 		     , '' CODE
 		     , '선택' CODE_NAME
 		     , 0 SORT_NO
-		  FROM DUAL
 		 UNION ALL
 		</if>
 		SELECT C.CATEGORY
 		     , C.CODE
 		     , C.CODE_NAME
+		     , C.SORT_NO
 		  FROM CODE_DTL C
 		 WHERE C.CATEGORY = #{CATEGORY}
 		   AND C.USING_YN = 'Y'
@@ -28,7 +28,6 @@
 		SELECT '' CODE
 		       ,'선택' NAME
 		       ,'000' SORT_NO
-		  FROM DUAL
 		 UNION ALL
 		</if>
 		SELECT C.DIVISION_CODE AS  CODE

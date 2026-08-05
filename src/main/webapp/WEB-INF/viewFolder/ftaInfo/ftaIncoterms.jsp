@@ -464,11 +464,15 @@
 			AUIGrid.bind(FTA_INCOTERMS.gridId, "cellEditEnd", function (event) {
 				if (event.dataField === "std_yyyy") {
 					KpackageOBJ.yearPicker.close();
-			    }else if(event.dataField === "division_code"){
-			    	FTA_INCOTERMS.fnOpenCompop("division");
-			    }else if(event.dataField === "nation_code"){
-			    	FTA_INCOTERMS.fnOpenCompop("nation");
 			    }
+				
+				if(!oUtil.isNull(event.value)){
+					if(event.dataField === "division_code"){
+				    	FTA_INCOTERMS.fnOpenCompop("division");
+				    }else if(event.dataField === "nation_code"){
+				    	FTA_INCOTERMS.fnOpenCompop("nation");
+				    }
+				}
 			});
 			
 			
