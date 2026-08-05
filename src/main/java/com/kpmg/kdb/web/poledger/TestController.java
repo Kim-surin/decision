@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
+import com.kpmg.kdb.web.coodecision.CooDecisionContext;
+import com.kpmg.kdb.web.coodecision.dto.FcrInfoRow;
 import com.kpmg.kdb.web.originbasis.HsCodeService;
 import com.kpmg.kdb.web.originbasis.IncotermsRateService;
 import com.kpmg.kdb.web.originbasis.ItemOriginRateService;
@@ -75,6 +77,13 @@ public class TestController extends GenericController {
 							new ItemOriginRateCriteria("FRT100", "FRT101", "091853X310", "PKRCO", "20260430")),
 					"1"));
 
+			// Layer2 서비스(CooDecisionSupportService 등) 테스트용 컨텍스트 준비 확인.
+			// PRODUCT_CODE=091101R050 의 BOM 자재 14건을 CooDecisionContext.fcrInfoRows 에 채운다.
+			CooDecisionContext sampleContext = buildSampleContext();
+			cases.add(runCase("CooDecisionContext.fcrInfoRows 준비",
+					() -> sampleContext.getFcrInfoRows().size(),
+					"14"));
+
 			boolean allPassed = cases.stream().allMatch(TestCase::isPassed);
 			result.setSuccess(allPassed);
 			result.setMessage(allPassed ? "전체 통과" : "실패 항목 있음 - value 목록 확인");
@@ -102,6 +111,66 @@ public class TestController extends GenericController {
 			testCase.setPassed(false);
 		}
 		return testCase;
+	}
+
+	/**
+	 * Layer2 테스트용 CooDecisionContext. PRODUCT_CODE=091101R050(FTA_CODE=PKRPH) 의
+	 * BOM 자재 스냅샷을 fcrInfoRows 에 채워서 반환한다.
+	 */
+	private CooDecisionContext buildSampleContext() {
+		CooDecisionContext ctx = new CooDecisionContext();
+		ctx.setFcrInfoRows(buildSampleFcrInfoRows());
+		return ctx;
+	}
+
+	/**
+	 * 캡처된 FCR_INFO_TEMP 스냅샷(14건)을 그대로 옮긴 것.
+	 * WEIGHT/REQUIREMENT_QTY 등 빈 셀로 보이는 값은 null 로 두었고, EXCLUSION_RULE1~14 는
+	 * 이미지상 전부 'N'(미적용)이라 기본값(false) 그대로 두었다. COO_NATION 컬럼 값이 전부 'N'으로
+	 * 보였는데 실제 국가코드로 보기엔 애매해서 null 로 남겨뒀다 - 필요하면 값을 알려달라.
+	 */
+	private List<FcrInfoRow> buildSampleFcrInfoRows() {
+		List<FcrInfoRow> rows = new ArrayList<>();
+		// itemCode, hsCode, weight, requirementQty, inputAmount, inareaQty, inareaAmount, outareaQty, outareaAmount
+		rows.add(fcrInfoRow("091271R050", "391910", null, "1", "40", "0", "0", null, "40"));
+		rows.add(fcrInfoRow("091853X310", "731910", null, "1", "468", "0", "468", null, "0"));
+		rows.add(fcrInfoRow("091272C001", "391910", null, "1", "29", "0", "29", null, "0"));
+		rows.add(fcrInfoRow("091363X200", "843110", null, "1", "816", "0", "816", null, "0"));
+		rows.add(fcrInfoRow("091853X400", "731910", null, "1", "463", "0", "463", null, "0"));
+		rows.add(fcrInfoRow("DNB11135600", "731822", null, "1", "47.39", "1", "47.39", null, "0"));
+		rows.add(fcrInfoRow("091853X400-SJ", "382499", "0.0732", null, "43.92", "0", "0", "0.0732", "43.92"));
+		rows.add(fcrInfoRow("09136AW100", "843110", null, "1", "740", "0", "740", null, "0"));
+		rows.add(fcrInfoRow("091363X200-SJ", "390730", null, "1", "197", "0", "197", null, "0"));
+		rows.add(fcrInfoRow("FRNB11135800-1", "848210", null, "1", "265", "0", "265", null, "0"));
+		rows.add(fcrInfoRow("091851M100", "731815", null, "1", "721", "0", "721", null, "0"));
+		rows.add(fcrInfoRow("091851M320", "730799", null, "1", "164", "0", "164", null, "0"));
+		rows.add(fcrInfoRow("09136AW100-SJ", "382499", null, "1", "193", "0", "193", null, "0"));
+		rows.add(fcrInfoRow("091853X300-SJ", "382499", "0.11473", null, "44.7447", "0", "0", "0.11473", "44.7447"));
+		return rows;
+	}
+
+	private FcrInfoRow fcrInfoRow(String itemCode, String hsCode, String weight, String requirementQty,
+			String inputAmount, String inareaQty, String inareaAmount, String outareaQty, String outareaAmount) {
+		FcrInfoRow row = new FcrInfoRow();
+		row.setFtaCode("PKRPH");
+		row.setDivisionCode("FRT101");
+		row.setCompanyCode("FRT100");
+		row.setProductCode("091101R050");
+		row.setItemCode(itemCode);
+		row.setParentHsCode("842549");
+		row.setHsCode(hsCode);
+		row.setWeight(toBigDecimal(weight));
+		row.setRequirementQty(toBigDecimal(requirementQty));
+		row.setInputAmount(toBigDecimal(inputAmount));
+		row.setInareaQty(toBigDecimal(inareaQty));
+		row.setInareaAmount(toBigDecimal(inareaAmount));
+		row.setOutareaQty(toBigDecimal(outareaQty));
+		row.setOutareaAmount(toBigDecimal(outareaAmount));
+		return row;
+	}
+
+	private static BigDecimal toBigDecimal(String value) {
+		return value == null ? null : new BigDecimal(value);
 	}
 
 	private boolean matches(Object actual, String expected) {
