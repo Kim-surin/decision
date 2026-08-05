@@ -30,7 +30,7 @@ public interface CooDecisionSupportDao {
 	/** 최소공정 제외 품목 해당 건수 (GET_MP_ITEM) */
 	long selectMinimalProcessItemCount(@Param("companyCode") String companyCode,
 			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
-			@Param("salesSeq") String salesSeq);
+			@Param("salesSeq") int salesSeq);
 
 	/** 해당 FTA 협정 적용대상 회원국 코드 목록 (GET_RCEP_NATION / GET_RCEP_RVC_NATION 공용) */
 	List<String> selectFtaApplyNations(@Param("ftaCode") String ftaCode);
@@ -42,17 +42,17 @@ public interface CooDecisionSupportDao {
 	void insertFcrResult(FcrResultRecord record);
 
 	/** UPDATE_FRM_PROCEDURE 1단계: 역내산(COMPANY_COO_YN='Y') 판정결과 조회 */
-	List<FcrResultRecord> selectOwnCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") String salesSeq,
+	List<FcrResultRecord> selectOwnCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
 			@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode);
 
 	/** UPDATE_FRM_PROCEDURE 2단계: 역외산만 존재(COMPANY_COO_YN='N', STATUS='N') 판정결과 조회 */
-	List<FcrResultRecord> selectNonCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") String salesSeq,
+	List<FcrResultRecord> selectNonCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
 			@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode);
 
 	/** UPDATE_FRM_PROCEDURE 말미: FCR_MST 최종 판정결과 반영 */
-	void updateFcrMstDecisionResult(@Param("salesNo") String salesNo, @Param("salesSeq") String salesSeq,
+	void updateFcrMstDecisionResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
 			@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode, @Param("ruleContents") String ruleContents,
 			@Param("ftaCooYn") String ftaCooYn, @Param("companyCooYn") String companyCooYn,

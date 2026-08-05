@@ -70,7 +70,7 @@ public class CooDecisionSupportService extends GeneralService {
 	}
 
 	/** 레거시 GET_MP_ITEM 이관: 최소공정 제외 품목 해당 여부('Y'/'N') */
-	public String getMinimalProcessItemYn(String companyCode, String divisionCode, String salesNo, String salesSeq) {
+	public String getMinimalProcessItemYn(String companyCode, String divisionCode, String salesNo, int salesSeq) {
 		long count = sqlSession.getMapper(CooDecisionSupportDao.class).selectMinimalProcessItemCount(companyCode,
 				divisionCode, salesNo, salesSeq);
 		return count > 0 ? "Y" : "N";

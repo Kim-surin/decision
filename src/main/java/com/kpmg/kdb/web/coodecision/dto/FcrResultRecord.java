@@ -14,7 +14,7 @@ public class FcrResultRecord {
 
 	private Long seq;
 	private String salesNo;
-	private String salesSeq;
+	private int salesSeq;
 	private String ftaCode;
 	private String divisionCode;
 	private String companyCode;
@@ -69,11 +69,11 @@ public class FcrResultRecord {
 		this.salesNo = salesNo;
 	}
 
-	public String getSalesSeq() {
+	public int getSalesSeq() {
 		return salesSeq;
 	}
 
-	public void setSalesSeq(String salesSeq) {
+	public void setSalesSeq(int salesSeq) {
 		this.salesSeq = salesSeq;
 	}
 
@@ -380,7 +380,7 @@ public class FcrResultRecord {
 	public void resetForNextRule() {
 		this.seq = null;
 		this.salesNo = null;
-		this.salesSeq = null;
+		this.salesSeq = 0; // 다음 룰 처리 직전에 FM_LIST.SALES_SEQ 로 재설정되므로 0은 실제로 읽히지 않는다
 		this.ftaCode = null;
 		this.ruleSeq = null;
 		this.divisionCode = null;

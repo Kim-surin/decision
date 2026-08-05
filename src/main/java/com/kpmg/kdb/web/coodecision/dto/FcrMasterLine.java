@@ -10,7 +10,7 @@ public class FcrMasterLine {
 
 	private String ftaCode;
 	private String salesNo;
-	private String salesSeq;
+	private int salesSeq;
 	private String divisionCode;
 	private String companyCode;
 	private String productCode;
@@ -52,11 +52,11 @@ public class FcrMasterLine {
 		this.salesNo = salesNo;
 	}
 
-	public String getSalesSeq() {
+	public int getSalesSeq() {
 		return salesSeq;
 	}
 
-	public void setSalesSeq(String salesSeq) {
+	public void setSalesSeq(int salesSeq) {
 		this.salesSeq = salesSeq;
 	}
 
