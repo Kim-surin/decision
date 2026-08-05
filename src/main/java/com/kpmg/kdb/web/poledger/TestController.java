@@ -124,28 +124,27 @@ public class TestController extends GenericController {
 	}
 
 	/**
-	 * 캡처된 FCR_INFO_TEMP 스냅샷(14건)을 그대로 옮긴 것.
-	 * WEIGHT/REQUIREMENT_QTY 등 빈 셀로 보이는 값은 null 로 두었고, EXCLUSION_RULE1~14 는
-	 * 이미지상 전부 'N'(미적용)이라 기본값(false) 그대로 두었다. COO_NATION 컬럼 값이 전부 'N'으로
-	 * 보였는데 실제 국가코드로 보기엔 애매해서 null 로 남겨뒀다 - 필요하면 값을 알려달라.
+	 * 사용자가 제공한 FCR_INFO_TEMP 스냅샷(14건, 탭 구분 텍스트 기준)을 그대로 옮긴 것.
+	 * WEIGHT/STANDARD 는 전 행 공란(null). EXCLUSION_RULE1~14 는 전 행 'N'(미적용)이라
+	 * 기본값(false) 그대로 두었고, COO_NATION 도 전 행 공란이라 null 로 두었다.
 	 */
 	private List<FcrInfoRow> buildSampleFcrInfoRows() {
 		List<FcrInfoRow> rows = new ArrayList<>();
 		// itemCode, hsCode, weight, requirementQty, inputAmount, inareaQty, inareaAmount, outareaQty, outareaAmount
-		rows.add(fcrInfoRow("091271R050", "391910", null, "1", "40", "0", "0", null, "40"));
-		rows.add(fcrInfoRow("091853X310", "731910", null, "1", "468", "0", "468", null, "0"));
-		rows.add(fcrInfoRow("091272C001", "391910", null, "1", "29", "0", "29", null, "0"));
-		rows.add(fcrInfoRow("091363X200", "843110", null, "1", "816", "0", "816", null, "0"));
-		rows.add(fcrInfoRow("091853X400", "731910", null, "1", "463", "0", "463", null, "0"));
-		rows.add(fcrInfoRow("DNB11135600", "731822", null, "1", "47.39", "1", "47.39", null, "0"));
-		rows.add(fcrInfoRow("091853X400-SJ", "382499", "0.0732", null, "43.92", "0", "0", "0.0732", "43.92"));
-		rows.add(fcrInfoRow("09136AW100", "843110", null, "1", "740", "0", "740", null, "0"));
-		rows.add(fcrInfoRow("091363X200-SJ", "390730", null, "1", "197", "0", "197", null, "0"));
-		rows.add(fcrInfoRow("FRNB11135800-1", "848210", null, "1", "265", "0", "265", null, "0"));
-		rows.add(fcrInfoRow("091851M100", "731815", null, "1", "721", "0", "721", null, "0"));
-		rows.add(fcrInfoRow("091851M320", "730799", null, "1", "164", "0", "164", null, "0"));
-		rows.add(fcrInfoRow("09136AW100-SJ", "382499", null, "1", "193", "0", "193", null, "0"));
-		rows.add(fcrInfoRow("091853X300-SJ", "382499", "0.11473", null, "44.7447", "0", "0", "0.11473", "44.7447"));
+		rows.add(fcrInfoRow("091271R050", "391910", null, "1", "40", "0", "0", "1", "40"));
+		rows.add(fcrInfoRow("091853X310", "731829", null, "1", "468", "1", "468", "0", "0"));
+		rows.add(fcrInfoRow("091272C001", "391910", null, "1", "29", "1", "29", "0", "0"));
+		rows.add(fcrInfoRow("091363X200", "843110", null, "1", "816", "1", "816", "0", "0"));
+		rows.add(fcrInfoRow("091853X400", "731829", null, "1", "463", "1", "463", "0", "0"));
+		rows.add(fcrInfoRow("DNB11135600", "731822", null, "1", "47.39", "1", "47.39", "0", "0"));
+		rows.add(fcrInfoRow("091853X400-SJ", "382499", null, "0.0732", "43.92", "0", "0", "0.0732", "43.92"));
+		rows.add(fcrInfoRow("09136AW100", "843110", null, "1", "740", "1", "740", "0", "0"));
+		rows.add(fcrInfoRow("091363X200-SI", "390730", null, "1", "197", "0", "0", "1", "197"));
+		rows.add(fcrInfoRow("FRNB11135800-1", "848210", null, "1", "265", "1", "265", "0", "0"));
+		rows.add(fcrInfoRow("091851M100", "731815", null, "1", "721", "1", "721", "0", "0"));
+		rows.add(fcrInfoRow("091851M320", "730799", null, "1", "164", "1", "164", "0", "0"));
+		rows.add(fcrInfoRow("09136AW100-SI", "382499", null, "1", "193", "0", "0", "1", "193"));
+		rows.add(fcrInfoRow("091853X300-SJ", "382499", null, "0.11473", "44.7447", "0", "0", "0.11473", "44.7447"));
 		return rows;
 	}
 
