@@ -3,7 +3,7 @@
 <mapper namespace="com.kpmg.kdb.web.coodecision.ExclusionRuleDao">
 
 	<select id="selectExclusionRuleHeaders" resultType="com.kpmg.kdb.web.coodecision.dto.ExclusionRuleHeader">
-		SELECT DISTINCT EXCLUSION_TYPE AS exclusionType
+		SELECT DISTINCT CAST(EXCLUSION_TYPE AS DECIMAL) AS exclusionType
 		               ,JOIN_CONDITION AS joinCondition
 		               ,EXCLUSION_RATE AS exclusionRate
 		FROM   FTA_EXCLUSION_RULE
