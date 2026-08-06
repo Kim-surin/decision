@@ -5131,102 +5131,1106 @@ var KpackageOBJ = {
 
 
         },  
+        
+                
         /**
+		 * 엑스트라 행 체크박스가 설정된 경우행 고유 값(rowIdField 값)을 이용해 특정 행에 체크를 설정합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_rowIds : (Array) 행 고유 값(rowIdField 값)들을 요소로 갖는 배열
+		 * 
+		 */ 
+		"addCheckedRowsByIds" : function(p_TargetGridId, p_rowIds ) {
+	   		AUIGrid.addCheckedRowsByIds(p_TargetGridId, p_rowIds );
+		},
+        
+        /**
+		 *엑스트라 행 체크박스가 설정된 경우 특정 행의 dataField 의 값과 일치하는 행에 체크를 표시합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_dataField : (String) 행 아이템에서 체크하고자 하는 필드명
+		 * - p_values : (Array or String) 행 아이템에서 체크하고자 하는 필드의 값(value), 복수의 값을 체크하고자 한다면 배열로 설정(예: ["Anna", "Steve"])
+		 * 
+		 */ 
+		"addCheckedRowsByValue" : function(p_TargetGridId, p_dataField, p_values) {
+	   		AUIGrid.addCheckedRowsByValue(p_TargetGridId, p_dataField, p_values);
+		},
+		
+        /**
+		 *엑스트라 행 체크박스가 설정된 경우 특정 행의 dataField 의 값과 일치하는 행에 체크를 표시합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_cItem (Object or Array) : 삽입하고자 하는 열 객체(columnm Object), 복수의 열을 삽입하고자 하는 경우 Object 를 배열로 묶으십시오.
+		 * - p_columnIndex (Number or String) : 삽입될 열의 인덱스, columnIndex 에 다음 문자를 설정한 경우
+		 *               => "first" : 맨처음, "last" : 맨끝, "selectionLeft" : 선택 열 왼쪽에, "selectionRight" : 선택 열 오른쪽에 추가 열이 삽입됩니다.
+		 * 
+		 */ 
+		"addColumn" : function(p_TargetGridId, p_cItem , p_columnIndex = "last" ) {
+	   		AUIGrid.addColumn(p_TargetGridId, p_cItem , p_columnIndex );
+		},        
+        
+        /**
+		 * 그리드 행(row) 아이템을 추가, 삽입합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_items (Object or Array) : 삽입하고자 하는 행 아이템, 복수의 행을 삽입하고자 하는 경우 Object 를 배열로 묶으십시오.
+		 * - p_rowIndex (Number or String) : 삽입될 행의 인덱스, rowIndex 에 다음 문자를 설정한 경우
+		 *            => "first" : 첫 행, "last" : 최하단, "selectionUp" : 선택행 위, "selectionDown" : 선택행 아래에 추가행이 삽입됩니다.
+         * 			  => 기본값 last 	
+         */
+        "addRow": function(p_TargetGridId, p_items, p_rowIndex = "last") {
+            AUIGrid.addRow(p_TargetGridId, p_items, p_rowIndex);
+        },
+
+	    /**
+		 * 그리드에서 특정 열(column)의 자식으로 열을 추가, 삽입합니다.
+		 *
+  	     * 파라메터 설명
+		 * - cItem (Object or Array) : 삽입하고자 하는 열 객체(columnm Object), 복수의 열을 삽입하고자 하는 경우 Object 를 배열로 묶으십시오.
+		 * - p_parentDataField (String) : 부모 dataField 명, 해당 dataField 의 자식으로 칼럼이 추가됩니다.
+		 * - p_columnIndex (Number or String) : 삽입될 열의 인덱스, columnIndex 에 다음 문자를 설정한 경우. "first" : 맨처음, "last" : 맨끝에 추가 열이 삽입됩니다.
+		 * 
+         */
+        "addTreeColumn": function(p_TargetGridId, p_cItem, p_parentDataField, p_columnIndex = "last") {
+            AUIGrid.addTreeColumn(p_TargetGridId, p_cItem, p_parentDataField, p_columnIndex);
+        },
+
+	    /**
+		 * 트리 그리드 행(row) 아이템을 추가, 삽입합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_items (Object or Array) : 삽입하고자 하는 행 아이템, 복수의 행을 삽입하고자 하는 경우 Object 를 배열로 묶으십시오.
+		 * - p_parentRowId (String) : 추가될 행의 부모 행 고유 값(rowIdField 값).
+		 * - p_rowPosition (String) : 삽입될 행의 위치 값, 유효값은 다음과 같습니다
+		 *                          => "first" : 첫 행, "last" : 최하단, "selectionUp" : 선택행 위, "selectionDown" : 선택행 아래에 추가행이 삽입됩니다.
+		 * 
+         */
+        "addTreeRow": function(p_TargetGridId, p_items, p_parentRowId, p_rowPosition = "last") {
+            AUIGrid.addTreeRow(p_TargetGridId, p_items, p_parentRowId, p_rowPosition);
+        },
+        
+	    /**
+		 * 트리 그리드 행(row) 아이템을 특정 행 위치(rowIndex)에 추가, 삽입합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_items (Object or Array) : 삽입하고자 하는 행 아이템, 복수의 행을 삽입하고자 하는 경우 Object 를 배열로 묶으십시오.
+		 * - p_rowIndex (Number) : 추가될 행이 위치할 행 인덱스(rowIndex)
+		 * 
+         */
+        "addTreeRowByIndex": function(p_TargetGridId, p_items, p_rowIndex ) {
+            AUIGrid.addTreeRowByIndex(p_TargetGridId, p_items, p_rowIndex);
+        },        
+        
+	    /**
+		 * 스트라 행 체크박스가 설정된 경우 행 고유 값(rowIdField 값)을 이용해 특정 행에 체크 해제를 설정합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_rowIds : (Array) 행 고유 값(rowIdField 값)들을 요소로 갖는 배열
+		 * 
+         */
+        "addUncheckedRowsByIds": function(p_TargetGridId, p_rowIds) {
+            AUIGrid.addUncheckedRowsByIds(p_TargetGridId, p_rowIds);
+        },        
+       
+	    /**
+		 * 엑스트라 행 체크박스가 설정된 경우 특정 행의 dataField 의 값과 일치하는 행에 체크 해제를 설정합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_dataField : (String) 행 아이템에서 체크 해제 하고자 하는 필드명
+		 * - p_values : (Array or String) 행 아이템에서 체크 해제 하고자 하는 필드의 값(value), 복수의 값을 체크하고자 한다면 배열로 설정(예: ["Anna", "Steve"])
+		 * 
+         */
+        "addUncheckedRowsByValue": function(p_TargetGridId, p_dataField, p_values ) {
+            AUIGrid.addUncheckedRowsByValue(p_TargetGridId, p_dataField, p_values);
+        },                        
+        
+	    /**
+		 * 기존 그리드 데이터의 하단(뒤쪽)에 추가로 데이터를 붙입니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_additionalData (Array) : 추가시키고자 하는 데이터
+		 * 
+         */
+        "appendData": function(p_TargetGridId, p_additionalData) {
+            AUIGrid.appendData(p_TargetGridId, p_additionalData);
+        },             
+        
+        
+	    /**
+		 * 그리드 이벤트를 핸들링하기 위해 이벤트를 바인딩하는 메소드입니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_type : (String or Array) 바인딩하고자 하는 이벤트 유형
+		 * - p_function : (Function) 이벤트 핸들러 함수
+		 * 
+         */
+        "bind": function(p_TargetGridId, p_type, p_function ) {
+            AUIGrid.bind(p_TargetGridId, p_type, p_function);
+        },                        
+        
+	    /**
+		 * 그리드의 칼럼 레이아웃(columnLayout) 을 변경합니다.
+		 *
+  	     * 파라메터 설명
+		 * - p_columnLayout : (Array-Object) 변경하고자 하는 새로운 칼럼 레이아웃
+		 * 
+         */
+        "changeColumnLayout ": function(p_TargetGridId, p_columnLayout) {
+            AUIGrid.changeColumnLayout (p_TargetGridId, p_columnLayout);
+        },           
+        
+		/**
+		 * 엑스트라 칼럼인 행 드래그&드랍 손잡이(showDragKnobColumn), 행 번호(showRowNumColumn), 행 상태(showStateColumn), 행 체크박스(showRowCheckColumn)의 순서를 변경합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_orders (Array) : 엑스트라 칼럼 속성명을 순서로 지정한 배열
+		 * 
+         */
+        "changeExtraColumnOrders ": function(p_TargetGridId, p_orders) {
+            AUIGrid.changeExtraColumnOrders (p_TargetGridId, p_orders);
+        },      
+        
+		/**
+		 * 엑스트라 칼럼인 행 드래그&드랍 손잡이(showDragKnobColumn), 행 번호(showRowNumColumn), 행 상태(showStateColumn), 행 체크박스(showRowCheckColumn)의 너비(width)를 변경합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_name (String) : 엑스트라 칼럼 너비 속성 이름
+		 * - p_width (Number) : 변경 시킬 너비
+		 * 
+         */
+        "changeExtraColumnWidth ": function(p_TargetGridId, p_name, p_width) {
+            AUIGrid.changeExtraColumnWidth (p_TargetGridId, p_name, p_width);
+        },      
+        
+		/**
+		 * 그리드의 푸터 레이아웃(footerLayout) 을 변경합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_footerLayout : (Array-Object) 변경하고자 하는 새로운 푸터 레이아웃
+		 * 
+         */
+        "changeFooterLayout ": function(p_TargetGridId, p_footerLayout) {
+            AUIGrid.changeFooterLayout (p_TargetGridId, p_footerLayout);
+        },           
+               
+		/**
+		 * 필터링이 설정되어 있다면 해당 칼럼의 필터링을 해제합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_dataField (String) : 칼럼이 출력하고 있는 데이터의 필드명
+		 * 
+         */
+        "clearFilter ": function(p_TargetGridId, p_dataField) {
+            AUIGrid.clearFilter (p_TargetGridId, p_dataField);
+        },                   
+        
+		/**
+		 * 모든 필터링을 해제합니다.
+		 * 
+         */
+        "clearFilterAll ": function(p_TargetGridId) {
+            AUIGrid.clearFilterAll (p_TargetGridId);
+        },
+        
+		/**
 		 * 그리드 데이터를 모두 초기화하여 빈 그리드로 만듭니다.
 		 * Auigrid 데이터 조회
 		 * 
 		 */ 
         "clearGridData" : function(p_TargetGridId) {
 	   		AUIGrid.clearGridData(p_TargetGridId);
-		},
-
-        "remove": function(p_AuiGridId) {
-            AUIGrid.destroy("#" + p_AuiGridId);
+		},                   
+         
+		/**
+		 * 선택되어진 모든 아이템들을 초기화합니다.
+		 * 
+         */
+        "clearSelection ": function(p_TargetGridId) {
+            AUIGrid.clearSelection (p_TargetGridId);
+        },            
+        
+		/**
+		 * 정렬(Sorting)이 설정되어 있다면 모든 정렬을 초기화 합니다.
+		 * 
+         */
+        "clearSortingAll ": function(p_TargetGridId) {
+            AUIGrid.clearSortingAll (p_TargetGridId);
+        },                      
+        
+		/**
+		 * 실행 취소(Undo), 다시 실행(Redo) 커맨드 스택을 초기화 합니다.
+		 * 
+         */
+        "clearUndoRedoStack ": function(p_TargetGridId) {
+            AUIGrid.clearUndoRedoStack (p_TargetGridId);
+        },                      
+                
+        
+		/**
+		 * 그리드 필터를 설정한 경우, 필터 레이어(필터 메뉴)가 오픈되어 있을 때 닫도록 지시합니다.
+		 * 
+         */
+        "closeFilterLayer ": function(p_TargetGridId) {
+            AUIGrid.closeFilterLayer (p_TargetGridId);
+        },                      
+                        
+		/**
+		 * 계층 구조 데이터 표현(트리 데이터)인 경우 모든 노드들을 닫고 최상위 Branch 만 표시합니다.
+         */
+        "collapseAll ": function(p_TargetGridId) {
+            AUIGrid.collapseAll (p_TargetGridId);
+        },              
+        
+                     
+		/**
+		 * 작성된 그리드를 완전히 제거합니다.
+         */
+        "destroy": function(p_TargetGridId) {
+            AUIGrid.destroy(p_TargetGridId);
         },
-		
+
 		/**
-		 * 그리드에 데이터를 로드 합니다. 
-		 * Auigrid 데이터 조회
-		 * 
-		 * 
-		 */
+		 * 계층 구조 데이터 표현인 경우 모든 노드들을 열어 전체 펼치기를 실행합니다.
+         */
+        "expandAll": function(p_TargetGridId) {
+            AUIGrid.expandAll(p_TargetGridId);
+        },
+
+
 		/**
-		 * 그리드에 데이터를 로드 합니다.
-		 * Auigrid 데이터 조회
+		 * 계층형 그리드(트리 그리드)인 경우 행 고유 값(rowIdField 값)에 맞는 아이템이 브랜치(branch)일 때 열기/닫기를 실행합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_rowIds (Array 또는 String) : 행 고유 값(rowIdField 값) (복수인 경우 Array 로 지정)
+		 * - p_open (Boolean) : 열기 할지 닫기 할지 여부(true 인 경우 열기 실행)
+		 * - p_recursive (Boolean) : 해당 아이템의 자손까지 모두 열지 여부
+		 * 
+         */
+        "expandItemByRowId ": function(p_TargetGridId, p_rowIds, p_open, p_recursive) {
+            AUIGrid.expandItemByRowId (p_TargetGridId, p_rowIds, p_open, p_recursive);
+        },      
+        
+              
+		/**
+		 * 그리드에 출력된 현재 데이터를 다운로드 가능한 CSV 형태로 내보내기 합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_exportProps (Object) : 내보내기 할 때 파일명 등을 지정할 수 있는 파라메터입니다.
+		 *     						=>  afterRequestCallback (Function) : 내보내기 후 호출될 콜백함수를 지정합니다.
+		 *     						=>	alwaysQuotes (Boolean) : 쌍따옴표를 모든 값에 붙일지 여부를 지정합니다. 값에 컴마가 있는지 확인하여 붙이는 경우(이 속성 false 설정한 경우) 퍼포먼스가 낮을 수 있습니다.
+		 *     						=>	beforeRequestCallback (Function) : 내보내기 전 호출될 콜백함수를 지정합니다.
+		 *     						=>	fileName (String) : 내보내기 할 때 파일명을 지정하면 해당 파일명을 서버 사이드에서 파라메터로 받을 수 있습니다.
+		 *     						=>	localControl(Boolean) : 다운로딩 처리가 아닌 데이터를 Blob 으로 반환할지 여부를 지정합니다.(기본값 : false)
+		 *     						=>	localControlFunc(Function) : localControl 를 true 설정한 경우 그리드가 CSV 서식 작성 완료 후 Blob 으로 반환하는 함수입니다.
+		 *     						=>	localAsText (Boolean) : localControl 를 true 설정한 경우 localControlFunc 의 파라메터를 Blob 대신 String 으로 대체할지 여부를 지정합니다.(기본값 : false)
+		 *     						=>	progressBar (Boolean) : 내보내기 진행 상황을 퍼센티지로 보여줄지 여부를 나타냅니다.(기본값 : false)
+		 * 
+         */
+        "exportToCsv ": function(p_TargetGridId, p_exportProps ) {
+            AUIGrid.exportToCsv (p_TargetGridId, p_exportProps );
+        },                   
+        
+		/**
+		 * 그리드에 출력된 현재 데이터를 다운로드 가능한 JSON 형태로 내보내기 합니다.
+		 * 
+  	     * 파라메터 설명
+		 * p_exportProps (Object) : 내보내기 할 때 파일명 등을 지정할 수 있는 파라메터입니다.
+		 *     						=>  afterRequestCallback (Function) : 내보내기 후 호출될 콜백함수를 지정합니다.
+		 *     						=>	beforeRequestCallback (Function) : 내보내기 전 호출될 콜백함수를 지정합니다.
+		 *     						=>	fileName (String) : 내보내기 할 때 파일명을 지정하면 해당 파일명을 서버 사이드에서 파라메터로 받을 수 있습니다.
+		 *     						=>	keyValueMode (Boolean) : 내보내기 할 때 Row 데이터를 칼럼 인덱스에 맞는 배열로 할 지 key-value 로 짝을 갖는 Object 요소 배열로 할지 여부를 나타냅니다.
+		 *     						=>	localControl(Boolean) : 다운로딩 처리가 아닌 데이터를 Blob 으로 반환할지 여부를 지정합니다.(기본값 : false)
+		 *     						=>	localControlFunc(Function) : localControl 를 true 설정한 경우 그리드가 CSV 서식 작성 완료 후 Blob 으로 반환하는 함수입니다.
+		 *     						=>	localAsText (Boolean) : localControl 를 true 설정한 경우 localControlFunc 의 파라메터를 Blob 대신 String 으로 대체할지 여부를 지정합니다.(기본값 : false)
+		 * 
+         */
+        "exportToJson ": function(p_TargetGridId, p_exportProps ) {
+            AUIGrid.exportToJson (p_TargetGridId, p_exportProps );
+        },                         
+        
+        
+		/**
+		 * 그리드에 출력된 현재 데이터를 자바스크립트 Array-Object 로 내보내기 합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_keyValueMode (Boolean) : 내보내기 할 때 Row 데이터를 칼럼 인덱스에 맞는 배열로 할 지 key-value 로 짝을 갖는 Object 요소 배열로 할지 여부를 나타냅니다.
+		 * 
+		 * Return : (Array) 그리드의 Array-Object 데이터
+         */
+        "exportToObject ": function(p_TargetGridId, p_keyValueMode ) {
+            return AUIGrid.exportToObject (p_TargetGridId, p_keyValueMode );
+        },          
+
+
+		/**
+		 * 그리드에 출력된 현재 데이터를 다운로드 가능한 PDF 로 내보내기 합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_exportProps (Object) : PDF로 내보내기 할 때 파일명, 상단, 하단 추가 텍스트를 지정할 수 있는 파라메터입니다.
+		 *  			 => afterRequestCallback (Function) : 내보내기 후 호출될 콜백함수를 지정합니다.
+		 *  			 => beforeRequestCallback (Function) : 내보내기 전 호출될 콜백함수를 지정합니다.
+		 *  			 => fontPath (String) : PDF 파일 작성 시 사용할 글꼴(Font) URL 경로입니다.(필수)
+		 *  			 => compress (Boolean) : PDF 파일 작성 시 압축을 할 지 여부를 지정합니다.(기본값: false)
+		 *  			 => fileName (String) : PDF로 내보내기 할 때 파일명을 지정하면 해당 파일명을 서버 사이드에서 파라메터로 받을 수 있습니다.
+		 *  			 => isRowStyleFront(Boolean) : 행에 적용된 스타일이 열에 적용된 스타일 보다 상위에 적용될지 여부를 지정합니다.(기본값 : true)
+		 *  			 => localControl(Boolean) : 다운로딩 처리가 아닌 데이터를 Blob 으로 반환할지 여부를 지정합니다.(기본값 : false)
+		 *  			 => localControlFunc(Function) : localControl 를 true 설정한 경우 그리드가 PDF 서식 작성 완료 후 Blob 으로 반환하는 함수입니다.
+		 *  			 => headers (Array) : 그리드 상단에 표시할 추가 행들을 지정합니다. 제목이나 부제목과 같은 내용이 될 수 있습니다.
+		 *  			 => footers (Array) : 그리드 하단에 표시할 추가 행들을 지정합니다.
+		 *  			 => text (String) : PDF에 표시할 텍스트입니다.
+		 *  			 => height (Number) : PDF에서 행의 높이를 지정합니다.(px 단위, 실제 PDF는 pt 입니다. 그리드가 px 를 pt 로 변환하므로 px 단위로 지정하십시오.)
+		 *  			 => style (Object) : 행의 스타일을 지정합니다. (유효값 : fontSize, textAlign, underline, background, color)
+		 * 
+         */
+        "exportToPdf ": function(p_TargetGridId, p_exportProps ) {
+            AUIGrid.exportToPdf (p_TargetGridId, p_exportProps );
+        },                         
+        
+		/**
+		 * 그리드에 출력된 현재 데이터를 다운로드 가능한 TXT 형태로 내보내기 합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_exportProps (Object) : PDF로 내보내기 할 때 파일명, 상단, 하단 추가 텍스트를 지정할 수 있는 파라메터입니다.
+		 *  			 => afterRequestCallback (Function) : 내보내기 후 호출될 콜백함수를 지정합니다.
+		 *  			 => beforeRequestCallback (Function) : 내보내기 전 호출될 콜백함수를 지정합니다.
+		 *  			 => fileName (String) : 내보내기 할 때 파일명을 지정하면 해당 파일명을 서버 사이드에서 파라메터로 받을 수 있습니다.
+		 *  			 => localControl(Boolean) : 다운로딩 처리가 아닌 데이터를 Blob 으로 반환할지 여부를 지정합니다.(기본값 : false)
+		 *  			 => localControlFunc(Function) : localControl 를 true 설정한 경우 그리드가 TXT 서식 작성 완료 후 Blob 으로 반환하는 함수입니다.
+		 *  			 => localAsText (Boolean) : localControl 를 true 설정한 경우 localControlFunc 의 파라메터를 Blob 대신 String 으로 대체할지 여부를 지정합니다.(기본값 : false)
+		 *  			 => progressBar (Boolean) : 내보내기 진행 상황을 퍼센티지로 보여줄지 여부를 나타냅니다.(기본값 : false)
+		 * 
+         */
+        "exportToTxt ": function(p_TargetGridId, p_exportProps ) {
+            AUIGrid.exportToTxt (p_TargetGridId, p_exportProps );
+        },           
+
+		/**
+		 * 그리드에 출력된 현재 데이터를 다운로드 가능한 엑셀(xlsx) 로 내보내기 합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_exportProps (Object) : PDF로 내보내기 할 때 파일명, 상단, 하단 추가 텍스트를 지정할 수 있는 파라메터입니다.
+		 *  			 => API 문서 참고.. 너무 많음
+		 * 
+         */
+        "exportToXlsx ": function(p_TargetGridId, p_exportProps ) {
+            AUIGrid.exportToXlsx (p_TargetGridId, p_exportProps );
+        },     
+
+		/**
+		 * 다수의 그리드에 출력된 현재 데이터를 1개의 엑셀(xlsx) 파일에 각각의 엑셀 시트(Sheets)로 내보내기 합니다.
+		 * 
+  	     * 파라메터 설명
+		 * -p_subGridIds (Array) : 시트(Sheets)에 각각 같이 내보내기 할 서브 그리드들의 pid 배열
+		 * -p_exportProps (Array) : 각각 그리드들의 내보내기 속성 정의 배열
+		 *  			 => exceptColumnFields (Array) : 엑셀로 저장 할 때 포함 시키지 않을 칼럼들의 dataField 를 지정합니다.
+		 *  			 => exportWithStyle (Boolean) : 엑셀로 내보내기 할 때 스타일 정보(폰트 및 컬러 등)을 함께 내보내기 할지 여부를 나타냅니다.
+		 *  			 => isRowStyleFront(Boolean) : 행에 적용된 스타일이 열에 적용된 스타일 보다 상위에 적용될지 여부를 지정합니다.(기본값 : true)
+		 *  			 => sheetName (String) : 엑셀로 내보내기 할 때 엑셀의 시트명을 지정합니다. (기본값 : Sheet 1)
+		 *  			 => fixedColumnCount (Number) : 엑셀로 내보내기 할 때 엑셀 상의 틀고정 열(column)을 임의로 지정합니다.
+		 *  			 => fixedRowCount (Number) : 엑셀로 내보내기 할 때 엑셀 상의 틀고정 행(row)을 임의로 지정합니다.
+		 *  			 => headers (Array) : 그리드 상단에 표시할 추가 행들을 지정합니다. 제목이나 부제목과 같은 내용이 될 수 있습니다.
+		 *  			 => footers (Array) : 그리드 하단에 표시할 추가 행들을 지정합니다.
+         */
+        "exportToXlsxMulti ": function(p_TargetGridId, p_subGridIds, p_exportProps ) {
+            AUIGrid.exportToXlsxMulti (p_TargetGridId, p_subGridIds, p_exportProps );
+        },     
+
+
+		/**
+		 * 그리드에 출력된 현재 데이터를 다운로드 가능한 XML 형태로 내보내기 합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_exportProps (Array) : 각각 그리드들의 내보내기 속성 정의 배열
+		 *  			 => afterRequestCallback (Function) : 내보내기 후 호출될 콜백함수를 지정합니다.
+		 *  			 => beforeRequestCallback (Function) : 내보내기 전 호출될 콜백함수를 지정합니다.
+		 *  			 => fileName (String) : 내보내기 할 때 파일명을 지정하면 해당 파일명을 서버 사이드에서 파라메터로 받을 수 있습니다.
+		 *  			 => localControl(Boolean) : 다운로딩 처리가 아닌 데이터를 Blob 으로 반환할지 여부를 지정합니다.(기본값 : false)
+		 *  			 => localControlFunc(Function) : localControl 를 true 설정한 경우 그리드가 XML 서식 작성 완료 후 Blob 으로 반환하는 함수입니다.
+		 *  			 => localAsText (Boolean) : localControl 를 true 설정한 경우 localControlFunc 의 파라메터를 Blob 대신 String 으로 대체할지 여부를 지정합니다.(기본값 : false)
+         */
+        "exportToXml ": function(p_TargetGridId, p_exportProps ) {
+            AUIGrid.exportToXml (p_TargetGridId, p_exportProps );
+        },     
+
+
+		/**
+		 * 편집모드(editable=true)인 경우 해당 input 의 값을 강제적으로 편집 완료 또는 취소 상태로 만듭니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_value (Object) : 설정하고자 하는 값
+		 * - p_cancel (Boolean) : 이 값이 true 라면 에디팅 취소(cancel) 가 적용됩니다.
+		 * 
+         */
+        "forceEditingComplete ": function(p_TargetGridId, p_value, p_cancel ) {
+            AUIGrid.forceEditingComplete (p_TargetGridId, p_value, p_cancel );
+        },         
+
+		/**
+		 * 그리드에서 추가된 열(column) 의 dataField 들의 묶음(배열)을 반환합니다.
+		 * 
+		 * Return : (Array) 추가된 열의 dataField 들
+         */
+        "getAddedColumnFields ": function(p_TargetGridId) {
+            return AUIGrid.getAddedColumnFields (p_TargetGridId);
+        },         
+
+		/**
+		 * 그리드에서 추가된 아이템들의 묶음(배열)을 반환합니다.
+		 * 
+		 * Return : (Array) 추가된 행 아이템들
+         */
+        "getAddedRowItems ": function(p_TargetGridId) {
+            return AUIGrid.getAddedRowItems (p_TargetGridId);
+        },         
+
+		/**
+		 * 트리 그리드(계층형 그리드)에서 행 고유 값(rowIdField 값)에 해당되는 모든 조상(ascendants) 행 아이템을 찾아 배열로 반환합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_rowId : (String) 행 고유 값(rowIdField 값)
+		 * 
+		 * Return : (Array) 주어진 행 고유 값(rowIdField 값)에 따른 모든 조상 행 아이템들
+         */
+        "getAscendantsByRowId ": function(p_TargetGridId, p_rowId ) {
+            return AUIGrid.getAscendantsByRowId (p_TargetGridId, p_rowId );
+        },         
+
+		/**
+		 * 그리드의 특정 셀의 포매팅된 값을 반환합니다.
+		 * 
+  	     * 파라메터 설명
+		 * - p_rowIndex (Number) : 얻고자하는 행 인덱스
+		 * - p_col : dataField or columnIndex(String or Number) - 얻고자 하는 칼럼의 dataField 또는 칼럼 인덱스
+		 * 
+		 * Return : 선택 셀 포매팅된 값
 		 */
-		"retrieve": function (p_TargetGridId, p_RetrieveUrl, p_Params) {
-
-		    if (!p_TargetGridId || typeof p_TargetGridId !== "string") {
-		        console.warn("[retrieve] p_TargetGridId 값이 올바르지 않습니다.", p_TargetGridId);
-		        return;
-		    }
-
-		    if (!p_RetrieveUrl || typeof p_RetrieveUrl !== "string") {
-		        console.warn("[retrieve] p_RetrieveUrl 값이 올바르지 않습니다.", p_RetrieveUrl);
-		        return;
-		    }
-
-		    if (typeof AUIGrid === "undefined" || typeof AUIGrid.setGridData !== "function") {
-		        console.error("[retrieve] AUIGrid를 사용할 수 없습니다.");
-		        return;
-		    }
-
-		    if (p_Params == null || typeof p_Params !== "object" || $.isEmptyObject(p_Params)) {
-		        p_Params = { dummy: "dummy" };
-		    }
-
-		    KpackageOBJ.ajax.doSubmit(p_RetrieveUrl, p_Params, function (result) {
-		        var gridData = [];
-
-		        if (result && Array.isArray(result.value)) {
-		            gridData = result.value;
-		        } else {
-		            console.warn("[retrieve] result.value가 배열이 아닙니다.", result);
-		        }
-
-		        AUIGrid.setGridData(p_TargetGridId, gridData);
-		    });
-			
-		},
-		
-		
+        "getCellFormatValue ": function(p_TargetGridId, p_rowIndex, p_col ) {
+            return AUIGrid.getCellFormatValue (p_TargetGridId, p_rowIndex, p_col );
+        },    
 
         /**
-         * 그리드에 출력된 현재 데이터를 추가(added), 삭제(removed), 수정(edited)된 상태와 함께 반환합니다.
-         * 그리드에 보여지는 현재 데이터 그대로에 행 상태 정보가 포함되어 반환합니다.
+         * 그리드의 특정 셀의 값을 반환합니다.
+         * 파라메터 설명
+         *   - p_rowIndex (Number) : 얻고자하는 행 인덱스
+         *   - p_col : dataField or columnIndex(String or Number) 얻고자 하는 칼럼의 dataField 또는 칼럼 인덱스
          * 
-         * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
+         * Return : 선택 셀 값
          */
-        "getGridData": function(p_AuiGridId) {
-            return  AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" });
+        "getCellValue": function(p_TargetGridId, p_rowIndex, p_col) {
+            return AUIGrid.getCellValue(p_TargetGridId, p_rowIndex, p_col);
+        },
+        
+        /**
+         * 엑스트라 행 체크박스가 설정된 경우 체크박스로 체크된 모든 행의 아이템과 행인덱스를 갖는 배열을 반환 합니다.
+         * 
+         * Return : (Array) 체크된 행 아이템 및 행 인덱스 배열
+         */
+        "getCheckedRowItems": function(p_TargetGridId) {
+            return AUIGrid.getCheckedRowItems(p_TargetGridId);
+        },
+
+        /**
+         * 엑스트라 행 체크박스가 설정된 경우 체크박스로 체크된 모든 행의 아이템을 반환합니다.
+		 * 
+         * Return : (Array) 체크된 행 아이템 배열
+         */
+        "getCheckedRowItemsAll": function(p_TargetGridId) {
+            return AUIGrid.getCheckedRowItemsAll(p_TargetGridId);
+        },
+        
+		/**
+         * 현재 그리드에서 출력하고 있는 전체 열(columns)의 개수를 반환합니다.
+		 * 
+         * Return : (Number) 전체 열(columns) 수
+         */
+        "getColumnCount": function(p_TargetGridId) {
+            return AUIGrid.getColumnCount(p_TargetGridId);
+        },
+
+		/**
+         * 그리드의 칼럼이 출력하는 모든 값들을 반환하되 중복된 값을 제거하고 반환합니다.         
+		 * 파라메터 설명
+         *   - p_dataField : (String) 칼럼의 dataField 명
+         *   - p_total : (Boolean) 그리드의 원래 데이터를 대상으로 할지 여부. 즉, 필터링이 된 경우 필터링 된 상태의 값만 원한다면 false 지정
+         *
+         * Return : (Array) 해당 칼럼이 출력하고 있는 모든 값들(중복된 값이 제거된 고유 값들만 반환)
+         */
+        "getColumnDistinctValues": function(p_TargetGridId, p_dataField, p_total) {
+            return AUIGrid.getColumnDistinctValues(p_TargetGridId, p_dataField, p_total);
+        },
+
+		/**
+         * 이터 필드에 맞는 현재 그리드의 칼럼인덱스를 반환합니다.
+		 * 파라메터 설명
+         *   - p_dataField : (String) 데이터 필드명
+         *
+         * Return : (Number) 칼럼인덱스
+         */
+        "getColumnIndexByDataField": function(p_TargetGridId, p_dataField) {
+            return AUIGrid.getColumnIndexByDataField(p_TargetGridId, p_dataField);
+        },
+
+		/**
+         * 그리드에 출력된 칼럼 정보를 갖는 1차원 배열을 반환합니다.
+		 * Return : (Array) 현재 그리드 칼럼 레이아웃
+         */
+        "getColumnInfoList": function(p_TargetGridId) {
+            return AUIGrid.getColumnInfoList(p_TargetGridId);
+        },
+
+		/**
+         * 데이터 필드(dataField)에 맞는 칼럼 레이아웃의 칼럼 객체를 반환합니다.
+		 * 파라메터 설명
+         *   - p_dataField : (String) 컬럼이 출력하고 있는 데이터필드명
+         *
+         * return : (Object) 칼럼 레이아웃의 칼럼 객체
+         */
+        "getColumnItemByDataField": function(p_TargetGridId, p_dataField) {
+            return AUIGrid.getColumnItemByDataField(p_TargetGridId, p_dataField);
+        },
+
+		/**
+         * 열 인덱스(columnIndex)에 맞는 칼럼 레이아웃의 칼럼 객체를 반환합니다.
+		 * 파라메터 설명
+         *   -p_columnIndex : (Number) 컬럼이 출력되고 있는 인덱스
+         *
+         *Return : (Object) 칼럼 레이아웃의 칼럼 객체
+         */
+        "getColumnItemByIndex": function(p_TargetGridId, p_columnIndex) {
+            return AUIGrid.getColumnItemByIndex(p_TargetGridId, p_columnIndex);
+        },
+
+		/**
+         * 그리드에 출력된 현재 칼럼 레이아웃을 반환합니다.
+         *
+         * Return : (Array) 현재 그리드 칼럼 레이아웃
+         */
+        "getColumnLayout": function(p_TargetGridId) {
+            return AUIGrid.getColumnLayout(p_TargetGridId);
+        },
+
+		/**
+         * 그리드의 칼럼이 출력하는 모든 값들을 반환합니다.
+		 * 파라메터 설명
+         *   - p_dataField : (String) 칼럼의 dataField 명
+		 *   - p_total : (Boolean) 그리드의 원래 데이터를 대상으로 할지 여부. 예로 필터링이 된 경우 필터링 무시하고 전체 데이터 대상 원한다면 true 지정
+         *
+         * Return : (Array) 해당 칼럼이 출력하고 있는 모든 값들
+         */
+        "getColumnValues": function(p_TargetGridId, p_dataField, p_total  = ture) {
+            return AUIGrid.getColumnValues(p_TargetGridId, p_dataField, p_total);
+        },
+
+		/**
+         * 데이터 필드에 맞는 칼럼의 현재 너비(width)를 반환합니다.
+		 * 파라메터 설명
+         *   - p_dataField : (String) 데이터 필드명
+         *
+         * Return : (Number) 칼럼의 현재 너비(width)
+         */
+        "getColumnWidthByDataField": function(p_TargetGridId, p_dataField) {
+            return AUIGrid.getColumnWidthByDataField(p_TargetGridId, p_dataField);
+        },
+
+		/**
+         * 칼럼들의 모든 현재 너비(width)를 배열로 반환합니다.
+		 * 
+         * Return : (Array) 칼럼의 모든 너비(width) 배열
+         */
+        "getColumnWidthList": function(p_TargetGridId) {
+            return AUIGrid.getColumnWidthList(p_TargetGridId);
+        },
+
+		/**
+         * 페이징 모드(usePaging=true)인 경우 현재 페이지에 출력되는 데이터만 반환합니다.
+		 * 
+         * Return : (Array) 칼럼의 모든 너비(width) 배열
+         */
+        "getCurrentPageData": function(p_TargetGridId) {
+            return AUIGrid.getCurrentPageData(p_TargetGridId);
+        },
+
+		/**
+         * 현재 그리드의 칼럼인덱스에 출력 중인 데이터필드(dataField)를 반환합니다.
+		 * 파라메터 설명
+         *   - p_columnIndex : (Number) 칼럼 인덱스
+         *
+         * RReturn : (String) 데이터 필드명
+         */
+        "getDataFieldByColumnIndex": function(p_TargetGridId, p_columnIndex) {
+            return AUIGrid.getDataFieldByColumnIndex(p_TargetGridId, p_columnIndex);
+        },
+
+		/**
+         * 계층형 그리드(트리 그리드)인 경우 행 고유 값(rowIdField 값)에 맞는 행 아이템의 depth를 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowId (String) : 행 고유 값(rowIdField 값)
+         *
+         * Return : (Number) 계층구조에서 depth
+         */
+        "getDepthByRowId": function(p_TargetGridId, p_rowId) {
+            return AUIGrid.getDepthByRowId(p_TargetGridId, p_rowId);
+        },
+
+		/**
+         * 트리 그리드(계층형 그리드)에서 행 고유 값(rowIdField 값)에 해당되는 모든 자손(descendants) 행 아이템을 찾아 배열로 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowId (String) : 행 고유 값(rowIdField 값)
+         *
+         * Return : (Array) 주어진 행 고유 값(rowIdField 값)에 따른 모든 자손 행 아이템들
+         */
+        "getDescendantsByRowId": function(p_TargetGridId, p_rowId) {
+            return AUIGrid.getDescendantsByRowId(p_TargetGridId, p_rowId);
+        },
+
+		/**
+         * 그리드에서 수정된 아이템들의 묶음(배열)을 반환합니다.
+	     * Return : (Array) 수정된 행 아이템들
+         */
+        "getEditedRowColumnItems": function(p_TargetGridId) {
+            return AUIGrid.getEditedRowColumnItems(p_TargetGridId);
+        },
+
+
+		/**
+         * 그리드에서 수정된 아이템들의 묶음(배열)을 반환합니다.
+	     * Return : (Array) 수정된 행 아이템들
+         */
+        "getEditedRowItems": function(p_TargetGridId) {
+            return AUIGrid.getEditedRowItems(p_TargetGridId);
+        },
+
+		/**
+         * 필터링 된 경우 현재 어떤 필드와 값으로 필터링 되었는지에 대한 정보를 반환합니다.
+	     * Return : (Object) 필터링 필드와 현재 필터링 된 값들에 대한 정보
+         */
+        "getFilterCache": function(p_TargetGridId) {
+            return AUIGrid.getFilterCache(p_TargetGridId);
+        },
+
+		/**
+         * 인라인 필터 행을 표시하여 필터링을 한 경우 해당 인라인 필터의 현재 텍스트들(input 의 값들)을 반환합니다.
+	     * Return : (Array) 인라인 필터로 필터링 된 칼럼들에 대한 텍스트값들
+         */
+        "getFilterInlineTexts": function(p_TargetGridId) {
+            return AUIGrid.getFilterInlineTexts(p_TargetGridId);
+        },
+
+		/**
+         * 지정한 칼럼에 대하여 최적의 칼럼 사이즈를 반환합니다.
+		 * 파라메터 설명
+         *   - p_dataField : (String) : 칼럼 데이터 필드명
+         *
+	     * Return : (Number) 해당 칼럼의 사이즈
+         */
+        "getFitColumnSizeByDataField": function(p_TargetGridId, p_dataField) {
+            return AUIGrid.getFitColumnSizeByDataField(p_TargetGridId, p_dataField);
+        },
+
+		/**
+         * 현재 출력된 헤더 텍스트를 모함하여 모든 셀들의 길이를 조사하여 최적의 칼럼 사이즈를 배열 형태로 반환합니다.
+		 * 파라메터 설명
+         *   - p_fitToGrid (Boolean) : 모든 칼럼 사이즈들의 총합이 그리드 전체 크기보다 작은 경우 그리드 크기에 맞출지 여부를 지정합니다. (기본값: false)
+         *
+	     * Return : (Array) 모든 칼럼들의 크기를 담은 배열
+         */
+        "getFitColumnSizeList": function(p_TargetGridId, p_fitToGrid = false) {
+            return AUIGrid.getFitColumnSizeList(p_TargetGridId, p_fitToGrid);
+        },
+
+		/**
+         * 현재 그리드에 출력된 푸터 데이터를 반환합니다.
+		 * 파라메터 설명
+         *   - p_index : 출력된 값의 칼럼 인덱스 값 ("#base" 로 행 번호 칼럼에 출력된 푸터 값은 index 가 -1입니다.)
+         *   - p_value : 푸터의 값이 포매팅 전의 순수 값 (labelFunction 으로 사용자가 임의 지정한 경우 value 는 text 와 같습니다.)
+         *   - p_text : 실제로 푸터의 셀에 출력된 포매팅 된 값
+         *
+	     * Return : (Array) 출력된 푸터 데이터
+         */
+        "getFooterData": function(p_TargetGridId, p_index, p_value, p_text) {
+            return AUIGrid.getFooterData(p_TargetGridId, p_index, p_value, p_text);
+        },
+
+		/**
+         * 푸터를 설정한 경우 푸터의 특정 필드의 포매팅된 값을 반환합니다.
+		 * 파라메터 설명
+         *   - p_dataField : (String) 푸터의 출력 위치 dataField
+         *
+	     * Return : (String) 해당 열의 푸터 포매팅된 값
+         */
+        "getFooterFormatValueByDataField": function(p_TargetGridId, p_dataField) {
+            return AUIGrid.getFooterFormatValueByDataField(p_TargetGridId, p_dataField);
+        },
+
+
+		/**
+         * 사용자가 설정한 푸터 객체(푸터 레이아웃) 을 반환합니다.
+	     * Return : (Array) 사용자가 설정한 푸터 객체(푸터 레이아웃)
+         */
+        "getFooterLayout": function(p_TargetGridId) {
+            return AUIGrid.getFooterLayout(p_TargetGridId);
+        },
+
+		/**
+         * 푸터를 설정한 경우 푸터의 특정 필드 값을 반환합니다.
+		 * 파라메터 설명
+         *   - p_dataField : (String) 푸터의 출력 위치 dataField
+         *
+	     * Return : (Number or String) 해당 열의 푸터 값
+         */
+        "getFooterValueByDataField": function(p_TargetGridId, p_dataField) {
+            return AUIGrid.getFooterValueByDataField(p_TargetGridId, p_dataField);
         },
         
         
         /**
-         * 그리드에서 수정된 데이터만 선별해서 가져온다.
-         * 
+         * 그리드에 출력된 현재 데이터를 반환합니다.
+		 * 
          * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
          */
-        "getGridCudData": function(p_AuiGridId) {
-       		return  AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" }).filter(item => item.state != null);
+        "getGridData": function(p_TargetGridId) {
+            return  AUIGrid.getGridData(p_TargetGridId);
+        },
+
+        /**
+         * 리드에 출력된 현재 데이터를 추가(added), 삭제(removed), 수정(edited)된 상태와 함께 반환합니다.
+		 * 파라메터 설명
+         *   - p_stateField (String) : 상태 정보가 추가될 필드명
+         *   - p_option (Object) : stateField 의 값으로 사용 될 상태 값들 재정의
+		 * 
+         * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
+         */
+        "getGridDataWithState": function(p_TargetGridId, p_stateField = "state", p_option = { added: "a", removed: "r", edited: "e" } ) {
+            return  AUIGrid.getGridDataWithState(p_TargetGridId, p_stateField, p_option);
+        },        
+
+        /**
+         * 현재 그리드에서 숨겨진 칼럼(hidden Columns)이 있는 경우 숨겨진 칼럼들의 모든 dataField 를 반환합니다.
+	     * Return : (Array) 숨겨진 칼럼(hidden Columns)들의 dataField 를 담은 배열
+         */
+        "getHiddenColumnDataFields": function(p_TargetGridId) {
+            return  AUIGrid.getHiddenColumnDataFields(p_TargetGridId);
+        },
+
+        /**
+         * 현재 그리드에서 숨겨진 칼럼(hidden Columns)이 있는 경우 숨겨진 칼럼들의 칼럼 인덱스(columnIndex) 를 반환합니다..
+	     * Return : (Array) 숨겨진 칼럼(hidden Columns)들의 칼럼 인덱스를 담은 배열
+         */
+        "getHiddenColumnIndexes": function(p_TargetGridId) {
+            return  AUIGrid.getHiddenColumnIndexes(p_TargetGridId);
+        },
+
+        /**
+         * 자바스크립트 네이티브 마우스 이벤트(Native MouseEvent)를 통해 그리드의 인덱스 정보를 반환합니다.
+		 * 파라메터 설명
+         *   - p_mouseEvent : (MouseEvent) 마우스 이벤트
+		 * 
+         * Return : (Object) { startRowIndex, startColumnIndex, endRowIndex, endColumnIndex } 의 key 를 갖는 그리드 인덱스 정보 Object
+         */
+        "getGridDataWithState": function(p_TargetGridId, p_mouseEvent ) {
+            return  AUIGrid.getGridDataWithState(p_TargetGridId, p_mouseEvent);
+        },  
+
+        /**
+         * 특정 셀(rowId 에 맞는 행, dataField 에 맞는 열 부합하는 셀)이 수정된 경우 최초의 그리드 셀 값을 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowId : (String) 행 아이템의 rowId 값
+         *   - p_dataField : (String) 열의 dataField
+		 * 
+         * Return : (String or Object) 변경 전 원래 셀의 값
+         */
+        "getInitCellValue": function(p_TargetGridId, p_rowId, p_dataField ) {
+            return  AUIGrid.getInitCellValue(p_TargetGridId, p_rowId, p_dataField);
+        },  
+
+        /**
+         * 그리드 행이 수정된 경우 최초의 그리드 행 아이템을 반환합니다. 즉, 수정되기 전 원래의 값을 갖는 행 아이템을 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowId : (String) 행 아이템의 rowId 값
+		 * 
+         * Return : (Object or Array) 수정 전의 행 아이템(들), 만약 해당 행이 수정되지 않았다면 null 반환
+         */
+        "getInitValueItem": function(p_TargetGridId, p_rowId ) {
+            return  AUIGrid.getInitValueItem(p_TargetGridId, p_rowId);
+        },
+
+        /**
+         * 행 고유 값(rowIdField 값)에 맞는 행 아이템을 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowId : (String) 행 아이템의 rowId 값
+		 * 
+         * Return : (Object) 행아이템 객체
+         */
+        "getItemByRowId": function(p_TargetGridId, p_rowId ) {
+            return  AUIGrid.getItemByRowId(p_TargetGridId, p_rowId);
         },
         
-        
-		
 		/**
-         * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 모든 셀(또는 행) 아이템을 반환합니다.
-         * 
-         * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
+         * 행 인덱스에 맞는 행 아이템을 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowIndex (Number) : 행인덱스
+		 * 
+         * Return : (Object) 행아이템 객체
          */
-        "getSelectRowData": function(p_AuiGridId) {
-			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
-			
-            return rowArray[0]["item"];
+        "getItemByRowIndex": function(p_TargetGridId, p_rowIndex ) {
+            return  AUIGrid.getItemByRowIndex(p_TargetGridId, p_rowIndex);
         },
 
 		/**
-		 * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 모든 셀(또는 행) 아이템을 반환합니다.
+         * 가로 병합된 셀에 대하여 해당 병합의 마지막 칼럼 인덱스를 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowIndex : (Number) 가로 병합된 셀의 행 인덱스
+         *   - p_columnIndex : (Number) 가로 병합된 셀의 열 인덱스
 		 * 
+         * Return : (Number) 셀이 가로 병합된 셀인 경우 병합 마지막 인덱스 반환
+         */
+        "getItemByRowIndex": function(p_TargetGridId, p_rowIndex, p_columnIndex ) {
+            return  AUIGrid.getItemByRowIndex(p_TargetGridId, p_rowIndex, p_columnIndex);
+        },
+
+		/**
+         * 세로 병합된 셀에 대하여 해당 병합의 마지막 행 인덱스를 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowIndex : (Number) 가로 병합된 셀의 행 인덱스
+         *   - p_columnIndex : (Number) 가로 병합된 셀의 열 인덱스
+		 * 
+         * Return : (Number) 셀이 세로 병합된 셀인 경우 병합 마지막 행 인덱스 반환
+         */
+        "getMergeEndRowIndex": function(p_TargetGridId, p_rowIndex, p_columnIndex ) {
+            return  AUIGrid.getMergeEndRowIndex(p_TargetGridId, p_rowIndex, p_columnIndex);
+        },
+
+
+		/**
+         * 주어진 셀이 세로 병합된 경우 해당 셀의 세로 병합의 대상이 된 모든 행 아이템을 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowIndex : (Number) 가로 병합된 셀의 행 인덱스
+         *   - p_columnIndex : (Number) 가로 병합된 셀의 열 인덱스
+		 * 
+         * Return : (Array) 해당 셀로 세로 병합된 모든 행 아이템들
+         */
+        "getMergeItems": function(p_TargetGridId, p_rowIndex, p_columnIndex ) {
+            return  AUIGrid.getMergeItems(p_TargetGridId, p_rowIndex, p_columnIndex);
+        },
+        
+        
+		/**
+         * 가로 병합된 셀에 대하여 해당 병합의 시작 칼럼 인덱스를 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowIndex : (Number) 가로 병합된 셀의 행 인덱스
+         *   - p_columnIndex : (Number) 가로 병합된 셀의 열 인덱스
+		 * 
+         * Return : (Number) 셀이 가로 병합된 셀인 경우 병합 시작 인덱스 반환
+         */
+        "getMergeStartColumnIndex": function(p_TargetGridId, p_rowIndex, p_columnIndex ) {
+            return  AUIGrid.getMergeStartColumnIndex(p_TargetGridId, p_rowIndex, p_columnIndex);
+        },
+
+		/**
+         * 세로 병합된 셀에 대하여 해당 병합의 시작 행 인덱스를 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowIndex : (Number) 가로 병합된 셀의 행 인덱스
+         *   - p_columnIndex : (Number) 가로 병합된 셀의 열 인덱스
+		 * 
+         * Return : (Number) 셀이 세로 병합된 셀인 경우 병합 시작 인덱스 반환
+         */
+        "getMergeStartRowIndex": function(p_TargetGridId, p_rowIndex, p_columnIndex ) {
+            return  AUIGrid.getMergeStartRowIndex(p_TargetGridId, p_rowIndex, p_columnIndex);
+        },
+
+		/**
+         * [deprecated Ver 3.0.4] 수정되기 전의 셀 값을 반환합니다.
+		 * 
+         * Return : [deprecated Ver 3.0.4] 수정되기 전의 셀 값을 반환합니다.
+         */
+        "getOrgCellValue": function(p_TargetGridId) {
+            return  AUIGrid.getOrgCellValue(p_TargetGridId);
+        },
+
+		/**
+         * 그리드의 데이터를 반환합니다.
+		 * - 이 메소드는 필터링, 정렬 등으로 현재 그리드에 보여지는 데이터가 아닌 전체 데이터를 반환합니다.
+		 * 
+         * Return : (Array) 현재 그리드 행 아이템들
+         */
+        "getOrgGridData": function(p_TargetGridId) {
+            return  AUIGrid.getOrgGridData(p_TargetGridId);
+        },
+
+		/**
+         * [deprecated Ver 3.0.4] 수정되기 전 원래의 값을 갖는 행 아이템을 반환합니다.
+		 * 
+         * Return : [deprecated Ver 3.0.4] 수정되기 전 원래의 값을 갖는 행 아이템을 반환합니다.
+         */
+        "getOrgValueItem": function(p_TargetGridId) {
+            return  AUIGrid.getOrgValueItem(p_TargetGridId);
+        },
+
+		/**
+         * 헤더를 계층형(그룹형)으로 설정한 경우 자기 자신의 부모에 해당되는 그룹 칼럼을 반환합니다.
+		 * 파라메터 설명
+         *   - p_dataField (String) : 칼럼의 데이터 필드명
+		 * 
+         *  Return : (Object) 그룹 칼럼 아이템
+         */
+        "getParentColumnByDataField": function(p_TargetGridId, p_dataField) {
+            return  AUIGrid.getParentColumnByDataField(p_TargetGridId, p_dataField);
+        },
+
+		/**
+         * 계층형 그리드(트리 그리드)인 경우 행 고유 값(rowIdField 값)에 맞는 행 아이템의 부모 행 아이템을 찾아 반환합니다.
+		 * 파라메터 설명
+         *   - p_rowId (String) : 행 고유 값(rowIdField 값)
+		 * 
+         *  Return : (Object) 부모 행 아이템
+         */
+        "getParentItemByRowId": function(p_TargetGridId, p_rowId) {
+            return  AUIGrid.getParentItemByRowId(p_TargetGridId, p_rowId);
+        },
+
+		/**
+         * 그리드 속성의 값을 반환합니다.
+		 * 파라메터 설명
+         *   - p_name (String) : 속성명
+		 * 
+         *  Return : (Object) 속성값
+         */
+        "getProp": function(p_TargetGridId, p_name) {
+            return  AUIGrid.getProp(p_TargetGridId, p_name);
+        },
+
+
+		/**
+		 * 그리드에서 삭제된 열(column)의 dataField 목록을 반환합니다.
+		 *
+		 * 삭제된 열이란 최초 컬럼 레이아웃에서 정의한 컬럼을 삭제한 경우를 의미합니다.
+		 * 사용자가 추가한 후 삭제한 컬럼은 포함되지 않습니다.
+		 *
+		 * Return : (Array) 삭제된 열의 dataField 목록
+		 */
+		"getRemovedColumnFields": function(p_TargetGridId) {
+		    return AUIGrid.getRemovedColumnFields(p_TargetGridId);
+		},
+		
+		/**
+		 * 그리드에서 삭제된 행 아이템들을 반환합니다.
+		 *
+		 * 기본적으로 최초 데이터에서 삭제된 행만 반환합니다.
+		 * addRow() 등으로 추가한 후 다시 삭제한 행은 포함되지 않습니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_includeAdded (Boolean, Optional) : true인 경우 추가 후 삭제한 행도 포함합니다.
+		 *
+		 * Return : (Array) 삭제된 행 아이템 목록
+		 */
+		"getRemovedItems": function(p_TargetGridId, includeAdded) {
+		    return includeAdded === undefined
+		        ? AUIGrid.getRemovedItems(p_TargetGridId)
+		        : AUIGrid.getRemovedItems(p_TargetGridId, p_includeAdded);
+		},
+		
+		/**
+		 * 그리드에서 사용자가 추가한 후 다시 삭제한 행 아이템들을 반환합니다.
+		 *
+		 * 최초 데이터가 아닌 addRow(), insertRow() 등으로 추가한 후
+		 * 다시 삭제한 행만 반환합니다.
+		 *
+		 * Return : (Array) 추가 후 삭제된 행 아이템 목록
+		 */
+		"getRemovedNewItems": function(p_TargetGridId) {
+		    return AUIGrid.getRemovedNewItems(p_TargetGridId);
+		},
+		
+		/**
+		 * 현재 그리드에 출력되고 있는 전체 행 개수를 반환합니다.
+		 *
+		 * 트리 그리드인 경우 접혀있는 브랜치(branch) 행도 포함하여 반환합니다.
+		 *
+		 * Return : (Number) 전체 행 개수
+		 */
+		"getRowCount": function(p_TargetGridId) {
+		    return AUIGrid.getRowCount(p_TargetGridId);
+		},
+
+
+		/**
+		 * 특정 컬럼의 값과 일치하는 값이 있는 모든 행의 인덱스를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 찾고자 하는 컬럼의 dataField명
+		 *  - p_Values (String or Array) : dataField에서 찾고자 하는 값
+		 *
+		 * Return : (Array) 주어진 값과 일치하는 모든 행 아이템의 rowIndex
+		 */
+		"getRowIndexesByValue": function(p_TargetGridId, p_DataField, p_Values) {
+		    return AUIGrid.getRowIndexesByValue(p_TargetGridId, p_DataField, p_Values);
+		},
+		
+		/**
+		 * 수직 스크롤이 생성된 경우 현재 그리드에 출력되고 있는 행의 최상단 인덱스를 반환합니다.
+		 *
+		 * 수직 스크롤이 생성되지 않은 경우 0을 반환합니다.
+		 *
+		 * Return : (Number) 최상단 행 인덱스
+		 */
+		"getRowPosition": function(p_TargetGridId) {
+		    return AUIGrid.getRowPosition(p_TargetGridId);
+		},
+		
+		/**
+		 * 특정 컬럼의 값과 일치하는 값이 있는 모든 행 아이템을 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 찾고자 하는 컬럼의 dataField명
+		 *  - p_Values (String or Array) : dataField에서 찾고자 하는 값
+		 *
+		 * Return : (Array) 주어진 값과 일치하는 모든 행 아이템
+		 */
+		"getRowsByValue": function(p_TargetGridId, p_DataField, p_Values) {
+		    return AUIGrid.getRowsByValue(p_TargetGridId, p_DataField, p_Values);
+		},
+		
+		/**
+		 * 그리드에 설정된 scaleFactor 값을 반환합니다.
+		 *
+		 * Return : (Number) scale 값
+		 */
+		"getScaleFactor": function(p_TargetGridId) {
+		    return AUIGrid.getScaleFactor(p_TargetGridId);
+		},
+
+		/**
+		 * 현재 선택된 셀들이 블록 형태인 경우 선택한 셀들의 시작 컬럼 인덱스와
+		 * 종료 컬럼 인덱스를 반환합니다.
+		 *
+		 * Return : (Array) 선택한 셀들의 시작 컬럼 인덱스와 종료 컬럼 인덱스 배열
+		 */
+		"getSelectedColIndexes": function(p_TargetGridId) {
+		    return AUIGrid.getSelectedColIndexes(p_TargetGridId);
+		},
+		
+		/**
+		 * 현재 선택된 아이템의 rowIndex와 columnIndex를 반환합니다.
+		 *
+		 * 선택 모드가 "none"인 경우에도 현재 선택된 아이템의
+		 * rowIndex와 columnIndex를 반환합니다.
+		 *
+		 * 다수의 셀 또는 행을 선택한 경우 첫 번째로 선택된 셀 또는 행의
+		 * rowIndex와 columnIndex를 반환합니다.
+		 *
+		 * Return : (Array) rowIndex와 columnIndex를 갖는 배열
+		 */
+		"getSelectedIndex": function(p_TargetGridId) {
+		    return AUIGrid.getSelectedIndex(p_TargetGridId);
+		},
+
+		/**
+		 * 현재 선택된 모든 셀(또는 행) 아이템을 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_PerformanceMode (Boolean, Optional) : 성능 위주로 선택 셀(또는 행) 아이템을 반환할지 여부 (기본값 : false)
+		 *
+		 * Return : (Array) 선택된 아이템들을 요소로 갖는 배열
 		 * 		반환값은 배열로 개별 배열 요소는 다음과 같은 요소를 갖는 Object 입니다.
 		 * 		rowIndex : 행의 인덱스
 		 * 		columnIndex : 칼럼의 인덱스
@@ -5235,184 +6239,626 @@ var KpackageOBJ = {
 		 * 		editable : 선택 칼럼의 수정 가능 여부
 		 * 		value : 선택 셀의 현재 그리드 값
 		 * 		item : 선택 행 아이템들을 갖는 Object
-		 * 
-		 * Return : 선택된 행과 열에 대한 정보
 		 */
-		"getSelectedItems": function(p_AuiGridId) {
-			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
-			return rowArray[0];
+		"getSelectedItems": function(p_TargetGridId, p_PerformanceMode) {
+		    return p_PerformanceMode === undefined
+		        ? AUIGrid.getSelectedItems(p_TargetGridId)
+		        : AUIGrid.getSelectedItems(p_TargetGridId, p_PerformanceMode);
 		},
 		
 		/**
-		 * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 row Index 반환합니다.
-		 * 
-		 * Return : 숫자 행번호 (0부터시작)
+		 * 셀 병합 상태에서 다중 선택으로 인해 변경된 기준 셀의
+		 * rowIndex와 columnIndex를 반환합니다.
+		 *
+		 * Return : (Array) rowIndex와 columnIndex를 갖는 배열
 		 */
-		"getSelectRowIndex": function(p_AuiGridId) {
-			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
-						
-			return rowArray[0]["rowIndex"];
+		"getSelectedPrimeIndexOnMerge": function(p_TargetGridId) {
+		    return AUIGrid.getSelectedPrimeIndexOnMerge(p_TargetGridId);
+		},
+
+
+		/**
+		 * 현재 선택된 셀들이 블럭 형태인 경우 선택한 셀들의 시작 행 인덱스와
+		 * 종료 행 인덱스를 반환합니다.
+		 *
+		 * Return : (Array) 선택한 셀들의 시작 행 인덱스와 종료 행 인덱스 배열
+		 */
+		"getSelectedRowIndexes": function(p_TargetGridId) {
+		    return AUIGrid.getSelectedRowIndexes(p_TargetGridId);
+		},
+		
+		/**
+		 * 현재 선택된 행(rows) 아이템을 반환합니다.
+		 *
+		 * Return : (Array) 선택된 행 아이템들을 요소로 갖는 배열
+		 */
+		"getSelectedRows": function(p_TargetGridId) {
+		    return AUIGrid.getSelectedRows(p_TargetGridId);
+		},
+		
+		/**
+		 * 그리드 선택 셀의 값을 텍스트로 반환합니다.
+		 *
+		 * 다수의 셀이 선택된 경우 행은 캐리지 리턴(\r\n),
+		 * 열은 탭(\t)으로 구분된 텍스트를 반환합니다.
+		 *
+		 * Return : (String) 선택 셀 값 텍스트
+		 */
+		"getSelectedText": function(p_TargetGridId) {
+		    return AUIGrid.getSelectedText(p_TargetGridId);
+		},
+		
+		/**
+		 * 현재 설정된 정렬 문자열 비교기(Intl.Collator) 객체를 반환합니다.
+		 *
+		 * Return : (Intl.Collator | null) 문자열 비교기 객체
+		 */
+		"getSortCollator": function(p_TargetGridId) {
+		    return AUIGrid.getSortCollator(p_TargetGridId);
+		},
+		
+		/**
+		 * 현재 그리드에 적용된 정렬 필드 정보를 반환합니다.
+		 *
+		 * Return : (Array) 정렬 필드 정보 배열
+		 */
+		"getSortingFields": function(p_TargetGridId) {
+		    return AUIGrid.getSortingFields(p_TargetGridId);
+		},
+
+
+		/**
+		 * 현재 그리드의 추가, 삭제, 변경된 상태 정보를 반환합니다.
+		 *
+		 * Return : (Object) 추가, 삭제, 변경된 상태 정보
+		 */
+		"getStateCache": function(p_TargetGridId) {
+		    return AUIGrid.getStateCache(p_TargetGridId);
+		},
+		
+		/**
+		 * 현재 그리드에 출력된 값을 모두 문자열(String) 형태의
+		 * 텍스트 데이터로 반환합니다.
+		 *
+		 * Return : (Array) 현재 그리드 텍스트 데이터
+		 */
+		"getTextDataProvider": function(p_TargetGridId) {
+		    return AUIGrid.getTextDataProvider(p_TargetGridId);
+		},
+		
+		/**
+		 * 트리 그리드에서 필터링 규칙에 맞는 모든 행을
+		 * 1차원 배열 형태로 반환합니다.
+		 *
+		 * Return : (Array) 필터링 상태의 행 아이템
+		 */
+		"getTreeFilteredFlatData": function(p_TargetGridId) {
+		    return AUIGrid.getTreeFilteredFlatData(p_TargetGridId);
+		},
+		
+		/**
+		 * 트리 그리드의 전체 데이터를
+		 * 1차원 배열 형태로 반환합니다.
+		 *
+		 * Return : (Array) 전체 행 아이템
+		 */
+		"getTreeFlatData": function(p_TargetGridId) {
+		    return AUIGrid.getTreeFlatData(p_TargetGridId);
+		},
+		
+		/**
+		 * 트리 그리드의 계층 구조 데이터를 반환합니다.
+		 *
+		 * Return : (Array) 계층 구조 행 아이템
+		 */
+		"getTreeGridData": function(p_TargetGridId) {
+		    return AUIGrid.getTreeGridData(p_TargetGridId);
+		},
+		
+		/**
+		 * 트리 그리드의 전체 계층 깊이(depth)를 반환합니다.
+		 *
+		 * Return : (Number) 전체 depth
+		 */
+		"getTreeTotalDepth": function(p_TargetGridId) {
+		    return AUIGrid.getTreeTotalDepth(p_TargetGridId);
+		},
+		
+		/**
+		 * 지정한 dataField에 해당하는 컬럼을 숨깁니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String or Array) : 컬럼의 데이터 필드명
+		 */
+		"hideColumnByDataField": function(p_TargetGridId, p_DataField) {
+		    AUIGrid.hideColumnByDataField(p_TargetGridId, p_DataField);
+		},
+
+
+		/**
+		 * 지정한 컬럼 그룹에 속한 모든 하위 컬럼을 숨깁니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 컬럼의 데이터 필드명
+		 */
+		"hideColumnGroup": function(p_TargetGridId, p_DataField) {
+		    AUIGrid.hideColumnGroup(p_TargetGridId, p_DataField);
+		},
+		
+		/**
+		 * 지정한 엑스트라 컬럼을 숨깁니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_PropName (String) : 숨길 엑스트라 컬럼 속성명
+		 */
+		"hideExtraColumn": function(p_TargetGridId, p_PropName) {
+		    AUIGrid.hideExtraColumn(p_TargetGridId, p_PropName);
+		},
+		
+		/**
+		 * 현재 출력된 그리드에서 푸터를 숨깁니다.
+		 */
+		"hideFooterLater": function(p_TargetGridId) {
+		    AUIGrid.hideFooterLater(p_TargetGridId);
+		},
+		
+		/**
+		 * 선택한 행을 들여쓰기하여 계층 구조로 만듭니다.
+		 */
+		"indentTreeDepth": function(p_TargetGridId) {
+		    AUIGrid.indentTreeDepth(p_TargetGridId);
+		},
+		
+		/**
+		 * 행 인덱스(rowIndex)에 해당하는 행 고유 값(rowId)을 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 *
+		 * Return : (String) 행 고유 값(rowId)
+		 */
+		"indexToRowId": function(p_TargetGridId, p_RowIndex) {
+		    return AUIGrid.indexToRowId(p_TargetGridId, p_RowIndex);
 		},
 
 		/**
-		 * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 column의 index 반환합니다.
-		 * 
-		 * Return : 숫자 열번호 (0부터시작)
+		 * 행 고유 값(rowId)에 해당하는 행이 추가된 행인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *
+		 * Return : (Boolean) 추가된 행 여부
 		 */
-		"getSelectColIndex": function(p_AuiGridId) {
-			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
-						
-			return rowArray[0]["columnIndex"];
+		"isAddedById": function(p_TargetGridId, p_RowId) {
+		    return AUIGrid.isAddedById(p_TargetGridId, p_RowId);
 		},
 		
-
-        /**
-         * 그리드의 특정 셀의 값을 반환합니다.
-         * 파라메터 설명
-         *   - 얻고자하는 행 인덱스 : p_RowIndex
-         *   - 얻고자 하는 컬럼의 데이터 필드명 : p_ColName
-         * 
-         * Return : 선택 셀 값
-         */
-        "getCellValue": function(p_AuiGridId, p_RowIndex, p_ColName) {
-            return AUIGrid.getCellValue(p_AuiGridId, p_RowIndex, p_ColName);
-        },
-
-        /**
-             * 엑스트라 행 체크박스가 설정된 경우 체크박스로 체크된 모든 행의 아이템과 행인덱스를 갖는 배열을 반환 합니다.
-         * Return : (Array) 체크된 행 아이템 및 행 인덱스 배열
-             */
-        "getCheckedRowItems": function(p_AuiGridId) {
-            return AUIGrid.getCheckedRowItems(p_AuiGridId);
-        },
-
-
-        /**
-         * 엑스트라 행 체크박스가 설정된 경우 체크박스로 체크된 모든 행의 아이템을 반환합니다.
-         * Return : (Array) 체크된 행 아이템 배열
-             */
-        "getCheckedRowItemsAll": function(p_AuiGridId) {
-            return AUIGrid.getCheckedRowItemsAll(p_AuiGridId);
-        },
-
-
-
-        /**
-         * 현재 그리드에서 출력하고 있는 전체 열(columns)의 개수를 반환합니다.
-         * Return : (Number) 전체 열(columns) 수
-         */
-        "getColumnCount": function(p_AuiGridId) {
-            return AUIGrid.getColumnCount(p_AuiGridId);
-        },
-
-        /**
-         * 그리드의 칼럼이 출력하는 모든 값들을 반환합니다.
-         * 파라메터 설명
-         * 	  dataField : (String) 칼럼의 dataField 명
-         * Return : (Array) 해당 칼럼이 출력하고 있는 모든 값들
-         */
-        "getColumnValues": function(p_AuiGridId, p_ColName) {
-            return AUIGrid.getColumnValues(p_AuiGridId, p_ColName, true);
-        },
-
-        /**
-         * 그리드에서 수정된 아이템들의 묶음(배열)을 반환합니다.
-         * 수정된 아이템은 최초의 데이터에서 addRow 메소드로 추가된 아이템을 수정한 경우 포함되지 않습니다.
-         * Return : (Array) 수정된 행 아이템들
-         */
-        "getEditedRowItems": function(p_AuiGridId) {
-            return AUIGrid.getEditedRowItems(p_AuiGridId);
-        },
-
-        /**
-         * 그리드에서 추가된 아이템들의 묶음(배열)을 반환합니다.
-         * Return : (Array) 추가된 행 아이템들
-         * 
-         */
-        "getAddedRowItems": function(p_AuiGridId) {
-            return AUIGrid.getAddedRowItems(p_AuiGridId);
-        },
-
-        /**
-         * 그리드에서 삭제된 아이템들의 묶음(배열)을 반환합니다.
-         * 기본적으로, 삭제된 아이템은 최초의 데이터에서 addRow 메소드로 추가된 아이템을 삭제한 경우 포함되지 않습니다.
-         * 
-         * Return : (Array) 삭제된 행 아이템들
-         */
-        "getRemovedItems": function(p_AuiGridId) {
-            return AUIGrid.getRemovedItems(p_AuiGridId);
-        },
-
-        /**
-         * 현재 그리드에서 출력하고 있는 전체 행의 개수를 반환합니다.
-         * 만약 트리 그리드로 출력하고 있다면 접혀진 브랜치(branch) 행 그대로 개수를 반환합니다. 예를 들어 브랜치 행이 모두 닫혀져 3개만 보이고 있을 때 3이 반환됩니다.
-         * 
-         * Return : (Number) 전체 행 수
-         */
-        "getRowCount": function(p_AuiGridId) {
-            return AUIGrid.getRowCount(p_AuiGridId);
-        },
+		/**
+		 * 행 인덱스(rowIndex)에 해당하는 행이 추가된 행인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 *
+		 * Return : (Boolean) 추가된 행 여부
+		 */
+		"isAddedByRowIndex": function(p_TargetGridId, p_RowIndex) {
+		    return AUIGrid.isAddedByRowIndex(p_TargetGridId, p_RowIndex);
+		},
 		
 		/**
-         * 입력받은 grid의 행번호에 해당하는 데이터를 리턴합니다. 
-         * 
-         * Return : row data
-         */
-        "getRowData": function(p_AuiGridId, p_RowIndex) {
-            return AUIGrid.getItemByRowIndex(p_AuiGridId, p_RowIndex);
-        },
+		 * 현재 브라우저에서 PDF 내보내기 사용 가능 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) PDF 내보내기 가능 여부
+		 */
+		"isAvailablePdf": function(p_TargetGridId) {
+		    return AUIGrid.isAvailablePdf(p_TargetGridId);
+		},
+		
+		/**
+		 * 로컬 다운로드 사용 가능 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) 로컬 다운로드 가능 여부
+		 */
+		"isAvailableLocalDownload": function(p_TargetGridId) {
+		    return AUIGrid.isAvailableLocalDownload(p_TargetGridId);
+		},
+		
+		/**
+		 * 행 고유 값(rowId)에 해당하는 행의 체크 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *
+		 * Return : (Boolean) 체크 여부
+		 */
+		"isCheckedRowById": function(p_TargetGridId, p_RowId) {
+		    return AUIGrid.isCheckedRowById(p_TargetGridId, p_RowId);
+		},
+
+		/**
+		 * 그리드가 생성되었는지 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) 생성 여부
+		 */
+		"isCreated": function(p_TargetGridId) {
+		    return AUIGrid.isCreated(p_TargetGridId);
+		},
+		
+		/**
+		 * 행 고유 값(rowId)에 해당하는 행이 수정된 행인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *
+		 * Return : (Boolean) 수정된 행 여부
+		 */
+		"isEditedById": function(p_TargetGridId, p_RowId) {
+		    return AUIGrid.isEditedById(p_TargetGridId, p_RowId);
+		},
+		
+		/**
+		 * 행 인덱스(rowIndex)에 해당하는 행이 수정된 행인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 *
+		 * Return : (Boolean) 수정된 행 여부
+		 */
+		"isEditedByRowIndex": function(p_TargetGridId, p_RowIndex) {
+		    return AUIGrid.isEditedByRowIndex(p_TargetGridId, p_RowIndex);
+		},
+		
+		/**
+		 * 지정한 셀이 수정되었는지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *  - p_DataField (String) : 컬럼의 dataField
+		 *
+		 * Return : (Boolean) 수정된 셀 여부
+		 */
+		"isEditedCell": function(p_TargetGridId, p_RowId, p_DataField) {
+		    return AUIGrid.isEditedCell(p_TargetGridId, p_RowId, p_DataField);
+		},
+		
+		/**
+		 * 지정한 셀이 수정되었는지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 *  - p_ColumnIndex (Number) : 열 인덱스
+		 *
+		 * Return : (Boolean) 수정된 셀 여부
+		 */
+		"isEditedCellByIndex": function(p_TargetGridId, p_RowIndex, p_ColumnIndex) {
+		    return AUIGrid.isEditedCellByIndex(p_TargetGridId, p_RowIndex, p_ColumnIndex);
+		},
 
 
-        /**
-         * 선택 모드가 "none" 이 아닌 경우 현재 선택된 아이템의 rowIndex, columnIndex 를 반환합니다.	
-         * 다수의 셀 또는 행을 선택한 경우 첫번째 선택된 셀 또는 행의 rowIndex, columnIndex 를 반환합니다.
-         * 
-         * Return : (Array) rowIndex, columnIndex 를 갖는 배열(배열 요소 2개임 0번째는 rowIndex, 1번째는 columnIndex)
-         */
-        "getSelectedIndex": function(p_AuiGridId) {
-            return AUIGrid.getSelectedIndex(p_AuiGridId);
-        },
+		/**
+		 * 현재 그리드 데이터가 필터링되었는지 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) 필터링 여부
+		 */
+		"isFilteredGrid": function(p_TargetGridId) {
+		    return AUIGrid.isFilteredGrid(p_TargetGridId);
+		},
+		
+		/**
+		 * 지정한 행이 브랜치(branch)인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *
+		 * Return : (Boolean) 브랜치 여부
+		 */
+		"isItemBranchByRowId": function(p_TargetGridId, p_RowId) {
+		    return AUIGrid.isItemBranchByRowId(p_TargetGridId, p_RowId);
+		},
+		
+		/**
+		 * 지정한 행이 열린 상태인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *
+		 * Return : (Boolean) 열린 상태 여부
+		 */
+		"isItemOpenByRowId": function(p_TargetGridId, p_RowId) {
+		    return AUIGrid.isItemOpenByRowId(p_TargetGridId, p_RowId);
+		},
+		
+		/**
+		 * 지정한 행이 현재 그리드에 출력되고 있는지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *
+		 * Return : (Boolean) 출력 여부
+		 */
+		"isItemVisibleByRowId": function(p_TargetGridId, p_RowId) {
+		    return AUIGrid.isItemVisibleByRowId(p_TargetGridId, p_RowId);
+		},
+		
+		/**
+		 * treeLazyMode에서 하위(자식) 데이터가 이미 요청되었는지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 *
+		 * Return : (Boolean) 요청 여부
+		 */
+		"isLazyRequestedByIndex": function(p_TargetGridId, p_RowIndex) {
+		    return AUIGrid.isLazyRequestedByIndex(p_TargetGridId, p_RowIndex);
+		},
 
-        /**
-         * 리드에 출력된 현재 데이터를 다운로드 가능한 요청 형태로 다운로드 한다.	
-         * xlsx, csv, txt, xml, json
-         * Return : 요청한 형태의  파일 
-         */
-        "exportTo": function(p_AuiGridId, p_ExportType) {
-            switch (p_ExportType) {
-                case "xlsx":
-                    AUIGrid.exportToXlsx(p_AuiGridId, {
-                        exportWithStyle: false
-                    });
-                    break;
-                case "csv":
-                    AUIGrid.exportToCsv(p_AuiGridId);
-                    break;
-                case "txt":
-                    AUIGrid.exportToTxt(p_AuiGridId);
-                    break;
-                case "xml":
-                    AUIGrid.exportToXml(p_AuiGridId);
-                    break;
-                case "json":
-                    AUIGrid.exportToJson(p_AuiGridId);
-                    break;
-            }
-        },
-        /**
-         * 그리드 행(row) 아이템을 추가, 삽입합니다.
-         * 그리드의 속성 editable 과 무관하게 이 메소드를 통해 아이템을 추가할 수 있습니다.
-         * 
-         */
-        "addRow": function(p_AuiGridId, p_AddItem) {
-            return AUIGrid.addRow(p_AuiGridId, p_AddItem, "last");
-        },
+		/**
+		 * 지정한 셀이 병합된 셀인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 셀의 행 인덱스
+		 *  - p_ColumnIndex (Number) : 셀의 열 인덱스
+		 *
+		 * Return : (Boolean) 병합된 셀 여부
+		 */
+		"isMergedCell": function(p_TargetGridId, p_RowIndex, p_ColumnIndex) {
+		    return AUIGrid.isMergedCell(p_TargetGridId, p_RowIndex, p_ColumnIndex);
+		},
+		
+		/**
+		 * 지정한 셀이 가로 병합된 셀인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 셀의 행 인덱스
+		 *  - p_ColumnIndex (Number) : 셀의 열 인덱스
+		 *
+		 * Return : (Boolean) 가로 병합된 셀 여부
+		 */
+		"isMergedCellByColumn": function(p_TargetGridId, p_RowIndex, p_ColumnIndex) {
+		    return AUIGrid.isMergedCellByColumn(p_TargetGridId, p_RowIndex, p_ColumnIndex);
+		},
+		
+		/**
+		 * 지정한 셀이 세로 병합된 셀인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 셀의 행 인덱스
+		 *  - p_ColumnIndex (Number) : 셀의 열 인덱스
+		 *
+		 * Return : (Boolean) 세로 병합된 셀 여부
+		 */
+		"isMergedCellByRow": function(p_TargetGridId, p_RowIndex, p_ColumnIndex) {
+		    return AUIGrid.isMergedCellByRow(p_TargetGridId, p_RowIndex, p_ColumnIndex);
+		},
+		
+		/**
+		 * 현재 필터 레이어가 열려있는지 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) 필터 레이어 오픈 여부
+		 */
+		"isOpenFilterLayer": function(p_TargetGridId) {
+		    return AUIGrid.isOpenFilterLayer(p_TargetGridId);
+		},
+		
+		/**
+		 * 행 고유 값(rowId)에 해당하는 행이 삭제된 행인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *
+		 * Return : (Boolean) 삭제된 행 여부
+		 */
+		"isRemovedById": function(p_TargetGridId, p_RowId) {
+		    return AUIGrid.isRemovedById(p_TargetGridId, p_RowId);
+		},
+		
+		/**
+		 * 행 인덱스(rowIndex)에 해당하는 행이 삭제된 행인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 *
+		 * Return : (Boolean) 삭제된 행 여부
+		 */
+		"isRemovedByRowIndex": function(p_TargetGridId, p_RowIndex) {
+		    return AUIGrid.isRemovedByRowIndex(p_TargetGridId, p_RowIndex);
+		},
+		
+		/**
+		 * 현재 셀 선택이 역방향인지 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) 역방향 선택 여부
+		 */
+		"isSelectionReversed": function(p_TargetGridId) {
+		    return AUIGrid.isSelectionReversed(p_TargetGridId);
+		},
+		
+		/**
+		 * 현재 그리드 데이터가 정렬되었는지 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) 정렬 여부
+		 */
+		"isSortedGrid": function(p_TargetGridId) {
+		    return AUIGrid.isSortedGrid(p_TargetGridId);
+		},
+		
+		/**
+		 * 현재 그리드가 트리 그리드인지 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) 트리 그리드 여부
+		 */
+		"isTreeGrid": function(p_TargetGridId) {
+		    return AUIGrid.isTreeGrid(p_TargetGridId);
+		},
+		
+		/**
+		 * 지정한 값이 해당 컬럼에서 고유한 값인지 여부를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 데이터 필드명
+		 *  - p_Value (Object) : 검사할 값
+		 *
+		 * Return : (Boolean) 고유 값 여부
+		 */
+		"isUniqueValue": function(p_TargetGridId, p_DataField, p_Value) {
+		    return AUIGrid.isUniqueValue(p_TargetGridId, p_DataField, p_Value);
+		},
+		
+		/**
+		 * 지정한 페이지로 이동합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_PageNum (Number) : 이동할 페이지 번호
+		 *  - p_KeepVScrollPos (Boolean, Optional) : 수직 스크롤 위치 유지 여부
+		 *  - p_KeepHScrollPos (Boolean, Optional) : 수평 스크롤 위치 유지 여부
+		 */
+		"movePageTo": function(p_TargetGridId, p_PageNum, p_KeepVScrollPos, p_KeepHScrollPos) {
+		    AUIGrid.movePageTo(p_TargetGridId, p_PageNum, p_KeepVScrollPos, p_KeepHScrollPos);
+		},
+		
+		/**
+		 * 선택한 행을 아래로 한 단계 이동합니다.
+		 */
+		"moveRowsToDown": function(p_TargetGridId) {
+		    AUIGrid.moveRowsToDown(p_TargetGridId);
+		},
+		
+		/**
+		 * 선택한 행을 위로 한 단계 이동합니다.
+		 */
+		"moveRowsToUp": function(p_TargetGridId) {
+		    AUIGrid.moveRowsToUp(p_TargetGridId);
+		},
 
-        /**
+		/**
+		 * 지정한 단일 행을 원하는 행 인덱스로 이동합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *  - p_ToRowIndex (Object) : 이동시킬 위치의 행 인덱스
+		 */
+		"moveRowToIndex": function(p_TargetGridId, p_RowId, p_ToRowIndex) {
+		    AUIGrid.moveRowToIndex(p_TargetGridId, p_RowId, p_ToRowIndex);
+		},
+		
+		/**
+		 * 현재 선택된 셀에 편집기와 하단 리스트를 강제로 오픈합니다.
+		 */
+		"openEditDownListLayer": function(p_TargetGridId) {
+		    AUIGrid.openEditDownListLayer(p_TargetGridId);
+		},
+		
+		/**
+		 * 지정한 컬럼의 필터 레이어를 오픈합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 컬럼의 dataField명
+		 */
+		"openFilterLayer": function(p_TargetGridId, p_DataField) {
+		    AUIGrid.openFilterLayer(p_TargetGridId, p_DataField);
+		},
+		
+		/**
+		 * 현재 선택된 셀에 편집기를 강제로 오픈합니다.
+		 */
+		"openInputer": function(p_TargetGridId) {
+		    AUIGrid.openInputer(p_TargetGridId);
+		},
+		
+		/**
+		 * 선택한 행을 내어쓰기하여 계층 구조를 변경합니다.
+		 */
+		"outdentTreeDepth": function(p_TargetGridId) {
+		    AUIGrid.outdentTreeDepth(p_TargetGridId);
+		},
+		
+		/**
+		 * 기존 그리드 데이터의 상단에 데이터를 추가합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_AdditionalData (Array) : 추가할 데이터
+		 */
+		"prependData": function(p_TargetGridId, p_AdditionalData) {
+		    AUIGrid.prependData(p_TargetGridId, p_AdditionalData);
+		},
+		
+		/**
+		 * 이전에 실행 취소한 작업을 다시 실행합니다.
+		 */
+		"redo": function(p_TargetGridId) {
+		    AUIGrid.redo(p_TargetGridId);
+		},
+		
+		/**
+		 * 다시 실행 가능 여부를 반환합니다.
+		 *
+		 * Return : (Boolean) 다시 실행 가능 여부
+		 */
+		"redoable": function(p_TargetGridId) {
+		    return AUIGrid.redoable(p_TargetGridId);
+		},
+		
+		/**
+		 * 변경된 그리드 속성을 실제 그리드에 적용합니다.
+		 */
+		"refresh": function(p_TargetGridId) {
+		    AUIGrid.refresh(p_TargetGridId);
+		},
+		
+		/**
+		 * 지정한 행 데이터를 찾아 갱신합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Items (Array or Object) : 갱신할 행 데이터
+		 *  - p_FlashStyle (String, Optional) : 갱신된 셀에 적용할 CSS 클래스명
+		 *  - p_FlashTime (Number, Optional) : CSS 클래스가 적용되는 시간(ms)
+		 */
+		"refreshRows": function(p_TargetGridId, p_Items, p_FlashStyle, p_FlashTime) {
+		    AUIGrid.refreshRows(
+		        p_TargetGridId,
+		        p_Items,
+		        p_FlashStyle,
+		        p_FlashTime
+		    );
+		},
+		
+		/**
+		 * 그리드에 표시된 프리로더를 삭제합니다.
+		 */
+		"removeAjaxLoader": function(p_TargetGridId) {
+		    AUIGrid.removeAjaxLoader(p_TargetGridId);
+		},
+		
+		/**
+		 * 체크박스에 체크된 행을 그리드에서 삭제합니다.
+		 */
+		"removeCheckedRows": function(p_TargetGridId) {
+		    AUIGrid.removeCheckedRows(p_TargetGridId);
+		},
+
+
+		/**
+		 * 그리드 열(column)을 삭제합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_ColumnIndex (Number or String or Array) : 삭제할 열의 인덱스, "selectedIndex" 또는 열 인덱스 배열
+		 */
+		"removeColumn": function(p_TargetGridId, p_ColumnIndex) {
+		    AUIGrid.removeColumn(p_TargetGridId, p_ColumnIndex);
+		},
+		
+		/**
+		 * 그리드에 출력된 안내 메시지를 제거합니다.
+		 */
+		"removeInfoMessage": function(p_TargetGridId) {
+		    AUIGrid.removeInfoMessage(p_TargetGridId);
+		},
+		
+		 /**
          * 그리드 행(row) 아이템을 삭제합니다.
          * 
          * 파라메터 설명
-         * 	  p_DeleteTargetRowIndex_Array : [1,3,5]형태의 삭제 대상 행 array
+         * 	 - p_DeleteTargetRowIndex_Array (Number or String or Array) : 삭제할 행 인덱스, "selectedIndex" 또는 행 인덱스 배열
          */
         "removeRow": function(p_AuiGridId, p_DeleteTargetRowIndex_Array) {
 
@@ -5452,33 +6898,120 @@ var KpackageOBJ = {
             return AUIGrid.removeRow(p_AuiGridId, rowIndexes);
 
         },
+		
+		
 		/**
-		 * 그리드 행(row) 아이템을 rowid값을 이용하여 삭제합니다.
+		 * 행 고유 값(rowId)을 이용하여 그리드 행 아이템을 삭제합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String or Array) : 삭제할 행 고유 값 또는 행 고유 값 배열
+		 */
+		"removeRowByRowId": function(p_TargetGridId, p_RowId) {
+		    AUIGrid.removeRowByRowId(p_TargetGridId, p_RowId);
+		},
+		
+		/**
+		 * 소프트 삭제 상태로 표시된 행을 그리드에서 완전히 제거합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIds (String or Array, Optional) : 제거할 행의 rowId 또는 rowId 배열
+		 */
+		"removeSoftRows": function(p_TargetGridId, p_RowIds) {
+		    AUIGrid.removeSoftRows(p_TargetGridId, p_RowIds);
+		},
+		
+		/**
+		 * 특정 셀에 출력된 토스트 메시지를 제거합니다.
+		 */
+		"removeToastMessage": function(p_TargetGridId) {
+		    AUIGrid.removeToastMessage(p_TargetGridId);
+		},
+		
+		/**
+		 * treeLazyMode에서 지정한 행의 하위 데이터 요청 상태를 초기화합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 */
+		"resetLazyStateByIndex": function(p_TargetGridId, p_RowIndex) {
+		    AUIGrid.resetLazyStateByIndex(p_TargetGridId, p_RowIndex);
+		},
+		
+		/**
+		 * 추가 또는 삭제된 컬럼의 상태 정보 캐시를 초기화합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Option (String) : 초기화 옵션("c", "d", "a")
+		 */
+		"resetUpdatedColumns": function(p_TargetGridId, p_Option) {
+		    AUIGrid.resetUpdatedColumns(p_TargetGridId, p_Option);
+		},
+		
+		/**
+		 * 지정한 행의 추가, 수정, 삭제 상태 정보 캐시를 초기화합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 초기화할 행의 rowId
+		 *  - p_Option (String) : 초기화 옵션("c", "u", "e", "d", "a")
+		 */
+		"resetUpdatedItemById": function(p_TargetGridId, p_RowId, p_Option) {
+		    AUIGrid.resetUpdatedItemById(p_TargetGridId, p_RowId, p_Option);
+		},
+		
+		/**
+		 * 전체 행의 추가, 수정, 삭제 상태 정보 캐시를 초기화합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Option (String) : 초기화 옵션("c", "u", "e", "d", "a")
+		 */
+		"resetUpdatedItems": function(p_TargetGridId, p_Option) {
+		    AUIGrid.resetUpdatedItems(p_TargetGridId, p_Option);
+		},
+		
+		/**
+		 * 그리드의 크기를 변경합니다.
 		 * 
 		 * 파라메터 설명
-		 * 	  p_DeleteTargetRowId : 삭제하고자 하는 행 고유 값(rowIdField 값). 만약 복수를 삭제하고자 할 때 rowId 값을 배열로
+		 * 		 p_Width (Number) : 변경시키고자 하는 가로 사이즈
+		 * 		 p_Height (Number) : 변경시키고자 하는 세로 사이즈
+		 * 만약 파라메터 없이 resize 메소드 호출 시 부모 Div의 크기를 다시 계산하여 그에 맞게 사이즈를 변경합니다.
+		 * 부모(조상) Div 가 보이지 않는 상태(display : none)인 경우 부모 Div 의 크기를 알 수 없습니다. 이런 경우 그리드는 기본 크기로 변경 시킵니다.
+		 * 따라서 파라메터 없이 resize 메소드 호출 시는 반드시 부모 Div 가 DOM 영역에서 보여졌을 때 호출해야 합니다.
 		 */
-        "removeRowByRowId": function(p_AuiGridId, p_DeleteTargetRowId) {
-			
-			return AUIGrid.removeRowByRowId(p_AuiGridId, p_DeleteTargetRowId);
-			
-        },
-        	
-       /**
-		 * 체크박스 엑스트라 렌더러를 사용한 경우 체크박스에 체크된 행(들)을 그리드에서 삭제 처리 합니다.
-		 * 
+		"resize" : function(p_AuiGridId, p_Width, p_Height) {
+			if (p_AuiGridId != null && String(p_AuiGridId).trim() !== '') {
+				var hasWidth = p_Width != null && String(p_Width).trim() !== '';
+		        var hasHeight = p_Height != null && String(p_Height).trim() !== '';
+
+		        if (hasWidth && hasHeight) {
+		            AUIGrid.resize(p_AuiGridId, p_Width, p_Height);
+		        } else if (hasWidth) {
+		            AUIGrid.resize(p_AuiGridId, p_Width);
+		        } else if (hasHeight) {
+		            AUIGrid.resize(p_AuiGridId, undefined, p_Height);
+		        } else {
+		            AUIGrid.resize(p_AuiGridId);
+		        }
+			}
+		},
+		
+		/**
+		 * 지정한 셀의 수정 내용을 취소하고 최초 값으로 복구합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Cells (Array or String) : 복구할 셀 정보 배열 또는 "selectedIndex"
 		 */
-        "removeCheckedRows": function(p_AuiGridId) {
-			return AUIGrid.removeCheckedRows(p_AuiGridId);
-        },
-        
-        
+		"restoreEditedCells": function(p_TargetGridId, p_Cells) {
+		    AUIGrid.restoreEditedCells(p_TargetGridId, p_Cells);
+		},
+		
 		/**
 		 * 그리드의 행을 수정한 해당 행 전체 셀 값을 수정 취소(복구) 합니다.
 		 * 수정 취소(복구)는 최초 그리드에 삽입된 행의 셀 값들로 되돌립니다.
 		 * 
 		 * 파라메터 설명
-		 * 	  p_DeleteTargetRowId : 삭제하고자 하는 행 고유 값(rowIdField 값). 만약 복수를 삭제하고자 할 때 rowId 값을 배열로
+		 * 	  p_DeleteTargetRowId : (Number or Array or String) : 복구할 행 인덱스, 행 인덱스 배열 또는 "selectedIndex"
+		 *     -> 삭제하고자 하는 행 고유 값(rowIdField 값). 만약 복수를 삭제하고자 할 때 rowId 값을 배열로
 		 */
 		"restoreEditedRows": function(p_AuiGridId, p_RestoreTargetIndex_Array) {
 			
@@ -5519,78 +7052,889 @@ var KpackageOBJ = {
 		},
 		
 		/**
-		 * 그리드의 크기를 변경합니다.
-		 * 
-		 * 파라메터 설명
-		 * 		 width (Number) : 변경시키고자 하는 가로 사이즈
-		 * 		 height (Number) : 변경시키고자 하는 세로 사이즈
-		 * 만약 파라메터 없이 resize 메소드 호출 시 부모 Div의 크기를 다시 계산하여 그에 맞게 사이즈를 변경합니다.
-		 * 부모(조상) Div 가 보이지 않는 상태(display : none)인 경우 부모 Div 의 크기를 알 수 없습니다. 이런 경우 그리드는 기본 크기로 변경 시킵니다.
-		 * 따라서 파라메터 없이 resize 메소드 호출 시는 반드시 부모 Div 가 DOM 영역에서 보여졌을 때 호출해야 합니다.
+		 * 소프트 삭제 상태의 행을 복구합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Option (Number or Array or String) : "selectedIndex", "all", 행 인덱스 또는 행 인덱스 배열
 		 */
-		"resize" : function(p_AuiGridId, p_Width, p_Height) {
-			if (p_AuiGridId != null && String(p_AuiGridId).trim() !== '') {
-				var hasWidth = p_Width != null && String(p_Width).trim() !== '';
-		        var hasHeight = p_Height != null && String(p_Height).trim() !== '';
+		"restoreSoftRows": function(p_TargetGridId, p_Option) {
+		    AUIGrid.restoreSoftRows(p_TargetGridId, p_Option);
+		},
+		
+		/**
+		 * 행 고유 값(rowId)에 해당하는 행 인덱스를 반환합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowId (String) : 행 고유 값(rowId)
+		 *
+		 * Return : (Number) 행 인덱스
+		 */
+		"rowIdToIndex": function(p_TargetGridId, p_RowId) {
+		    return AUIGrid.rowIdToIndex(p_TargetGridId, p_RowId);
+		},
 
-		        if (hasWidth && hasHeight) {
-		            AUIGrid.resize(p_AuiGridId, p_Width, p_Height);
-		        } else if (hasWidth) {
-		            AUIGrid.resize(p_AuiGridId, p_Width);
-		        } else if (hasHeight) {
-		            AUIGrid.resize(p_AuiGridId, undefined, p_Height);
+		/**
+		 * 그리드의 특정 컬럼에서 문자열을 검색합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 검색할 컬럼의 dataField명
+		 *  - p_Term (String) : 검색할 문자열
+		 *  - p_Options (Object, Optional) : 검색 옵션
+		 */
+		"search": function(p_TargetGridId, p_DataField, p_Term, p_Options) {
+		    AUIGrid.search(p_TargetGridId, p_DataField, p_Term, p_Options);
+		},
+		
+		/**
+		 * 그리드의 전체 컬럼을 대상으로 문자열을 검색합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Term (String) : 검색할 문자열
+		 *  - p_Options (Object, Optional) : 검색 옵션
+		 */
+		"searchAll": function(p_TargetGridId, p_Term, p_Options) {
+		    AUIGrid.searchAll(p_TargetGridId, p_Term, p_Options);
+		},
+		
+		/**
+		 * 행 고유 값(rowId)을 이용하여 특정 행 아이템을 선택합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIds (Array or String) : 선택할 행 고유 값 또는 행 고유 값 배열
+		 */
+		"selectRowsByRowId": function(p_TargetGridId, p_RowIds) {
+		    AUIGrid.selectRowsByRowId(p_TargetGridId, p_RowIds);
+		},
+		
+		/**
+		 * 모든 행의 체크박스 상태를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Checked (Boolean) : true인 경우 전체 선택, false인 경우 전체 해제
+		 */
+		"setAllCheckedRows": function(p_TargetGridId, p_Checked) {
+		    AUIGrid.setAllCheckedRows(p_TargetGridId, p_Checked);
+		},
+		
+		/**
+		 * 셀 병합 기능을 활성화하거나 비활성화합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Flag (Boolean) : true인 경우 활성화, false인 경우 비활성화
+		 */
+		"setCellMerge": function(p_TargetGridId, p_Flag) {
+		    AUIGrid.setCellMerge(p_TargetGridId, p_Flag);
+		},
+		
+		/**
+		 * 지정한 셀의 값을 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 변경할 행 인덱스
+		 *  - p_DataFieldOrColumnIndex (String or Number) : 변경할 컬럼의 dataField 또는 컬럼 인덱스
+		 *  - p_Value (Object) : 변경할 값
+		 */
+		"setCellValue": function(p_TargetGridId, p_RowIndex, p_DataFieldOrColumnIndex, p_Value) {
+		    AUIGrid.setCellValue(
+		        p_TargetGridId,
+		        p_RowIndex,
+		        p_DataFieldOrColumnIndex,
+		        p_Value
+		    );
+		},
+		
+		/**
+		 * 행 고유 값(rowId)을 이용하여 체크된 행을 설정합니다.
+		 *
+		 * 기존 체크 상태는 제거되고 전달한 행만 체크됩니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIds (Array) : 체크할 행 고유 값 배열
+		 */
+		"setCheckedRowsByIds": function(p_TargetGridId, p_RowIds) {
+		    AUIGrid.setCheckedRowsByIds(p_TargetGridId, p_RowIds);
+		},
+		
+		/**
+		 * 특정 컬럼의 값과 일치하는 행을 체크합니다.
+		 *
+		 * 기존 체크 상태는 제거되고 전달한 값과 일치하는 행만 체크됩니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 체크 조건으로 사용할 컬럼의 dataField명
+		 *  - p_Values (Array or String) : 체크할 값 또는 값 배열
+		 */
+		"setCheckedRowsByValue": function(p_TargetGridId, p_DataField, p_Values) {
+		    AUIGrid.setCheckedRowsByValue(p_TargetGridId, p_DataField, p_Values);
+		},
+		
+		/**
+		 * 그룹 컬럼에 속한 자식 컬럼의 출력 순서를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataFields (Array) : 자식 컬럼의 출력 순서를 나타내는 dataField 배열
+		 */
+		"setColumnChildOrder": function(p_TargetGridId, p_DataFields) {
+		    AUIGrid.setColumnChildOrder(p_TargetGridId, p_DataFields);
+		},
+		
+		/**
+		 * 그리드 컬럼의 출력 순서를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataFields (Array) : 컬럼의 출력 순서를 나타내는 dataField 배열
+		 */
+		"setColumnOrder": function(p_TargetGridId, p_DataFields) {
+		    AUIGrid.setColumnOrder(p_TargetGridId, p_DataFields);
+		},
+
+		/**
+		 * 지정한 컬럼 인덱스의 컬럼 속성을 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_ColumnIndex (Number) : 변경할 컬럼 인덱스
+		 *  - p_PropObj (Object) : 변경할 컬럼 속성 정보
+		 */
+		"setColumnProp": function(p_TargetGridId, p_ColumnIndex, p_PropObj) {
+		    AUIGrid.setColumnProp(p_TargetGridId, p_ColumnIndex, p_PropObj);
+		},
+		
+		/**
+		 * 지정한 dataField의 컬럼 속성을 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 변경할 컬럼의 dataField
+		 *  - p_PropObj (Object) : 변경할 컬럼 속성 정보
+		 */
+		"setColumnPropByDataField": function(p_TargetGridId, p_DataField, p_PropObj) {
+		    AUIGrid.setColumnPropByDataField(p_TargetGridId, p_DataField, p_PropObj);
+		},
+		
+		/**
+		 * 컬럼의 가로 크기(width)를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_SizeList (Array) : 컬럼 너비 목록
+		 */
+		"setColumnSizeList": function(p_TargetGridId, p_SizeList) {
+		    AUIGrid.setColumnSizeList(p_TargetGridId, p_SizeList);
+		},
+		
+		/**
+		 * CSV 문자열을 그리드 데이터로 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_CsvData (String) : CSV 데이터
+		 *  - p_IsSimpleMode (Boolean, Optional) : 단순 CSV 여부
+		 */
+		"setCsvGridData": function(p_TargetGridId, p_CsvData, p_IsSimpleMode) {
+		    AUIGrid.setCsvGridData(p_TargetGridId, p_CsvData, p_IsSimpleMode);
+		},
+		
+		/**
+		 * 편집 중인 셀의 Input 값을 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Value (Object) : 설정할 값
+		 */
+		"setEditingInputValue": function(p_TargetGridId, p_Value) {
+		    AUIGrid.setEditingInputValue(p_TargetGridId, p_Value);
+		},
+		
+		/**
+		 * 지정한 컬럼에 필터를 설정하고 실행합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 컬럼의 dataField
+		 *  - p_FilterFunction (Function) : 필터 함수
+		 */
+		"setFilter": function(p_TargetGridId, p_DataField, p_FilterFunction) {
+		    AUIGrid.setFilter(p_TargetGridId, p_DataField, p_FilterFunction);
+		},
+		
+		/**
+		 * 지정한 값으로 컬럼 필터를 설정하고 실행합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 컬럼의 dataField
+		 *  - p_Values (String or Array) : 필터링할 값 또는 값 배열
+		 */
+		"setFilterByValues": function(p_TargetGridId, p_DataField, p_Values) {
+		    AUIGrid.setFilterByValues(p_TargetGridId, p_DataField, p_Values);
+		},
+		
+		/**
+		 * 필터 캐시 정보를 적용하여 필터를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Cache (Object) : 필터 캐시 정보
+		 */
+		"setFilterCache": function(p_TargetGridId, p_Cache) {
+		    AUIGrid.setFilterCache(p_TargetGridId, p_Cache);
+		},
+		
+		/**
+		 * 인라인 필터의 텍스트를 설정하여 필터를 적용합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_InlineTexts (Array) : 인라인 필터 텍스트 정보
+		 */
+		"setFilterInlineTexts": function(p_TargetGridId, p_InlineTexts) {
+		    AUIGrid.setFilterInlineTexts(p_TargetGridId, p_InlineTexts);
+		},
+
+
+		/**
+		 * 고정 컬럼(FixedColumn) 개수를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Count (Number) : 고정 컬럼 개수
+		 */
+		"setFixedColumnCount": function(p_TargetGridId, p_Count) {
+		    AUIGrid.setFixedColumnCount(p_TargetGridId, p_Count);
+		},
+		
+		/**
+		 * 고정 행(FixedRow) 개수를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Count (Number) : 고정 행 개수
+		 */
+		"setFixedRowCount": function(p_TargetGridId, p_Count) {
+		    AUIGrid.setFixedRowCount(p_TargetGridId, p_Count);
+		},
+		
+		/**
+		 * 그리드에 키보드 포커스를 설정합니다.
+		 */
+		"setFocus": function(p_TargetGridId) {
+		    AUIGrid.setFocus(p_TargetGridId);
+		},
+		
+		/**
+		 * 그리드의 푸터 레이아웃을 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_FooterLayout (Array) : 푸터 레이아웃
+		 */
+		"setFooter": function(p_TargetGridId, p_FooterLayout) {
+		    AUIGrid.setFooter(p_TargetGridId, p_FooterLayout);
+		},
+		
+		/**
+		 * 그리드 데이터를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Data (Array) : 그리드 데이터
+		 */
+		"setGridData": function(p_TargetGridId, p_Data) {
+		    AUIGrid.setGridData(p_TargetGridId, p_Data);
+		},
+		
+		/**
+		 * 지정한 필드로 그룹핑을 수행합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_GroupingFields (Array) : 그룹핑할 필드 목록
+		 *  - p_GroupingSummary (Object, Optional) : 그룹핑 소계 정보
+		 */
+		"setGroupBy": function(p_TargetGridId, p_GroupingFields, p_GroupingSummary) {
+		    AUIGrid.setGroupBy(p_TargetGridId, p_GroupingFields, p_GroupingSummary);
+		},
+		
+		/**
+		 * 지정한 컬럼의 HeaderRenderer 속성을 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_ColumnIndex (Number) : 컬럼 인덱스
+		 *  - p_PropObj (Object) : HeaderRenderer 속성 정보
+		 */
+		"setHeaderRendererProp": function(p_TargetGridId, p_ColumnIndex, p_PropObj) {
+		    AUIGrid.setHeaderRendererProp(p_TargetGridId, p_ColumnIndex, p_PropObj);
+		},
+		
+		/**
+		 * 지정한 dataField의 HeaderRenderer 속성을 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 컬럼의 dataField
+		 *  - p_PropObj (Object) : HeaderRenderer 속성 정보
+		 */
+		"setHeaderRendererPropByDataField": function(p_TargetGridId, p_DataField, p_PropObj) {
+		    AUIGrid.setHeaderRendererPropByDataField(p_TargetGridId, p_DataField, p_PropObj);
+		},
+		
+		/**
+		 * 마우스 Hover 모드를 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_HoverMode (String) : Hover 모드("singleCell", "singleRow", "none")
+		 */
+		"setHoverMode": function(p_TargetGridId, p_HoverMode) {
+		    AUIGrid.setHoverMode(p_TargetGridId, p_HoverMode);
+		},
+		
+		/**
+		 * 수평 스크롤을 지정한 컬럼 인덱스로 이동합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_ColumnIndex (Number) : 컬럼 인덱스
+		 */
+		"setHScrollPosition": function(p_TargetGridId, p_ColumnIndex) {
+		    AUIGrid.setHScrollPosition(p_TargetGridId, p_ColumnIndex);
+		},
+		
+		/**
+		 * 수평 스크롤을 지정한 픽셀 위치로 이동합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Pixel (Number) : 픽셀 위치
+		 */
+		"setHScrollPositionByPx": function(p_TargetGridId, p_Pixel) {
+		    AUIGrid.setHScrollPositionByPx(p_TargetGridId, p_Pixel);
+		},
+		
+		/**
+		 * 그리드 안내 메시지를 설정합니다.
+		 *
+		 * @deprecated Ver 3.0.4
+		 */
+		"setInfoMessage": function(p_TargetGridId) {
+		    AUIGrid.setInfoMessage(p_TargetGridId);
+		},
+		
+		/**
+		 * 페이지당 출력할 행 개수를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_PageRowCount (Number) : 페이지당 행 개수
+		 */
+		"setPageRowCount": function(p_TargetGridId, p_PageRowCount) {
+		    AUIGrid.setPageRowCount(p_TargetGridId, p_PageRowCount);
+		},
+
+		
+		/**
+		 * 페이지당 출력할 행 개수를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_props (Object) : 복수인 경우 속성명과 속성값이 각각 key-value 를 이루는 object, 1개의 속성인 경우 속성명
+		 *            => API 문서 참조
+		 *  - p_value (Object) : 1개의 속성 값 변경을 위한 파라메터로 1개의 속성의 새로운 값에 해당됩니다.(복수인 경우 의미없음)
+		 */
+		"setProp": function(p_TargetGridId, p_props, p_value) {
+		    AUIGrid.setProp(p_TargetGridId, p_props, p_value);
+		},
+
+		/**
+		 * 지정한 컬럼의 renderer 속성을 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_ColumnIndex (Number) : 컬럼 인덱스
+		 *  - p_PropObj (Object) : renderer 속성 정보
+		 */
+		"setRendererProp": function(p_TargetGridId, p_ColumnIndex, p_PropObj) {
+		    AUIGrid.setRendererProp(p_TargetGridId, p_ColumnIndex, p_PropObj);
+		},
+		
+		/**
+		 * 지정한 행이 최상단에 오도록 스크롤을 이동합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowPosition (Number) : 행 인덱스
+		 */
+		"setRowPosition": function(p_TargetGridId, p_RowPosition) {
+		    AUIGrid.setRowPosition(p_TargetGridId, p_RowPosition);
+		},
+		
+		/**
+		 * 그리드의 Scale 값을 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_ScaleFactor (Number) : Scale 값
+		 */
+		"setScaleFactor": function(p_TargetGridId, p_ScaleFactor) {
+		    AUIGrid.setScaleFactor(p_TargetGridId, p_ScaleFactor);
+		},
+		
+		/**
+		 * 그리드 전체를 선택합니다.
+		 */
+		"setSelectionAll": function(p_TargetGridId) {
+		    AUIGrid.setSelectionAll(p_TargetGridId);
+		},
+		
+		/**
+		 * 셀 선택 블록을 지정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_StartRowIndex (Number) : 시작 행 인덱스
+		 *  - p_EndRowIndex (Number) : 종료 행 인덱스
+		 *  - p_StartColumnIndex (Number) : 시작 열 인덱스
+		 *  - p_EndColumnIndex (Number) : 종료 열 인덱스
+		 */
+		"setSelectionBlock": function(p_TargetGridId, p_StartRowIndex, p_EndRowIndex, p_StartColumnIndex, p_EndColumnIndex) {
+		    AUIGrid.setSelectionBlock(p_TargetGridId, p_StartRowIndex, p_EndRowIndex, p_StartColumnIndex, p_EndColumnIndex);
+		},
+		
+		/**
+		 * 지정한 셀 또는 행을 선택합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 *  - p_ColumnIndex (Number, Optional) : 열 인덱스
+		 */
+		"setSelectionByIndex": function(p_TargetGridId, p_RowIndex, p_ColumnIndex) {
+		    AUIGrid.setSelectionByIndex(p_TargetGridId, p_RowIndex, p_ColumnIndex);
+		},
+		
+		/**
+		 * 지정한 컬럼 범위를 선택합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_StartColIdx (Number) : 시작 컬럼 인덱스
+		 *  - p_EndColIdx (Number) : 종료 컬럼 인덱스
+		 */
+		"setSelectionColumn": function(p_TargetGridId, p_StartColIdx, p_EndColIdx) {
+		    AUIGrid.setSelectionColumn(p_TargetGridId, p_StartColIdx, p_EndColIdx);
+		},
+		
+		/**
+		 * 선택 모드를 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_SelectionMode (String) : 선택 모드
+		 */
+		"setSelectionMode": function(p_TargetGridId, p_SelectionMode) {
+		    AUIGrid.setSelectionMode(p_TargetGridId, p_SelectionMode);
+		},
+		
+		/**
+		 * 정렬 비교 객체(Intl.Collator)를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Collator (Intl.Collator) : 정렬 비교 객체
+		 */
+		"setSortCollator": function(p_TargetGridId, p_Collator) {
+		    AUIGrid.setSortCollator(p_TargetGridId, p_Collator);
+		},
+		
+		/**
+		 * 정렬을 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_SortingInfo (Array) : 정렬 정보
+		 *  - p_OnlyLastDepthSorting (Boolean, Optional) : 마지막 Depth만 정렬 여부
+		 */
+		"setSorting": function(p_TargetGridId, p_SortingInfo, p_OnlyLastDepthSorting) {
+		    AUIGrid.setSorting(p_TargetGridId, p_SortingInfo, p_OnlyLastDepthSorting);
+		},
+		
+		/**
+		 * XML 데이터를 설정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_XmlData (Object) : XML 데이터
+		 *  - p_TagName (String, Optional) : 행 태그명
+		 */
+		"setXmlGridData": function(p_TargetGridId, p_XmlData, p_TagName) {
+		    AUIGrid.setXmlGridData(p_TargetGridId, p_XmlData, p_TagName);
+		},
+		
+		/**
+		 * 그리드에 프리로더를 표시합니다.
+		 */
+		"showAjaxLoader": function(p_TargetGridId) {
+		    AUIGrid.showAjaxLoader(p_TargetGridId);
+		},
+		
+		/**
+		 * 숨겨진 모든 컬럼을 표시합니다.
+		 */
+		"showAllColumns": function(p_TargetGridId) {
+		    AUIGrid.showAllColumns(p_TargetGridId);
+		},
+
+		/**
+		 * 지정한 dataField 컬럼을 표시합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String|Array) : 표시할 dataField
+		 */
+		"showColumnByDataField": function(p_TargetGridId, p_DataField) {
+		    AUIGrid.showColumnByDataField(p_TargetGridId, p_DataField);
+		},
+		
+		/**
+		 * 지정한 컬럼 그룹을 표시합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : 그룹 dataField
+		 */
+		"showColumnGroup": function(p_TargetGridId, p_DataField) {
+		    AUIGrid.showColumnGroup(p_TargetGridId, p_DataField);
+		},
+		
+		/**
+		 * 엑스트라 컬럼을 표시합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_PropName (String) : 엑스트라 컬럼 속성명
+		 */
+		"showExtraColumn": function(p_TargetGridId, p_PropName) {
+		    AUIGrid.showExtraColumn(p_TargetGridId, p_PropName);
+		},
+		
+		/**
+		 * Footer를 표시합니다.
+		 */
+		"showFooterLater": function(p_TargetGridId) {
+		    AUIGrid.showFooterLater(p_TargetGridId);
+		},
+		
+		/**
+		 * 그리드에 안내 메시지를 표시합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_MsgHTML (String) : 표시할 HTML 메시지
+		 */
+		"showInfoMessage": function(p_TargetGridId, p_MsgHTML) {
+		    AUIGrid.showInfoMessage(p_TargetGridId, p_MsgHTML);
+		},
+		
+		/**
+		 * 지정한 Depth까지 트리 데이터를 펼칩니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Depth (Number) : 표시할 Depth
+		 */
+		"showItemsOnDepth": function(p_TargetGridId, p_Depth) {
+		    AUIGrid.showItemsOnDepth(p_TargetGridId, p_Depth);
+		},
+		
+		/**
+		 * 특정 셀에 Toast 메시지를 표시합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RowIndex (Number) : 행 인덱스
+		 *  - p_ColumnIndex (Number) : 열 인덱스
+		 *  - p_Message (String) : 메시지
+		 */
+		"showToastMessage": function(p_TargetGridId, p_RowIndex, p_ColumnIndex, p_Message) {
+		    AUIGrid.showToastMessage(p_TargetGridId, p_RowIndex, p_ColumnIndex, p_Message);
+		},
+		
+		/**
+		 * 상태 정보를 포함하여 데이터를 동기화합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Data (Array) : 데이터
+		 *  - p_Cache (Object) : 상태 캐시
+		 */
+		"syncGridData": function(p_TargetGridId, p_Data, p_Cache) {
+		    AUIGrid.syncGridData(p_TargetGridId, p_Data, p_Cache);
+		},
+		
+		/**
+		 * 이벤트를 해제합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Type (String|Array) : 이벤트 타입
+		 */
+		"unbind": function(p_TargetGridId, p_Type) {
+		    AUIGrid.unbind(p_TargetGridId, p_Type);
+		},
+		
+		/**
+		 * Undo를 실행합니다.
+		 */
+		"undo": function(p_TargetGridId) {
+		    AUIGrid.undo(p_TargetGridId);
+		},
+		
+		/**
+		 * Undo 가능 여부를 반환합니다.
+		 */
+		"undoable": function(p_TargetGridId) {
+		    return AUIGrid.undoable(p_TargetGridId);
+		},
+		
+		/**
+		 * 셀 내용을 갱신합니다.
+		 */
+		"update": function(p_TargetGridId) {
+		    AUIGrid.update(p_TargetGridId);
+		},
+		
+		/**
+		 * 특정 컬럼 값을 전체 데이터에 일괄 적용합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_DataField (String) : dataField
+		 *  - p_Value (Object) : 변경 값
+		 */
+		"updateAllToValue": function(p_TargetGridId, p_DataField, p_Value) {
+		    AUIGrid.updateAllToValue(p_TargetGridId, p_DataField, p_Value);
+		},
+		
+		/**
+		 * 모든 expFunction을 다시 계산합니다.
+		 */
+		"updateExpFuncAll": function(p_TargetGridId) {
+		    AUIGrid.updateExpFuncAll(p_TargetGridId);
+		},
+		
+		/**
+		 * 그룹핑 및 Summary를 다시 계산합니다.
+		 */
+		"updateGrouping": function(p_TargetGridId) {
+		    AUIGrid.updateGrouping(p_TargetGridId);
+		},
+
+		/**
+		 * 그리드의 특정 행 아이템을 수정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Item (Object) : 수정할 행 아이템
+		 *  - p_RowIndex (Number or String) : 수정할 행 인덱스 또는 "selectedIndex"
+		 *  - p_IsMarkEdited (Boolean, Optional) : 수정 상태 표시 여부 (기본값 : true)
+		 */
+		"updateRow": function(p_TargetGridId, p_Item, p_RowIndex, p_IsMarkEdited) {
+		    AUIGrid.updateRow(
+		        p_TargetGridId,
+		        p_Item,
+		        p_RowIndex,
+		        p_IsMarkEdited
+		    );
+		},
+		
+		/**
+		 * 지정한 행 범위의 특정 필드 값을 일괄 변경합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_StartRowIndex (Number) : 시작 행 인덱스
+		 *  - p_EndRowIndex (Number) : 종료 행 인덱스
+		 *  - p_DataFields (String or Array) : 변경할 dataField 또는 dataField 배열
+		 *  - p_Values (Object or Array) : 변경할 값 또는 값 배열
+		 */
+		"updateRowBlockToValue": function(p_TargetGridId, p_StartRowIndex, p_EndRowIndex, p_DataFields, p_Values) {
+		    AUIGrid.updateRowBlockToValue(
+		        p_TargetGridId,
+		        p_StartRowIndex,
+		        p_EndRowIndex,
+		        p_DataFields,
+		        p_Values
+		    );
+		},
+		
+		/**
+		 * 지정한 여러 행 아이템을 일괄 수정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Items (Array) : 수정할 행 아이템 배열
+		 *  - p_RowIndexes (Array) : 수정할 행 인덱스 배열
+		 *  - p_IsMarkEdited (Boolean, Optional) : 수정 상태 표시 여부 (기본값 : true)
+		 */
+		"updateRows": function(p_TargetGridId, p_Items, p_RowIndexes, p_IsMarkEdited) {
+		    AUIGrid.updateRows(
+		        p_TargetGridId,
+		        p_Items,
+		        p_RowIndexes,
+		        p_IsMarkEdited
+		    );
+		},
+		
+		/**
+		 * 행 고유 값(rowId)을 이용하여 하나 또는 여러 행을 수정합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_Items (Array or Object) : 수정할 행 아이템 또는 행 아이템 배열
+		 *  - p_IsMarkEdited (Boolean, Optional) : 수정 상태 표시 여부 (기본값 : true)
+		 */
+		"updateRowsById": function(p_TargetGridId, p_Items, p_IsMarkEdited) {
+		    AUIGrid.updateRowsById(
+		        p_TargetGridId,
+		        p_Items,
+		        p_IsMarkEdited
+		    );
+		},
+		
+		/**
+		 * 수정되거나 추가된 행의 필수 입력값을 검사합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RequireFields (String or Array) : 필수 입력 dataField 또는 dataField 배열
+		 *  - p_Message (String, Optional) : 유효성 검사 실패 시 표시할 메시지
+		 *
+		 * Return : (Boolean) 유효성 검사 통과 여부
+		 */
+		"validateChangedGridData": function(p_TargetGridId, p_RequireFields, p_Message) {
+		    return AUIGrid.validateChangedGridData(
+		        p_TargetGridId,
+		        p_RequireFields,
+		        p_Message
+		    );
+		},
+		
+		/**
+		 * 그리드 전체 데이터의 필수 입력값을 검사합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RequireFields (String or Array) : 필수 입력 dataField 또는 dataField 배열
+		 *  - p_Message (String, Optional) : 유효성 검사 실패 시 표시할 메시지
+		 *
+		 * Return : (Boolean) 유효성 검사 통과 여부
+		 */
+		"validateGridData": function(p_TargetGridId, p_RequireFields, p_Message) {
+		    return AUIGrid.validateGridData(
+		        p_TargetGridId,
+		        p_RequireFields,
+		        p_Message
+		    );
+		},
+		
+		/**
+		 * 사용자 정의 검사 함수를 이용하여 그리드 데이터의 유효성을 검사합니다.
+		 *
+		 * 파라미터 설명
+		 *  - p_RequireFields (String or Array) : 검사할 dataField 또는 dataField 배열
+		 *  - p_ValidFunc (Function) : 유효성 검사 함수
+		 *  - p_Message (String, Optional) : 유효성 검사 실패 시 표시할 메시지
+		 *  - p_OnlyByFunc (Boolean, Optional) : validFunc의 반환값만으로 검사할지 여부
+		 *
+		 * Return : (Boolean) 유효성 검사 통과 여부
+		 */
+		"validateGridDataByFunc": function(p_TargetGridId, p_RequireFields, p_ValidFunc, p_Message, p_OnlyByFunc) {
+		    return AUIGrid.validateGridDataByFunc(
+		        p_TargetGridId,
+		        p_RequireFields,
+		        p_ValidFunc,
+		        p_Message,
+		        p_OnlyByFunc
+		    );
+		},
+		
+		/**================================================================================================================== 
+		 *  
+		 * 여기서 부터는 CUSTOM FUCNTION 
+		 * ================================================================================================================== 
+		 * **/
+
+  		/**
+         * 리드에 출력된 현재 데이터를 다운로드 가능한 요청 형태로 다운로드 한다.	
+         * xlsx, csv, txt, xml, json
+         * Return : 요청한 형태의  파일 
+         */
+        "exportTo": function(p_AuiGridId, p_ExportType) {
+            switch (p_ExportType) {
+                case "xlsx":
+                    AUIGrid.exportToXlsx(p_AuiGridId, {
+                        exportWithStyle: false
+                    });
+                    break;
+                case "csv":
+                    AUIGrid.exportToCsv(p_AuiGridId);
+                    break;
+                case "txt":
+                    AUIGrid.exportToTxt(p_AuiGridId);
+                    break;
+                case "xml":
+                    AUIGrid.exportToXml(p_AuiGridId);
+                    break;
+                case "json":
+                    AUIGrid.exportToJson(p_AuiGridId);
+                    break;
+            }
+        },
+        
+		"remove": function(p_AuiGridId) {
+            AUIGrid.destroy("#" + p_AuiGridId);
+        },
+		
+        /**
+		 * 그리드에 데이터를 로드 합니다.
+		 * Auigrid 데이터 조회
+		 */
+		"retrieve": function (p_TargetGridId, p_RetrieveUrl, p_Params) {
+
+		    if (!p_TargetGridId || typeof p_TargetGridId !== "string") {
+		        console.warn("[retrieve] p_TargetGridId 값이 올바르지 않습니다.", p_TargetGridId);
+		        return;
+		    }
+
+		    if (!p_RetrieveUrl || typeof p_RetrieveUrl !== "string") {
+		        console.warn("[retrieve] p_RetrieveUrl 값이 올바르지 않습니다.", p_RetrieveUrl);
+		        return;
+		    }
+
+		    if (typeof AUIGrid === "undefined" || typeof AUIGrid.setGridData !== "function") {
+		        console.error("[retrieve] AUIGrid를 사용할 수 없습니다.");
+		        return;
+		    }
+
+		    if (p_Params == null || typeof p_Params !== "object" || $.isEmptyObject(p_Params)) {
+		        p_Params = { dummy: "dummy" };
+		    }
+
+		    KpackageOBJ.ajax.doSubmit(p_RetrieveUrl, p_Params, function (result) {
+		        var gridData = [];
+
+		        if (result && Array.isArray(result.value)) {
+		            gridData = result.value;
 		        } else {
-		            AUIGrid.resize(p_AuiGridId);
+		            console.warn("[retrieve] result.value가 배열이 아닙니다.", result);
 		        }
-			}
+
+		        AUIGrid.setGridData(p_TargetGridId, gridData);
+		    });
+			
 		},
 		
+
+        /**
+         * 그리드에서 수정된 데이터만 선별해서 가져온다.
+         * 
+         * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
+         */
+        "getGridCudData": function(p_AuiGridId) {
+       		return  AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" }).filter(item => item.state != null);
+        },
+        
+
 		/**
-		 * 그리드 데이터의 필드들 중 빈값(undefined, null, "")에 해당되는 값이 있는지 검사합니다.
-		 * 
-		 * 파라메터 설명
-		 * 		 requireFields (String or Array) : 필수로 값이 있어야 하는 dataField 들. 즉, 모두 값이 채워 졌는지 체크 하고자 하는 dataField
-		 * 		 message (String) : 빈값, null 이 존재할 때 적용 시킬 toast alert 메세지. message 파라메터를 설정하지 않으면 toast 는 출력되지 않음.
-		 */
-		"validateGridData" : function(p_AuiGridId, requireFields , message ) {
-			return AUIGrid.validateGridData(p_AuiGridId, requireFields , message);
-		},
-		
+         * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 모든 셀(또는 행) 아이템을 반환합니다.
+         * 
+         * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
+         */
+        "getSelectRowData": function(p_AuiGridId) {
+			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
+			
+            return rowArray[0]["item"];
+        },
+
+
 		/**
-		 * 행 인덱스(rowIndex)에 맞는 행 아이템이 추가된 행인지 여부를 반환합니다. 
+		 * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 row Index 반환합니다.
 		 * 
-		 * 파라메터 설명
-		 * 		rowIndex : (Number) 행 인덱스
+		 * Return : 숫자 행번호 (0부터시작)
 		 */
-		"isAddedByRowIndex" : function(p_AuiGridId, rowIndex) {
-			return AUIGrid.isAddedByRowIndex(p_AuiGridId, rowIndex);
+		"getSelectRowIndex": function(p_AuiGridId) {
+			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
+						
+			return rowArray[0]["rowIndex"];
 		},
 
 		/**
-		 * 그리드의 특정 셀의 값을 변경합니다.
+		 * 선택 모드(selectionMode)가 "none" 이 아닌 경우 현재 선택된 column의 index 반환합니다.
 		 * 
-		 * 파라메터 설명
-		 * 	rowIndex : (Number) 행 인덱스
-		 * 	colField : dataField or columnIndex(String or Number) : 변경하고자 하는 칼럼의 dataField 또는 칼럼 인덱스
-		 *  value (Object) : 변경하고자 하는 값
+		 * Return : 숫자 열번호 (0부터시작)
 		 */
-		"setCellValue" : function(p_AuiGridId, rowIndex , colField, value){
-			return AUIGrid.setCellValue(p_AuiGridId, rowIndex, colField, value);
+		"getSelectColIndex": function(p_AuiGridId) {
+			var rowArray = AUIGrid.getSelectedItems(p_AuiGridId);
+						
+			return rowArray[0]["columnIndex"];
 		},
-		
-		
-		/**
-		 * 그리드 데이터를 설정합니다. 그리드 데이터는 반드시 배열요소가 Object 인 배열(Array) 여야 합니다.
-		 * 
-		 * 파라메터 설명
-		 * 	data (Array) : 그리드가 표현할 데이터 배열
-		 */
-		"setGridData" : function(p_AuiGridId, data){
-			AUIGrid.setGridData(p_AuiGridId, data);
-		}
-		
-		 
-		
+
     }
 
 };
