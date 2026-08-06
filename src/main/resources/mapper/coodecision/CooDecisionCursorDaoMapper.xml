@@ -1,0 +1,183 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.coodecision.CooDecisionCursorDao">
+
+	<!-- ===================== COO_DECISION 초기화 ===================== -->
+
+	<select id="selectInvoiceDate" resultType="string">
+		SELECT SM.INVOICE_DATE
+		FROM   SALES_MST SM
+		WHERE  SM.SALES_NO = #{salesNo}
+		AND    SM.COMPANY_CODE = #{companyCode}
+	</select>
+
+	<!-- ===================== CURSOR C_FCR_MST ===================== -->
+
+	<select id="selectFcrMasterLines" resultType="com.kpmg.kdb.web.coodecision.dto.FcrMasterLine">
+		SELECT FTAFM.FTA_CODE                                                    AS ftaCode
+		      ,FTAFM.SALES_NO                                                    AS salesNo
+		      ,FTAFM.SALES_SEQ                                                   AS salesSeq
+		      ,FTAFM.DIVISION_CODE                                               AS divisionCode
+		      ,FTAFM.COMPANY_CODE                                                AS companyCode
+		      ,FTAFM.PRODUCT_CODE                                                AS productCode
+		      ,FTAFM.BIZ_PROJECT_CODE                                            AS bizProjectCode
+		      ,FTAFM.INKOTERMS_TYPE                                              AS inkotermsType
+		      ,FTAFM.DE_MINIMIS_INKOTERMS_TYPE                                   AS deMinimisInkotermsType
+		      ,FTAFM.PRODUCT_UNIT                                                AS productUnit
+		      ,FTAFM.PRODUCT_ASSETS_TYPE                                         AS productAssetsType
+		      ,FTAFM.HS_CODE                                                     AS hsCode
+		      ,FTAFM.STANDARD                                                    AS standard
+		      ,FTAFM.WEIGHT                                                      AS weight
+		      ,FTAFM.AMOUNT                                                      AS amount
+		      ,FTAFM.NET_COST_AMOUNT                                             AS netCostAmount
+		      ,FTAFM.EXWORK_AMOUNT                                               AS exworkAmount
+		      ,FTAFM.FOB_AMOUNT                                                  AS fobAmount
+		      ,FTAFM.INAREA_AMOUNT                                               AS inareaAmount
+		      ,FTAFM.OUTAREA_AMOUNT                                              AS outareaAmount
+		      ,FTAFM.SP_COO_YN                                                   AS spCooYn
+		      ,FTAFM.WO_COO_YN                                                   AS woCooYn
+		      ,COALESCE(IHSC.HS_CODE_SUB_CATEGORY, '1')                          AS hsCodeSubCategory
+		      ,FTAFM.TARIFF_YN                                                   AS tariffYn
+		FROM   (SELECT FCRM.FTA_CODE            AS FTA_CODE
+		              ,FCRM.SALES_NO            AS SALES_NO
+		              ,FCRM.SALES_SEQ           AS SALES_SEQ
+		              ,FCRM.DIVISION_CODE       AS DIVISION_CODE
+		              ,FCRM.COMPANY_CODE        AS COMPANY_CODE
+		              ,FCRM.PRODUCT_CODE        AS PRODUCT_CODE
+		              ,FCRM.BIZ_PROJECT_CODE    AS BIZ_PROJECT_CODE
+		              ,FM.INKOTERMS_TYPE        AS INKOTERMS_TYPE
+		              ,FM.DE_MINIMIS_INKOTERMS_TYPE AS DE_MINIMIS_INKOTERMS_TYPE
+		              ,FCRM.PRODUCT_UNIT        AS PRODUCT_UNIT
+		              ,FCRM.PRODUCT_ASSETS_TYPE AS PRODUCT_ASSETS_TYPE
+		              ,FCRM.HS_CODE             AS HS_CODE
+		              ,FCRM.STANDARD            AS STANDARD
+		              ,FCRM.WEIGHT              AS WEIGHT
+		              ,FCRM.AMOUNT              AS AMOUNT
+		              ,FCRM.NET_COST_AMOUNT     AS NET_COST_AMOUNT
+		              ,FCRM.EXWORK_AMOUNT       AS EXWORK_AMOUNT
+		              ,FCRM.FOB_AMOUNT          AS FOB_AMOUNT
+		              ,FCRM.INAREA_AMOUNT       AS INAREA_AMOUNT
+		              ,FCRM.OUTAREA_AMOUNT      AS OUTAREA_AMOUNT
+		              ,FCRM.SP_COO_YN           AS SP_COO_YN
+		              ,FCRM.WO_COO_YN           AS WO_COO_YN
+		              ,CASE WHEN TD.HS_CODE IS NULL THEN 'N' ELSE 'Y' END AS TARIFF_YN
+		        FROM   (SELECT FM.FTA_CODE            AS FTA_CODE
+		                      ,FM.SALES_NO            AS SALES_NO
+		                      ,FM.SALES_SEQ           AS SALES_SEQ
+		                      ,FM.DIVISION_CODE       AS DIVISION_CODE
+		                      ,FM.COMPANY_CODE        AS COMPANY_CODE
+		                      ,FM.PRODUCT_CODE        AS PRODUCT_CODE
+		                      ,FM.BIZ_PROJECT_CODE    AS BIZ_PROJECT_CODE
+		                      ,FM.PRODUCT_UNIT        AS PRODUCT_UNIT
+		                      ,FM.PRODUCT_ASSETS_TYPE AS PRODUCT_ASSETS_TYPE
+		                      ,FM.HS_CODE             AS HS_CODE
+		                      ,FM.STANDARD            AS STANDARD
+		                      ,FM.WEIGHT              AS WEIGHT
+		                      ,FM.AMOUNT              AS AMOUNT
+		                      ,FM.NET_COST_AMOUNT     AS NET_COST_AMOUNT
+		                      ,FM.EXWORK_AMOUNT       AS EXWORK_AMOUNT
+		                      ,FM.FOB_AMOUNT          AS FOB_AMOUNT
+		                      ,FM.INAREA_AMOUNT       AS INAREA_AMOUNT
+		                      ,FM.OUTAREA_AMOUNT      AS OUTAREA_AMOUNT
+		                      ,FM.SP_COO_YN           AS SP_COO_YN
+		                      ,FM.WO_COO_YN           AS WO_COO_YN
+		                      ,SM.EXPORT_FLAG         AS EXPORT_FLAG
+		                      ,SM.INVOICE_DATE        AS INVOICE_DATE
+		                      ,SM.ARRIVAL_NATION      AS ARRIVAL_NATION
+		                FROM   FCR_MST FM
+		                INNER  JOIN SALES_MST SM
+		                ON     SM.SALES_NO = FM.SALES_NO
+		                AND    SM.DIVISION_CODE = FM.DIVISION_CODE
+		                AND    SM.COMPANY_CODE = FM.COMPANY_CODE
+		                WHERE  FM.SALES_NO = #{salesNo}
+		                AND    FM.COMPANY_CODE = #{companyCode}
+		                AND    FM.DECISION_YN = 'Y'
+		                AND    FM.PRODUCT_ASSETS_TYPE IN ('P', 'H')) FCRM
+		        INNER  JOIN FTA_MASTER FM
+		        ON     FM.FTA_CODE = FCRM.FTA_CODE
+		        AND    FM.DELETE_YN &lt;&gt; 'Y'
+		        LEFT OUTER JOIN TARIFF_DIFFERENTIALS TD
+		        ON     TD.FTA_CODE = FCRM.FTA_CODE
+		        AND    TD.HS_CODE = FCRM.HS_CODE
+		        AND    TD.NATION_CODE = CASE WHEN FCRM.EXPORT_FLAG = 'E' THEN FCRM.ARRIVAL_NATION ELSE TD.NATION_CODE END
+		        AND    FCRM.INVOICE_DATE BETWEEN TD.APPLY_DATE AND TD.END_DATE
+		       ) FTAFM
+		LEFT OUTER JOIN ITEM_HS_SUB_CATEGORY IHSC
+		ON     IHSC.ITEM_CODE = FTAFM.PRODUCT_CODE
+		AND    IHSC.DIVISION_CODE = FTAFM.DIVISION_CODE
+		AND    IHSC.COMPANY_CODE = FTAFM.COMPANY_CODE
+		AND    IHSC.FTA_CODE = FTAFM.FTA_CODE
+	</select>
+
+	<!-- ===================== COO_DECISION 메인루프: 기판정 결과 삭제 ===================== -->
+
+	<delete id="deletePriorFcrResult">
+		DELETE FROM FCR_RESULT
+		WHERE  SALES_NO = #{salesNo}
+		AND    SALES_SEQ = #{salesSeq}
+		AND    FTA_CODE = #{ftaCode}
+		AND    COMPANY_CODE = #{companyCode}
+	</delete>
+
+	<!-- ===================== FCR_INFO_TEMP 대체 (FCR_DTL 조회) ===================== -->
+
+	<select id="selectFcrInfoRows" resultType="com.kpmg.kdb.web.coodecision.dto.FcrInfoRow">
+		SELECT FI.FTA_CODE       AS ftaCode
+		      ,FI.DIVISION_CODE  AS divisionCode
+		      ,FI.COMPANY_CODE   AS companyCode
+		      ,FI.PRODUCT_CODE   AS productCode
+		      ,FI.ITEM_CODE      AS itemCode
+		      ,#{parentHsCode}   AS parentHsCode
+		      ,FI.HS_CODE        AS hsCode
+		      ,FI.STANDARD       AS standard
+		      ,FI.WEIGHT         AS weight
+		      ,FI.REQUIREMENT_QTY AS requirementQty
+		      ,FI.INPUT_AMOUNT   AS inputAmount
+		      ,FI.INAREA_QTY     AS inareaQty
+		      ,FI.INAREA_AMOUNT  AS inareaAmount
+		      ,FI.OUTAREA_QTY    AS outareaQty
+		      ,FI.OUTAREA_AMOUNT AS outareaAmount
+		FROM   FCR_DTL FI
+		WHERE  FI.FTA_CODE = #{ftaCode}
+		AND    FI.DIVISION_CODE = #{divisionCode}
+		AND    FI.COMPANY_CODE = #{companyCode}
+		AND    FI.SALES_NO = #{salesNo}
+		AND    FI.SALES_SEQ = #{salesSeq}
+	</select>
+
+	<!-- ===================== CURSOR C_FTA_RULE ===================== -->
+
+	<select id="selectApplicableFtaRules" resultType="com.kpmg.kdb.web.coodecision.dto.FtaRule">
+		SELECT RULE_ID                                            AS ruleId
+		      ,FTA_CODE                                           AS ftaCode
+		      ,HS_CODE                                            AS hsCode
+		      ,HS_CODE_SUB_CATEGORY                                AS hsCodeSubCategory
+		      ,RULE_SEQ                                           AS ruleSeq
+		      ,HS_CODE_DESCRIPTION                                AS hsCodeDescription
+		      ,RULE_DESCRIPTION                                   AS ruleDescription
+		      ,RULE_CONTENTS                                      AS ruleContents
+		      ,CASE WHEN POSITION('SP' IN RULE_CONTENTS) = 0 THEN '*' ELSE 'SP' END AS spRule
+		      ,COALESCE(WO_RULE, '*')                              AS woRule
+		      ,COALESCE(CTH_RULE, '*')                             AS cthRule
+		      ,COALESCE(BD_RULE, 0)                                AS bdRule
+		      ,COALESCE(BU_RULE, 0)                                AS buRule
+		      ,COALESCE(NC_RULE, 0)                                AS ncRule
+		      ,COALESCE(MC_RULE, 0)                                AS mcRule
+		      ,DE_MINIMIS_UNIT                                    AS deMinimisUnit
+		      ,DE_MINIMIS_RATE                                    AS deMinimisRate
+		      ,EXCLUSION_RULE_YN                                  AS exclusionRuleYn
+		FROM   FTA_RULE
+		      ,(-- CTSH &gt; CTH &gt; CC 순으로 룰을 찾기 위해 적용가능한 HS_CODE 의 최대 길이를 구한다
+		        SELECT MAX(LENGTH(HS_CODE)) AS HS_CODE_LENGTH
+		        FROM   FTA_RULE
+		        WHERE  HS_CODE = SUBSTRING(#{hsCode} FROM 1 FOR LENGTH(HS_CODE))
+		        AND    FTA_CODE = #{ftaCode}
+		        AND    HS_CODE_SUB_CATEGORY = #{hsCodeSubCategory}) FRL
+		WHERE  HS_CODE = SUBSTRING(#{hsCode} FROM 1 FOR FRL.HS_CODE_LENGTH)
+		AND    FTA_CODE = #{ftaCode}
+		AND    HS_CODE_SUB_CATEGORY = #{hsCodeSubCategory}
+		<!-- 2018.07.03 APTA NEW PSR 적용: INVOICE_DATE 기준 V_NEW_APTA_PSR_FLAG 에 따라 APTA 협정만 추가 PSR 적용여부를 다르게 한다 -->
+		AND    RULE_SEQ = CASE WHEN FTA_CODE = 'PKRAP' AND #{newAptaPsrFlag} = '0' THEN '1' ELSE RULE_SEQ END
+		ORDER  BY RULE_SEQ
+	</select>
+</mapper>
