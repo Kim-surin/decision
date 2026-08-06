@@ -389,6 +389,7 @@
 				HSCODE_BY_NATION.retrieve_rightBottomGridData();
 			});
 			
+			
 			//우측 TOP GRID 이벤트 추가 
 			AUIGrid.bind(HSCODE_BY_NATION.gridIdRT, "cellEditBegin", function( event ) {
 				const disableCol = ["item_code", "fta_hs_code"]
@@ -436,7 +437,6 @@
 				    	 HSCODE_BY_NATION.fnOpenCompop("bottom_hs_code");
 				    }
 				}
-
 			});
 			
 		}
@@ -453,6 +453,8 @@
 			}
 			
 			KpackageOBJ.auiGrid.retrieve(HSCODE_BY_NATION.gridIdL, "/origin/ftaInfo/retrieveNationIncludeRcepCntList", params);
+
+		
 		}
 		
 		//우측 상단그리드 조회
@@ -477,7 +479,6 @@
 			
 			KpackageOBJ.auiGrid.retrieve(HSCODE_BY_NATION.gridIdRB, "/origin/ftaInfo/retrieveHsCodeRcepList", params);
 		}
-		
 		
 		
 		//곧통팝업 오픈

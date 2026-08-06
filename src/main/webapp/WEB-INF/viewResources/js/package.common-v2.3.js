@@ -5197,7 +5197,7 @@ var KpackageOBJ = {
          * 
          * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
          */
-        "getGridData": function(p_AuiGridId, p_RowIndex, p_ColName) {
+        "getGridData": function(p_AuiGridId) {
             return  AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" });
         },
         
@@ -5352,6 +5352,16 @@ var KpackageOBJ = {
         "getRowCount": function(p_AuiGridId) {
             return AUIGrid.getRowCount(p_AuiGridId);
         },
+		
+		/**
+         * 입력받은 grid의 행번호에 해당하는 데이터를 리턴합니다. 
+         * 
+         * Return : row data
+         */
+        "getRowData": function(p_AuiGridId, p_RowIndex) {
+            return AUIGrid.getItemByRowIndex(p_AuiGridId, p_RowIndex);
+        },
+
 
         /**
          * 선택 모드가 "none" 이 아닌 경우 현재 선택된 아이템의 rowIndex, columnIndex 를 반환합니다.	

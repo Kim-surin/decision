@@ -157,7 +157,7 @@
 		
 		//오측 그리드 저장
 		this.fnSave = function() {
-			const data = KpackageOBJ.auiGrid.getGridData(FTAINFO_NATION.gridIdR);  //전체 삭제후 INSERT이므로 전처데이터
+			const data = KpackageOBJ.auiGrid.getGridDataWithState(FTAINFO_NATION.gridIdR);  //전체 삭제후 INSERT이므로 전처데이터
 			const isValid = KpackageOBJ.auiGrid.validateGridData(FTAINFO_NATION.gridIdR, ["effect_date"], "해당 값은 필수 입력값입니다.")
 		
 
