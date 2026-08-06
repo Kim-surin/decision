@@ -5197,7 +5197,7 @@ var KpackageOBJ = {
          * 
          * Return : (Array) 상태 정보가 포함된 현재 그리드 행 아이템들
          */
-        "getGridData": function(p_AuiGridId, p_RowIndex, p_ColName) {
+        "getGridData": function(p_AuiGridId) {
             return  AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" });
         },
         
