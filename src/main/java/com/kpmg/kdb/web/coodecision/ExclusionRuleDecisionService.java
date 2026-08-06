@@ -21,22 +21,30 @@ import com.kpmg.kdb.web.coodecision.dto.FtaRule;
  * 던지는 대신 {@link CooDecisionContext#getFcrInfoRows()}(매출 1건당 1회 조회한 리스트)를
  * 스트림으로 집계해 처리한다.
  *
- * <p><b>알려진 원본 결함(그대로 이관):</b> 원본 소스에서 "예외 TYPE 17" 처리 블록은 실수로
- * TYPE 16 처리 안의 CTH_RULE 분기(CC/CTH/CTSH) 체인의 4번째 ELSIF 로 잘못 중첩되어 있다.
- * FER_LIST.EXCLUSION_TYPE 은 그 분기에 진입한 시점에 이미 '16' 으로 고정되어 있으므로
- * "ELSIF FER_LIST.EXCLUSION_TYPE = '17'" 조건은 그 문맥에서 항상 거짓이 되어 도달 불가능한
- * 코드다. 즉 TYPE 17 로 등록된 예외룰은 실제로는 전혀 평가되지 않고, V_EXCLUSION_YN 값이
- * 직전 반복에서 계산된 값을 그대로 유지한 채 다음 단계로 넘어간다. 실제 운영 결과와 100%
- * 동일하게 유지하기 위해 이 버그를 "고치지 않고" 그대로 이관했다 — TYPE 17 에 대한 별도 분기를
- * 두지 않음으로써 자연스럽게 동일한 동작(직전 값 유지)이 재현된다. 캐나다 FTA 에 TYPE 17
- * 예외룰이 등록되어 있다면 실제 판정 결과가 룰 설계 의도와 다를 수 있으므로 업무팀 확인 필요.
+ * <p><b>원본 결함 수정(TYPE 17):</b> 원본 소스에서는 "예외 TYPE 17" 처리 블록이 실수로 TYPE 16
+ * 처리 안의 CTH_RULE 분기(CC/CTH/CTSH) 체인의 4번째 ELSIF 로 잘못 중첩되어 있었다.
+ * FER_LIST.EXCLUSION_TYPE 은 그 분기에 진입한 시점에 이미 '16' 으로 고정되어 있어
+ * "ELSIF FER_LIST.EXCLUSION_TYPE = '17'" 조건이 그 문맥에서 항상 거짓이 되고, TYPE 17 로
+ * 등록된 예외룰은 실제로는 전혀 평가되지 않은 채 V_EXCLUSION_YN 이 직전 반복 값을 그대로
+ * 유지하고 다음 단계로 넘어가는 결함이 있었다. 이 메서드는 해당 결함을 수정해 TYPE 17 을 실제로
+ * 평가한다. 판정 로직은 TYPE 4 / TYPE 16 2단계와 동일하게 "비역내산 재료비 비율이 예외HS코드별
+ * 최대 기준율 미만인지"를 계산하는 공용 패턴을 사용한다({@link #outareaAmountRatioBelowMaxRate}
+ * 참고). 원본에서 TYPE 17 코드가 도달 불가능했던 탓에 이 로직은 실제 운영 데이터로 검증된 적이
+ * 없으므로, TYPE 17 예외룰이 등록된 협정(예: 캐나다 FTA)에 대해서는 판정 결과를 업무팀이 별도
+ * 검증할 필요가 있다.
  */
 @Service
 public class ExclusionRuleDecisionService extends GeneralService {
 
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
-	/** CTC 전용 모드에서 값기준(RVC성) 예외타입은 평가 자체가 불가능해 무조건 'N' 처리한다(원본 주석 처리 블록과 동일) */
-	private static final java.util.Set<String> CTC_ONLY_FORCED_N_TYPES = java.util.Set.of("4", "6", "13", "15", "16");
+	/**
+	 * CTC 전용 모드에서 값기준(RVC성) 예외타입은 평가 자체가 불가능해 무조건 'N' 처리한다(원본 주석
+	 * 처리 블록과 동일). TYPE 17 은 원본에서 도달 불가능한 코드였던 탓에 이 목록에 포함된 적이 없었지만,
+	 * TYPE 4/16-2단계와 동일하게 VG_INKOTERMS_AMOUNT(값기준) 를 분모로 사용하는 패턴이므로 결함 수정과
+	 * 함께 동일하게 강제 'N' 처리 대상에 포함했다.
+	 */
+	private static final java.util.Set<String> CTC_ONLY_FORCED_N_TYPES = java.util.Set.of("4", "6", "13", "15", "16",
+			"17");
 
 	public void decide(CooDecisionContext ctx, FtaRule frList, DecisionMode mode) {
 		try {
@@ -142,8 +150,10 @@ public class ExclusionRuleDecisionService extends GeneralService {
 				return evaluateType15(rows, frList, header, dao);
 			case "16":
 				return evaluateType16(ctx, rows, frList, header, dao, type, currentValue);
-			// TYPE 17: 원본에서 도달 불가능한 코드(클래스 주석 참고). 의도적으로 분기를 두지 않아
-			// currentValue(직전 반복 결과)를 그대로 유지하는 원본 동작을 재현한다.
+			// TYPE 17: 원본에서는 도달 불가능한 코드였던 결함을 수정(클래스 주석 참고).
+			// TYPE 4 / TYPE 16 2단계와 동일한 값기준 비율 판정 패턴을 사용한다.
+			case "17":
+				return outareaAmountRatioBelowMaxRate(ctx, rows, details(dao, frList, type));
 			default:
 				return currentValue;
 		}
