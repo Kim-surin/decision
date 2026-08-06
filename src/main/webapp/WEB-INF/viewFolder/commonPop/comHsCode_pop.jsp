@@ -87,7 +87,7 @@
 			
 			COM_HSCODE_POPUP.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_comHsCodePop", columnLayout, gridProps, "radio");
 			
-			AUIGrid.bind(COM_HSCODE_POPUP.gridId, "cellDoubleClick", function (event) {
+			KpackageOBJ.auiGrid.bind(COM_HSCODE_POPUP.gridId, "cellDoubleClick", function (event) {
 				COM_HSCODE_POPUP.selectData(event.item)
 			});
 			

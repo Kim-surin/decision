@@ -87,7 +87,7 @@
 			
 			COM_NATION_POPUP.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_comNation", columnLayout, gridProps, "radio");
 			
-			AUIGrid.bind(COM_NATION_POPUP.gridId, "cellDoubleClick", function (event) {
+			KpackageOBJ.auiGrid.bind(COM_NATION_POPUP.gridId, "cellDoubleClick", function (event) {
 				COM_NATION_POPUP.selectData(event.item)
 			});
 			

@@ -117,7 +117,7 @@
 			
 			COM_FTACODE_POPUP.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_comFtaCodePop", columnLayout, gridProps, "radio");
 			
-			AUIGrid.bind(COM_FTACODE_POPUP.gridId, "cellDoubleClick", function (event) {
+			KpackageOBJ.auiGrid.bind(COM_FTACODE_POPUP.gridId, "cellDoubleClick", function (event) {
 				COM_FTACODE_POPUP.selectData(event.item)
 			});
 			

@@ -162,7 +162,7 @@
 			
 			
 			// 좌측 GRID 이벤트 바인드
-			AUIGrid.bind(HSCODE_MGNT.gridIdL, "selectionChange", function( event ) {
+			KpackageOBJ.auiGrid.bind(HSCODE_MGNT.gridIdL, "selectionChange", function( event ) {
 				HSCODE_MGNT.state['masterRow'] = event.selectedItems[0].item;
 				
 				$("#selHsCode").text(HSCODE_MGNT.state['masterRow']['hs_code']);

@@ -425,7 +425,7 @@
 			FTA_INCOTERMS.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_ftaIncoterms", columnLayout, gridProps, "check");
 			
 			//Year Picker가 정상적으로 뜨지 않아서 CUSTOM으로 생성
-			AUIGrid.bind(FTA_INCOTERMS.gridId, "cellClick", function (event) {
+			KpackageOBJ.auiGrid.bind(FTA_INCOTERMS.gridId, "cellClick", function (event) {
 				if (event.dataField === "std_yyyy") {
 					 if (!KpackageOBJ.auiGrid.isAddedByRowIndex(FTA_INCOTERMS.gridId, event.rowIndex)) {
 						return false;						 
@@ -451,7 +451,7 @@
 			});
 			
 			// GRID 이벤트 바인드
-			AUIGrid.bind(FTA_INCOTERMS.gridId, "cellEditBegin", function (event) {
+			KpackageOBJ.auiGrid.bind(FTA_INCOTERMS.gridId, "cellEditBegin", function (event) {
 				const disableCol = ["std_yyyy", "division_code", "incoterms_type"]
 				
 				if (disableCol.includes(event.dataField)) {
@@ -465,7 +465,7 @@
 				}
 			});
 			
-			AUIGrid.bind(FTA_INCOTERMS.gridId, "cellEditEnd", function (event) {
+			KpackageOBJ.auiGrid.bind(FTA_INCOTERMS.gridId, "cellEditEnd", function (event) {
 				if (event.dataField === "std_yyyy") {
 					KpackageOBJ.yearPicker.close();
 			    }

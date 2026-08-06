@@ -383,14 +383,14 @@
 			
 			
 			//좌측GRID 이벤트 추가
-			AUIGrid.bind(HSCODE_BY_NATION.gridIdL, "selectionChange", function( event ) {
+			KpackageOBJ.auiGrid.bind(HSCODE_BY_NATION.gridIdL, "selectionChange", function( event ) {
 				HSCODE_BY_NATION.state['masterRow'] = event.selectedItems[0].item;
 				HSCODE_BY_NATION.retrieve_rightTopGridData();
 				HSCODE_BY_NATION.retrieve_rightBottomGridData();
 			});
 			
 			//우측 TOP GRID 이벤트 추가 
-			AUIGrid.bind(HSCODE_BY_NATION.gridIdRT, "cellEditBegin", function( event ) {
+			KpackageOBJ.auiGrid.bind(HSCODE_BY_NATION.gridIdRT, "cellEditBegin", function( event ) {
 				const disableCol = ["item_code", "fta_hs_code"]
 				
 				if (disableCol.includes(event.dataField)) {
@@ -405,7 +405,7 @@
 				}
 			});
 			
-			AUIGrid.bind(HSCODE_BY_NATION.gridIdRT, "cellEditEnd", function (event) {
+			KpackageOBJ.auiGrid.bind(HSCODE_BY_NATION.gridIdRT, "cellEditEnd", function (event) {
 				if(!oUtil.isNull(event.value)){
 					if(event.dataField === "item_code"){
 						 HSCODE_BY_NATION.fnOpenCompop("top_item_code");
@@ -417,7 +417,7 @@
 			});
 
 			//우측 BOTTOM GRID 이벤트 추가 
-			AUIGrid.bind(HSCODE_BY_NATION.gridIdRB, "cellEditBegin", function( event ) {
+			KpackageOBJ.auiGrid.bind(HSCODE_BY_NATION.gridIdRB, "cellEditBegin", function( event ) {
 				const disableCol = ["fta_code", "hs_code"]
 				
 				if (disableCol.includes(event.dataField)) {
@@ -428,7 +428,7 @@
 			});
 			
 
-			AUIGrid.bind(HSCODE_BY_NATION.gridIdRB, "cellEditEnd", function (event) {
+			KpackageOBJ.auiGrid.bind(HSCODE_BY_NATION.gridIdRB, "cellEditEnd", function (event) {
 				if(!oUtil.isNull(event.value)){
 					if(event.dataField === "bottom_fta_code"){
 						 HSCODE_BY_NATION.fnOpenCompop("bottom_fta_code");

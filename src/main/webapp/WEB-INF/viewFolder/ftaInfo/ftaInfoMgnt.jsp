@@ -363,7 +363,7 @@
 			FTA_INFO.gridId = KpackageOBJ.auiGrid.create("oAuiGrid_ftaInfo", columnLayout, gridProps, "check");
 			
 			//GRID 이벤트 바인드
-			AUIGrid.bind(FTA_INFO.gridId, "cellEditBegin", function(event) {
+			KpackageOBJ.auiGrid.bind(FTA_INFO.gridId, "cellEditBegin", function(event) {
 				if(event.dataField === "fta_code"){
 					if(!KpackageOBJ.auiGrid.isAddedByRowIndex(FTA_INFO.gridId,event.rowIndex)){
 						return false;
@@ -371,7 +371,7 @@
 				}
 			});
 							
-			AUIGrid.bind(FTA_INFO.gridId, "cellClick", function(event) {
+			KpackageOBJ.auiGrid.bind(FTA_INFO.gridId, "cellClick", function(event) {
 				if(event.dataField === "fta_apply_cnt"){
 					KpackageOBJ.object.setFormValue("ftaInfo-form", "popParam", JSON.stringify(event.item));
 					KpackageOBJ.dialog.open('ftaNationPopup','협정별 국가지정 팝업','/origin/ftaInfo/ftaNation',1000,700);
