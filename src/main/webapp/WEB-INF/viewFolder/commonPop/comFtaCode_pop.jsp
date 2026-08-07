@@ -9,6 +9,9 @@
 </head>
 <body>
 	<form:form id="comFtaCodePop-form" class="s4-form h-full" novalidate="novalidate" onsubmit="return false;">
+		<input type="hidden" id="comFtaCodePop_callback" value="<c:out value='${params.callback}' />">
+		<input type="hidden" id="comFtaCodePop_rowIndex" value="<c:out value='${params.rowIndex}' />">
+		
 		<div class="modal-header h-20">
 			<div class="row h-full w-full"   style="position:relative; margin:0; padding-right:110px;">
 				<div class="d-flex w-full" style="vertical-align:middle;  align-items: center;">
@@ -58,10 +61,9 @@
 			params : {}
 		}
 		
-		// 시작점
+		// VIEW OBJECT INIT
 		this.Initialize_viewObject = function() {
-			const popupConfig = parent.commonPopupParam;
-			COM_FTACODE_POPUP.state['params'] = parent.commonPopupParam['data'];
+			COM_FTACODE_POPUP.state['params'] = JSON.parse('${params["data"]}' || '{}');
 			KpackageOBJ.object.setFormValue("comFtaCodePop-form", "searchText", COM_FTACODE_POPUP.state['params']['searchText']);
 			KpackageOBJ.object.setFormValue("comFtaCodePop-form", "searchEffectDate", KpackageOBJ.date.getCurrDay('-'));
 			
@@ -76,11 +78,11 @@
 			}
 			
 			COM_FTACODE_POPUP.createAUIGrid();
-			COM_FTACODE_POPUP.retrieve_data();
+			COM_FTACODE_POPUP.retrieve_GridData();
 		}
 
 
-		// AUIGrid 를 생성합니다.
+		// AUI GRID INIT.
 		this.createAUIGrid = function() {
 			const columnLayout = [
 				{
@@ -124,6 +126,7 @@
 			
 		};
 		
+		//그리드 조회
 		this.retrieve_GridData = function(){
 			const params = {
 				  "searchText" : KpackageOBJ.object.getFormValue("comFtaCodePop-form", "searchText")
@@ -134,31 +137,10 @@
 			KpackageOBJ.auiGrid.retrieve(COM_FTACODE_POPUP.gridId, "/origin/commonPop/retrieveComFtaCodePopList", params);
 		};
 		
-		this.retrieve_data = function(){
-			const params = {
-				  "searchText" : KpackageOBJ.object.getFormValue("comFtaCodePop-form", "searchText")
-				, "searchEffectDate" : KpackageOBJ.object.getFormValue("comFtaCodePop-form", "searchEffectDate").replace(/-/g, "")
-				, "searchNation" : KpackageOBJ.object.getFormValue("comFtaCodePop-form", "searchNation")
-			};
-			
-			KpackageOBJ.ajax.doSubmit("/origin/commonPop/retrieveComFtaCodePopList", params, COM_FTACODE_POPUP.retrieve_dataCallback);
-		};
-		
-		this.retrieve_dataCallback = function(res){
-			if(res.success){
-				if(res.value.length === 1){
-					COM_FTACODE_POPUP.selectData(res.value[0]);
-				}else{
-					KpackageOBJ.auiGrid.setGridData(COM_FTACODE_POPUP.gridId, res.value);
-				}
-			}
-		
-		};
-		
-		
+		// 데이터 선택시 이벤트
 		this.selectData = function (selectedData) {
-
-		    var callback = parent.commonPopupParam["callback"];
+			var callback = $('#comFtaCodePop_callback').val();
+			var rowIndex = $('#comFtaCodePop_rowIndex').val();
 
 		    if (!callback) {
 		        console.error("callback 정보가 없습니다.");
@@ -166,8 +148,7 @@
 		    }
 
 		    var path = callback.split(".");
-
-		    var target = parent;
+		    var target = window;
 
 		    // 마지막 함수 전까지 객체 탐색
 		    for (var i = 0; i < path.length - 1; i++) {
@@ -179,21 +160,23 @@
 		        }
 		    }
 
-		    var fn = target[path[path.length - 1]];
+			var functionName = path[path.length - 1];
+			var fn = target[functionName];
 
-		    if (typeof fn !== "function") {
-		        console.error("콜백 함수가 존재하지 않습니다. : " + callback);
-		        return;
-		    }
+			if (typeof fn !== 'function') {
+				console.error(
+					'콜백 함수가 존재하지 않습니다. : ' + callback
+				);
+				return;
+			}
 
-		    selectedData['rowIndex'] = parent.commonPopupParam["rowIndex"];
-		    fn.call(target, selectedData);
-
-		    
-		    
-		    KpackageOBJ.dialog.close("commonPop");
+			selectedData = selectedData || {};
+			selectedData.rowIndex = rowIndex;
+			fn.call(target, selectedData);
+			KpackageOBJ.dialog.close('commonPop');
 		};
 		
+		//셀렉트 버튼
 		this.fnSelectCode = function() {
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(COM_FTACODE_POPUP.gridId);
 			
@@ -206,6 +189,12 @@
 		}
 		
 	};
+	
+	//팝업 X 클릭시 호출
+	function onPopupClose() {
+		COM_FTACODE_POPUP.selectData(null);		
+	}
+	
 	
 	$(document).ready(function() {
 		pageSetUp(); // 위젯 기능을 사용하기 위해 필수로 호출 합니다.

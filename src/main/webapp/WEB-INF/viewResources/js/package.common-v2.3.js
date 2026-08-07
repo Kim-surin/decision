@@ -2382,7 +2382,8 @@ var KpackageOBJ = {
             _pd,
             successHandler,
             errorHandler,
-            useProgress
+            useProgress,
+            p_async = true
         ) {
             if (useProgress == undefined) {
                 useProgress = true;
@@ -2398,7 +2399,7 @@ var KpackageOBJ = {
                 data: JSON.stringify(_pd),
                 contentType: "application/json; charset=utf-8",
                 traditional: true,
-                async: true,
+                async: p_async,
                 dataType: "json",
                 beforeSend: function(xhr) {
                     if (useProgress) {
@@ -2930,7 +2931,7 @@ var KpackageOBJ = {
 		
 	},
     dialog : {
-		open : function(panelId, panelTitle, url, pWidth, pHeight, closeOnBackdrop){
+		open : function(panelId, panelTitle, url, pWidth, pHeight, closeOnBackdrop, postData){
 			$('#' + panelId).remove();
 
 			if ($.isNumeric(pWidth)) pWidth = pWidth + 'px';
@@ -2960,14 +2961,42 @@ var KpackageOBJ = {
 			var $body = $panel.find('.custom-popup-body');
 			var $header = $panel.find('.draggable-header');
 
-			$body.load(url, function(response, status, xhr) {
-			  if (status === 'error') {
-			    $body.html('<div class="text-danger">화면을 불러오는 중 오류가 발생했습니다.</div>');
-			  }
-			});
+
+			function loadCallback(response, status, xhr) {
+				if (status === 'error') {
+					$body.html(
+						'<div class="text-danger">화면을 불러오는 중 오류가 발생했습니다.</div>'
+					);
+				}
+			}
+	
+			/*
+			 * postData가 전달된 경우에만 POST 요청
+			 * 기존 호출 방식은 GET 요청으로 그대로 유지
+			 */
+			if (postData && typeof postData === 'object') {
+				var requestData = $.extend({}, postData);
+			
+				if (requestData.data && typeof requestData.data === "object") {
+					requestData.data = JSON.stringify(requestData.data);
+				}
+			
+				console.log("POST 실제 전송 데이터 :", requestData);
+			
+				$body.load(url, requestData, loadCallback);
+			} else {
+				$body.load(url, loadCallback);
+			}
 
 			// 닫기
 			function closePopup() {
+				
+				
+		    // JSP에 별도 close 함수가 정의되어 있으면 해당 함수 실행
+		    if (typeof window.onPopupClose === "function") {
+		        window.onPopupClose();
+		        return;
+		    }
 				
 			  // AUIGrid 필터 팝업 닫기
     		  $('.aui-grid-filter-popup-layer').hide();	
@@ -3048,8 +3077,128 @@ var KpackageOBJ = {
 			  e.preventDefault();
 			});
 		},
-
 		
+		openCommonPop : function(p_PopGubn,  p_Options = {}) {
+			const popConfig = {
+				COMCODE: {
+					url: "/origin/commonPop/comCode",
+					searchUrl: "/origin/commonPop/retrieveComCodeList",
+			        title: "공통코드 조회",
+			    },
+			    DIVISION: {
+					url: "/origin/commonPop/comDivision",
+					searchUrl: "/origin/commonPop/retrieveComDivisionList",
+			        title: "사업장 조회",
+			    },
+			    FTA: {
+					url: "/origin/commonPop/comFtaCode",
+					searchUrl: "/origin/commonPop/retrieveComFtaCodePopList",
+			        title: "FTA정보 조회",
+			    },
+			    HSCODE: {
+					url: "/origin/commonPop/comHsCode",
+					searchUrl: "/origin/commonPop/retrieveComHsCodePopList",
+			        title: "HS코드 조회",
+			    },
+			    ITEM: {
+					url: "/origin/commonPop/comItem",
+					searchUrl: "/origin/commonPop/retrieveComItemList",
+			        title: "자재 조회",
+			    },
+				NATION: {
+					url: "/origin/commonPop/comNation",
+					searchUrl: "/origin/commonPop/retrieveComNationList",
+			        title: "국가 조회",
+			    },
+			};
+			
+			const config = popConfig[p_PopGubn];
+			
+			if (!config) {
+				KpackageOBJ.object.alert("등록되지 않은 공통팝업입니다.");
+				return;
+			}
+			
+ 			const {
+			    title = "",
+			    callbackObject = "",
+			    callbackFunctionName = "",
+			    data = {},
+			    rowIndex = null,
+			    bAutoSearch = false
+			} = p_Options;
+			
+			// Title은 전달값이 있으면 전달값 사용
+			const popTitle = title || config.title;
+			const callbackName =   callbackFunctionName || config.callbackFunctionName || "";
+  			const callbackFunc = callbackObject && callbackName ? callbackObject + "." + callbackName : callbackName;
+			
+			
+			// Callback 필수 체크
+			if (!callbackFunc) {
+			    KpackageOBJ.object.alert("Callback 정보가 없습니다.");
+			    return;
+			}
+			
+			//팝업 파라미터
+			const postParam = {
+		        rowIndex: rowIndex,
+		        callback: callbackFunc,
+		        data: data,
+		        bAutoSearch: bAutoSearch
+		    };
+			
+			//공통 팝업 오픈
+		    const openPopup = function() {
+		        KpackageOBJ.dialog.open("commonPop",  popTitle, config.url,  1000, 700,  true, postParam);
+		    };
+			
+			
+		    const executeCallback = function(selectedData) {
+		
+			    const path = callbackFunc.split(".");
+			    let target = window;
+			
+			    // 마지막 함수명을 제외한 객체 경로 탐색
+			    for (let i = 0; i < path.length - 1; i++) {
+			
+			        target = target[path[i]];
+			
+			        if (!target) {
+			            KpackageOBJ.object.alert( "Callback 객체를 찾을 수 없습니다." );
+			            return;
+			        }
+			    }
+			
+			    const functionName = path[path.length - 1];
+			    const callback = target[functionName];
+			
+			    if (typeof callback !== "function") {
+			        KpackageOBJ.object.alert("Callback 함수를 찾을 수 없습니다.");
+			        return;
+			    }
+				selectedData["rowIndex"] = rowIndex;
+			    callback.call(target, selectedData, rowIndex);
+		    };			
+		    
+		    // 자동조회가 아니면 즉시 팝업 오픈
+		    if (!bAutoSearch) {
+		        openPopup();
+		        return;
+		    }
+
+
+ 			 KpackageOBJ.ajax.doSubmit(config.searchUrl, postParam['data'], function(res) {
+				if(res.success){
+					if(res.value.length === 1){
+						executeCallback(res.value[0]);
+					}else{
+						openPopup();
+					}
+				}
+			});
+		},
+
 		close: function(panelId) {
 		  var $panel = $('#' + panelId);
 
@@ -7901,6 +8050,12 @@ var KpackageOBJ = {
         "getGridCudData": function(p_AuiGridId) {
        		return  AUIGrid.getGridDataWithState(p_AuiGridId, "state", { added: "a", removed: "r", edited: "e" }).filter(item => item.state != null);
         },
+        
+        "getRowCountWithoutSoftRemove": function(p_TargetGridId) {
+		   const gridData = AUIGrid.getGridDataWithState(p_TargetGridId, "state", { added: "a", removed: "r", edited: "e" }).filter(item => item.state != 'r');
+		   
+		   return gridData.length;
+		},
         
 
 		/**

@@ -170,7 +170,7 @@
 		                    }
 		                },
 		                onClick: (e) => {
-		                	FTA_INCOTERMS.fnOpenCompop("division");
+		                	FTA_INCOTERMS.fnOpenCompop("division_code");
 		                },
 		            },
 				},
@@ -221,7 +221,7 @@
 		                    }
 		                },
 		                onClick: (e) => {
-		                	FTA_INCOTERMS.fnOpenCompop("nation");
+		                	FTA_INCOTERMS.fnOpenCompop("nation_code");
 		                },
 		            },
 				},
@@ -460,9 +460,6 @@
 					}
 			    }
 				
-				if(event.dataField === "nation_code"){
-					KpackageOBJ.auiGrid.setCellValue(FTA_INCOTERMS.gridId, event.rowIndex, "nation_name", "");
-				}
 			});
 			
 			KpackageOBJ.auiGrid.bind(FTA_INCOTERMS.gridId, "cellEditEnd", function (event) {
@@ -472,9 +469,9 @@
 				
 				if(!oUtil.isNull(event.value)){
 					if(event.dataField === "division_code"){
-				    	FTA_INCOTERMS.fnOpenCompop("division");
+				    	FTA_INCOTERMS.fnOpenCompop("division_code", true);
 				    }else if(event.dataField === "nation_code"){
-				    	FTA_INCOTERMS.fnOpenCompop("nation");
+				    	FTA_INCOTERMS.fnOpenCompop("nation_code", true);
 				    }
 				}
 			});
@@ -545,41 +542,41 @@
 		}
 		
 		//곧통팝업 오픈
-		this.fnOpenCompop = function(popGubn) {
+		this.fnOpenCompop = function(colGubn, bAutoSearch = false ) {
 			const selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(FTA_INCOTERMS.gridId)[0];
-			let popParam = {};
-			let callbackFunc ="";	
-			let popUrl = "";
-			let popTitle = "";
+		    let callbackFunctionName = "";
+		    let searchText = "";
+		    let popGubn = "";
+		    let data = {};
+		    
+		    switch (colGubn) {
+		    	case "nation_code":
+		    		popGubn = "NATION";
+		    	    callbackFunctionName = "setComNationPopupData";
+		    	    data ={
+		    	    	"searchText": nullToString(KpackageOBJ.auiGrid.getCellValue(FTA_INCOTERMS.gridId, selRowIndex, "nation_code"))
+			        };
+		            break;
+		    	case "division_code":
+					popGubn = "DIVISION";
+		    	    callbackFunctionName = "setComDivisionPopupData";
+		    	    data = {
+		    	    	"searchText": nullToString(KpackageOBJ.auiGrid.getCellValue(FTA_INCOTERMS.gridId, selRowIndex, "division_code"))
+			        };
+		            break;    
+		    	 default:
+		    		 return;
+		    }
 			
-			if(popGubn === "nation"){
-				popUrl = "/origin/commonPop/comNation";
-				popTitle = "국가코드 조회";
-				popParam = {
-		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(FTA_INCOTERMS.gridId, selRowIndex, "nation_code")
-		    	}
-				callbackFunc =  "FTA_INCOTERMS.setComNationPopupData";
-		    	
 			
-			}else if(popGubn === "division"){
-				popUrl = "/origin/commonPop/comDivision";
-				popTitle = "사업장 조회";
-				popParam = {
-		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(FTA_INCOTERMS.gridId, selRowIndex, "division_code")
-		    	}
-				callbackFunc =  "FTA_INCOTERMS.setComDivisionPopupData";
-			}
-			
-			
-			window.commonPopupParam = {
-	    			rowIndex : selRowIndex,
-	    		    callback: callbackFunc,
-	    		    data: popParam
-	    		};
-	    	
-	    	KpackageOBJ.dialog.open('commonPop',popTitle,popUrl,1000,700);
+		    KpackageOBJ.dialog.openCommonPop(popGubn, {
+		        callbackObject: "FTA_INCOTERMS",
+		        callbackFunctionName: callbackFunctionName,
+		        rowIndex: selRowIndex,
+		        bAutoSearch: bAutoSearch,
+		        data: data
+		    });
 		};
-			
 		
 		//국가코드 팝업 세팅
 	    this.setComNationPopupData = function(selectedData) {

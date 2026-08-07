@@ -9,6 +9,9 @@
 </head>
 <body>
 	<form:form id="comCodePop-form" class="s4-form h-full" novalidate="novalidate" onsubmit="return false;">
+		<input type="hidden" id="comCodePop_callback" value="<c:out value='${params.callback}' />">
+		<input type="hidden" id="comCodePop_rowIndex" value="<c:out value='${params.rowIndex}' />">
+
 		<div class="modal-header h-10">
 			<div class="row h-full w-full">
 				<div class="d-flex mb-3 w-full" style="vertical-align:middle">
@@ -47,17 +50,15 @@
 			params : {}
 		}
 		
-		// 시작점
+		// VIEW OBJECT INIT
 		this.Initialize_viewObject = function() {
-			const popupConfig = parent.commonPopupParam;
-			COM_CODE_POPUP.state['params'] = parent.commonPopupParam['data'];
+			COM_CODE_POPUP.state['params'] = JSON.parse('${params["data"]}' || '{}');
 			KpackageOBJ.object.setFormValue("comCodePop-form", "searchText", COM_CODE_POPUP.state['params']['searchText']);
 			COM_CODE_POPUP.createAUIGrid();
-			COM_CODE_POPUP.retrieve_data();
+			COM_CODE_POPUP.retrieve_GridData();
 		}
 
-
-		// AUIGrid 를 생성합니다.
+		// AUI GRID INIT.
 		this.createAUIGrid = function() {
 			const columnLayout = [
 				{
@@ -95,6 +96,7 @@
 			
 		};
 		
+		//그리드 조회
 		this.retrieve_GridData = function(){
 			const params = {
 				"searchText" : KpackageOBJ.object.getFormValue("comCodePop-form", "searchText")
@@ -103,29 +105,10 @@
 			KpackageOBJ.auiGrid.retrieve(COM_CODE_POPUP.gridId, "/origin/commonPop/retrieveComCodeList", params);
 		};
 		
-		this.retrieve_data = function(){
-			const params = {
-				"searchText" : KpackageOBJ.object.getFormValue("comCodePop-form", "searchText")
-			};
-			
-			KpackageOBJ.ajax.doSubmit("/origin/commonPop/retrieveComCodeList", params, COM_NATION_POPUP.retrieve_dataCallback);
-			
-		};
-		
-		this.retrieve_dataCallback = function(res){
-			if(res.success){
-				if(res.value.length === 1){
-					COM_NATION_POPUP.selectData(res.value[0]);
-				}else{
-					KpackageOBJ.auiGrid.setGridData(COM_NATION_POPUP.gridId, res.value);
-				}
-			}
-		
-		};
-		
+		// 데이터 선택시 이벤트
 		this.selectData = function (selectedData) {
-
-		    var callback = parent.commonPopupParam["callback"];
+			var callback = $('#comDivisionPop_callback').val();
+			var rowIndex = $('#comDivisionPop_rowIndex').val();
 
 		    if (!callback) {
 		        console.error("callback 정보가 없습니다.");
@@ -133,8 +116,7 @@
 		    }
 
 		    var path = callback.split(".");
-
-		    var target = parent;
+		    var target = window;
 
 		    // 마지막 함수 전까지 객체 탐색
 		    for (var i = 0; i < path.length - 1; i++) {
@@ -146,19 +128,23 @@
 		        }
 		    }
 
-		    var fn = target[path[path.length - 1]];
+			var functionName = path[path.length - 1];
+			var fn = target[functionName];
 
-		    if (typeof fn !== "function") {
-		        console.error("콜백 함수가 존재하지 않습니다. : " + callback);
-		        return;
-		    }
-
-		    selectedData['rowIndex'] = parent.commonPopupParam["rowIndex"];
-		    fn.call(target, selectedData);
-
-		    KpackageOBJ.dialog.close("commonPop");
+			if (typeof fn !== 'function') {
+				console.error(
+					'콜백 함수가 존재하지 않습니다. : ' + callback
+				);
+				return;
+			}
+			
+			selectedData = selectedData || {};
+			selectedData.rowIndex = rowIndex;
+			fn.call(target, selectedData);
+			KpackageOBJ.dialog.close('commonPop');
 		};
 		
+		//셀렉트 버튼
 		this.fnSelectCode = function() {
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(COM_CODE_POPUP.gridId);
 			
@@ -172,6 +158,11 @@
 		}
 		
 	};
+	
+	//팝업 X 클릭시 호출
+	function onPopupClose() {
+		COM_CODE_POPUP.selectData(null);		
+	}
 	
 	$(document).ready(function() {
 		pageSetUp(); // 위젯 기능을 사용하기 위해 필수로 호출 합니다.

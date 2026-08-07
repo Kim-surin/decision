@@ -2,6 +2,7 @@ package com.kpmg.kdb.web.ts.commonPop;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
@@ -42,8 +45,9 @@ public class CommonPopController extends GenericController {
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/commonPop/comCode")
-	public String comCodePop_view(Model model, HttpSession session) {
+	@RequestMapping(value = "/origin/commonPop/comCode", method = { RequestMethod.GET, RequestMethod.POST })
+	public String comCodePop_view(Model model,HttpSession session, HttpServletRequest request, @RequestParam(required = false) Map<String, String> params) {
+		model.addAttribute("params", params);
 		return "commonPop/comCode_pop";
 	}
 	
@@ -78,10 +82,11 @@ public class CommonPopController extends GenericController {
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/commonPop/comNation")
-	public String comNationPop_view(Model model, HttpSession session) {
-		return "commonPop/comNation_pop";
-	}
+	@RequestMapping(value = "/origin/commonPop/comNation", method = { RequestMethod.GET, RequestMethod.POST })
+	public String comNationPop_view(Model model,HttpSession session, HttpServletRequest request, @RequestParam(required = false) Map<String, String> params) {
+			model.addAttribute("params", params);
+			return "commonPop/comNation_pop";
+		}
 	
 	/**
 	 *  공통 팝업 - 국가코드 리스트 조회
@@ -114,8 +119,9 @@ public class CommonPopController extends GenericController {
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/commonPop/comDivision")
-	public String comDivisionPop_view(Model model, HttpSession session) {
+	@RequestMapping(value = "/origin/commonPop/comDivision", method = { RequestMethod.GET, RequestMethod.POST })
+	public String comDivisionPop_view(Model model,HttpSession session, HttpServletRequest request, @RequestParam(required = false) Map<String, String> params) {
+		model.addAttribute("params", params);
 		return "commonPop/comDivision_pop";
 	}
 	
@@ -150,8 +156,9 @@ public class CommonPopController extends GenericController {
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/commonPop/comItem")
-	public String comItem_view(Model model, HttpSession session) {
+	@RequestMapping(value = "/origin/commonPop/comItem", method = { RequestMethod.GET, RequestMethod.POST })
+	public String comItem_view(Model model,HttpSession session, HttpServletRequest request, @RequestParam(required = false) Map<String, String> params) {
+		model.addAttribute("params", params);
 		return "commonPop/comItem_pop";
 	}
 	
@@ -185,8 +192,9 @@ public class CommonPopController extends GenericController {
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/commonPop/comHsCode")
-	public String comHsCode_view(Model model, HttpSession session) {
+	@RequestMapping(value = "/origin/commonPop/comHsCode", method = { RequestMethod.GET, RequestMethod.POST })
+	public String comHsCode_view(Model model,HttpSession session, HttpServletRequest request, @RequestParam(required = false) Map<String, String> params) {
+		model.addAttribute("params", params);
 		return "commonPop/comHsCode_pop";
 	}
 	
@@ -220,8 +228,9 @@ public class CommonPopController extends GenericController {
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/commonPop/comFtaCode")
-	public String comFtaCode_view(Model model, HttpSession session) {
+	@RequestMapping(value = "/origin/commonPop/comFtaCode", method = { RequestMethod.GET, RequestMethod.POST })
+	public String comFtaCode_view(Model model,HttpSession session, HttpServletRequest request, @RequestParam(required = false) Map<String, String> params) {
+		model.addAttribute("params", params);
 		return "commonPop/comFtaCode_pop";
 	}
 	

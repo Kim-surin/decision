@@ -82,7 +82,7 @@
 						</span>
 				    </div>
 			    	<div id="oAuiGrid_hscodeByNation_RT" class="w-100 h-40"></div>
-			    	<div class="d-flex subheader-title mb-1">
+			    	<div class="d-flex subheader-title mb-1 mt-5">
 			    		<label>양허표 리스트</label>
 			    		<span style="margin-left:auto;">
 					    	<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="HSCODE_BY_NATION.fnGridRBAddRow()">
@@ -203,9 +203,7 @@
 				  , filter: {showIcon: true}
 				  , editRenderer: {
 						type: "InputEditRenderer",
-					 	onlyNumeric: true, // 0~9만 입력가능
-						textAlign: "right", // 오른쪽 정렬로 입력되도록 설정
-						autoThousandSeparator: false, // 천단위 구분자 삽입 여부
+				        regExp: "^[0-9]*$",
 						maxlength : 6
 					}
 				  , renderer: {
@@ -274,8 +272,7 @@
 				  , filter: {showIcon: true}
 				  , editRenderer: {
 						type: "InputEditRenderer",
-					 	onlyNumeric: true, // 0~9만 입력가능
-						autoThousandSeparator: false, // 천단위 구분자 삽입 여부
+				        regExp: "^[0-9]*$",
 						maxlength : 6
 					}
 				  , renderer: {
@@ -365,6 +362,8 @@
 				enableFilter: true,
 				fillColumnSizeMode:true,
 				showStateColumn:false,
+				showEditedCellMarker:false
+				
 			};
 			
 
@@ -392,25 +391,29 @@
 			//우측 TOP GRID 이벤트 추가 
 			KpackageOBJ.auiGrid.bind(HSCODE_BY_NATION.gridIdRT, "cellEditBegin", function( event ) {
 				const disableCol = ["item_code", "fta_hs_code"]
-				
 				if (disableCol.includes(event.dataField)) {
 				 	if (!KpackageOBJ.auiGrid.isAddedByRowIndex(HSCODE_BY_NATION.gridIdRT, event.rowIndex)) {
 						return false;						 
 					}
 			    }
 				
-				if(event.dataField === "item_code"){
-					KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, event.rowIndex, "item_name", "");
-					KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, event.rowIndex, "hs_code", "");
-				}
 			});
 			
 			KpackageOBJ.auiGrid.bind(HSCODE_BY_NATION.gridIdRT, "cellEditEnd", function (event) {
+				//Edit 초기화
+				if(event.dataField === "item_code"){
+					if(event.value != event.oldValue){
+						KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, event.rowIndex, "item_name", "");
+						KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, event.rowIndex, "hs_code", "");
+					}
+				}
+				
+				//팝업 호출부 
 				if(!oUtil.isNull(event.value)){
 					if(event.dataField === "item_code"){
-						 HSCODE_BY_NATION.fnOpenCompop("top_item_code");
+						HSCODE_BY_NATION.fnOpenCompop("top_item_code", true);
 				    }else if(event.dataField === "fta_hs_code"){
-				    	 HSCODE_BY_NATION.fnOpenCompop("top_hs_code");
+				    	 HSCODE_BY_NATION.fnOpenCompop("top_hs_code", true);
 				    }
 				}
 
@@ -429,11 +432,18 @@
 			
 
 			KpackageOBJ.auiGrid.bind(HSCODE_BY_NATION.gridIdRB, "cellEditEnd", function (event) {
+				//Edit 초기화
+				if(event.dataField === "fta_code"){
+					if(event.value != event.oldValue){
+						KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRB, event.rowIndex, "fta_name", "");
+					}
+				}
+				
 				if(!oUtil.isNull(event.value)){
-					if(event.dataField === "bottom_fta_code"){
-						 HSCODE_BY_NATION.fnOpenCompop("bottom_fta_code");
-				    }else if(event.dataField === "bottom_hs_code"){
-				    	 HSCODE_BY_NATION.fnOpenCompop("bottom_hs_code");
+					if(event.dataField === "fta_code"){
+						 HSCODE_BY_NATION.fnOpenCompop("bottom_fta_code", true);
+				    }else if(event.dataField === "hs_code"){
+				    	 HSCODE_BY_NATION.fnOpenCompop("bottom_hs_code", true);
 				    }
 				}
 
@@ -481,57 +491,63 @@
 		
 		
 		//곧통팝업 오픈
-		this.fnOpenCompop = function(popGubn) {
+		this.fnOpenCompop = function(colGubn, bAutoSearch = false ) {
 			let selRowIndex = 0;
-			let popParam = {};
-			let callbackFunc ="";	
-			let popUrl = "";
-			let popTitle = "";
-			
-			if(popGubn === "top_item_code"){
-				selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRT)[0];
-				popUrl = "/origin/commonPop/comItem";
-				popTitle = "자재코드 조회";
-				popParam = {
-		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRT, selRowIndex, "item_code")
-		    	}
-				callbackFunc =  "HSCODE_BY_NATION.setComItemPopupTopGridData";
-		    } else if(popGubn === "top_hs_code"){
-		    	selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRT)[0];
-				popUrl = "/origin/commonPop/comHsCode";
-				popTitle = "HS코드 조회";
-				popParam = {
-		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRT, selRowIndex, "fta_hs_code")
-		    	}
-				callbackFunc =  "HSCODE_BY_NATION.setComHsCodePopupTopGridData";
-		    } else if(popGubn === "bottom_hs_code"){
-		    	selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRB)[0];
-		    	popUrl = "/origin/commonPop/comHsCode";
-				popTitle = "HS코드 조회";
-				popParam = {
-		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "hs_code")
-		    	}
-				callbackFunc =  "HSCODE_BY_NATION.setComHsCodePopupBottomGridData";
-		    } else if(popGubn === "bottom_fta_code"){
-		    	selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRB)[0];
-		    	popUrl = "/origin/commonPop/comFtaCode";
-				popTitle = "FTA코드 조회";
-				popParam = {
-		    			"searchText" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "fta_code"),
-		    			"searchNation" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "nation_code"),
-		    			"searchNationView" : true
-		    	}
-				callbackFunc =  "HSCODE_BY_NATION.setComFtaCodePopupBottomGridData";
+		    let callbackFunctionName = "";
+		    let searchText = "";
+		    let popGubn = "";
+		    let data = {};
+		    
+		    switch (colGubn) {
+		    	case "top_item_code":
+		    		popGubn = "ITEM";
+		    		selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRT)[0];
+		    		callbackFunctionName = "setComItemPopupTopGridData";
+		    	    data = {
+		    	    	"searchText": nullToString(KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRT, selRowIndex, "item_code"))
+			        };
+		            break;
+		    	case "top_hs_code":
+		    		popGubn = "HSCODE";
+		    		selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRT)[0];
+		    		callbackFunctionName = "setComHsCodePopupTopGridData";
+		    		data = {
+		    			"searchText": nullToString(KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRT, selRowIndex, "fta_hs_code"))
+				    };
+		            break;				            
+		    	case "bottom_hs_code":
+		    		popGubn = "HSCODE";
+		    		selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRB)[0];
+		    		callbackFunctionName = "setComHsCodePopupBottomGridData";
+		    		data = {
+		    			"searchText": nullToString(KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "hs_code"))
+			    	};
+		            break;			
+		    	case "bottom_fta_code":
+		    		popGubn = "FTA";
+		    		selRowIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdRB)[0];
+		    		callbackFunctionName = "setComFtaCodePopupBottomGridData";
+		    		data = {
+			            "searchText": nullToString( KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "fta_code")),
+			            "searchNation" : KpackageOBJ.auiGrid.getCellValue(HSCODE_BY_NATION.gridIdRB, selRowIndex, "nation_code"),
+						"searchNationView" : true
+		    		};
+		            break;
+		    	 default:
+		    		 return;
 		    }
+		    
+
 			
-			
-			window.commonPopupParam = {
-	    			rowIndex : selRowIndex,
-	    		    callback: callbackFunc,
-	    		    data: popParam
-	    		};
+		    KpackageOBJ.dialog.openCommonPop(popGubn, {
+		        callbackObject: "HSCODE_BY_NATION",
+		        callbackFunctionName: callbackFunctionName,
+		        rowIndex: selRowIndex,
+		        bAutoSearch: bAutoSearch,
+		        data: data
+		    });
+		    
 	    	
-	    	KpackageOBJ.dialog.open('commonPop',popTitle,popUrl,1000,700);
 		};
 		
 		//상단그리드 - 국가코드 팝업 세팅
@@ -543,7 +559,7 @@
 	    
 	    //상단그리드 - 국가별 HS코드 세팅
 	    this.setComHsCodePopupTopGridData = function(selectedData) {
-			KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, selectedData["rowIndex"], "fta_hs_code", selectedData["code"]);
+	    	KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdRT, selectedData["rowIndex"], "fta_hs_code", selectedData["code"]);
 	    };
 	    
 	    //하단그리드 - HS코드 세팅
@@ -607,9 +623,15 @@
 	    
 	    //상단 저장 콜백
 	    this.fnGridRTSaveCallBack = function(res) {
+	    	const selectIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdL);
+	    	
+	    	console.log(KpackageOBJ.auiGrid.getGridData(HSCODE_BY_NATION.gridIdRT));
+	    	
 			if(res.success){
 				KpackageOBJ.object.alert("저장되었습니다.");
-				HSCODE_BY_NATION.retrieve_leftGridData()
+				HSCODE_BY_NATION.retrieve_rightTopGridData()
+				
+				KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdL, selectIndex[0], "fta_hs_cnt", KpackageOBJ.auiGrid.getRowCountWithoutSoftRemove(HSCODE_BY_NATION.gridIdRT));
 			}else{
 				KpackageOBJ.object.alert(res.message);
 			}
@@ -665,9 +687,13 @@
 	    
 	    //하단 저장 콜백
 	    this.fnGridRBSaveCallBack = function(res) {
-			if(res.success){
+	    	const selectIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdL);
+	    	
+	    	if(res.success){
 				KpackageOBJ.object.alert("저장되었습니다.");
-				HSCODE_BY_NATION.retrieve_leftGridData()
+				HSCODE_BY_NATION.retrieve_rightBottomGridData()
+				
+				KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdL, selectIndex[0], "rcep_cnt", KpackageOBJ.auiGrid.getRowCountWithoutSoftRemove(HSCODE_BY_NATION.gridIdRB));
 			}else{
 				KpackageOBJ.object.alert(res.message);
 			}
