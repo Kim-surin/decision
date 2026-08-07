@@ -2,9 +2,12 @@ package com.kpmg.kdb.web.poledger;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,6 +22,10 @@ import com.kpmg.kdb.web.coodecision.ExclusionRuleDecisionService;
 import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
+import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
+import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindecision.OriginDecisionPipeline;
+import com.kpmg.kdb.web.origindecision.OriginDecisionPipelineFactory;
 import com.kpmg.kdb.web.originbasis.HsCodeService;
 import com.kpmg.kdb.web.originbasis.IncotermsRateService;
 import com.kpmg.kdb.web.originbasis.ItemOriginRateService;
@@ -50,6 +57,8 @@ public class TestController extends GenericController {
 	private ItemOriginRateService itemOriginRateService;
 	@Autowired
 	private ExclusionRuleDecisionService exclusionRuleDecisionService;
+	@Autowired
+	private OriginDecisionPipelineFactory pipelineFactory;
 
 	@RequestMapping(value = "/origin/compliance/test/test")
 	@ResponseBody
@@ -121,6 +130,58 @@ public class TestController extends GenericController {
 
 		result.setValue(cases);
 		return result;
+	}
+
+	/**
+	 * OriginDecisionPipeline 의 내수(가상매출 생성 -> CREATE_FCR -> COO_DECISION -> STATUS 업데이트)
+	 * 흐름을 실제로 실행해보는 테스트 엔드포인트. DB 에 실제로 가상 SALES_MST/SALES_DTL 을 만들고
+	 * FCR_MST/FCR_DTL 삽입, 원산지판정, 상태값 갱신까지 진행하므로 운영 DB 에서는 호출하지 않는다.
+	 *
+	 * companyCode=FRT100, divisionCode=FRT101, customerCode=1018116406, yyyymm=202604,
+	 * productCodes=[091101R050] 로 가상매출을 좁혀서 만든다 -> 결과 SALES_NO 는
+	 * "1018116406FRT101202604"(customerCode+divisionCode+yyyymm) 가 된다. 사용자가 준 salesNo
+	 * "...202606"은 yyyymm=202604 와 어긋나서, 기존 TestController 샘플 데이터(FCR_MST 25건 등,
+	 * salesNo=...202604)와 맞추기로 확인하고 202604 를 기준으로 삼았다.
+	 */
+	@RequestMapping(value = "/origin/compliance/test/domestic-decision")
+	@ResponseBody
+	public Result runDomesticDecision() {
+		Result result = new Result();
+		try {
+			String companyCode = "FRT100";
+			List<String> productCodes = List.of("091101R050");
+
+			VirtualSalesGenerationParams params = new VirtualSalesGenerationParams();
+			params.setCompanyCode(companyCode);
+			params.setDivisionCode("FRT101");
+			params.setCustomerCode("1018116406");
+			params.setYyyymmdd("202604");
+			params.setProductCodes(productCodes);
+
+			OriginDecisionPipeline pipeline = pipelineFactory.forDomestic(companyCode, productCodes)
+					.generateVirtualSales(params)
+					.createFcr()
+					.determineOrigin()
+					.updateStatus();
+
+			Map<String, Object> value = new LinkedHashMap<>();
+			value.put("targets", pipeline.targets().stream().map(this::describeTarget).collect(Collectors.toList()));
+			value.put("failedTargets",
+					pipeline.failedTargets().stream().map(this::describeTarget).collect(Collectors.toList()));
+
+			result.setSuccess(pipeline.failedTargets().isEmpty());
+			result.setMessage(pipeline.failedTargets().isEmpty() ? "내수 판정 완료" : "일부 판정대상 실패 - value 확인");
+			result.setValue(value);
+		} catch (Exception e) {
+			logger.error("내수 판정 테스트 실행 중 오류", e);
+			result.setSuccess(false);
+			result.setMessage("내수 판정 테스트 실행 중 오류: " + e.getMessage());
+		}
+		return result;
+	}
+
+	private String describeTarget(SalesTarget target) {
+		return target.getCompanyCode() + "/" + target.getDivisionCode() + "/" + target.getSalesNo();
 	}
 
 	private TestCase runCase(String name, Supplier<Object> invocation, String expected) {
