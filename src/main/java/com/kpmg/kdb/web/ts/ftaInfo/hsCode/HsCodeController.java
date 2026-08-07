@@ -54,7 +54,7 @@ public class HsCodeController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/retrieveHsCodeList")
+	@RequestMapping(value="/origin/ftaInfo/hsCodeMgnt/retrieveHsCodeList")
 	@ResponseBody
 	public Result retrieveHsCodeList(@RequestBody Map param) {
 		Result result = new Result();
@@ -78,7 +78,7 @@ public class HsCodeController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/retrieveHsCodePsrList")
+	@RequestMapping(value="/origin/ftaInfo/hsCodeMgnt/retrieveHsCodePsrList")
 	@ResponseBody
 	public Result retrieveHsCodePsrList(@RequestBody Map param) {
 		Result result = new Result();

@@ -26,7 +26,7 @@
 					<div class="panel-container show">
 						<div class="panel-content">
 							<div class="row">
-								<div class="col-4">
+								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
 											<label class="form-label" for="example-input-border">HS코드</label>
@@ -38,7 +38,7 @@
 								</div>
 								<div class="col-4">
 								</div>
-								<div class="col-3">
+								<div class="col-4">
 								</div>
 								<div class="col">
 									<button type="button"
@@ -52,13 +52,13 @@
 				</div>
 			</form:form>
 		</div>
-		<div class="d-flex col-12 dual-grid-wrap" style="height: calc(100vh - 450px);" >
+		<div class="d-flex col-12 dual-grid-wrap" style="height: calc(100vh - 350px);" >
 			<div class="w-30 left-grid-area h-full" >
 				<div class="grid-title mb-2"><label>HS 코드 목록</label></div>
 				<div id="oAuiGrid_hsCodeMgnt_L" class="w-100 h-95" ></div>
 			</div>
 			<div class="right-grid-area h-full" >
-				<div class="w-100" >
+				<div class="w-100 h-100 d-flex flex-column">
 			    	<div class="grid-title mb-1">HS 코드 정보</div>
 			    	<div class="detail-card mb-3">
 			    		<div class="detail-card-row">
@@ -75,8 +75,7 @@
 						</div>
 			    	</div>
 			    	<div class="subheader-title mb-1"><label>FTA 원산지 결정기준</label></div>
-			    	<div id="oAuiGrid_hsCodeMgnt_R" class="w-100 h-95"></div>
-					
+			    	<div id="oAuiGrid_hsCodeMgnt_R" class="w-100"  style="flex:1; min-height:0;"></div>
 				</div>
 			</div>
 		</div>
@@ -183,7 +182,7 @@
 				"searchHsCode": KpackageOBJ.object.getFormValue("HSCODE_MGNT-form", "searchHsCode")
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(HSCODE_MGNT.gridIdL, "/origin/ftaInfo/retrieveHsCodeList", params);
+			KpackageOBJ.auiGrid.retrieve(HSCODE_MGNT.gridIdL, "/origin/ftaInfo/hsCodeMgnt/retrieveHsCodeList", params);
 		}
 		
 		//우측그리드 조회
@@ -192,7 +191,7 @@
 				"selHsCode": HSCODE_MGNT.state['masterRow']['hs_code']
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(HSCODE_MGNT.gridIdR, "/origin/ftaInfo/retrieveHsCodePsrList", params);
+			KpackageOBJ.auiGrid.retrieve(HSCODE_MGNT.gridIdR, "/origin/ftaInfo/hsCodeMgnt/retrieveHsCodePsrList", params);
 		}
 	}
 

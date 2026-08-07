@@ -7,7 +7,7 @@
 		<if test="OPTION_ALL == 'Y'.toString()">
 		SELECT #{CATEGORY} AS CATEGORY
 		     , '' CODE
-		     , '선택' CODE_NAME
+   			 , COALESCE(#{OPTION_ALL_NAME}, '선택') AS CODE_NAME
 		     , 0 SORT_NO
 		 UNION ALL
 		</if>

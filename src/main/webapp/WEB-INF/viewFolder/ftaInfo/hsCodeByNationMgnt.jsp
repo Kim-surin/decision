@@ -60,13 +60,13 @@
 				</div>
 			</form:form>
 		</div>
-		<div class="d-flex col-12 dual-grid-wrap" style="height: calc(100vh - 450px);" >
+		<div class="d-flex col-12 dual-grid-wrap" style="height: calc(100vh - 350px);" >
 			<div class="w-30 left-grid-area h-full" >
 				<div class="grid-title mb-2"><label>국가 목록</label></div>
 				<div id="oAuiGrid_hscodeByNation_L" class="w-100 h-95" ></div>
 			</div>
 			<div class="right-grid-area h-full" >
-				<div class="w-100 h-full" >
+				<div class="w-100 h-100 d-flex flex-column">
 				    <div class="d-flex subheader-title mb-1">
 				    	<label>국가별 HS코드</label>
 				    	<span style="margin-left:auto;">
@@ -96,7 +96,7 @@
 							</button>
 						</span>
 			    	</div>
-			    	<div id="oAuiGrid_hscodeByNation_RB" class="w-100 h-40"></div>
+			    	<div id="oAuiGrid_hscodeByNation_RB" class="w-100" style="flex:1; min-height:0;"></div>
 					
 				</div>
 			</div>
@@ -462,7 +462,7 @@
 				, "searchHsCode": KpackageOBJ.object.getFormValue("HSCODE_BY_NATION-form", "searchHsCode")
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(HSCODE_BY_NATION.gridIdL, "/origin/ftaInfo/retrieveNationIncludeRcepCntList", params);
+			KpackageOBJ.auiGrid.retrieve(HSCODE_BY_NATION.gridIdL, "/origin/ftaInfo/hsCodeByNationMgnt/retrieveNationIncludeRcepCntList", params);
 		}
 		
 		//우측 상단그리드 조회
@@ -473,7 +473,7 @@
 				  , "searchHsCode": KpackageOBJ.object.getFormValue("HSCODE_BY_NATION-form", "searchHsCode")
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(HSCODE_BY_NATION.gridIdRT, "/origin/ftaInfo/retrieveHsCodeByNationList", params);
+			KpackageOBJ.auiGrid.retrieve(HSCODE_BY_NATION.gridIdRT, "/origin/ftaInfo/hsCodeByNationMgnt/retrieveHsCodeByNationList", params);
 		}
 		
 
@@ -485,7 +485,7 @@
 				  , "searchHsCode": KpackageOBJ.object.getFormValue("HSCODE_BY_NATION-form", "searchHsCode")
 			}
 			
-			KpackageOBJ.auiGrid.retrieve(HSCODE_BY_NATION.gridIdRB, "/origin/ftaInfo/retrieveHsCodeRcepList", params);
+			KpackageOBJ.auiGrid.retrieve(HSCODE_BY_NATION.gridIdRB, "/origin/ftaInfo/hsCodeByNationMgnt/retrieveHsCodeRcepList", params);
 		}
 		
 		
@@ -617,7 +617,7 @@
 				var params = {
 					"SAVE_LIST" : data
 				};
-				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/saveHsCodeByNationList", params, HSCODE_BY_NATION.fnGridRTSaveCallBack);
+				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/hsCodeByNationMgnt/saveHsCodeByNationList", params, HSCODE_BY_NATION.fnGridRTSaveCallBack);
 			}
 		};
 	    
@@ -680,7 +680,7 @@
 				var params = {
 					"SAVE_LIST" : data
 				};
-				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/saveHsCodeRcepList", params, HSCODE_BY_NATION.fnGridRBSaveCallBack);
+				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/hsCodeByNationMgnt/saveHsCodeRcepList", params, HSCODE_BY_NATION.fnGridRBSaveCallBack);
 			}
 
 	    };

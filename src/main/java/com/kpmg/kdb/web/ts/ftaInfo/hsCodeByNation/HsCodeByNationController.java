@@ -53,7 +53,7 @@ public class HsCodeByNationController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/retrieveNationIncludeRcepCntList")
+	@RequestMapping(value="/origin/ftaInfo/hsCodeByNationMgnt/retrieveNationIncludeRcepCntList")
 	@ResponseBody
 	public Result retrieveNationIncludeRcepCntList(@RequestBody Map param) {
 		Result result = new Result();
@@ -77,7 +77,7 @@ public class HsCodeByNationController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/retrieveHsCodeByNationList")
+	@RequestMapping(value="/origin/ftaInfo/hsCodeByNationMgnt/retrieveHsCodeByNationList")
 	@ResponseBody
 	public Result retrieveHsCodeByNationList(@RequestBody Map param) {
 		Result result = new Result();
@@ -101,7 +101,7 @@ public class HsCodeByNationController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/saveHsCodeByNationList")
+	@RequestMapping(value="/origin/ftaInfo/hsCodeByNationMgnt/saveHsCodeByNationList")
 	@ResponseBody
 	public Result saveHsCodeByNationList(@RequestBody Map param) {
 		Result result = new Result();
@@ -126,7 +126,7 @@ public class HsCodeByNationController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/retrieveHsCodeRcepList")
+	@RequestMapping(value="/origin/ftaInfo/hsCodeByNationMgnt/retrieveHsCodeRcepList")
 	@ResponseBody
 	public Result retrieveHsCodeRcepList(@RequestBody Map param) {
 		Result result = new Result();
@@ -151,7 +151,7 @@ public class HsCodeByNationController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/saveHsCodeRcepList")
+	@RequestMapping(value="/origin/ftaInfo/hsCodeByNationMgnt/saveHsCodeRcepList")
 	@ResponseBody
 	public Result saveHsCodeRcepList(@RequestBody Map param) {
 		Result result = new Result();

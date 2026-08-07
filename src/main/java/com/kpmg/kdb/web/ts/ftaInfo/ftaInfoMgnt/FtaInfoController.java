@@ -54,7 +54,7 @@ public class FtaInfoController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/retrieveFtaInfoList")
+	@RequestMapping(value="/origin/ftaInfo/ftaInfoMgnt/retrieveFtaInfoList")
 	@ResponseBody
 	public Result retrieveFtaInfoList(@RequestBody Map param) {
 		Result result = new Result();
@@ -78,7 +78,7 @@ public class FtaInfoController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/saveFtaInfoList")
+	@RequestMapping(value="/origin/ftaInfo/ftaInfoMgnt/saveFtaInfoList")
 	@ResponseBody
 	public Result saveFtaInfoList(@RequestBody Map param) {
 		Result result = new Result();
@@ -103,7 +103,7 @@ public class FtaInfoController extends GenericController {
 	 * @author osw
 	 * @return View Path String
 	 */
-	@RequestMapping(value = "/origin/ftaInfo/ftaNation")
+	@RequestMapping(value = "/origin/ftaInfo/ftaInfoMgnt/ftaNation")
 	public String sample001pop02_view(Model model, HttpSession session) {
 		return "ftaInfo/ftaInfoMgnt_nation_pop";
 	}
@@ -115,7 +115,7 @@ public class FtaInfoController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/ftaNation/retrieveFtaNationAllList")
+	@RequestMapping(value="/origin/ftaInfo/ftaInfoMgnt/ftaNation/retrieveFtaNationAllList")
 	@ResponseBody
 	public Result retrieveFtaNationAllList(@RequestBody Map param) {
 		Result result = new Result();
@@ -141,7 +141,7 @@ public class FtaInfoController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/ftaNation/retrieveFtaNationApplyList")
+	@RequestMapping(value="/origin/ftaInfo/ftaInfoMgnt/ftaNation/retrieveFtaNationApplyList")
 	@ResponseBody
 	public Result retrieveFtaNationApplyList(@RequestBody Map param) {
 		Result result = new Result();
@@ -166,7 +166,7 @@ public class FtaInfoController extends GenericController {
 	 * @author osw
 	 * @return 
 	 */
-	@RequestMapping(value="/origin/ftaInfo/saveFtaNationList")
+	@RequestMapping(value="/origin/ftaInfo/ftaInfoMgnt/ftaNation/saveFtaNationList")
 	@ResponseBody
 	public Result saveFtaNationList(@RequestBody Map param) {
 		Result result = new Result();

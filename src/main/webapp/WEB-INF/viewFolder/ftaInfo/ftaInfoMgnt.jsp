@@ -26,7 +26,7 @@
 					<div class="panel-container show">
 						<div class="panel-content">
 							<div class="row">
-								<div class="col-4">
+								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
 											<label class="form-label" for="example-input-border">국가코드/명</label>
@@ -38,7 +38,7 @@
 								</div>
 								<div class="col-4">
 								</div>
-								<div class="col-3">
+								<div class="col-4">
 								</div>
 								<div class="col">
 									<button type="button"
@@ -374,7 +374,7 @@
 			KpackageOBJ.auiGrid.bind(FTA_INFO.gridId, "cellClick", function(event) {
 				if(event.dataField === "fta_apply_cnt"){
 					KpackageOBJ.object.setFormValue("ftaInfo-form", "popParam", JSON.stringify(event.item));
-					KpackageOBJ.dialog.open('ftaNationPopup','협정별 국가지정 팝업','/origin/ftaInfo/ftaNation',1000,700);
+					KpackageOBJ.dialog.open('ftaNationPopup','협정별 국가지정 팝업','/origin/ftaInfo/ftaInfoMgnt/ftaNation',1000,700);
 				}
 			});
 		}
@@ -385,7 +385,7 @@
 				"searchCountry": KpackageOBJ.object.getFormValue("ftaInfo-form", "searchCountry")
 			}
 							
-			KpackageOBJ.auiGrid.retrieve(FTA_INFO.gridId, "/origin/ftaInfo/retrieveFtaInfoList", params);
+			KpackageOBJ.auiGrid.retrieve(FTA_INFO.gridId, "/origin/ftaInfo/ftaInfoMgnt/retrieveFtaInfoList", params);
 		}
 		
 		// 행추가
@@ -425,7 +425,7 @@
 				var params = {
 					"SAVE_LIST" : data
 				};
-				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/saveFtaInfoList", params, FTA_INFO.fnSaveCallBack);
+				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/ftaInfoMgnt/saveFtaInfoList", params, FTA_INFO.fnSaveCallBack);
 			}
 
 		}

@@ -1031,7 +1031,7 @@ table.table-bordered td:last-child, table.table-bordered th:last-child{
     font-size:15px;
     font-weight:600;
     color:#333;
-    padding-left:2px;
+    padding-left:5px;
 }
 
 /**********************************************************************************************************/
@@ -1094,11 +1094,25 @@ table.table-bordered td:last-child, table.table-bordered th:last-child{
 
 .detail-card-label {
     width: 15%;
-    padding: 12px 16px;
+    padding: 5px 8px;
     background-color: #eef4ff;
     color: #245b9e;
     font-weight: 600;
     box-sizing: border-box;
+    
+    display: flex;
+	align-items: center;
+}
+
+.detail-card select {
+	height: 32px;
+	min-height: 32px;
+	padding: 4px 8px;
+	border: none;
+	outline: none;
+	background-color: transparent;
+
+	margin: auto 0;
 }
 
 .detail-card-value {
@@ -1109,6 +1123,61 @@ table.table-bordered td:last-child, table.table-bordered th:last-child{
     overflow-y: auto;
     overflow-x: hidden;
 }
+
+.radio-group {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+}
+
+.radio-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	font-size: 14px;
+	color: #444;
+}
+
+.radio-item input {
+	display: none;
+}
+
+/* 라디오 바깥 원 */
+.radio-circle {
+	width: 16px;
+	height: 16px;
+	border: 2px solid #b8bec7;
+	border-radius: 50%;
+	box-sizing: border-box;
+	position: relative;
+	transition: 0.15s;
+}
+
+/* 선택 */
+.radio-item input:checked + .radio-circle {
+	border-color: #3478f6;
+}
+
+/* 라디오 안쪽 점 */
+.radio-item input:checked + .radio-circle::after {
+	content: "";
+	position: absolute;
+	width: 8px;
+	height: 8px;
+	background: #3478f6;
+	border-radius: 50%;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+/* 선택된 글자 */
+.radio-item:has(input:checked) {
+	color: #3478f6;
+	font-weight: 600;
+}
+
 
 /**********************************************************************************************************
 YEAR PICKER

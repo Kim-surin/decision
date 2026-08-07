@@ -147,12 +147,12 @@
 		
 		//좌측 그리드 조회
 		this.retrieve_LeftGridData = function(){
-			KpackageOBJ.auiGrid.retrieve(FTAINFO_NATION.gridIdL, "/origin/ftaInfo/ftaNation/retrieveFtaNationAllList", FTAINFO_NATION.state["params"]);
+			KpackageOBJ.auiGrid.retrieve(FTAINFO_NATION.gridIdL, "/origin/ftaInfo/ftaInfoMgnt/ftaNation/retrieveFtaNationAllList", FTAINFO_NATION.state["params"]);
 		};
 		
 		//우측 그리드 조회
 		this.retrieve_RightGridData = function(){
-			KpackageOBJ.auiGrid.retrieve(FTAINFO_NATION.gridIdR, "/origin/ftaInfo/ftaNation/retrieveFtaNationApplyList", FTAINFO_NATION.state["params"]);
+			KpackageOBJ.auiGrid.retrieve(FTAINFO_NATION.gridIdR, "/origin/ftaInfo/ftaInfoMgnt/ftaNation/retrieveFtaNationApplyList", FTAINFO_NATION.state["params"]);
 		};
 		
 		//오측 그리드 저장
@@ -170,7 +170,7 @@
 				var params = FTAINFO_NATION.state["params"];
 				params["SAVE_LIST"] = data;
 
-				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/saveFtaNationList", params, FTAINFO_NATION.fnSaveCallBack);
+				KpackageOBJ.ajax.doSubmit("/origin/ftaInfo/ftaInfoMgnt/ftaNation/saveFtaNationList", params, FTAINFO_NATION.fnSaveCallBack);
 			}
 
 		}

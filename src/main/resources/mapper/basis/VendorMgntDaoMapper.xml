@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.basis.vendorMgnt.VendorMgntDao">
+	
+ 	<select id="retrieveVendorList" parameterType="HashMap" resultType="HashMap">
+		SELECT VENDOR_CODE AS VC_CODE
+		     , VENDOR_NAME AS VC_NAME
+			 , VENDOR_NAME_ENG AS VC_NAME_ENG
+			 , BUSINESS_NO
+			 , OFFICER_NAME
+			 , OFFICER_NAME_ENG
+			 , NATION_CODE
+			 , ADDRESS
+			 , ADDRESS_ENG
+			 , TEL_NO
+			 , FAX_NO
+			 , IMPORTANCE_MGT_YN AS MGT_YN
+			 , REMARK
+		  FROM VENDOR 
+		 WHERE COMPANY_CODE = #{company_code}
+		<if test="searchCode != null and searchCode != ''">
+	  	   AND (VENDOR_CODE LIKE CONCAT(#{searchCode}, '%') 
+	  	     OR VENDOR_NAME LIKE CONCAT(#{searchCode}, '%')) 
+   		</if>
+   		<if test="searchMgtYn != null and searchMgtYn != ''">
+   		   AND IMPORTANCE_MGT_YN = #{searchMgtYn}
+   		</if>
+      ORDER BY VENDOR_CODE 
+ 	</select>
+ 	
+	<select id="retrieveVendorInChargeList" parameterType="HashMap" resultType="HashMap">
+		SELECT vendor_code
+		     , vendor_id
+			 , seq
+			 , name_kor
+			 , name_eng
+			 , position
+			 , email
+			 , tel_no
+			 , remark
+		  FROM VENDOR_IN_CHARGE
+ 		 WHERE COMPANY_CODE = #{company_code}
+		   AND VENDOR_CODE = #{vc_code}
+		ORDER BY SEQ
+	</select>
+ 	
+	<select id="retrieveCustomerList" parameterType="HashMap" resultType="HashMap">
+		 SELECT CUSTOMER_CODE AS VC_CODE
+		      , CUSTOMER_NAME AS VC_NAME
+			  , CUSTOMER_NAME_ENG AS VC_NAME_ENG
+			  , BUSINESS_NO
+			  , OFFICER_NAME
+			  , OFFICER_NAME_ENG
+			  , NATION_CODE
+			  , ADDRESS
+			  , ADDRESS_ENG
+			  , TEL_NO
+			  , FAX_NO
+			  , TARGET_YN AS MGT_YN
+			  , CO_CERTIFIED_EXPORTER_YN
+			  , REMARK
+		   FROM CUSTOMER
+		<if test="searchCode != null and searchCode != ''">
+	  	   AND (CUSTOMER_CODE LIKE CONCAT(#{searchCode}, '%') 
+	  	     OR CUSTOMER_NAME LIKE CONCAT(#{searchCode}, '%')) 
+   		</if>
+   		<if test="searchMgtYn != null and searchMgtYn != ''">
+   		   AND TARGET_YN = #{searchMgtYn}
+   		</if>
+      ORDER BY CUSTOMER_CODE 
+ 	</select>
+
+</mapper>
