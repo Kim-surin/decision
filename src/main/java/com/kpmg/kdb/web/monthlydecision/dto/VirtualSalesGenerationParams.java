@@ -1,9 +1,11 @@
 package com.kpmg.kdb.web.monthlydecision.dto;
 
+import java.util.List;
+
 /**
  * 레거시 MONTHLY_DECISION_PROC 의 파라미터 목록(P_YYYYMMDD, P_COMPANY_CODE, ...) 대체 객체.
  * 가상매출 생성(OriginDecisionPipeline#generateVirtualSales) 호출 시 넘기는 조건으로, 월 판정/개별
- * 판정이 공용으로 쓴다 — 월 판정은 yyyymmdd(매출년월) 범위 전체를, 개별 판정은 productCode 로 특정
+ * 판정이 공용으로 쓴다 — 월 판정은 yyyymmdd(매출년월) 범위 전체를, 개별 판정은 productCodes 로 특정
  * 매출건만 좁혀서 호출한다.
  */
 public class VirtualSalesGenerationParams {
@@ -14,7 +16,8 @@ public class VirtualSalesGenerationParams {
 	private String divisionCode;
 	private String customerCode;
 	private String deliveryCustomerCode;
-	private String productCode;
+	/** null/빈 리스트면 제품 필터 없음(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상으로 한다. */
+	private List<String> productCodes;
 	private String exportFlag;
 
 	public String getYyyymmdd() {
@@ -57,12 +60,12 @@ public class VirtualSalesGenerationParams {
 		this.deliveryCustomerCode = deliveryCustomerCode;
 	}
 
-	public String getProductCode() {
-		return productCode;
+	public List<String> getProductCodes() {
+		return productCodes;
 	}
 
-	public void setProductCode(String productCode) {
-		this.productCode = productCode;
+	public void setProductCodes(List<String> productCodes) {
+		this.productCodes = productCodes;
 	}
 
 	public String getExportFlag() {

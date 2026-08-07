@@ -143,7 +143,12 @@
 		               AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
 		               AND    SD.DELIVERY_CUSTOMER_CODE = COALESCE(#{p.deliveryCustomerCode}, SM.DELIVERY_CUSTOMER_CODE)
 		               AND    SM.EXPORT_FLAG = COALESCE(#{p.exportFlag}, SM.EXPORT_FLAG)
-		               AND    SD.PRODUCT_CODE = COALESCE(#{p.productCode}, SD.PRODUCT_CODE)
+		               <if test="p.productCodes != null and !p.productCodes.isEmpty()">
+		               AND    SD.PRODUCT_CODE IN
+		                      <foreach collection="p.productCodes" item="productCode" open="(" separator="," close=")">
+		                          #{productCode}
+		                      </foreach>
+		               </if>
 		               AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE)
 		               GROUP  BY SD.DIVISION_CODE, SD.COMPANY_CODE, SD.PRODUCT_CODE, SM.CUSTOMER_CODE,
 		                        SD.PRODUCT_NAME, SD.PRODUCT_UNIT, SD.PRODUCT_ASSETS_TYPE, IM.HS_CODE,
@@ -193,7 +198,12 @@
 		        AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
 		        AND    SM.DELIVERY_CUSTOMER_CODE = COALESCE(#{p.deliveryCustomerCode}, SM.DELIVERY_CUSTOMER_CODE)
 		        AND    SM.EXPORT_FLAG = COALESCE(#{p.exportFlag}, SM.EXPORT_FLAG)
-		        AND    SD.PRODUCT_CODE = COALESCE(#{p.productCode}, SD.PRODUCT_CODE)) X
+		        <if test="p.productCodes != null and !p.productCodes.isEmpty()">
+		        AND    SD.PRODUCT_CODE IN
+		               <foreach collection="p.productCodes" item="productCode" open="(" separator="," close=")">
+		                   #{productCode}
+		               </foreach>
+		        </if>) X
 		GROUP  BY COMPANY_CODE, DIVISION_CODE, SALES_NO, EXPORT_FLAG, CUSTOMER_CODE
 		ORDER  BY EXPORT_FLAG, CUSTOMER_CODE
 	</select>
