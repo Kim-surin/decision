@@ -81,7 +81,7 @@
 		     , F.FTA_NAME AS CODE_NAME
 		     , F.EFFECT_DATE
 		  FROM FTA_MASTER F
-		 WHERE F.COMPANY_CODE = 'FRT100'
+		 WHERE F.COMPANY_CODE = #{company_code}
 		   AND F.DELETE_YN  = 'N'
 		   <if test="searchText != null and searchText != ''">
 		   AND (F.FTA_CODE LIKE CONCAT(#{searchText} , '%') OR F.FTA_NAME LIKE CONCAT(#{searchText} , '%'))
@@ -96,6 +96,18 @@
 		   				  AND T.NATION_CODE = #{searchNation} ) 
 		   </if>
 	  ORDER BY FTA_CODE
+ 	</select>
+ 	
+ 	
+ 	 <select id="retrieveComCustomerList" parameterType="HashMap" resultType="HashMap">
+		 SELECT d.customer_code as CODE
+		      , d.customer_name as CODE_NAME
+		   FROM customer d
+		  WHERE d.company_code = #{company_code}
+		    <if test="searchText != null and searchText != ''">
+			AND (d.customer_code LIKE CONCAT(#{searchText} , '%') OR d.customer_name LIKE CONCAT(#{searchText} , '%'))
+		    </if>
+	   ORDER BY d.customer_code 
  	</select>
  	
 </mapper>

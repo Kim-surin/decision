@@ -17,6 +17,7 @@ public interface CommonPopDao {
 	public List retrieveComItemList(Map param);	
 	public List retrieveComHsCodePopList(Map param);
 	public List retrieveComFtaCodePopList(Map param);	
+	public List retrieveComCustomerList(Map param);
 		
 }
 

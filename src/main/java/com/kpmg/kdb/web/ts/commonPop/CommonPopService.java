@@ -147,5 +147,25 @@ public class CommonPopService extends GeneralService {
     }
     
     
-    
+
+    /**
+     *  공통 팝업 - 사업장코드 리스트 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveComCustomerList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		result.setValue(sqlSession.getMapper(CommonPopDao.class).retrieveComCustomerList(param));
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
 }

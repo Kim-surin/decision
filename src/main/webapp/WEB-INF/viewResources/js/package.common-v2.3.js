@@ -3110,6 +3110,12 @@ var KpackageOBJ = {
 					searchUrl: "/origin/commonPop/retrieveComNationList",
 			        title: "국가 조회",
 			    },
+				CUSTOMER: {
+					url: "/origin/commonPop/comCustomer",
+					searchUrl: "/origin/commonPop/retrieveComCustomerList",
+			        title: "고객사 조회",
+			    }
+				
 			};
 			
 			const config = popConfig[p_PopGubn];
