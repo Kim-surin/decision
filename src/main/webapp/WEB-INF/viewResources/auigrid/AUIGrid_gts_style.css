@@ -2216,3 +2216,8 @@
 .aui-grid-button-renderer {
 	border-radius: 2px;
 }
+
+/* 그리드 찾기 버튼 */
+.grid-search-btn {
+	border: 1px solid #dddddd !important;
+}
