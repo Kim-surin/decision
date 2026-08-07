@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.kpmg.kdb.web.coodecision.OriginDeterminationMode;
-import com.kpmg.kdb.web.monthlydecision.dto.MonthlyDecisionParams;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
+import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 
 /**
  * 원산지판정 전체 흐름(레거시 MONTHLY_DECISION_PROC + CREATE_FCR + PKG99_COO_DECISION.COO_DECISION)을
@@ -94,7 +94,7 @@ public class OriginDecisionPipeline {
 	 * "1. 가상매출 생성"(내수 전용). 회사/기간 단위로 SALES_MST/SALES_DTL 가상매출을 만들고, 그 결과를
 	 * 판정 대상 목록으로 갱신한다. 수출 파이프라인에서는 호출하지 않는다.
 	 */
-	public OriginDecisionPipeline generateVirtualSales(MonthlyDecisionParams params) {
+	public OriginDecisionPipeline generateVirtualSales(VirtualSalesGenerationParams params) {
 		this.targets = virtualSalesGenerator.generate(params);
 		this.failedTargets.clear();
 		return this;

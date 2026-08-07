@@ -1,7 +1,12 @@
 package com.kpmg.kdb.web.monthlydecision.dto;
 
-/** 레거시 MONTHLY_DECISION_PROC 의 파라미터 목록(P_YYYYMMDD, P_COMPANY_CODE, ...) 대체 객체 */
-public class MonthlyDecisionParams {
+/**
+ * 레거시 MONTHLY_DECISION_PROC 의 파라미터 목록(P_YYYYMMDD, P_COMPANY_CODE, ...) 대체 객체.
+ * 가상매출 생성(OriginDecisionPipeline#generateVirtualSales) 호출 시 넘기는 조건으로, 월 판정/개별
+ * 판정이 공용으로 쓴다 — 월 판정은 yyyymmdd(매출년월) 범위 전체를, 개별 판정은 productCode 로 특정
+ * 매출건만 좁혀서 호출한다.
+ */
+public class VirtualSalesGenerationParams {
 
 	/** YYYYMM 또는 YYYYMMDD 모두 가능(INVOICE_DATE LIKE 접두어 매칭 기준) */
 	private String yyyymmdd;

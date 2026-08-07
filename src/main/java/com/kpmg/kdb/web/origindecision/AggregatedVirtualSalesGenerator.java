@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.monthlydecision.MonthlyDecisionDao;
-import com.kpmg.kdb.web.monthlydecision.dto.MonthlyDecisionParams;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
+import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 
 /**
  * {@link VirtualSalesGenerator} 기본 구현. 레거시 MONTHLY_DECISION_PROC "1. 내수 포괄 매출 생성" /
@@ -22,7 +22,7 @@ import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 public class AggregatedVirtualSalesGenerator extends GeneralService implements VirtualSalesGenerator {
 
 	@Override
-	public List<SalesTarget> generate(MonthlyDecisionParams params) {
+	public List<SalesTarget> generate(VirtualSalesGenerationParams params) {
 		MonthlyDecisionDao dao = sqlSession.getMapper(MonthlyDecisionDao.class);
 
 		dao.deleteAggregatedSalesDtl(params);

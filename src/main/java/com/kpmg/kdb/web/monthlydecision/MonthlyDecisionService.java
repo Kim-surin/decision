@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.coodecision.OriginDeterminationService;
 import com.kpmg.kdb.web.createfcr.CreateFcrService;
-import com.kpmg.kdb.web.monthlydecision.dto.MonthlyDecisionParams;
+import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 import com.kpmg.kdb.web.origindecision.OriginDecisionPipeline;
 import com.kpmg.kdb.web.origindecision.OriginDecisionPipelineFactory;
 
@@ -30,7 +30,7 @@ public class MonthlyDecisionService extends GeneralService {
 	@Autowired
 	private OriginDecisionPipelineFactory pipelineFactory;
 
-	public void run(MonthlyDecisionParams params) {
+	public void run(VirtualSalesGenerationParams params) {
 		try {
 			OriginDecisionPipeline pipeline = pipelineFactory.forDomestic(params.getCompanyCode(), null)
 					.generateVirtualSales(params)

@@ -2,8 +2,8 @@ package com.kpmg.kdb.web.origindecision;
 
 import java.util.List;
 
-import com.kpmg.kdb.web.monthlydecision.dto.MonthlyDecisionParams;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
+import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 
 /**
  * {@link OriginDecisionPipeline} "1. 가상매출 생성" 단계의 부품 인터페이스. 내수 전용 단계로, 회사/기간
@@ -13,5 +13,5 @@ import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
  */
 public interface VirtualSalesGenerator {
 
-	List<SalesTarget> generate(MonthlyDecisionParams params);
+	List<SalesTarget> generate(VirtualSalesGenerationParams params);
 }
