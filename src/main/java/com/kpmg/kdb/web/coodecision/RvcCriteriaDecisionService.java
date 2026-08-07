@@ -8,9 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.kpmg.kdb.web.coodecision.dto.FcrInfoRow;
-import com.kpmg.kdb.web.coodecision.dto.FcrResultRecord;
-import com.kpmg.kdb.web.coodecision.dto.FtaRule;
+import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 
 /**
  * 레거시 COO_DECISION_FOR_RVC(부가가치기준 원산지 판정) 이관.
@@ -19,19 +19,19 @@ import com.kpmg.kdb.web.coodecision.dto.FtaRule;
  * 비활성화되어 있고 FTA_RVC_YN/COMPANY_RVC_YN을 무조건 'N'으로 설정하는 스텁만 남아있다
  * (CTC 전용 판정에서는 부가가치기준을 사용하지 않기 때문). 그대로 이관했다.
  *
- * 이 프로시저도 FCR_INFO_TEMP(=CooDecisionContext.fcrInfoRows)만 읽으므로 DB 접근이 필요 없다.
+ * 이 프로시저도 FCR_INFO_TEMP(=OriginDeterminationContext.fcrInfoRows)만 읽으므로 DB 접근이 필요 없다.
  */
 @Service
-public class CooDecisionForRvcService {
+public class RvcCriteriaDecisionService {
 
-	private static final Logger logger = LoggerFactory.getLogger(CooDecisionForRvcService.class);
+	private static final Logger logger = LoggerFactory.getLogger(RvcCriteriaDecisionService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
-	public void decide(CooDecisionContext ctx, FtaRule frList, DecisionMode mode) {
+	public void decide(OriginDeterminationContext ctx, OriginCriteria frList, OriginDeterminationMode mode) {
 		try {
-			if (mode == DecisionMode.CTC_ONLY) {
+			if (mode == OriginDeterminationMode.CTC_ONLY) {
 				// CTC 전용 모드는 RVC 판정을 사용하지 않는다(원본 스텁과 동일)
-				FcrResultRecord rec = ctx.getFrdRec();
+				OriginDeterminationResult rec = ctx.getFrdRec();
 				rec.setFtaRvcYn("N");
 				rec.setCompanyRvcYn("N");
 				return;
@@ -45,15 +45,15 @@ public class CooDecisionForRvcService {
 		}
 	}
 
-	private void decideRvc(CooDecisionContext ctx, FtaRule frList) {
-		List<FcrInfoRow> rows = ctx.getFcrInfoRows();
+	private void decideRvc(OriginDeterminationContext ctx, OriginCriteria frList) {
+		List<MaterialOriginRow> rows = ctx.getMaterialOriginRows();
 
-		BigDecimal inareaAmount = sum(rows, FcrInfoRow::getInareaAmount);
-		BigDecimal outareaAmount = sum(rows, FcrInfoRow::getOutareaAmount);
-		BigDecimal inputAmount = sum(rows, FcrInfoRow::getInputAmount);
+		BigDecimal originatingAmount = sum(rows, MaterialOriginRow::getOriginatingAmount);
+		BigDecimal nonOriginatingAmount = sum(rows, MaterialOriginRow::getNonOriginatingAmount);
+		BigDecimal inputAmount = sum(rows, MaterialOriginRow::getInputAmount);
 		long zeroAmountCnt = rows.stream().filter(r -> isZero(r.getInputAmount())).count();
 
-		FcrResultRecord rec = ctx.getFrdRec();
+		OriginDeterminationResult rec = ctx.getFrdRec();
 
 		if (zeroAmountCnt > 0) {
 			rec.setFtaRvcYn("N");
@@ -73,22 +73,22 @@ public class CooDecisionForRvcService {
 			BigDecimal companyRvcRate;
 
 			if (positive(frList.getBuRule())) {
-				rvcRate = inareaAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? BigDecimal.ZERO
-						: ratio(inareaAmount, ctx.getInkotermsAmount());
+				rvcRate = originatingAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? BigDecimal.ZERO
+						: ratio(originatingAmount, ctx.getInkotermsAmount());
 				ftaRvcRate = frList.getBuRule();
 				companyRvcRate = ftaRvcRate.add(nvl(ctx.getCompanyRvcRate()));
 			} else if (positive(frList.getBdRule())) {
-				rvcRate = outareaAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? BigDecimal.ZERO
-						: ratio(ctx.getInkotermsAmount().subtract(outareaAmount), ctx.getInkotermsAmount());
+				rvcRate = nonOriginatingAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? BigDecimal.ZERO
+						: ratio(ctx.getInkotermsAmount().subtract(nonOriginatingAmount), ctx.getInkotermsAmount());
 				ftaRvcRate = frList.getBdRule();
 				companyRvcRate = ftaRvcRate.add(nvl(ctx.getCompanyRvcRate()));
 			} else if (positive(frList.getNcRule())) {
-				rvcRate = ratio(inputAmount.subtract(outareaAmount), ctx.getNetCostAmount());
+				rvcRate = ratio(inputAmount.subtract(nonOriginatingAmount), ctx.getNetCostAmount());
 				ftaRvcRate = frList.getNcRule();
 				companyRvcRate = ftaRvcRate.add(nvl(ctx.getCompanyRvcRate()));
 			} else if (mcRule) {
-				rvcRate = outareaAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? HUNDRED
-						: ratio(outareaAmount, ctx.getInkotermsAmount());
+				rvcRate = nonOriginatingAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? HUNDRED
+						: ratio(nonOriginatingAmount, ctx.getInkotermsAmount());
 				ftaRvcRate = frList.getMcRule();
 				// MC기준은 회사버퍼를 더하지 않고 뺀다
 				companyRvcRate = ftaRvcRate.subtract(nvl(ctx.getCompanyRvcRate()));
@@ -109,7 +109,7 @@ public class CooDecisionForRvcService {
 		} catch (Exception e) {
 			logger.warn("COO_DECISION_FOR_RVC 비율 계산 실패(무시하고 계속 진행). "
 					+ "BU={}, BD={}, NC={}, MC={}, 역내금액={}, 역외금액={}, FOB/EX={}", frList.getBuRule(),
-					frList.getBdRule(), frList.getNcRule(), frList.getMcRule(), inareaAmount, outareaAmount,
+					frList.getBdRule(), frList.getNcRule(), frList.getMcRule(), originatingAmount, nonOriginatingAmount,
 					ctx.getInkotermsAmount(), e);
 		}
 	}
@@ -120,8 +120,8 @@ public class CooDecisionForRvcService {
 		return satisfied ? "Y" : "N";
 	}
 
-	private static BigDecimal sum(List<FcrInfoRow> rows, java.util.function.Function<FcrInfoRow, BigDecimal> extractor) {
-		return rows.stream().map(extractor).map(CooDecisionForRvcService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
+	private static BigDecimal sum(List<MaterialOriginRow> rows, java.util.function.Function<MaterialOriginRow, BigDecimal> extractor) {
+		return rows.stream().map(extractor).map(RvcCriteriaDecisionService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	private static boolean positive(BigDecimal v) {

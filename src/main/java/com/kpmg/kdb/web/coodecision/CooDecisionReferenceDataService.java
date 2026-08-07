@@ -17,7 +17,7 @@ import com.kpmg.kdb.web.coodecision.dto.BufferRates;
  * 고카디널리티 조회와는 달리 캐시 적중률이 높고 힙 사용량도 작다).
  *
  * Spring @Cacheable 은 프록시 기반이라 같은 클래스 내부에서 self-invocation 으로 호출하면
- * 캐시가 적용되지 않는다. 그래서 {@link CooDecisionSupportService} 와 별도의 빈으로 분리해
+ * 캐시가 적용되지 않는다. 그래서 {@link OriginDeterminationSupportService} 와 별도의 빈으로 분리해
  * 반드시 프록시를 거쳐 호출되도록 했다.
  */
 @Service
@@ -25,26 +25,26 @@ public class CooDecisionReferenceDataService extends GeneralService {
 
 	@Cacheable(cacheNames = "bufferOptionValue", key = "#companyCode")
 	public String getBufferOptionValue(String companyCode) {
-		return sqlSession.getMapper(CooDecisionSupportDao.class).selectBufferOptionValue(companyCode);
+		return sqlSession.getMapper(OriginDeterminationSupportDao.class).selectBufferOptionValue(companyCode);
 	}
 
 	@Cacheable(cacheNames = "companyBuffer", key = "#companyCode")
 	public BufferRates getCompanyBuffer(String companyCode) {
-		return sqlSession.getMapper(CooDecisionSupportDao.class).selectCompanyBuffer(companyCode);
+		return sqlSession.getMapper(OriginDeterminationSupportDao.class).selectCompanyBuffer(companyCode);
 	}
 
 	@Cacheable(cacheNames = "divisionBuffer", key = "#companyCode + ':' + #divisionCode")
 	public BufferRates getDivisionBuffer(String companyCode, String divisionCode) {
-		return sqlSession.getMapper(CooDecisionSupportDao.class).selectDivisionBuffer(companyCode, divisionCode);
+		return sqlSession.getMapper(OriginDeterminationSupportDao.class).selectDivisionBuffer(companyCode, divisionCode);
 	}
 
 	@Cacheable(cacheNames = "ftaBuffer", key = "#ftaCode")
 	public BufferRates getFtaBuffer(String ftaCode) {
-		return sqlSession.getMapper(CooDecisionSupportDao.class).selectFtaBuffer(ftaCode);
+		return sqlSession.getMapper(OriginDeterminationSupportDao.class).selectFtaBuffer(ftaCode);
 	}
 
 	@Cacheable(cacheNames = "ftaApplyNations", key = "#ftaCode")
 	public List<String> getFtaApplyNations(String ftaCode) {
-		return sqlSession.getMapper(CooDecisionSupportDao.class).selectFtaApplyNations(ftaCode);
+		return sqlSession.getMapper(OriginDeterminationSupportDao.class).selectFtaApplyNations(ftaCode);
 	}
 }

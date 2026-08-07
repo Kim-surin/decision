@@ -5,14 +5,14 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import com.kpmg.kdb.web.coodecision.dto.BufferRates;
-import com.kpmg.kdb.web.coodecision.dto.FcrResultRecord;
+import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
 
 /**
  * PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 두 패키지에 완전 동일하게 존재하는
  * 공용 헬퍼 프로시저(GET_BUFFER, GET_MP_ITEM, GET_RCEP_NATION, GET_RCEP_RVC_NATION,
  * INSERT_FRD_PROCESS, UPDATE_FRM_PROCEDURE) 가 사용하는 조회/저장을 담당한다.
  */
-public interface CooDecisionSupportDao {
+public interface OriginDeterminationSupportDao {
 
 	/** COMPANY_OPTION.OPTION_CODE = 'BF' 값 조회 (GET_BUFFER 1단계) */
 	String selectBufferOptionValue(@Param("companyCode") String companyCode);
@@ -39,15 +39,15 @@ public interface CooDecisionSupportDao {
 	Long selectNextFcrResultSeq();
 
 	/** INSERT_FRD_PROCESS 의 FCR_RESULT INSERT */
-	void insertFcrResult(FcrResultRecord record);
+	void insertFcrResult(OriginDeterminationResult record);
 
 	/** UPDATE_FRM_PROCEDURE 1단계: 역내산(COMPANY_COO_YN='Y') 판정결과 조회 */
-	List<FcrResultRecord> selectOwnCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
+	List<OriginDeterminationResult> selectOwnCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
 			@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode);
 
 	/** UPDATE_FRM_PROCEDURE 2단계: 역외산만 존재(COMPANY_COO_YN='N', STATUS='N') 판정결과 조회 */
-	List<FcrResultRecord> selectNonCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
+	List<OriginDeterminationResult> selectNonCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
 			@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode);
 

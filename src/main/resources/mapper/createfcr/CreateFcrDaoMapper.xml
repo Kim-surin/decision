@@ -366,7 +366,7 @@
 		<foreach collection="rows" item="row" separator=",">
 			(#{row.itemCode}, #{row.ftaCode}, #{row.salesNo}, #{row.salesSeq}, #{row.productCode},
 			 #{row.divisionCode}, #{row.companyCode}, #{row.hsCode}, #{row.requirementQty}, #{row.inputAmount},
-			 #{row.inareaQty}, #{row.inareaAmount}, #{row.outareaQty}, #{row.outareaAmount}, #{row.hsCodeYn},
+			 #{row.originatingQty}, #{row.originatingAmount}, #{row.nonOriginatingQty}, #{row.nonOriginatingAmount}, #{row.hsCodeYn},
 			 #{row.priceNote}, CURRENT_TIMESTAMP, 'CREATE_FCR', CURRENT_TIMESTAMP, 'CREATE_FCR')
 		</foreach>
 	</insert>

@@ -6,7 +6,7 @@ import java.math.BigDecimal;
  * 레거시 PKG99_COO_DECISION.COO_DECISION 의 커서 변수 FM_LIST(CURSOR C_FCR_MST) 한 행.
  * 판정 대상이 되는 FCR_MST(+SALES_MST/FTA_MASTER 등 조인) 한 건을 표현한다.
  */
-public class FcrMasterLine {
+public class OriginDeterminationTarget {
 
 	private String ftaCode;
 	private String salesNo;
@@ -28,8 +28,8 @@ public class FcrMasterLine {
 	private BigDecimal netCostAmount;
 	private BigDecimal exworkAmount;
 	private BigDecimal fobAmount;
-	private BigDecimal inareaAmount;
-	private BigDecimal outareaAmount;
+	private BigDecimal originatingAmount;
+	private BigDecimal nonOriginatingAmount;
 	private String spCooYn;
 	private String woCooYn;
 	/** 가목/나목 처리를 위한 HS 세부분류. NULL 이면 '1' */
@@ -180,20 +180,20 @@ public class FcrMasterLine {
 		this.fobAmount = fobAmount;
 	}
 
-	public BigDecimal getInareaAmount() {
-		return inareaAmount;
+	public BigDecimal getOriginatingAmount() {
+		return originatingAmount;
 	}
 
-	public void setInareaAmount(BigDecimal inareaAmount) {
-		this.inareaAmount = inareaAmount;
+	public void setOriginatingAmount(BigDecimal originatingAmount) {
+		this.originatingAmount = originatingAmount;
 	}
 
-	public BigDecimal getOutareaAmount() {
-		return outareaAmount;
+	public BigDecimal getNonOriginatingAmount() {
+		return nonOriginatingAmount;
 	}
 
-	public void setOutareaAmount(BigDecimal outareaAmount) {
-		this.outareaAmount = outareaAmount;
+	public void setNonOriginatingAmount(BigDecimal nonOriginatingAmount) {
+		this.nonOriginatingAmount = nonOriginatingAmount;
 	}
 
 	public String getSpCooYn() {
@@ -230,8 +230,8 @@ public class FcrMasterLine {
 
 	/** IF I_FM_LIST.INAREA_AMOUNT + I_FM_LIST.OUTAREA_AMOUNT <= 0 */
 	public boolean hasNoMaterialAmount() {
-		BigDecimal in = inareaAmount == null ? BigDecimal.ZERO : inareaAmount;
-		BigDecimal out = outareaAmount == null ? BigDecimal.ZERO : outareaAmount;
+		BigDecimal in = originatingAmount == null ? BigDecimal.ZERO : originatingAmount;
+		BigDecimal out = nonOriginatingAmount == null ? BigDecimal.ZERO : nonOriginatingAmount;
 		return in.add(out).signum() <= 0;
 	}
 }

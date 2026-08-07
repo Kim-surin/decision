@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.web.coodecision.CooDecisionContext;
-import com.kpmg.kdb.web.coodecision.DecisionMode;
+import com.kpmg.kdb.web.coodecision.OriginDeterminationContext;
+import com.kpmg.kdb.web.coodecision.OriginDeterminationMode;
 import com.kpmg.kdb.web.coodecision.ExclusionRuleDecisionService;
-import com.kpmg.kdb.web.coodecision.dto.FcrInfoRow;
-import com.kpmg.kdb.web.coodecision.dto.FcrMasterLine;
-import com.kpmg.kdb.web.coodecision.dto.FtaRule;
+import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
+import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 import com.kpmg.kdb.web.originbasis.HsCodeService;
 import com.kpmg.kdb.web.originbasis.IncotermsRateService;
 import com.kpmg.kdb.web.originbasis.ItemOriginRateService;
@@ -83,16 +83,16 @@ public class TestController extends GenericController {
 							new ItemOriginRateCriteria("FRT100", "FRT101", "091853X310", "PKRCO", "20260430")),
 					"1"));
 
-			// Layer2 서비스(CooDecisionSupportService 등) 테스트용 컨텍스트 준비 확인.
-			// PRODUCT_CODE=091101R050 의 BOM 자재 14건을 CooDecisionContext.fcrInfoRows 에 채운다.
-			CooDecisionContext sampleContext = buildSampleContext();
-			cases.add(runCase("CooDecisionContext.fcrInfoRows 준비",
-					() -> sampleContext.getFcrInfoRows().size(),
+			// Layer2 서비스(OriginDeterminationSupportService 등) 테스트용 컨텍스트 준비 확인.
+			// PRODUCT_CODE=091101R050 의 BOM 자재 14건을 OriginDeterminationContext.fcrInfoRows 에 채운다.
+			OriginDeterminationContext sampleContext = buildSampleContext();
+			cases.add(runCase("OriginDeterminationContext.fcrInfoRows 준비",
+					() -> sampleContext.getMaterialOriginRows().size(),
 					"14"));
 
 			// 동일 매출건(SALES_SEQ=65)에 대해 FTA_CODE 25건(C_FCR_MST 커서 결과에 해당)을 준비하고,
 			// fcrInfoRows 와 FR_LIST 샘플(FTA_CODE=PKRAP) 범위를 맞추기 위해 그중 PKRAP 건을 ctx.fmList 로 설정한다.
-			cases.add(runCase("CooDecisionContext.fmList 준비",
+			cases.add(runCase("OriginDeterminationContext.fmList 준비",
 					() -> sampleContext.getFmList().getFtaCode() + ":" + sampleContext.getFmList().getSalesSeq(),
 					"PKRAP:65"));
 
@@ -100,8 +100,8 @@ public class TestController extends GenericController {
 			// fcrInfoRows/fmList/FR_LIST 모두 FTA_CODE='PKRAP' 로 통일된 샘플이라 원본의
 			// "FM_LIST.FTA_CODE 로 FR_LIST 를 조회" 전제가 성립한다. 다만 exclusionYn 의
 			// 정답값(ground truth)은 아직 검증하지 않았으므로 배선 확인용 정보성 케이스로 둔다.
-			FtaRule sampleRule = buildSampleFtaRule();
-			exclusionRuleDecisionService.decide(sampleContext, sampleRule, DecisionMode.RVC_CTC);
+			OriginCriteria sampleRule = buildSampleOriginCriteria();
+			exclusionRuleDecisionService.decide(sampleContext, sampleRule, OriginDeterminationMode.RVC_CTC);
 			TestCase exclusionCase = new TestCase();
 			exclusionCase.setName("ExclusionRuleDecisionService.decide (FTA_CODE=PKRAP, 배선 확인용, 기대값 미검증)");
 			exclusionCase.setActual("exclusionYn=" + sampleContext.getFrdRec().getExclusionYn()
@@ -140,14 +140,14 @@ public class TestController extends GenericController {
 	}
 
 	/**
-	 * Layer2 테스트용 CooDecisionContext. PRODUCT_CODE=091101R050(FTA_CODE=PKRAP) 의
+	 * Layer2 테스트용 OriginDeterminationContext. PRODUCT_CODE=091101R050(FTA_CODE=PKRAP) 의
 	 * BOM 자재 스냅샷을 fcrInfoRows 에, 동일 매출건의 FTA_CODE=PKRAP 판정대상 라인을 fmList 에 채워서 반환한다.
 	 * fmList 는 C_FCR_MST 커서가 FTA_CODE 별로 한 행씩 내려주는 것과 동일하게 25건 중 PKRAP 1건만 선택한다
 	 * (fcrInfoRows 샘플과 FR_LIST 샘플도 전부 PKRAP 기준으로 맞춰뒀다).
 	 */
-	private CooDecisionContext buildSampleContext() {
-		CooDecisionContext ctx = new CooDecisionContext();
-		ctx.setFcrInfoRows(buildSampleFcrInfoRows());
+	private OriginDeterminationContext buildSampleContext() {
+		OriginDeterminationContext ctx = new OriginDeterminationContext();
+		ctx.setMaterialOriginRows(buildSampleMaterialOriginRows());
 		ctx.setFmList(buildSampleFmList().stream()
 				.filter(fm -> "PKRAP".equals(fm.getFtaCode()))
 				.findFirst()
@@ -159,9 +159,9 @@ public class TestController extends GenericController {
 	 * 사용자가 제공한 FCR_MST 스냅샷(SALES_SEQ=65, FTA_CODE 25건, 탭 구분 텍스트 기준)을 그대로 옮긴 것.
 	 * STANDARD/WEIGHT/BIZ_PROJECT_CODE 는 전 행 공란(null).
 	 */
-	private List<FcrMasterLine> buildSampleFmList() {
-		List<FcrMasterLine> list = new ArrayList<>();
-		// ftaCode, inkotermsType, deMinimisInkotermsType, inareaAmount, outareaAmount
+	private List<OriginDeterminationTarget> buildSampleFmList() {
+		List<OriginDeterminationTarget> list = new ArrayList<>();
+		// ftaCode, inkotermsType, deMinimisInkotermsType, originatingAmount, nonOriginatingAmount
 		list.add(fcrMasterLine("PKRPH", "FOB", "FOB", "3713.39", "518.6647"));
 		list.add(fcrMasterLine("PKRIL", "EXW", "EXW", "3713.39", "518.6647"));
 		list.add(fcrMasterLine("PKRKH", "FOB", "FOB", "3713.39", "518.6647"));
@@ -190,9 +190,9 @@ public class TestController extends GenericController {
 		return list;
 	}
 
-	private FcrMasterLine fcrMasterLine(String ftaCode, String inkotermsType, String deMinimisInkotermsType,
-			String inareaAmount, String outareaAmount) {
-		FcrMasterLine fm = new FcrMasterLine();
+	private OriginDeterminationTarget fcrMasterLine(String ftaCode, String inkotermsType, String deMinimisInkotermsType,
+			String originatingAmount, String nonOriginatingAmount) {
+		OriginDeterminationTarget fm = new OriginDeterminationTarget();
 		fm.setFtaCode(ftaCode);
 		fm.setSalesNo("1018116406FRT101202604");
 		fm.setSalesSeq(65);
@@ -208,8 +208,8 @@ public class TestController extends GenericController {
 		fm.setNetCostAmount(toBigDecimal("0"));
 		fm.setExworkAmount(toBigDecimal("4717"));
 		fm.setFobAmount(toBigDecimal("4717"));
-		fm.setInareaAmount(toBigDecimal(inareaAmount));
-		fm.setOutareaAmount(toBigDecimal(outareaAmount));
+		fm.setOriginatingAmount(toBigDecimal(originatingAmount));
+		fm.setNonOriginatingAmount(toBigDecimal(nonOriginatingAmount));
 		fm.setSpCooYn("N");
 		fm.setWoCooYn("N");
 		fm.setHsCodeSubCategory("1");
@@ -222,9 +222,9 @@ public class TestController extends GenericController {
 	 * WEIGHT/STANDARD 는 전 행 공란(null). EXCLUSION_RULE1~14 는 전 행 'N'(미적용)이라
 	 * 기본값(false) 그대로 두었고, COO_NATION 도 전 행 공란이라 null 로 두었다.
 	 */
-	private List<FcrInfoRow> buildSampleFcrInfoRows() {
-		List<FcrInfoRow> rows = new ArrayList<>();
-		// itemCode, hsCode, weight, requirementQty, inputAmount, inareaQty, inareaAmount, outareaQty, outareaAmount
+	private List<MaterialOriginRow> buildSampleMaterialOriginRows() {
+		List<MaterialOriginRow> rows = new ArrayList<>();
+		// itemCode, hsCode, weight, requirementQty, inputAmount, originatingQty, originatingAmount, nonOriginatingQty, nonOriginatingAmount
 		rows.add(fcrInfoRow("091271R050", "391910", null, "1", "40", "0", "0", "1", "40"));
 		rows.add(fcrInfoRow("091853X310", "731829", null, "1", "468", "1", "468", "0", "0"));
 		rows.add(fcrInfoRow("091272C001", "391910", null, "1", "29", "1", "29", "0", "0"));
@@ -242,9 +242,9 @@ public class TestController extends GenericController {
 		return rows;
 	}
 
-	private FcrInfoRow fcrInfoRow(String itemCode, String hsCode, String weight, String requirementQty,
-			String inputAmount, String inareaQty, String inareaAmount, String outareaQty, String outareaAmount) {
-		FcrInfoRow row = new FcrInfoRow();
+	private MaterialOriginRow fcrInfoRow(String itemCode, String hsCode, String weight, String requirementQty,
+			String inputAmount, String originatingQty, String originatingAmount, String nonOriginatingQty, String nonOriginatingAmount) {
+		MaterialOriginRow row = new MaterialOriginRow();
 		row.setFtaCode("PKRAP");
 		row.setDivisionCode("FRT101");
 		row.setCompanyCode("FRT100");
@@ -255,10 +255,10 @@ public class TestController extends GenericController {
 		row.setWeight(toBigDecimal(weight));
 		row.setRequirementQty(toBigDecimal(requirementQty));
 		row.setInputAmount(toBigDecimal(inputAmount));
-		row.setInareaQty(toBigDecimal(inareaQty));
-		row.setInareaAmount(toBigDecimal(inareaAmount));
-		row.setOutareaQty(toBigDecimal(outareaQty));
-		row.setOutareaAmount(toBigDecimal(outareaAmount));
+		row.setOriginatingQty(toBigDecimal(originatingQty));
+		row.setOriginatingAmount(toBigDecimal(originatingAmount));
+		row.setNonOriginatingQty(toBigDecimal(nonOriginatingQty));
+		row.setNonOriginatingAmount(toBigDecimal(nonOriginatingAmount));
 		return row;
 	}
 
@@ -270,8 +270,8 @@ public class TestController extends GenericController {
 	 * 사용자가 FTA_RULE 에서 직접 조회해 제공한 FR_LIST 1건(RULE_ID=4168, FTA_CODE=PKRAP).
 	 * DE_MINIMIS_UNIT/DE_MINIMIS_RATE 는 원본 데이터가 공란이라 null 로 둔다.
 	 */
-	private FtaRule buildSampleFtaRule() {
-		FtaRule fr = new FtaRule();
+	private OriginCriteria buildSampleOriginCriteria() {
+		OriginCriteria fr = new OriginCriteria();
 		fr.setRuleId("4168");
 		fr.setFtaCode("PKRAP");
 		fr.setHsCode("8425");

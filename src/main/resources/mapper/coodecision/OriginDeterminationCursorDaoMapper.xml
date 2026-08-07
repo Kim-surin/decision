@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.coodecision.CooDecisionCursorDao">
+<mapper namespace="com.kpmg.kdb.web.coodecision.OriginDeterminationCursorDao">
 
 	<!-- ===================== COO_DECISION 초기화 ===================== -->
 
@@ -13,7 +13,7 @@
 
 	<!-- ===================== CURSOR C_FCR_MST ===================== -->
 
-	<select id="selectFcrMasterLines" resultType="com.kpmg.kdb.web.coodecision.dto.FcrMasterLine">
+	<select id="selectOriginDeterminationTargets" resultType="com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget">
 		SELECT FTAFM.FTA_CODE                                                    AS ftaCode
 		      ,FTAFM.SALES_NO                                                    AS salesNo
 		      ,FTAFM.SALES_SEQ                                                   AS salesSeq
@@ -32,8 +32,8 @@
 		      ,FTAFM.NET_COST_AMOUNT                                             AS netCostAmount
 		      ,FTAFM.EXWORK_AMOUNT                                               AS exworkAmount
 		      ,FTAFM.FOB_AMOUNT                                                  AS fobAmount
-		      ,FTAFM.INAREA_AMOUNT                                               AS inareaAmount
-		      ,FTAFM.OUTAREA_AMOUNT                                              AS outareaAmount
+		      ,FTAFM.INAREA_AMOUNT                                               AS originatingAmount
+		      ,FTAFM.OUTAREA_AMOUNT                                              AS nonOriginatingAmount
 		      ,FTAFM.SP_COO_YN                                                   AS spCooYn
 		      ,FTAFM.WO_COO_YN                                                   AS woCooYn
 		      ,COALESCE(IHSC.HS_CODE_SUB_CATEGORY, '1')                          AS hsCodeSubCategory
@@ -121,7 +121,7 @@
 
 	<!-- ===================== FCR_INFO_TEMP 대체 (FCR_DTL 조회) ===================== -->
 
-	<select id="selectFcrInfoRows" resultType="com.kpmg.kdb.web.coodecision.dto.FcrInfoRow">
+	<select id="selectMaterialOriginRows" resultType="com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow">
 		SELECT FI.FTA_CODE       AS ftaCode
 		      ,FI.DIVISION_CODE  AS divisionCode
 		      ,FI.COMPANY_CODE   AS companyCode
@@ -133,10 +133,10 @@
 		      ,FI.WEIGHT         AS weight
 		      ,FI.REQUIREMENT_QTY AS requirementQty
 		      ,FI.INPUT_AMOUNT   AS inputAmount
-		      ,FI.INAREA_QTY     AS inareaQty
-		      ,FI.INAREA_AMOUNT  AS inareaAmount
-		      ,FI.OUTAREA_QTY    AS outareaQty
-		      ,FI.OUTAREA_AMOUNT AS outareaAmount
+		      ,FI.INAREA_QTY     AS originatingQty
+		      ,FI.INAREA_AMOUNT  AS originatingAmount
+		      ,FI.OUTAREA_QTY    AS nonOriginatingQty
+		      ,FI.OUTAREA_AMOUNT AS nonOriginatingAmount
 		FROM   FCR_DTL FI
 		WHERE  FI.FTA_CODE = #{ftaCode}
 		AND    FI.DIVISION_CODE = #{divisionCode}
@@ -147,7 +147,7 @@
 
 	<!-- ===================== CURSOR C_FTA_RULE ===================== -->
 
-	<select id="selectApplicableFtaRules" resultType="com.kpmg.kdb.web.coodecision.dto.FtaRule">
+	<select id="selectApplicableOriginCriteria" resultType="com.kpmg.kdb.web.coodecision.dto.OriginCriteria">
 		SELECT RULE_ID                                            AS ruleId
 		      ,FTA_CODE                                           AS ftaCode
 		      ,HS_CODE                                            AS hsCode

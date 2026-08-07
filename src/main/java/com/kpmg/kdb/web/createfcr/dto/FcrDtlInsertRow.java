@@ -15,10 +15,10 @@ public class FcrDtlInsertRow {
 	private String hsCode;
 	private BigDecimal requirementQty;
 	private BigDecimal inputAmount;
-	private BigDecimal inareaQty;
-	private BigDecimal inareaAmount;
-	private BigDecimal outareaQty;
-	private BigDecimal outareaAmount;
+	private BigDecimal originatingQty;
+	private BigDecimal originatingAmount;
+	private BigDecimal nonOriginatingQty;
+	private BigDecimal nonOriginatingAmount;
 	private String hsCodeYn;
 	/** 3-4(상품/부산물) 행은 원본에 이 컬럼이 없어 항상 null */
 	private String priceNote;
@@ -103,36 +103,36 @@ public class FcrDtlInsertRow {
 		this.inputAmount = inputAmount;
 	}
 
-	public BigDecimal getInareaQty() {
-		return inareaQty;
+	public BigDecimal getOriginatingQty() {
+		return originatingQty;
 	}
 
-	public void setInareaQty(BigDecimal inareaQty) {
-		this.inareaQty = inareaQty;
+	public void setOriginatingQty(BigDecimal originatingQty) {
+		this.originatingQty = originatingQty;
 	}
 
-	public BigDecimal getInareaAmount() {
-		return inareaAmount;
+	public BigDecimal getOriginatingAmount() {
+		return originatingAmount;
 	}
 
-	public void setInareaAmount(BigDecimal inareaAmount) {
-		this.inareaAmount = inareaAmount;
+	public void setOriginatingAmount(BigDecimal originatingAmount) {
+		this.originatingAmount = originatingAmount;
 	}
 
-	public BigDecimal getOutareaQty() {
-		return outareaQty;
+	public BigDecimal getNonOriginatingQty() {
+		return nonOriginatingQty;
 	}
 
-	public void setOutareaQty(BigDecimal outareaQty) {
-		this.outareaQty = outareaQty;
+	public void setNonOriginatingQty(BigDecimal nonOriginatingQty) {
+		this.nonOriginatingQty = nonOriginatingQty;
 	}
 
-	public BigDecimal getOutareaAmount() {
-		return outareaAmount;
+	public BigDecimal getNonOriginatingAmount() {
+		return nonOriginatingAmount;
 	}
 
-	public void setOutareaAmount(BigDecimal outareaAmount) {
-		this.outareaAmount = outareaAmount;
+	public void setNonOriginatingAmount(BigDecimal nonOriginatingAmount) {
+		this.nonOriginatingAmount = nonOriginatingAmount;
 	}
 
 	public String getHsCodeYn() {

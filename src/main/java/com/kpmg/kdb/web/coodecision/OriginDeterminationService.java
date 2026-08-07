@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.coodecision.dto.FcrInfoRow;
-import com.kpmg.kdb.web.coodecision.dto.FcrMasterLine;
-import com.kpmg.kdb.web.coodecision.dto.FcrResultRecord;
-import com.kpmg.kdb.web.coodecision.dto.FtaRule;
+import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
+import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 import com.kpmg.kdb.web.originbasis.ItemNationService;
 import com.kpmg.kdb.web.originbasis.dto.ItemNationCriteria;
 
@@ -21,8 +21,8 @@ import com.kpmg.kdb.web.originbasis.dto.ItemNationCriteria;
  *
  * 매출(SALES_NO) 1건에 대해 판정대상 FTA_CODE 후보(C_FCR_MST, FM_LIST)를 순회하고, 각 후보마다
  * 적용 가능한 룰(C_FTA_RULE, FR_LIST)을 순회하며 예외판정/세번변경기준/부가가치기준 서비스를 호출해
- * 최종 원산지 판정결과를 산출한다. FM_LIST 1건 = {@link CooDecisionContext} 1개(스레드 안전을 위해
- * 매번 새로 생성 — {@link CooDecisionContext} 클래스 주석 참고).
+ * 최종 원산지 판정결과를 산출한다. FM_LIST 1건 = {@link OriginDeterminationContext} 1개(스레드 안전을 위해
+ * 매번 새로 생성 — {@link OriginDeterminationContext} 클래스 주석 참고).
  *
  * RVC_CTC/CTC_ONLY 두 원본 패키지의 COO_DECISION 은 "RVC_CTC 모드에서만 재료비 0원 검사를 수행한다"는
  * 한 가지 차이를 제외하면 완전히 동일한 구조라 이 클래스 하나로 통합했다(그 한 가지 차이는
@@ -32,19 +32,19 @@ import com.kpmg.kdb.web.originbasis.dto.ItemNationCriteria;
  * (FC01_GET_ITEM_NATION 이관)로 위임한다({@link #resolveItemCooNationForRcep} 참고).
  */
 @Service
-public class CooDecisionOrchestratorService extends GeneralService {
+public class OriginDeterminationService extends GeneralService {
 
 	/** APTA 신규 PSR 시행 기준일(V_APTA_STD_YYYYMMDD) */
 	private static final String APTA_STANDARD_DATE = "20180701";
 
 	@Autowired
-	private CooDecisionSupportService supportService;
+	private OriginDeterminationSupportService supportService;
 	@Autowired
 	private ExclusionRuleDecisionService exclusionRuleDecisionService;
 	@Autowired
-	private CooDecisionForCtcService ctcService;
+	private CtcCriteriaDecisionService ctcService;
 	@Autowired
-	private CooDecisionForRvcService rvcService;
+	private RvcCriteriaDecisionService rvcService;
 	@Autowired
 	private ItemNationService itemNationService;
 
@@ -53,15 +53,15 @@ public class CooDecisionOrchestratorService extends GeneralService {
 	 * 원본과 동일하게 최상위에서 모든 예외를 흡수하고 로그만 남긴다(재발생 없음) — 호출자는 매출 1건
 	 * 처리 실패가 배치 전체를 중단시키지 않는다는 것을 전제로 사용할 수 있다.
 	 */
-	public void decide(String companyCode, String salesNo, DecisionMode mode) {
+	public void determineOrigin(String companyCode, String salesNo, OriginDeterminationMode mode) {
 		try {
-			CooDecisionCursorDao dao = sqlSession.getMapper(CooDecisionCursorDao.class);
+			OriginDeterminationCursorDao dao = sqlSession.getMapper(OriginDeterminationCursorDao.class);
 
 			String invoiceDate = dao.selectInvoiceDate(companyCode, salesNo);
 			String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
 
-			List<FcrMasterLine> fmListRows = dao.selectFcrMasterLines(companyCode, salesNo);
-			for (FcrMasterLine fmList : fmListRows) {
+			List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo);
+			for (OriginDeterminationTarget fmList : fmListRows) {
 				decideOneFtaLine(dao, fmList, invoiceDate, newAptaPsrFlag, mode);
 			}
 		} catch (Exception e) {
@@ -69,9 +69,9 @@ public class CooDecisionOrchestratorService extends GeneralService {
 		}
 	}
 
-	private void decideOneFtaLine(CooDecisionCursorDao dao, FcrMasterLine fmList, String invoiceDate,
-			String newAptaPsrFlag, DecisionMode mode) {
-		CooDecisionContext ctx = new CooDecisionContext();
+	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmList, String invoiceDate,
+			String newAptaPsrFlag, OriginDeterminationMode mode) {
+		OriginDeterminationContext ctx = new OriginDeterminationContext();
 		ctx.setFmList(fmList);
 
 		supportService.loadBuffer(ctx, fmList.getCompanyCode(), fmList.getDivisionCode(), fmList.getFtaCode(),
@@ -82,21 +82,21 @@ public class CooDecisionOrchestratorService extends GeneralService {
 				fmList.getCompanyCode());
 
 		// FCR_INFO_TEMP 대체: FM_LIST 1건당 1회만 조회해 메모리에 적재(반복 SQL 제거)
-		ctx.setFcrInfoRows(dao.selectFcrInfoRows(fmList.getFtaCode(), fmList.getDivisionCode(),
+		ctx.setMaterialOriginRows(dao.selectMaterialOriginRows(fmList.getFtaCode(), fmList.getDivisionCode(),
 				fmList.getCompanyCode(), fmList.getSalesNo(), fmList.getSalesSeq(), fmList.getHsCode()));
 
 		if ("PKRRC".equals(fmList.getFtaCode())) {
 			resolveItemCooNationForRcep(ctx, invoiceDate);
 		}
 
-		List<FtaRule> ruleList = dao.selectApplicableFtaRules(fmList.getHsCode(), fmList.getFtaCode(),
+		List<OriginCriteria> ruleList = dao.selectApplicableOriginCriteria(fmList.getHsCode(), fmList.getFtaCode(),
 				fmList.getHsCodeSubCategory(), newAptaPsrFlag);
 
 		if (ruleList.isEmpty()) {
 			// 원본 V_RULE_CNT=100 분기: 해당 HS코드에 적용가능한 FTA_RULE 이 전혀 없는 경우
 			insertNoRuleFoundResult(ctx, fmList, mode);
 		} else {
-			for (FtaRule frList : ruleList) {
+			for (OriginCriteria frList : ruleList) {
 				decideOneRule(ctx, fmList, frList, mode);
 			}
 		}
@@ -108,8 +108,8 @@ public class CooDecisionOrchestratorService extends GeneralService {
 		supportService.updateFrm(ctx, mode);
 	}
 
-	private void insertNoRuleFoundResult(CooDecisionContext ctx, FcrMasterLine fmList, DecisionMode mode) {
-		FcrResultRecord rec = ctx.getFrdRec();
+	private void insertNoRuleFoundResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmList, OriginDeterminationMode mode) {
+		OriginDeterminationResult rec = ctx.getFrdRec();
 		rec.setSalesNo(fmList.getSalesNo());
 		rec.setSalesSeq(fmList.getSalesSeq());
 		rec.setFtaCode(fmList.getFtaCode());
@@ -126,8 +126,8 @@ public class CooDecisionOrchestratorService extends GeneralService {
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
-	private void decideOneRule(CooDecisionContext ctx, FcrMasterLine fmList, FtaRule frList, DecisionMode mode) {
-		FcrResultRecord rec = ctx.getFrdRec();
+	private void decideOneRule(OriginDeterminationContext ctx, OriginDeterminationTarget fmList, OriginCriteria frList, OriginDeterminationMode mode) {
+		OriginDeterminationResult rec = ctx.getFrdRec();
 		rec.setSalesNo(fmList.getSalesNo());
 		rec.setSalesSeq(fmList.getSalesSeq());
 		rec.setFtaCode(fmList.getFtaCode());
@@ -142,7 +142,7 @@ public class CooDecisionOrchestratorService extends GeneralService {
 
 		// RVC_CTC 모드에서만 재료비(역내+역외) 금액이 0인 경우를 오류로 처리한다. CTC_ONLY 모드는
 		// 원본에서 이 검사 블록 전체가 주석 처리되어 있어(값기준 계산 불가) 항상 통과시킨다.
-		if (mode == DecisionMode.RVC_CTC && fmList.hasNoMaterialAmount()) {
+		if (mode == OriginDeterminationMode.RVC_CTC && fmList.hasNoMaterialAmount()) {
 			rec.setCompanyCooYn("N");
 			rec.setFtaCooYn("N");
 			rec.setStatus("E");
@@ -205,7 +205,7 @@ public class CooDecisionOrchestratorService extends GeneralService {
 			// 다음 룰(다른 협정의 예외판정)에 이번 결과가 이어붙지 않도록 초기화한다(원본: 매 룰 처리 후
 			// FCR_INFO_TEMP.EXCLUSION_RULE1~14_YN 을 'N' 으로 리셋하는 UPDATE). 메모리 상의 리스트를
 			// 직접 되돌리므로 DB 호출이 필요 없다.
-			for (FcrInfoRow row : ctx.getFcrInfoRows()) {
+			for (MaterialOriginRow row : ctx.getMaterialOriginRows()) {
 				for (int i = 1; i <= 14; i++) {
 					row.setExclusionRule(i, false);
 				}
@@ -214,8 +214,8 @@ public class CooDecisionOrchestratorService extends GeneralService {
 	}
 
 	/** 레거시 COO_DECISION 메인루프 "룰 ID에 대한 최종 판정" 블록 이관 */
-	private void combineFinalResult(CooDecisionContext ctx, FcrMasterLine fmList, FtaRule frList) {
-		FcrResultRecord rec = ctx.getFrdRec();
+	private void combineFinalResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmList, OriginCriteria frList) {
+		OriginDeterminationResult rec = ctx.getFrdRec();
 		boolean loopFlag = false;
 
 		if ("Y".equals(frList.getExclusionRuleYn())) {
@@ -270,8 +270,8 @@ public class CooDecisionOrchestratorService extends GeneralService {
 	}
 
 	/** 레거시 COO_DECISION 메인루프의 RCEP(FTA_CODE='PKRRC') 최대기여국 산정 블록 이관 */
-	private void applyRcepDetermination(CooDecisionContext ctx, FcrMasterLine fmList) {
-		FcrResultRecord rec = ctx.getFrdRec();
+	private void applyRcepDetermination(OriginDeterminationContext ctx, OriginDeterminationTarget fmList) {
+		OriginDeterminationResult rec = ctx.getFrdRec();
 		String rcepNation = supportService.resolveRcepNation(ctx);
 
 		if ("KR".equals(rcepNation)) {
@@ -308,10 +308,10 @@ public class CooDecisionOrchestratorService extends GeneralService {
 	 * 유발할 수 있어(구매원장/원산지확인서 조회), FM_LIST 1건 처리 범위에서만 유효한 로컬 캐시로 동일
 	 * (회사/사업부/품목/HS코드) 조합의 중복 호출을 제거한다.
 	 */
-	private void resolveItemCooNationForRcep(CooDecisionContext ctx, String invoiceDate) {
+	private void resolveItemCooNationForRcep(OriginDeterminationContext ctx, String invoiceDate) {
 		Map<String, String> cache = new HashMap<>();
-		for (FcrInfoRow row : ctx.getFcrInfoRows()) {
-			if (row.getInareaAmount() != null && row.getInareaAmount().signum() > 0) {
+		for (MaterialOriginRow row : ctx.getMaterialOriginRows()) {
+			if (row.getOriginatingAmount() != null && row.getOriginatingAmount().signum() > 0) {
 				String key = String.join("|", nz(row.getCompanyCode()), nz(row.getDivisionCode()),
 						nz(row.getItemCode()), nz(row.getHsCode()));
 				String cooNation = cache.computeIfAbsent(key, k -> itemNationService.resolveItemNation(

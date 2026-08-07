@@ -376,12 +376,12 @@ public class CreateFcrService extends GeneralService {
 		row.setHsCode(first.getHsCode());
 		row.setRequirementQty(requirementQty);
 		row.setInputAmount(requirementQty.multiply(unitPrice));
-		BigDecimal inareaQty = requirementQty.multiply(originRate);
-		row.setInareaQty(inareaQty);
-		row.setInareaAmount(unitPrice.multiply(inareaQty));
-		BigDecimal outareaQty = requirementQty.multiply(BigDecimal.ONE.subtract(originRate));
-		row.setOutareaQty(outareaQty);
-		row.setOutareaAmount(unitPrice.multiply(outareaQty));
+		BigDecimal originatingQty = requirementQty.multiply(originRate);
+		row.setOriginatingQty(originatingQty);
+		row.setOriginatingAmount(unitPrice.multiply(originatingQty));
+		BigDecimal nonOriginatingQty = requirementQty.multiply(BigDecimal.ONE.subtract(originRate));
+		row.setNonOriginatingQty(nonOriginatingQty);
+		row.setNonOriginatingAmount(unitPrice.multiply(nonOriginatingQty));
 		row.setHsCodeYn(maxHsCodeYn);
 		// FC00_STRING_AGG_OR 이관: 원본 소스가 제공되지 않아 "중복 제거 후 콤마로 연결"로 재구현했다
 		// (표시용 참고 문구일 뿐 판정 로직에는 영향이 없어 위험도가 낮다고 판단).
@@ -401,7 +401,7 @@ public class CreateFcrService extends GeneralService {
 					: nvl(resolveOriginRateCached(originRateCache, src.getCompanyCode(), src.getProdDivisionCode(),
 							src.getProductCode(), src.getFtaCode(), invoiceDate));
 			BigDecimal inputAmount = nvl(src.getUnitPrice());
-			boolean fullyInarea = originRate.compareTo(BigDecimal.ONE) == 0;
+			boolean fullyOriginating = originRate.compareTo(BigDecimal.ONE) == 0;
 
 			FcrDtlInsertRow row = new FcrDtlInsertRow();
 			row.setItemCode(src.getProductCode());
@@ -414,10 +414,10 @@ public class CreateFcrService extends GeneralService {
 			row.setHsCode(src.getHsCode());
 			row.setRequirementQty(BigDecimal.ONE);
 			row.setInputAmount(inputAmount);
-			row.setInareaQty(fullyInarea ? BigDecimal.ONE : BigDecimal.ZERO);
-			row.setInareaAmount(row.getInareaQty().multiply(inputAmount));
-			row.setOutareaQty(fullyInarea ? BigDecimal.ZERO : BigDecimal.ONE);
-			row.setOutareaAmount(row.getOutareaQty().multiply(inputAmount));
+			row.setOriginatingQty(fullyOriginating ? BigDecimal.ONE : BigDecimal.ZERO);
+			row.setOriginatingAmount(row.getOriginatingQty().multiply(inputAmount));
+			row.setNonOriginatingQty(fullyOriginating ? BigDecimal.ZERO : BigDecimal.ONE);
+			row.setNonOriginatingAmount(row.getNonOriginatingQty().multiply(inputAmount));
 			row.setHsCodeYn(src.getItemHsCode() == null ? "N" : "Y");
 			row.setPriceNote(null);
 

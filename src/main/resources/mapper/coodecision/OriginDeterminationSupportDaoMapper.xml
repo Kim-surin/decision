@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.coodecision.CooDecisionSupportDao">
+<mapper namespace="com.kpmg.kdb.web.coodecision.OriginDeterminationSupportDao">
 
 	<!-- ===================== GET_BUFFER ===================== -->
 
@@ -78,7 +78,7 @@
 		SELECT FCR_RESULT_SEQ_S.NEXTVAL
 	</select>
 
-	<insert id="insertFcrResult" parameterType="com.kpmg.kdb.web.coodecision.dto.FcrResultRecord">
+	<insert id="insertFcrResult" parameterType="com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult">
 		INSERT INTO FCR_RESULT
 			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
 			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
@@ -119,7 +119,7 @@
 		원본은 ROWNUM = 1 만 사용하고 별도 정렬 기준이 없어(임의의 한 행) 그대로 이관한다.
 		ROWNUM 대신 목록을 반환하고 애플리케이션에서 첫 행만 사용해 동일하게 동작시킨다(DB 이식성).
 	-->
-	<select id="selectOwnCooFcrResult" resultType="com.kpmg.kdb.web.coodecision.dto.FcrResultRecord">
+	<select id="selectOwnCooFcrResult" resultType="com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult">
 		SELECT <include refid="fcrResultColumns"/>
 		FROM   FCR_RESULT FRD
 		WHERE  FRD.SALES_NO = #{salesNo}
@@ -130,7 +130,7 @@
 		AND    FRD.COMPANY_COO_YN = 'Y'
 	</select>
 
-	<select id="selectNonCooFcrResult" resultType="com.kpmg.kdb.web.coodecision.dto.FcrResultRecord">
+	<select id="selectNonCooFcrResult" resultType="com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult">
 		SELECT <include refid="fcrResultColumns"/>
 		FROM   FCR_RESULT FRD
 		WHERE  FRD.SALES_NO = #{salesNo}

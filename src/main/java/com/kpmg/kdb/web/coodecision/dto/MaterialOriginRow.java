@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  * Java 이관에서는 이 테이블을 그대로 옮기지 않고, 매출 1건당 한 번만 조회해 이 DTO 리스트로 메모리에
  * 적재한 뒤 이후의 모든 판정 로직이 스트림 연산으로 처리하도록 설계했다(반복 DB 호출 제거).
  */
-public class FcrInfoRow {
+public class MaterialOriginRow {
 
 	private String ftaCode;
 	private String divisionCode;
@@ -23,10 +23,10 @@ public class FcrInfoRow {
 	private BigDecimal weight;
 	private BigDecimal requirementQty;
 	private BigDecimal inputAmount;
-	private BigDecimal inareaQty;
-	private BigDecimal inareaAmount;
-	private BigDecimal outareaQty;
-	private BigDecimal outareaAmount;
+	private BigDecimal originatingQty;
+	private BigDecimal originatingAmount;
+	private BigDecimal nonOriginatingQty;
+	private BigDecimal nonOriginatingAmount;
 	private String cooNation;
 
 	/** EXCLUSION_RULE1_YN ~ EXCLUSION_RULE14_YN. index 0 = RULE1 */
@@ -120,36 +120,36 @@ public class FcrInfoRow {
 		this.inputAmount = inputAmount;
 	}
 
-	public BigDecimal getInareaQty() {
-		return inareaQty;
+	public BigDecimal getOriginatingQty() {
+		return originatingQty;
 	}
 
-	public void setInareaQty(BigDecimal inareaQty) {
-		this.inareaQty = inareaQty;
+	public void setOriginatingQty(BigDecimal originatingQty) {
+		this.originatingQty = originatingQty;
 	}
 
-	public BigDecimal getInareaAmount() {
-		return inareaAmount;
+	public BigDecimal getOriginatingAmount() {
+		return originatingAmount;
 	}
 
-	public void setInareaAmount(BigDecimal inareaAmount) {
-		this.inareaAmount = inareaAmount;
+	public void setOriginatingAmount(BigDecimal originatingAmount) {
+		this.originatingAmount = originatingAmount;
 	}
 
-	public BigDecimal getOutareaQty() {
-		return outareaQty;
+	public BigDecimal getNonOriginatingQty() {
+		return nonOriginatingQty;
 	}
 
-	public void setOutareaQty(BigDecimal outareaQty) {
-		this.outareaQty = outareaQty;
+	public void setNonOriginatingQty(BigDecimal nonOriginatingQty) {
+		this.nonOriginatingQty = nonOriginatingQty;
 	}
 
-	public BigDecimal getOutareaAmount() {
-		return outareaAmount;
+	public BigDecimal getNonOriginatingAmount() {
+		return nonOriginatingAmount;
 	}
 
-	public void setOutareaAmount(BigDecimal outareaAmount) {
-		this.outareaAmount = outareaAmount;
+	public void setNonOriginatingAmount(BigDecimal nonOriginatingAmount) {
+		this.nonOriginatingAmount = nonOriginatingAmount;
 	}
 
 	public String getCooNation() {

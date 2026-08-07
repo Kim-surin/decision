@@ -8,9 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.kpmg.kdb.web.coodecision.dto.FcrInfoRow;
-import com.kpmg.kdb.web.coodecision.dto.FcrResultRecord;
-import com.kpmg.kdb.web.coodecision.dto.FtaRule;
+import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 
 /**
  * 레거시 COO_DECISION_FOR_CTC(세번변경기준 + 미소기준 판정) 이관.
@@ -19,26 +19,26 @@ import com.kpmg.kdb.web.coodecision.dto.FtaRule;
  * 상당히 달라(미소기준/버퍼 계산 인프라가 CTC_ONLY 에는 아예 없음) 하나의 메서드로 억지로
  * 통합하지 않고 모드별로 분리했다. HS코드 누락 체크만 두 모드에 완전히 동일하게 존재한다.
  *
- * 이 프로시저는 FCR_INFO_TEMP(=CooDecisionContext.fcrInfoRows, 매출 1건당 1회 조회한 값)만
+ * 이 프로시저는 FCR_INFO_TEMP(=OriginDeterminationContext.fcrInfoRows, 매출 1건당 1회 조회한 값)만
  * 읽으므로 DB 접근이 전혀 필요 없다 — 전량 Java 스트림 연산으로 처리한다.
  */
 @Service
-public class CooDecisionForCtcService {
+public class CtcCriteriaDecisionService {
 
-	private static final Logger logger = LoggerFactory.getLogger(CooDecisionForCtcService.class);
+	private static final Logger logger = LoggerFactory.getLogger(CtcCriteriaDecisionService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
-	public void decide(CooDecisionContext ctx, FtaRule frList, DecisionMode mode) {
+	public void decide(OriginDeterminationContext ctx, OriginCriteria frList, OriginDeterminationMode mode) {
 		try {
-			if (hasMissingHsCode(ctx.getFcrInfoRows())) {
-				FcrResultRecord rec = ctx.getFrdRec();
+			if (hasMissingHsCode(ctx.getMaterialOriginRows())) {
+				OriginDeterminationResult rec = ctx.getFrdRec();
 				rec.setStatus("E");
 				rec.setErrorCode("TXT_HSCODE_INCLUDE_MISSING");
 				rec.setErrorMsg("HS 코드 누락 포함");
 				return;
 			}
 
-			if (mode == DecisionMode.CTC_ONLY) {
+			if (mode == OriginDeterminationMode.CTC_ONLY) {
 				decideCtcOnly(ctx, frList);
 			} else {
 				decideRvcCtc(ctx, frList);
@@ -52,35 +52,35 @@ public class CooDecisionForCtcService {
 	}
 
 	/** 레거시 V_NO_HSCODE_CNT 체크. HS_CODE 가 정확히 공백(' ') 하나인 자재가 있는지 확인 */
-	private boolean hasMissingHsCode(List<FcrInfoRow> rows) {
+	private boolean hasMissingHsCode(List<MaterialOriginRow> rows) {
 		return rows.stream().anyMatch(r -> " ".equals(r.getHsCode()));
 	}
 
 	// ===================== RVC_CTC 모드 (PKG99_COO_DECISION) =====================
 
-	private void decideRvcCtc(CooDecisionContext ctx, FtaRule frList) {
-		List<FcrInfoRow> scoped = ctx.getFcrInfoRows().stream().filter(r -> !r.isExclusionRule(7)).toList();
-		List<FcrInfoRow> outareaCandidates = scoped.stream()
-				.filter(r -> positive(r.getOutareaQty()) || positive(r.getOutareaAmount())).toList();
+	private void decideRvcCtc(OriginDeterminationContext ctx, OriginCriteria frList) {
+		List<MaterialOriginRow> scoped = ctx.getMaterialOriginRows().stream().filter(r -> !r.isExclusionRule(7)).toList();
+		List<MaterialOriginRow> nonOriginatingCandidates = scoped.stream()
+				.filter(r -> positive(r.getNonOriginatingQty()) || positive(r.getNonOriginatingAmount())).toList();
 
 		TariffChangeAggregate agg = new TariffChangeAggregate();
-		for (FcrInfoRow r : outareaCandidates) {
+		for (MaterialOriginRow r : nonOriginatingCandidates) {
 			agg.accumulate(r);
 		}
 
-		long totalCount = outareaCandidates.size(); // 원본 OFI.CNT
+		long totalCount = nonOriginatingCandidates.size(); // 원본 OFI.CNT
 		long zeroAmountCnt = scoped.stream().filter(r -> isZero(r.getInputAmount())).count();
-		BigDecimal totalOutareaAmount = scoped.stream().map(FcrInfoRow::getOutareaAmount)
-				.map(CooDecisionForCtcService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
+		BigDecimal totalNonOriginatingAmount = scoped.stream().map(MaterialOriginRow::getNonOriginatingAmount)
+				.map(CtcCriteriaDecisionService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
 		long matchCount = scoped.stream()
-				.filter(r -> positive(r.getOutareaAmount()) && prefixEquals(r.getHsCode(), r.getParentHsCode(), 6))
+				.filter(r -> positive(r.getNonOriginatingAmount()) && prefixEquals(r.getHsCode(), r.getParentHsCode(), 6))
 				.count();
 
 		String ccYn = totalCount == agg.ccCnt ? "Y" : "N";
 		String cthYn = totalCount == agg.cthCnt ? "Y" : "N";
 		String ctshYn = totalCount == agg.ctshCnt ? "Y" : "N";
 
-		FcrResultRecord rec = ctx.getFrdRec();
+		OriginDeterminationResult rec = ctx.getFrdRec();
 
 		if (zeroAmountCnt > 0) {
 			rec.setFtaDeMinimisYn("N");
@@ -134,8 +134,8 @@ public class CooDecisionForCtcService {
 		} else if ("A".equals(unit)) {
 			applyDeMinimisResult(ctx, rec, amountRate, frList);
 		} else if ("B".equals(unit)) {
-			BigDecimal resultRate = totalOutareaAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? HUNDRED
-					: ratio(totalOutareaAmount, ctx.getInkotermsAmount());
+			BigDecimal resultRate = totalNonOriginatingAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? HUNDRED
+					: ratio(totalNonOriginatingAmount, ctx.getInkotermsAmount());
 			rec.setCtcResultRate(resultRate);
 
 			if (frList.getDeMinimisRate() == null) {
@@ -172,7 +172,7 @@ public class CooDecisionForCtcService {
 	 * frList.deMinimisRate 가 NULL 이면 Oracle의 NULL 전파 규칙(NULL 사칙연산/비교는 항상 NULL=거짓)과
 	 * 동일하게 두 결과율을 NULL로, 두 충족여부를 모두 'N'으로 처리한다.
 	 */
-	private void applyDeMinimisResult(CooDecisionContext ctx, FcrResultRecord rec, BigDecimal rate, FtaRule frList) {
+	private void applyDeMinimisResult(OriginDeterminationContext ctx, OriginDeterminationResult rec, BigDecimal rate, OriginCriteria frList) {
 		rec.setCtcResultRate(rate);
 
 		if (frList.getDeMinimisRate() == null) {
@@ -200,24 +200,24 @@ public class CooDecisionForCtcService {
 		BigDecimal ccAmount = BigDecimal.ZERO, cthAmount = BigDecimal.ZERO, ctshAmount = BigDecimal.ZERO;
 		BigDecimal ccWeight = BigDecimal.ZERO, cthWeight = BigDecimal.ZERO, ctshWeight = BigDecimal.ZERO;
 
-		void accumulate(FcrInfoRow r) {
-			BigDecimal outareaAmount = nvl(r.getOutareaAmount());
-			BigDecimal weightQty = nvl(r.getWeight()).multiply(nvl(r.getOutareaQty()));
+		void accumulate(MaterialOriginRow r) {
+			BigDecimal nonOriginatingAmount = nvl(r.getNonOriginatingAmount());
+			BigDecimal weightQty = nvl(r.getWeight()).multiply(nvl(r.getNonOriginatingQty()));
 
 			if (prefixEquals(r.getHsCode(), r.getParentHsCode(), 2)) {
-				ccAmount = ccAmount.add(outareaAmount);
+				ccAmount = ccAmount.add(nonOriginatingAmount);
 				ccWeight = ccWeight.add(weightQty);
 			} else {
 				ccCnt++;
 			}
 			if (prefixEquals(r.getHsCode(), r.getParentHsCode(), 4)) {
-				cthAmount = cthAmount.add(outareaAmount);
+				cthAmount = cthAmount.add(nonOriginatingAmount);
 				cthWeight = cthWeight.add(weightQty);
 			} else {
 				cthCnt++;
 			}
 			if (prefixEquals(r.getHsCode(), r.getParentHsCode(), 6)) {
-				ctshAmount = ctshAmount.add(outareaAmount);
+				ctshAmount = ctshAmount.add(nonOriginatingAmount);
 				ctshWeight = ctshWeight.add(weightQty);
 			} else {
 				ctshCnt++;
@@ -227,8 +227,8 @@ public class CooDecisionForCtcService {
 
 	// ===================== CTC_ONLY 모드 (PKG99_COO_CTC_DECISION) =====================
 
-	private void decideCtcOnly(CooDecisionContext ctx, FtaRule frList) {
-		List<FcrInfoRow> scoped = ctx.getFcrInfoRows().stream().filter(r -> !r.isExclusionRule(7)).toList();
+	private void decideCtcOnly(OriginDeterminationContext ctx, OriginCriteria frList) {
+		List<MaterialOriginRow> scoped = ctx.getMaterialOriginRows().stream().filter(r -> !r.isExclusionRule(7)).toList();
 
 		// CTC_ONLY 모드는 원본에 OUTAREA_QTY/AMOUNT 필터가 없다(전체 자재 대상)
 		long ccMatch = scoped.stream().filter(r -> prefixEquals(r.getHsCode(), r.getParentHsCode(), 2)).count();
@@ -239,7 +239,7 @@ public class CooDecisionForCtcService {
 		String cthYn = cthMatch > 0 ? "N" : "Y";
 		String ctshYn = ctshMatch > 0 ? "N" : "Y";
 
-		FcrResultRecord rec = ctx.getFrdRec();
+		OriginDeterminationResult rec = ctx.getFrdRec();
 		String cthRule = frList.getCthRule();
 		if ("CTSH".equals(cthRule)) {
 			rec.setCtcYn(ctshYn);
