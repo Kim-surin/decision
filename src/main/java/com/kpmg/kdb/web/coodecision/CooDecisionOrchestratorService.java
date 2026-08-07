@@ -1,7 +1,9 @@
 package com.kpmg.kdb.web.coodecision;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,6 +13,8 @@ import com.kpmg.kdb.web.coodecision.dto.FcrInfoRow;
 import com.kpmg.kdb.web.coodecision.dto.FcrMasterLine;
 import com.kpmg.kdb.web.coodecision.dto.FcrResultRecord;
 import com.kpmg.kdb.web.coodecision.dto.FtaRule;
+import com.kpmg.kdb.web.originbasis.ItemNationService;
+import com.kpmg.kdb.web.originbasis.dto.ItemNationCriteria;
 
 /**
  * 레거시 PKG99_COO_DECISION.COO_DECISION / PKG99_COO_CTC_DECISION.COO_DECISION 메인 프로시저 이관.
@@ -24,10 +28,8 @@ import com.kpmg.kdb.web.coodecision.dto.FtaRule;
  * 한 가지 차이를 제외하면 완전히 동일한 구조라 이 클래스 하나로 통합했다(그 한 가지 차이는
  * {@link #decideOneRule} 의 재료비 검사 분기에서 mode 로 처리).
  *
- * <p><b>이관되지 않은 부분:</b> FTA_CODE='PKRRC'(RCEP) 전용 자재 원산지(COO_NATION) 산정에 사용되는
- * 레거시 FC01_GET_ITEM_NATION 함수는 이번 이관 대상 PL/SQL 소스 목록(decision sql 폴더)에 포함되어
- * 있지 않아 실제 로직을 옮기지 못했다({@link #resolveItemCooNationForRcep} 참고). 이 값이 채워지지
- * 않으면 RCEP 판정이 부정확할 수 있으므로, 운영 반영 전 원본 함수 소스를 확보해 별도로 이관해야 한다.
+ * <p>FTA_CODE='PKRRC'(RCEP) 전용 자재 원산지(COO_NATION) 산정은 {@link ItemNationService}
+ * (FC01_GET_ITEM_NATION 이관)로 위임한다({@link #resolveItemCooNationForRcep} 참고).
  */
 @Service
 public class CooDecisionOrchestratorService extends GeneralService {
@@ -43,6 +45,8 @@ public class CooDecisionOrchestratorService extends GeneralService {
 	private CooDecisionForCtcService ctcService;
 	@Autowired
 	private CooDecisionForRvcService rvcService;
+	@Autowired
+	private ItemNationService itemNationService;
 
 	/**
 	 * 레거시 COO_DECISION(P_COMPANY_CODE, P_SALES_NO, O_RETURN_CODE) 이관.
@@ -58,15 +62,15 @@ public class CooDecisionOrchestratorService extends GeneralService {
 
 			List<FcrMasterLine> fmListRows = dao.selectFcrMasterLines(companyCode, salesNo);
 			for (FcrMasterLine fmList : fmListRows) {
-				decideOneFtaLine(dao, fmList, newAptaPsrFlag, mode);
+				decideOneFtaLine(dao, fmList, invoiceDate, newAptaPsrFlag, mode);
 			}
 		} catch (Exception e) {
 			logger.error("COO_DECISION 실패. companyCode={}, salesNo={}", companyCode, salesNo, e);
 		}
 	}
 
-	private void decideOneFtaLine(CooDecisionCursorDao dao, FcrMasterLine fmList, String newAptaPsrFlag,
-			DecisionMode mode) {
+	private void decideOneFtaLine(CooDecisionCursorDao dao, FcrMasterLine fmList, String invoiceDate,
+			String newAptaPsrFlag, DecisionMode mode) {
 		CooDecisionContext ctx = new CooDecisionContext();
 		ctx.setFmList(fmList);
 
@@ -82,7 +86,7 @@ public class CooDecisionOrchestratorService extends GeneralService {
 				fmList.getCompanyCode(), fmList.getSalesNo(), fmList.getSalesSeq(), fmList.getHsCode()));
 
 		if ("PKRRC".equals(fmList.getFtaCode())) {
-			resolveItemCooNationForRcep(ctx);
+			resolveItemCooNationForRcep(ctx, invoiceDate);
 		}
 
 		List<FtaRule> ruleList = dao.selectApplicableFtaRules(fmList.getHsCode(), fmList.getFtaCode(),
@@ -299,18 +303,27 @@ public class CooDecisionOrchestratorService extends GeneralService {
 	}
 
 	/**
-	 * FC01_GET_ITEM_NATION 이관 미완료: RCEP(PKRRC) 판정에 필요한 자재별 원산지국가(COO_NATION) 산정
-	 * 함수의 PL/SQL 소스가 이번 이관 대상에 포함되어 있지 않아 실제 로직을 옮기지 못했다. 이 메서드가
-	 * 호출되는 한 INAREA_AMOUNT&gt;0 인 자재의 COO_NATION 은 계속 null 로 남아 이후 GET_RCEP_NATION 등
-	 * RCEP 최대기여국 판정이 부정확할 수 있다 — 운영 반영 전 원본 함수 소스 확보 후 별도 이관 필요.
+	 * 레거시 "IF FM_LIST.FTA_CODE = 'PKRRC' THEN UPDATE FCR_INFO_TEMP SET COO_NATION = FC01_GET_ITEM_NATION(...)
+	 * WHERE ... INAREA_AMOUNT &gt; 0" 이관. {@link ItemNationService} 호출은 자재 1건당 SQL 여러 번을
+	 * 유발할 수 있어(구매원장/원산지확인서 조회), FM_LIST 1건 처리 범위에서만 유효한 로컬 캐시로 동일
+	 * (회사/사업부/품목/HS코드) 조합의 중복 호출을 제거한다.
 	 */
-	private void resolveItemCooNationForRcep(CooDecisionContext ctx) {
-		boolean needsResolution = ctx.getFcrInfoRows().stream()
-				.anyMatch(r -> r.getInareaAmount() != null && r.getInareaAmount().signum() > 0);
-		if (needsResolution) {
-			logger.warn("FC01_GET_ITEM_NATION 미이관으로 PKRRC(RCEP) COO_NATION 산정을 건너뜁니다. salesNo={}, salesSeq={}",
-					ctx.getFmList().getSalesNo(), ctx.getFmList().getSalesSeq());
+	private void resolveItemCooNationForRcep(CooDecisionContext ctx, String invoiceDate) {
+		Map<String, String> cache = new HashMap<>();
+		for (FcrInfoRow row : ctx.getFcrInfoRows()) {
+			if (row.getInareaAmount() != null && row.getInareaAmount().signum() > 0) {
+				String key = String.join("|", nz(row.getCompanyCode()), nz(row.getDivisionCode()),
+						nz(row.getItemCode()), nz(row.getHsCode()));
+				String cooNation = cache.computeIfAbsent(key, k -> itemNationService.resolveItemNation(
+						new ItemNationCriteria(row.getCompanyCode(), row.getDivisionCode(), row.getItemCode(),
+								row.getFtaCode(), row.getHsCode(), invoiceDate)));
+				row.setCooNation(cooNation);
+			}
 		}
+	}
+
+	private static String nz(String value) {
+		return value == null ? "" : value;
 	}
 
 	private static boolean ynOrDefaultY(String value) {

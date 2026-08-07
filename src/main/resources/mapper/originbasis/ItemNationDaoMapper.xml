@@ -1,0 +1,49 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.originbasis.ItemNationDao">
+	<!--
+		레거시 FC01_GET_ITEM_NATION 의 PO_LEDGER/EXT_COO_CERTIFY_MST/EXT_COO_CERTIFY_DTL 조회 이관.
+		ItemOriginRateDaoMapper.xml 의 selectNonCertifiedOriginSummary 와 조인 구조(ECM/ECD/COO_DIVISION_V,
+		DOCUMENT_TYPE/APPLY_TYPE 에 따른 DIVISION_CODE CASE)가 동일하다.
+		원본은 P_ASSETS_TYPE 이 'P'/'H' 일 때만 ECD.HS_CODE 조건을 자기 자신으로 바꿔치기(사실상 조건
+		무력화)하는 분기가 있었지만, 이 함수의 유일한 호출부(COO_DECISION, FTA_CODE='PKRRC')는
+		P_ASSETS_TYPE 을 넘기지 않아(NULL) 항상 ELSE 분기(HS_CODE = 파라미터 값)로 귀결된다. 그 분기만
+		이관하고 P_ASSETS_TYPE 자체는 옮기지 않았다(호출부 조건에서 도달 불가능한 경로 생략).
+		FTA_CODE 는 원본처럼 'PKRRC' 로 하드코딩한다(원본도 파라미터를 쓰지 않고 하드코딩).
+	-->
+	<select id="selectCooNation" resultType="string">
+		SELECT CASE WHEN COUNT(*) > 1 THEN 'TT' ELSE MAX(COO_NATION) END
+		FROM   (SELECT DISTINCT PL.VENDOR_CODE
+		                       ,PL.ITEM_CODE
+		                       ,ECD.COO_NATION
+		        FROM   PO_LEDGER PL
+		        LEFT   OUTER JOIN COO_DIVISION_V D
+		        ON     D.DIVISION_CODE = PL.DIVISION_CODE
+		        AND    D.COMPANY_CODE = PL.COMPANY_CODE
+		        INNER  JOIN EXT_COO_CERTIFY_MST ECM
+		        ON     ECM.COMPANY_CODE = PL.COMPANY_CODE
+		        INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		        ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		        AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		        AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		        AND    ECD.VENDOR_CODE = PL.VENDOR_CODE
+		        AND    ECD.FTA_CODE = 'PKRRC'
+		        AND    ECD.HS_CODE = #{hsCode}
+		        AND    ECD.COO_YN = 'Y'
+		        WHERE  ECM.SUBMIT_STATUS = '4'
+		        AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		        AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		        AND    ECM.DIVISION_CODE = CASE
+		                   WHEN ECM.DOCUMENT_TYPE = 'F' THEN PL.DIVISION_CODE
+		                   WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A' THEN ECM.DIVISION_CODE
+		                   WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M' THEN D.COO_RECEIPT_DIVISION_CODE
+		               END
+		        AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		               OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
+		                   AND PL.SEQ = ECD.WAREHOUSING_SEQ))
+		        AND    ECD.ITEM_CODE = PL.ITEM_CODE
+		        AND    PL.ITEM_CODE = #{itemCode}
+		        AND    PL.COMPANY_CODE = #{companyCode}
+		        AND    PL.WAREHOUSING_DATE BETWEEN #{fromDate} AND #{toDate}) X
+	</select>
+</mapper>
