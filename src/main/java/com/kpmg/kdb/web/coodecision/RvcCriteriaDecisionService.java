@@ -19,7 +19,7 @@ import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
  * 비활성화되어 있고 FTA_RVC_YN/COMPANY_RVC_YN을 무조건 'N'으로 설정하는 스텁만 남아있다
  * (CTC 전용 판정에서는 부가가치기준을 사용하지 않기 때문). 그대로 이관했다.
  *
- * 이 프로시저도 FCR_INFO_TEMP(=OriginDeterminationContext.fcrInfoRows)만 읽으므로 DB 접근이 필요 없다.
+ * 이 프로시저도 FCR_INFO_TEMP(=OriginDeterminationContext.materialOriginRows)만 읽으므로 DB 접근이 필요 없다.
  */
 @Service
 public class RvcCriteriaDecisionService {
@@ -27,7 +27,7 @@ public class RvcCriteriaDecisionService {
 	private static final Logger logger = LoggerFactory.getLogger(RvcCriteriaDecisionService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
-	public void decide(OriginDeterminationContext ctx, OriginCriteria frList, OriginDeterminationMode mode) {
+	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
 		try {
 			if (mode == OriginDeterminationMode.CTC_ONLY) {
 				// CTC 전용 모드는 RVC 판정을 사용하지 않는다(원본 스텁과 동일)
@@ -36,16 +36,16 @@ public class RvcCriteriaDecisionService {
 				rec.setCompanyRvcYn("N");
 				return;
 			}
-			decideRvc(ctx, frList);
+			decideRvc(ctx, frData);
 		} catch (Exception e) {
 			ctx.setErrorCode("RVC ERROR");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			ctx.setReturnCode(-1);
-			logger.error("COO_DECISION_FOR_RVC 실패. ftaCode={}, hsCode={}", frList.getFtaCode(), frList.getHsCode(), e);
+			logger.error("COO_DECISION_FOR_RVC 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
 		}
 	}
 
-	private void decideRvc(OriginDeterminationContext ctx, OriginCriteria frList) {
+	private void decideRvc(OriginDeterminationContext ctx, OriginCriteria frData) {
 		List<MaterialOriginRow> rows = ctx.getMaterialOriginRows();
 
 		BigDecimal originatingAmount = sum(rows, MaterialOriginRow::getOriginatingAmount);
@@ -67,29 +67,29 @@ public class RvcCriteriaDecisionService {
 		// 원본은 이 블록에서 예외가 발생해도 로그만 남기고 조용히 넘어간다(상위 RVC ERROR 처리로
 		// 전파하지 않음) - 판정결과가 부분적으로 미설정된 채로 다음 단계로 넘어갈 수 있다.
 		try {
-			boolean mcRule = positive(frList.getMcRule());
+			boolean mcRule = positive(frData.getMcRule());
 			BigDecimal rvcRate;
 			BigDecimal ftaRvcRate;
 			BigDecimal companyRvcRate;
 
-			if (positive(frList.getBuRule())) {
+			if (positive(frData.getBuRule())) {
 				rvcRate = originatingAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? BigDecimal.ZERO
 						: ratio(originatingAmount, ctx.getInkotermsAmount());
-				ftaRvcRate = frList.getBuRule();
+				ftaRvcRate = frData.getBuRule();
 				companyRvcRate = ftaRvcRate.add(nvl(ctx.getCompanyRvcRate()));
-			} else if (positive(frList.getBdRule())) {
+			} else if (positive(frData.getBdRule())) {
 				rvcRate = nonOriginatingAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? BigDecimal.ZERO
 						: ratio(ctx.getInkotermsAmount().subtract(nonOriginatingAmount), ctx.getInkotermsAmount());
-				ftaRvcRate = frList.getBdRule();
+				ftaRvcRate = frData.getBdRule();
 				companyRvcRate = ftaRvcRate.add(nvl(ctx.getCompanyRvcRate()));
-			} else if (positive(frList.getNcRule())) {
+			} else if (positive(frData.getNcRule())) {
 				rvcRate = ratio(inputAmount.subtract(nonOriginatingAmount), ctx.getNetCostAmount());
-				ftaRvcRate = frList.getNcRule();
+				ftaRvcRate = frData.getNcRule();
 				companyRvcRate = ftaRvcRate.add(nvl(ctx.getCompanyRvcRate()));
 			} else if (mcRule) {
 				rvcRate = nonOriginatingAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? HUNDRED
 						: ratio(nonOriginatingAmount, ctx.getInkotermsAmount());
-				ftaRvcRate = frList.getMcRule();
+				ftaRvcRate = frData.getMcRule();
 				// MC기준은 회사버퍼를 더하지 않고 뺀다
 				companyRvcRate = ftaRvcRate.subtract(nvl(ctx.getCompanyRvcRate()));
 			} else {
@@ -108,8 +108,8 @@ public class RvcCriteriaDecisionService {
 			rec.setCompanyRvcYn(compareBySide(rvcRate, companyRvcRate, mcRule));
 		} catch (Exception e) {
 			logger.warn("COO_DECISION_FOR_RVC 비율 계산 실패(무시하고 계속 진행). "
-					+ "BU={}, BD={}, NC={}, MC={}, 역내금액={}, 역외금액={}, FOB/EX={}", frList.getBuRule(),
-					frList.getBdRule(), frList.getNcRule(), frList.getMcRule(), originatingAmount, nonOriginatingAmount,
+					+ "BU={}, BD={}, NC={}, MC={}, 역내금액={}, 역외금액={}, FOB/EX={}", frData.getBuRule(),
+					frData.getBdRule(), frData.getNcRule(), frData.getMcRule(), originatingAmount, nonOriginatingAmount,
 					ctx.getInkotermsAmount(), e);
 		}
 	}

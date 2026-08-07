@@ -18,15 +18,15 @@ import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
  * 새로 생성해서 사용한다(스레드 안전).
  *
  * FCR_INFO_TEMP(임시테이블)도 더 이상 DB 테이블로 두지 않고, 매출 1건당 한 번만 조회한 뒤
- * fcrInfoRows 리스트로 메모리에 올려 이후의 모든 판정 로직이 스트림으로 처리하도록 했다.
+ * materialOriginRows 리스트로 메모리에 올려 이후의 모든 판정 로직이 스트림으로 처리하도록 했다.
  */
 public class OriginDeterminationContext {
 
 	/** 현재 판정 대상 매출/FTA 라인 (원본 FM_LIST) */
-	private OriginDeterminationTarget fmList;
+	private OriginDeterminationTarget fmData;
 
 	/** FCR_INFO_TEMP 대체: 현재 매출건의 BOM 자재별 원산지/수량/금액 정보 (매출 1건당 1회 조회 후 재사용) */
-	private List<MaterialOriginRow> fcrInfoRows = new ArrayList<>();
+	private List<MaterialOriginRow> materialOriginRows = new ArrayList<>();
 
 	/** 현재 판정 룰 1건 처리 중 누적되는 판정결과 레코드 (원본 VG_FRD_REC) */
 	private OriginDeterminationResult frdRec = new OriginDeterminationResult();
@@ -57,20 +57,20 @@ public class OriginDeterminationContext {
 	/** RCEP 원산지 재료비 최대 기여국 (원본 VG_RCEP_COO_NATION) */
 	private String rcepCooNation;
 
-	public OriginDeterminationTarget getFmList() {
-		return fmList;
+	public OriginDeterminationTarget getFmData() {
+		return fmData;
 	}
 
-	public void setFmList(OriginDeterminationTarget fmList) {
-		this.fmList = fmList;
+	public void setFmData(OriginDeterminationTarget fmData) {
+		this.fmData = fmData;
 	}
 
 	public List<MaterialOriginRow> getMaterialOriginRows() {
-		return fcrInfoRows;
+		return materialOriginRows;
 	}
 
-	public void setMaterialOriginRows(List<MaterialOriginRow> fcrInfoRows) {
-		this.fcrInfoRows = fcrInfoRows;
+	public void setMaterialOriginRows(List<MaterialOriginRow> materialOriginRows) {
+		this.materialOriginRows = materialOriginRows;
 	}
 
 	public OriginDeterminationResult getFrdRec() {

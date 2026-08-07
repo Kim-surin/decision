@@ -84,20 +84,20 @@ public class TestController extends GenericController {
 					"1"));
 
 			// Layer2 서비스(OriginDeterminationSupportService 등) 테스트용 컨텍스트 준비 확인.
-			// PRODUCT_CODE=091101R050 의 BOM 자재 14건을 OriginDeterminationContext.fcrInfoRows 에 채운다.
+			// PRODUCT_CODE=091101R050 의 BOM 자재 14건을 OriginDeterminationContext.materialOriginRows 에 채운다.
 			OriginDeterminationContext sampleContext = buildSampleContext();
-			cases.add(runCase("OriginDeterminationContext.fcrInfoRows 준비",
+			cases.add(runCase("OriginDeterminationContext.materialOriginRows 준비",
 					() -> sampleContext.getMaterialOriginRows().size(),
 					"14"));
 
 			// 동일 매출건(SALES_SEQ=65)에 대해 FTA_CODE 25건(C_FCR_MST 커서 결과에 해당)을 준비하고,
-			// fcrInfoRows 와 FR_LIST 샘플(FTA_CODE=PKRAP) 범위를 맞추기 위해 그중 PKRAP 건을 ctx.fmList 로 설정한다.
-			cases.add(runCase("OriginDeterminationContext.fmList 준비",
-					() -> sampleContext.getFmList().getFtaCode() + ":" + sampleContext.getFmList().getSalesSeq(),
+			// materialOriginRows 와 FR_LIST 샘플(FTA_CODE=PKRAP) 범위를 맞추기 위해 그중 PKRAP 건을 ctx.fmData 로 설정한다.
+			cases.add(runCase("OriginDeterminationContext.fmData 준비",
+					() -> sampleContext.getFmData().getFtaCode() + ":" + sampleContext.getFmData().getSalesSeq(),
 					"PKRAP:65"));
 
 			// ExclusionRuleDecisionService.decide 호출.
-			// fcrInfoRows/fmList/FR_LIST 모두 FTA_CODE='PKRAP' 로 통일된 샘플이라 원본의
+			// materialOriginRows/fmData/FR_LIST 모두 FTA_CODE='PKRAP' 로 통일된 샘플이라 원본의
 			// "FM_LIST.FTA_CODE 로 FR_LIST 를 조회" 전제가 성립한다. 다만 exclusionYn 의
 			// 정답값(ground truth)은 아직 검증하지 않았으므로 배선 확인용 정보성 케이스로 둔다.
 			OriginCriteria sampleRule = buildSampleOriginCriteria();
@@ -141,14 +141,14 @@ public class TestController extends GenericController {
 
 	/**
 	 * Layer2 테스트용 OriginDeterminationContext. PRODUCT_CODE=091101R050(FTA_CODE=PKRAP) 의
-	 * BOM 자재 스냅샷을 fcrInfoRows 에, 동일 매출건의 FTA_CODE=PKRAP 판정대상 라인을 fmList 에 채워서 반환한다.
-	 * fmList 는 C_FCR_MST 커서가 FTA_CODE 별로 한 행씩 내려주는 것과 동일하게 25건 중 PKRAP 1건만 선택한다
-	 * (fcrInfoRows 샘플과 FR_LIST 샘플도 전부 PKRAP 기준으로 맞춰뒀다).
+	 * BOM 자재 스냅샷을 materialOriginRows 에, 동일 매출건의 FTA_CODE=PKRAP 판정대상 라인을 fmData 에 채워서 반환한다.
+	 * fmData 는 C_FCR_MST 커서가 FTA_CODE 별로 한 행씩 내려주는 것과 동일하게 25건 중 PKRAP 1건만 선택한다
+	 * (materialOriginRows 샘플과 FR_LIST 샘플도 전부 PKRAP 기준으로 맞춰뒀다).
 	 */
 	private OriginDeterminationContext buildSampleContext() {
 		OriginDeterminationContext ctx = new OriginDeterminationContext();
 		ctx.setMaterialOriginRows(buildSampleMaterialOriginRows());
-		ctx.setFmList(buildSampleFmList().stream()
+		ctx.setFmData(buildSampleFmList().stream()
 				.filter(fm -> "PKRAP".equals(fm.getFtaCode()))
 				.findFirst()
 				.orElseThrow());

@@ -88,7 +88,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 			throw new IllegalStateException("RCEP 원산지 판정 대상 자재(FCR_INFO_TEMP)가 없습니다.");
 		}
 
-		Set<String> applyNations = new HashSet<>(referenceDataService.getFtaApplyNations(ctx.getFmList().getFtaCode()));
+		Set<String> applyNations = new HashSet<>(referenceDataService.getFtaApplyNations(ctx.getFmData().getFtaCode()));
 
 		long itemCnt = rows.size();
 		long krCnt = rows.stream().filter(MaterialOriginRow::isKoreaOrigin).count();
@@ -126,7 +126,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 
 		ctx.setRcepKrYn(rvcRate.compareTo(RCEP_BD20_THRESHOLD) >= 0 ? "Y" : "N");
 
-		Set<String> applyNations = new HashSet<>(referenceDataService.getFtaApplyNations(ctx.getFmList().getFtaCode()));
+		Set<String> applyNations = new HashSet<>(referenceDataService.getFtaApplyNations(ctx.getFmData().getFtaCode()));
 
 		Map<String, BigDecimal> originatingAmountByNation = rows.stream()
 				.filter(r -> r.getCooNation() != null)
@@ -205,7 +205,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 	 *             원본에서 이 검사 블록 전체가 주석 처리되어 비활성화되어 있었다).
 	 */
 	public void updateFrm(OriginDeterminationContext ctx, OriginDeterminationMode mode) {
-		OriginDeterminationTarget fm = ctx.getFmList();
+		OriginDeterminationTarget fm = ctx.getFmData();
 		// 원본은 이 프로시저 안에서 지역변수 V_FRD_REC(FCR_RESULT%ROWTYPE)를 새로 선언해 사용한다.
 		// (판정 누적용 VG_FRD_REC 과는 별개의 변수)
 		OriginDeterminationResult rec = new OriginDeterminationResult();

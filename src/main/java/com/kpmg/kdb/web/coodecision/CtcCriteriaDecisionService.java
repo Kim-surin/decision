@@ -19,7 +19,7 @@ import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
  * 상당히 달라(미소기준/버퍼 계산 인프라가 CTC_ONLY 에는 아예 없음) 하나의 메서드로 억지로
  * 통합하지 않고 모드별로 분리했다. HS코드 누락 체크만 두 모드에 완전히 동일하게 존재한다.
  *
- * 이 프로시저는 FCR_INFO_TEMP(=OriginDeterminationContext.fcrInfoRows, 매출 1건당 1회 조회한 값)만
+ * 이 프로시저는 FCR_INFO_TEMP(=OriginDeterminationContext.materialOriginRows, 매출 1건당 1회 조회한 값)만
  * 읽으므로 DB 접근이 전혀 필요 없다 — 전량 Java 스트림 연산으로 처리한다.
  */
 @Service
@@ -28,7 +28,7 @@ public class CtcCriteriaDecisionService {
 	private static final Logger logger = LoggerFactory.getLogger(CtcCriteriaDecisionService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
-	public void decide(OriginDeterminationContext ctx, OriginCriteria frList, OriginDeterminationMode mode) {
+	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
 		try {
 			if (hasMissingHsCode(ctx.getMaterialOriginRows())) {
 				OriginDeterminationResult rec = ctx.getFrdRec();
@@ -39,15 +39,15 @@ public class CtcCriteriaDecisionService {
 			}
 
 			if (mode == OriginDeterminationMode.CTC_ONLY) {
-				decideCtcOnly(ctx, frList);
+				decideCtcOnly(ctx, frData);
 			} else {
-				decideRvcCtc(ctx, frList);
+				decideRvcCtc(ctx, frData);
 			}
 		} catch (Exception e) {
 			ctx.setErrorCode("CTC ERROR");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			ctx.setReturnCode(-1);
-			logger.error("COO_DECISION_FOR_CTC 실패. ftaCode={}, hsCode={}", frList.getFtaCode(), frList.getHsCode(), e);
+			logger.error("COO_DECISION_FOR_CTC 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
 		}
 	}
 
@@ -58,7 +58,7 @@ public class CtcCriteriaDecisionService {
 
 	// ===================== RVC_CTC 모드 (PKG99_COO_DECISION) =====================
 
-	private void decideRvcCtc(OriginDeterminationContext ctx, OriginCriteria frList) {
+	private void decideRvcCtc(OriginDeterminationContext ctx, OriginCriteria frData) {
 		List<MaterialOriginRow> scoped = ctx.getMaterialOriginRows().stream().filter(r -> !r.isExclusionRule(7)).toList();
 		List<MaterialOriginRow> nonOriginatingCandidates = scoped.stream()
 				.filter(r -> positive(r.getNonOriginatingQty()) || positive(r.getNonOriginatingAmount())).toList();
@@ -94,7 +94,7 @@ public class CtcCriteriaDecisionService {
 
 		BigDecimal weightRate = null;
 		BigDecimal amountRate = null;
-		String cthRule = frList.getCthRule();
+		String cthRule = frData.getCthRule();
 		if ("CTSH".equals(cthRule)) {
 			rec.setCtcYn(ctshYn);
 			if (positive(ctx.getNetWeight())) {
@@ -120,7 +120,7 @@ public class CtcCriteriaDecisionService {
 			return;
 		}
 
-		String unit = frList.getDeMinimisUnit();
+		String unit = frData.getDeMinimisUnit();
 		if ("W".equals(unit)) {
 			if (!positive(ctx.getNetWeight())) {
 				rec.setFtaDeMinimisYn("N");
@@ -129,24 +129,24 @@ public class CtcCriteriaDecisionService {
 				rec.setErrorCode("DE_MINIMIS01");
 				rec.setErrorMsg("Product Weight Not found!!");
 			} else {
-				applyDeMinimisResult(ctx, rec, weightRate, frList);
+				applyDeMinimisResult(ctx, rec, weightRate, frData);
 			}
 		} else if ("A".equals(unit)) {
-			applyDeMinimisResult(ctx, rec, amountRate, frList);
+			applyDeMinimisResult(ctx, rec, amountRate, frData);
 		} else if ("B".equals(unit)) {
 			BigDecimal resultRate = totalNonOriginatingAmount.compareTo(ctx.getInkotermsAmount()) > 0 ? HUNDRED
 					: ratio(totalNonOriginatingAmount, ctx.getInkotermsAmount());
 			rec.setCtcResultRate(resultRate);
 
-			if (frList.getDeMinimisRate() == null) {
+			if (frData.getDeMinimisRate() == null) {
 				// Oracle NULL 전파 규칙과 동일: 기준율이 없으면 비교가 불가하므로 미충족(N) 처리
 				rec.setCtcFtaResultRate(null);
 				rec.setCtcCompanyResultRate(null);
 				rec.setFtaDeMinimisYn("N");
 				rec.setCompanyDeMinimisYn("N");
 			} else {
-				rec.setCtcFtaResultRate(frList.getDeMinimisRate());
-				rec.setCtcCompanyResultRate(frList.getDeMinimisRate().subtract(nvl(ctx.getCompanyCtcRate())));
+				rec.setCtcFtaResultRate(frData.getDeMinimisRate());
+				rec.setCtcCompanyResultRate(frData.getDeMinimisRate().subtract(nvl(ctx.getCompanyCtcRate())));
 
 				if (matchCount > 0) {
 					rec.setFtaDeMinimisYn("N");
@@ -169,13 +169,13 @@ public class CtcCriteriaDecisionService {
 
 	/**
 	 * DE_MINIMIS_UNIT 'W'/'A' 공용: 협정기준/회사기준 충족여부 판정.
-	 * frList.deMinimisRate 가 NULL 이면 Oracle의 NULL 전파 규칙(NULL 사칙연산/비교는 항상 NULL=거짓)과
+	 * frData.deMinimisRate 가 NULL 이면 Oracle의 NULL 전파 규칙(NULL 사칙연산/비교는 항상 NULL=거짓)과
 	 * 동일하게 두 결과율을 NULL로, 두 충족여부를 모두 'N'으로 처리한다.
 	 */
-	private void applyDeMinimisResult(OriginDeterminationContext ctx, OriginDeterminationResult rec, BigDecimal rate, OriginCriteria frList) {
+	private void applyDeMinimisResult(OriginDeterminationContext ctx, OriginDeterminationResult rec, BigDecimal rate, OriginCriteria frData) {
 		rec.setCtcResultRate(rate);
 
-		if (frList.getDeMinimisRate() == null) {
+		if (frData.getDeMinimisRate() == null) {
 			rec.setCtcFtaResultRate(null);
 			rec.setCtcCompanyResultRate(null);
 			rec.setFtaDeMinimisYn("N");
@@ -183,8 +183,8 @@ public class CtcCriteriaDecisionService {
 			return;
 		}
 
-		rec.setCtcFtaResultRate(frList.getDeMinimisRate());
-		rec.setCtcCompanyResultRate(frList.getDeMinimisRate().subtract(nvl(ctx.getCompanyCtcRate())));
+		rec.setCtcFtaResultRate(frData.getDeMinimisRate());
+		rec.setCtcCompanyResultRate(frData.getDeMinimisRate().subtract(nvl(ctx.getCompanyCtcRate())));
 
 		rec.setFtaDeMinimisYn(rate.compareTo(rec.getCtcFtaResultRate()) <= 0 ? "Y" : "N");
 		if (rate.compareTo(rec.getCtcCompanyResultRate()) <= 0) {
@@ -227,7 +227,7 @@ public class CtcCriteriaDecisionService {
 
 	// ===================== CTC_ONLY 모드 (PKG99_COO_CTC_DECISION) =====================
 
-	private void decideCtcOnly(OriginDeterminationContext ctx, OriginCriteria frList) {
+	private void decideCtcOnly(OriginDeterminationContext ctx, OriginCriteria frData) {
 		List<MaterialOriginRow> scoped = ctx.getMaterialOriginRows().stream().filter(r -> !r.isExclusionRule(7)).toList();
 
 		// CTC_ONLY 모드는 원본에 OUTAREA_QTY/AMOUNT 필터가 없다(전체 자재 대상)
@@ -240,7 +240,7 @@ public class CtcCriteriaDecisionService {
 		String ctshYn = ctshMatch > 0 ? "N" : "Y";
 
 		OriginDeterminationResult rec = ctx.getFrdRec();
-		String cthRule = frList.getCthRule();
+		String cthRule = frData.getCthRule();
 		if ("CTSH".equals(cthRule)) {
 			rec.setCtcYn(ctshYn);
 		} else if ("CTH".equals(cthRule)) {

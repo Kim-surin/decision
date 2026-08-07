@@ -46,21 +46,21 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	private static final java.util.Set<String> CTC_ONLY_FORCED_N_TYPES = java.util.Set.of("4", "6", "13", "15", "16",
 			"17");
 
-	public void decide(OriginDeterminationContext ctx, OriginCriteria frList, OriginDeterminationMode mode) {
+	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
 		try {
 			ctx.setReturnCode(0);
 			ctx.getFrdRec().setExclusionCondition("000");
 
 			ExclusionRuleDao dao = sqlSession.getMapper(ExclusionRuleDao.class);
-			List<ExclusionRuleHeader> headers = dao.selectExclusionRuleHeaders(frList.getFtaCode(), frList.getHsCode(),
-					frList.getHsCodeSubCategory(), frList.getRuleSeq());
+			List<ExclusionRuleHeader> headers = dao.selectExclusionRuleHeaders(frData.getFtaCode(), frData.getHsCode(),
+					frData.getHsCodeSubCategory(), frData.getRuleSeq());
 
 			String exclusionYn = "Y"; // 원본 V_EXCLUSION_YN 초기값, 루프 내에서 재설정되지 않으면 이전 값을 유지
 			String andHold = null; // 원본 V_AND_HOLD_EXCLUSION_YN (NULL == NVL(...,'NO')='NO')
 			String orHold = null; // 원본 V_OR_HOLD_EXCLUSION_YN
 
 			for (ExclusionRuleHeader header : headers) {
-				exclusionYn = evaluateType(ctx, frList, header, mode, dao, exclusionYn);
+				exclusionYn = evaluateType(ctx, frData, header, mode, dao, exclusionYn);
 
 				if ("16".equals(header.getExclusionType()) && !"N16".equals(ctx.getFrdRec().getExclusionCondition())) {
 					ctx.getFrdRec().setExclusionCondition("E16");
@@ -101,11 +101,11 @@ public class ExclusionRuleDecisionService extends GeneralService {
 			ctx.setErrorCode("EXCLUSION99");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			ctx.setReturnCode(-1);
-			logger.error("EXCLUTION_RULE_DECISION 실패. ftaCode={}, hsCode={}", frList.getFtaCode(), frList.getHsCode(), e);
+			logger.error("EXCLUTION_RULE_DECISION 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
 		}
 	}
 
-	private String evaluateType(OriginDeterminationContext ctx, OriginCriteria frList, ExclusionRuleHeader header, OriginDeterminationMode mode,
+	private String evaluateType(OriginDeterminationContext ctx, OriginCriteria frData, ExclusionRuleHeader header, OriginDeterminationMode mode,
 			ExclusionRuleDao dao, String currentValue) {
 		String type = header.getExclusionType();
 
@@ -114,55 +114,55 @@ public class ExclusionRuleDecisionService extends GeneralService {
 		}
 
 		List<MaterialOriginRow> rows = ctx.getMaterialOriginRows();
-		OriginDeterminationTarget fmList = ctx.getFmList();
+		OriginDeterminationTarget fmData = ctx.getFmData();
 
 		switch (type) {
 			case "1":
-				return evaluateType1(rows, frList, header, dao);
+				return evaluateType1(rows, frData, header, dao);
 			case "2":
-				return fmList.getWoCooYn();
+				return fmData.getWoCooYn();
 			case "3":
-				return existsMatch(rows, details(dao, frList, type)) ? "Y" : "N";
+				return existsMatch(rows, details(dao, frData, type)) ? "Y" : "N";
 			case "4":
-				return evaluateType4(ctx, rows, frList, header, dao, type);
+				return evaluateType4(ctx, rows, frData, header, dao, type);
 			case "5":
-				return fmList.getSpCooYn();
+				return fmData.getSpCooYn();
 			case "6":
-				return evaluateType6(rows, frList, dao, type);
+				return evaluateType6(rows, frData, dao, type);
 			case "7":
-				return evaluateType7(rows, frList, dao, type);
+				return evaluateType7(rows, frData, dao, type);
 			case "8":
-				return evaluateNonOriginatingCandidates(rows).stream().noneMatch(r -> matches(r, details(dao, frList, type)))
+				return evaluateNonOriginatingCandidates(rows).stream().noneMatch(r -> matches(r, details(dao, frData, type)))
 						? "Y" : "N";
 			case "9":
 				return "N";
 			case "10":
 				return rows.stream().filter(r -> !"4017001000".equals(r.getHsCode())).count() == 0 ? "Y" : "N";
 			case "11":
-				return existsMatch(rows, details(dao, frList, type)) ? "Y" : "N";
+				return existsMatch(rows, details(dao, frData, type)) ? "Y" : "N";
 			case "12":
 				return "N";
 			case "13":
 				return evaluateType13(rows);
 			case "14":
-				return evaluateType14(rows, frList, dao, type);
+				return evaluateType14(rows, frData, dao, type);
 			case "15":
-				return evaluateType15(rows, frList, header, dao);
+				return evaluateType15(rows, frData, header, dao);
 			case "16":
-				return evaluateType16(ctx, rows, frList, header, dao, type, currentValue);
+				return evaluateType16(ctx, rows, frData, header, dao, type, currentValue);
 			// TYPE 17: 원본에서는 도달 불가능한 코드였던 결함을 수정(클래스 주석 참고).
 			// TYPE 4 / TYPE 16 2단계와 동일한 값기준 비율 판정 패턴을 사용한다.
 			case "17":
-				return nonOriginatingAmountRatioBelowMaxRate(ctx, rows, details(dao, frList, type));
+				return nonOriginatingAmountRatioBelowMaxRate(ctx, rows, details(dao, frData, type));
 			default:
 				return currentValue;
 		}
 	}
 
 	// ===== TYPE 1 =====
-	private String evaluateType1(List<MaterialOriginRow> rows, OriginCriteria frList, ExclusionRuleHeader header,
+	private String evaluateType1(List<MaterialOriginRow> rows, OriginCriteria frData, ExclusionRuleHeader header,
 			ExclusionRuleDao dao) {
-		List<ExclusionRuleDetail> details = details(dao, frList, "1");
+		List<ExclusionRuleDetail> details = details(dao, frData, "1");
 		BigDecimal numerator = BigDecimal.ZERO;
 		BigDecimal denominator = BigDecimal.ZERO;
 		for (MaterialOriginRow r : evaluateNonOriginatingCandidates(rows)) {
@@ -177,9 +177,9 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	}
 
 	// ===== TYPE 4 (TYPE 16/17 2단계와 동일 패턴이라 공용 메서드로 분리) =====
-	private String evaluateType4(OriginDeterminationContext ctx, List<MaterialOriginRow> rows, OriginCriteria frList,
+	private String evaluateType4(OriginDeterminationContext ctx, List<MaterialOriginRow> rows, OriginCriteria frData,
 			ExclusionRuleHeader header, ExclusionRuleDao dao, String type) {
-		List<ExclusionRuleDetail> details = details(dao, frList, type);
+		List<ExclusionRuleDetail> details = details(dao, frData, type);
 		return nonOriginatingAmountRatioBelowMaxRate(ctx, rows, details);
 	}
 
@@ -201,8 +201,8 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	}
 
 	// ===== TYPE 6 =====
-	private String evaluateType6(List<MaterialOriginRow> rows, OriginCriteria frList, ExclusionRuleDao dao, String type) {
-		List<ExclusionRuleDetail> details = details(dao, frList, type);
+	private String evaluateType6(List<MaterialOriginRow> rows, OriginCriteria frData, ExclusionRuleDao dao, String type) {
+		List<ExclusionRuleDetail> details = details(dao, frData, type);
 		BigDecimal sum = evaluateNonOriginatingCandidates(rows).stream()
 				.filter(r -> matches(r, details))
 				.map(MaterialOriginRow::getNonOriginatingQty)
@@ -212,8 +212,8 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	}
 
 	// ===== TYPE 7 =====
-	private String evaluateType7(List<MaterialOriginRow> rows, OriginCriteria frList, ExclusionRuleDao dao, String type) {
-		List<ExclusionRuleDetail> details = details(dao, frList, type);
+	private String evaluateType7(List<MaterialOriginRow> rows, OriginCriteria frData, ExclusionRuleDao dao, String type) {
+		List<ExclusionRuleDetail> details = details(dao, frData, type);
 		for (MaterialOriginRow r : rows) {
 			if (matches(r, details)) {
 				r.setExclusionRule(7, true);
@@ -232,9 +232,9 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	}
 
 	// ===== TYPE 14 (미국 협정 하드코딩 특례) =====
-	private String evaluateType14(List<MaterialOriginRow> rows, OriginCriteria frList, ExclusionRuleDao dao, String type) {
-		List<ExclusionRuleDetail> details = details(dao, frList, type);
-		String ruleHsCode = frList.getHsCode();
+	private String evaluateType14(List<MaterialOriginRow> rows, OriginCriteria frData, ExclusionRuleDao dao, String type) {
+		List<ExclusionRuleDetail> details = details(dao, frData, type);
+		String ruleHsCode = frData.getHsCode();
 
 		long matchCount = rows.stream().filter(r -> matchesType14(r, details, ruleHsCode)).count();
 		long totalCount = rows.size();
@@ -266,9 +266,9 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	// 분자: HS코드가 '39'로 시작하며 예외HS코드 목록에 매칭되는 자재의 weight*nonOriginatingQty 합
 	// 분모: HS코드가 '39'로 시작하는 전체 자재(매칭 여부 무관)의 weight*requirementQty 합
 	// (분자만 매칭 대상으로 제한되고 분모는 39%대 전체가 기준이 되는 것이 원본의 실제 동작이다)
-	private String evaluateType15(List<MaterialOriginRow> rows, OriginCriteria frList, ExclusionRuleHeader header,
+	private String evaluateType15(List<MaterialOriginRow> rows, OriginCriteria frData, ExclusionRuleHeader header,
 			ExclusionRuleDao dao) {
-		List<ExclusionRuleDetail> details = details(dao, frList, "15");
+		List<ExclusionRuleDetail> details = details(dao, frData, "15");
 		List<MaterialOriginRow> hs39Rows = rows.stream().filter(r -> r.getHsCode() != null && r.getHsCode().startsWith("39"))
 				.toList();
 
@@ -288,9 +288,9 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	}
 
 	// ===== TYPE 16 (3단계 복합 판정) =====
-	private String evaluateType16(OriginDeterminationContext ctx, List<MaterialOriginRow> rows, OriginCriteria frList,
+	private String evaluateType16(OriginDeterminationContext ctx, List<MaterialOriginRow> rows, OriginCriteria frData,
 			ExclusionRuleHeader header, ExclusionRuleDao dao, String type, String currentValue) {
-		List<ExclusionRuleDetail> details = details(dao, frList, type);
+		List<ExclusionRuleDetail> details = details(dao, frData, type);
 
 		// 1단계: 특정 HS코드 자재 투입 여부
 		boolean step1 = existsMatch(rows, details);
@@ -305,7 +305,7 @@ public class ExclusionRuleDecisionService extends GeneralService {
 		}
 
 		// 3단계: 세번변경기준(CC/CTH/CTSH)별 미소기준 적용
-		Integer prefixLen = switch (frList.getCthRule() == null ? "" : frList.getCthRule()) {
+		Integer prefixLen = switch (frData.getCthRule() == null ? "" : frData.getCthRule()) {
 			case "CC" -> 2;
 			case "CTH" -> 4;
 			case "CTSH" -> 6;
@@ -326,14 +326,14 @@ public class ExclusionRuleDecisionService extends GeneralService {
 			}
 		}
 		BigDecimal ratio = numerator.divide(ctx.getInkotermsAmount(), 10, RoundingMode.HALF_UP).multiply(HUNDRED);
-		return ratio.compareTo(nvl(frList.getDeMinimisRate())) < 0 ? "Y" : "N";
+		return ratio.compareTo(nvl(frData.getDeMinimisRate())) < 0 ? "Y" : "N";
 	}
 
 	// ===== 공통 헬퍼 =====
 
-	private List<ExclusionRuleDetail> details(ExclusionRuleDao dao, OriginCriteria frList, String exclusionType) {
-		return dao.selectExclusionRuleDetails(frList.getFtaCode(), frList.getHsCode(), frList.getHsCodeSubCategory(),
-				frList.getRuleSeq(), exclusionType);
+	private List<ExclusionRuleDetail> details(ExclusionRuleDao dao, OriginCriteria frData, String exclusionType) {
+		return dao.selectExclusionRuleDetails(frData.getFtaCode(), frData.getHsCode(), frData.getHsCodeSubCategory(),
+				frData.getRuleSeq(), exclusionType);
 	}
 
 	private static List<MaterialOriginRow> evaluateNonOriginatingCandidates(List<MaterialOriginRow> rows) {

@@ -61,43 +61,43 @@ public class OriginDeterminationService extends GeneralService {
 			String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
 
 			List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo);
-			for (OriginDeterminationTarget fmList : fmListRows) {
-				decideOneFtaLine(dao, fmList, invoiceDate, newAptaPsrFlag, mode);
+			for (OriginDeterminationTarget fmData : fmListRows) {
+				decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode);
 			}
 		} catch (Exception e) {
 			logger.error("COO_DECISION 실패. companyCode={}, salesNo={}", companyCode, salesNo, e);
 		}
 	}
 
-	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmList, String invoiceDate,
+	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmData, String invoiceDate,
 			String newAptaPsrFlag, OriginDeterminationMode mode) {
 		OriginDeterminationContext ctx = new OriginDeterminationContext();
-		ctx.setFmList(fmList);
+		ctx.setFmData(fmData);
 
-		supportService.loadBuffer(ctx, fmList.getCompanyCode(), fmList.getDivisionCode(), fmList.getFtaCode(),
-				fmList.getProductCode());
+		supportService.loadBuffer(ctx, fmData.getCompanyCode(), fmData.getDivisionCode(), fmData.getFtaCode(),
+				fmData.getProductCode());
 
 		// 기판정된 결과가 있는 경우 삭제
-		dao.deletePriorFcrResult(fmList.getSalesNo(), fmList.getSalesSeq(), fmList.getFtaCode(),
-				fmList.getCompanyCode());
+		dao.deletePriorFcrResult(fmData.getSalesNo(), fmData.getSalesSeq(), fmData.getFtaCode(),
+				fmData.getCompanyCode());
 
 		// FCR_INFO_TEMP 대체: FM_LIST 1건당 1회만 조회해 메모리에 적재(반복 SQL 제거)
-		ctx.setMaterialOriginRows(dao.selectMaterialOriginRows(fmList.getFtaCode(), fmList.getDivisionCode(),
-				fmList.getCompanyCode(), fmList.getSalesNo(), fmList.getSalesSeq(), fmList.getHsCode()));
+		ctx.setMaterialOriginRows(dao.selectMaterialOriginRows(fmData.getFtaCode(), fmData.getDivisionCode(),
+				fmData.getCompanyCode(), fmData.getSalesNo(), fmData.getSalesSeq(), fmData.getHsCode()));
 
-		if ("PKRRC".equals(fmList.getFtaCode())) {
+		if ("PKRRC".equals(fmData.getFtaCode())) {
 			resolveItemCooNationForRcep(ctx, invoiceDate);
 		}
 
-		List<OriginCriteria> ruleList = dao.selectApplicableOriginCriteria(fmList.getHsCode(), fmList.getFtaCode(),
-				fmList.getHsCodeSubCategory(), newAptaPsrFlag);
+		List<OriginCriteria> rules = dao.selectApplicableOriginCriteria(fmData.getHsCode(), fmData.getFtaCode(),
+				fmData.getHsCodeSubCategory(), newAptaPsrFlag);
 
-		if (ruleList.isEmpty()) {
+		if (rules.isEmpty()) {
 			// 원본 V_RULE_CNT=100 분기: 해당 HS코드에 적용가능한 FTA_RULE 이 전혀 없는 경우
-			insertNoRuleFoundResult(ctx, fmList, mode);
+			insertNoRuleFoundResult(ctx, fmData, mode);
 		} else {
-			for (OriginCriteria frList : ruleList) {
-				decideOneRule(ctx, fmList, frList, mode);
+			for (OriginCriteria frData : rules) {
+				decideOneRule(ctx, fmData, frData, mode);
 			}
 		}
 
@@ -108,16 +108,16 @@ public class OriginDeterminationService extends GeneralService {
 		supportService.updateFrm(ctx, mode);
 	}
 
-	private void insertNoRuleFoundResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmList, OriginDeterminationMode mode) {
+	private void insertNoRuleFoundResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
-		rec.setSalesNo(fmList.getSalesNo());
-		rec.setSalesSeq(fmList.getSalesSeq());
-		rec.setFtaCode(fmList.getFtaCode());
-		rec.setDivisionCode(fmList.getDivisionCode());
-		rec.setCompanyCode(fmList.getCompanyCode());
-		rec.setProductCode(fmList.getProductCode());
-		rec.setHsCode(fmList.getHsCode());
-		rec.setStandard(fmList.getStandard());
+		rec.setSalesNo(fmData.getSalesNo());
+		rec.setSalesSeq(fmData.getSalesSeq());
+		rec.setFtaCode(fmData.getFtaCode());
+		rec.setDivisionCode(fmData.getDivisionCode());
+		rec.setCompanyCode(fmData.getCompanyCode());
+		rec.setProductCode(fmData.getProductCode());
+		rec.setHsCode(fmData.getHsCode());
+		rec.setStandard(fmData.getStandard());
 		rec.setStatus("E");
 		rec.setCompanyCooYn("N");
 		rec.setFtaCooYn("N");
@@ -126,23 +126,23 @@ public class OriginDeterminationService extends GeneralService {
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
-	private void decideOneRule(OriginDeterminationContext ctx, OriginDeterminationTarget fmList, OriginCriteria frList, OriginDeterminationMode mode) {
+	private void decideOneRule(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginCriteria frData, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
-		rec.setSalesNo(fmList.getSalesNo());
-		rec.setSalesSeq(fmList.getSalesSeq());
-		rec.setFtaCode(fmList.getFtaCode());
-		rec.setRuleSeq(frList.getRuleId());
-		rec.setDivisionCode(fmList.getDivisionCode());
-		rec.setCompanyCode(fmList.getCompanyCode());
-		rec.setRuleCode(frList.getRuleContents());
-		rec.setProductCode(fmList.getProductCode());
-		rec.setHsCode(fmList.getHsCode());
-		rec.setStandard(fmList.getStandard());
+		rec.setSalesNo(fmData.getSalesNo());
+		rec.setSalesSeq(fmData.getSalesSeq());
+		rec.setFtaCode(fmData.getFtaCode());
+		rec.setRuleSeq(frData.getRuleId());
+		rec.setDivisionCode(fmData.getDivisionCode());
+		rec.setCompanyCode(fmData.getCompanyCode());
+		rec.setRuleCode(frData.getRuleContents());
+		rec.setProductCode(fmData.getProductCode());
+		rec.setHsCode(fmData.getHsCode());
+		rec.setStandard(fmData.getStandard());
 		rec.setStatus("N");
 
 		// RVC_CTC 모드에서만 재료비(역내+역외) 금액이 0인 경우를 오류로 처리한다. CTC_ONLY 모드는
 		// 원본에서 이 검사 블록 전체가 주석 처리되어 있어(값기준 계산 불가) 항상 통과시킨다.
-		if (mode == OriginDeterminationMode.RVC_CTC && fmList.hasNoMaterialAmount()) {
+		if (mode == OriginDeterminationMode.RVC_CTC && fmData.hasNoMaterialAmount()) {
 			rec.setCompanyCooYn("N");
 			rec.setFtaCooYn("N");
 			rec.setStatus("E");
@@ -152,24 +152,24 @@ public class OriginDeterminationService extends GeneralService {
 			return;
 		}
 
-		ctx.setNetWeight(fmList.getWeight());
-		ctx.setNetCostAmount(fmList.getNetCostAmount());
+		ctx.setNetWeight(fmData.getWeight());
+		ctx.setNetCostAmount(fmData.getNetCostAmount());
 		ctx.setInkotermsAmount(
-				"EXW".equals(fmList.getInkotermsType()) ? fmList.getExworkAmount() : fmList.getFobAmount());
+				"EXW".equals(fmData.getInkotermsType()) ? fmData.getExworkAmount() : fmData.getFobAmount());
 		ctx.setDeMinimisInkotermsAmount(
-				"EXW".equals(fmList.getDeMinimisInkotermsType()) ? fmList.getExworkAmount() : fmList.getFobAmount());
+				"EXW".equals(fmData.getDeMinimisInkotermsType()) ? fmData.getExworkAmount() : fmData.getFobAmount());
 
-		if ("SP".equals(frList.getSpRule())) {
-			rec.setSpCooYn(fmList.getSpCooYn());
+		if ("SP".equals(frData.getSpRule())) {
+			rec.setSpCooYn(fmData.getSpCooYn());
 		}
-		if ("WO".equals(frList.getWoRule())) {
-			rec.setWoCooYn(fmList.getWoCooYn());
+		if ("WO".equals(frData.getWoRule())) {
+			rec.setWoCooYn(fmData.getWoCooYn());
 		}
 
 		boolean stop = false;
 
-		if ("Y".equals(frList.getExclusionRuleYn())) {
-			exclusionRuleDecisionService.decide(ctx, frList, mode);
+		if ("Y".equals(frData.getExclusionRuleYn())) {
+			exclusionRuleDecisionService.decide(ctx, frData, mode);
 			if (ctx.getReturnCode() < 0) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);
@@ -177,8 +177,8 @@ public class OriginDeterminationService extends GeneralService {
 			}
 		}
 
-		if (!stop && !"*".equals(frList.getCthRule())) {
-			ctcService.decide(ctx, frList, mode);
+		if (!stop && !"*".equals(frData.getCthRule())) {
+			ctcService.decide(ctx, frData, mode);
 			if (ctx.getReturnCode() < 0) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);
@@ -186,9 +186,9 @@ public class OriginDeterminationService extends GeneralService {
 			}
 		}
 
-		if (!stop && (positive(frList.getBdRule()) || positive(frList.getBuRule()) || positive(frList.getNcRule())
-				|| positive(frList.getMcRule()))) {
-			rvcService.decide(ctx, frList, mode);
+		if (!stop && (positive(frData.getBdRule()) || positive(frData.getBuRule()) || positive(frData.getNcRule())
+				|| positive(frData.getMcRule()))) {
+			rvcService.decide(ctx, frData, mode);
 			if (ctx.getReturnCode() < 0) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);
@@ -197,11 +197,11 @@ public class OriginDeterminationService extends GeneralService {
 		}
 
 		if (!stop) {
-			combineFinalResult(ctx, fmList, frList);
+			combineFinalResult(ctx, fmData, frData);
 			supportService.insertFrdAndReset(ctx, mode);
 		}
 
-		if ("Y".equals(frList.getExclusionRuleYn())) {
+		if ("Y".equals(frData.getExclusionRuleYn())) {
 			// 다음 룰(다른 협정의 예외판정)에 이번 결과가 이어붙지 않도록 초기화한다(원본: 매 룰 처리 후
 			// FCR_INFO_TEMP.EXCLUSION_RULE1~14_YN 을 'N' 으로 리셋하는 UPDATE). 메모리 상의 리스트를
 			// 직접 되돌리므로 DB 호출이 필요 없다.
@@ -214,11 +214,11 @@ public class OriginDeterminationService extends GeneralService {
 	}
 
 	/** 레거시 COO_DECISION 메인루프 "룰 ID에 대한 최종 판정" 블록 이관 */
-	private void combineFinalResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmList, OriginCriteria frList) {
+	private void combineFinalResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginCriteria frData) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		boolean loopFlag = false;
 
-		if ("Y".equals(frList.getExclusionRuleYn())) {
+		if ("Y".equals(frData.getExclusionRuleYn())) {
 			if ("N".equals(rec.getExclusionYn()) && "AND".equals(rec.getExclusionCondition())) {
 				rec.setFtaCooYn("N");
 				rec.setCompanyCooYn("N");
@@ -264,37 +264,37 @@ public class OriginDeterminationService extends GeneralService {
 			}
 		}
 
-		if ("PKRRC".equals(fmList.getFtaCode())) {
-			applyRcepDetermination(ctx, fmList);
+		if ("PKRRC".equals(fmData.getFtaCode())) {
+			applyRcepDetermination(ctx, fmData);
 		}
 	}
 
 	/** 레거시 COO_DECISION 메인루프의 RCEP(FTA_CODE='PKRRC') 최대기여국 산정 블록 이관 */
-	private void applyRcepDetermination(OriginDeterminationContext ctx, OriginDeterminationTarget fmList) {
+	private void applyRcepDetermination(OriginDeterminationContext ctx, OriginDeterminationTarget fmData) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		String rcepNation = supportService.resolveRcepNation(ctx);
 
 		if ("KR".equals(rcepNation)) {
 			rec.setRcepCooNation("KR");
 		} else if ("RCEP".equals(rcepNation)) {
-			if ("Y".equals(fmList.getTariffYn())) {
-				supportService.resolveRcepRvcNation(ctx, fmList.getAmount());
+			if ("Y".equals(fmData.getTariffYn())) {
+				supportService.resolveRcepRvcNation(ctx, fmData.getAmount());
 				rec.setRcepCooNation("Y".equals(ctx.getRcepKrYn()) ? "KR" : ctx.getRcepCooNation());
 			} else {
-				String mpItemYn = supportService.getMinimalProcessItemYn(fmList.getCompanyCode(),
-						fmList.getDivisionCode(), fmList.getSalesNo(), fmList.getSalesSeq());
+				String mpItemYn = supportService.getMinimalProcessItemYn(fmData.getCompanyCode(),
+						fmData.getDivisionCode(), fmData.getSalesNo(), fmData.getSalesSeq());
 				if ("N".equals(mpItemYn)) {
 					rec.setRcepCooNation("KR");
 				} else {
-					supportService.resolveRcepRvcNation(ctx, fmList.getAmount());
+					supportService.resolveRcepRvcNation(ctx, fmData.getAmount());
 					rec.setRcepCooNation(ctx.getRcepCooNation());
 				}
 			}
-		} else if ("Y".equals(fmList.getTariffYn()) && "Y".equals(rec.getCompanyCooYn()) && "ZZ".equals(rcepNation)) {
+		} else if ("Y".equals(fmData.getTariffYn()) && "Y".equals(rec.getCompanyCooYn()) && "ZZ".equals(rcepNation)) {
 			// 원본 그대로 이관: 바깥 ELSIF 조건에 이미 TARIFF_YN='Y' 가 포함돼 있어 안쪽 ELSE 는
 			// 실질적으로 도달 불가능한 원본의 중복 조건이다(보존).
-			if ("Y".equals(fmList.getTariffYn())) {
-				supportService.resolveRcepRvcNation(ctx, fmList.getAmount());
+			if ("Y".equals(fmData.getTariffYn())) {
+				supportService.resolveRcepRvcNation(ctx, fmData.getAmount());
 				rec.setRcepCooNation("Y".equals(ctx.getRcepKrYn()) ? "KR" : ctx.getRcepCooNation());
 			} else {
 				rec.setRcepCooNation("KR");
