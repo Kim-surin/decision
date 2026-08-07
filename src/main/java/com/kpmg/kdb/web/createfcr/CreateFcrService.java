@@ -32,6 +32,7 @@ import com.kpmg.kdb.web.originbasis.dto.HsCodeCriteria;
 import com.kpmg.kdb.web.originbasis.dto.IncotermsChangeRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
+import com.kpmg.kdb.web.origindecision.FcrCreator;
 
 /**
  * 레거시 CREATE_FCR(P_COMPANY_CODE, P_DIVISION_CODE, P_SALES_NO, P_BOM_TYPE, P_ERR_CODE) 프로시저 이관.
@@ -58,7 +59,7 @@ import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
  * 넘기는 책임은 호출자(MonthlyDecisionService)에 있다.
  */
 @Service
-public class CreateFcrService extends GeneralService {
+public class CreateFcrService extends GeneralService implements FcrCreator {
 
 	private static final int INSERT_CHUNK_SIZE = 500;
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
@@ -80,6 +81,7 @@ public class CreateFcrService extends GeneralService {
 	 *                      (DECISION_YN 값을 다른 화면/리포트가 읽지 않는 것을 확인함).
 	 * @return 원본 P_ERR_CODE 와 동일한 상태 문자열: "successed" / "semisuccess" / "failed"
 	 */
+	@Override
 	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam,
 			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);

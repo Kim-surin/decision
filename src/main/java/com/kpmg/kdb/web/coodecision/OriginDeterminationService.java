@@ -16,6 +16,7 @@ import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
 import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 import com.kpmg.kdb.web.originbasis.ItemNationService;
 import com.kpmg.kdb.web.originbasis.dto.ItemNationCriteria;
+import com.kpmg.kdb.web.origindecision.OriginDecider;
 
 /**
  * 레거시 PKG99_COO_DECISION.COO_DECISION / PKG99_COO_CTC_DECISION.COO_DECISION 메인 프로시저 이관.
@@ -33,7 +34,7 @@ import com.kpmg.kdb.web.originbasis.dto.ItemNationCriteria;
  * (FC01_GET_ITEM_NATION 이관)로 위임한다({@link #resolveItemCooNationForRcep} 참고).
  */
 @Service
-public class OriginDeterminationService extends GeneralService {
+public class OriginDeterminationService extends GeneralService implements OriginDecider {
 
 	/** APTA 신규 PSR 시행 기준일(V_APTA_STD_YYYYMMDD) */
 	private static final String APTA_STANDARD_DATE = "20180701";
@@ -58,6 +59,7 @@ public class OriginDeterminationService extends GeneralService {
 	 *                      값이 있으면 그 제품들만(개별 판정) 대상으로 한다. {@link CreateFcrService}
 	 *                      호출 시 넘긴 것과 같은 값을 넘겨야 같은 스코프의 FCR_MST 를 판정한다.
 	 */
+	@Override
 	public void determineOrigin(String companyCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
 		try {
