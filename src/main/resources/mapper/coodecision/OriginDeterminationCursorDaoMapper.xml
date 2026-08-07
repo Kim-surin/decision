@@ -91,8 +91,14 @@
 		                AND    SM.COMPANY_CODE = FM.COMPANY_CODE
 		                WHERE  FM.SALES_NO = #{salesNo}
 		                AND    FM.COMPANY_CODE = #{companyCode}
-		                AND    FM.DECISION_YN = 'Y'
-		                AND    FM.PRODUCT_ASSETS_TYPE IN ('P', 'H')) FCRM
+		                AND    FM.PRODUCT_ASSETS_TYPE IN ('P', 'H')
+		                <if test="productCodes != null and !productCodes.isEmpty()">
+		                AND    FM.PRODUCT_CODE IN
+		                       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                           #{productCode}
+		                       </foreach>
+		                </if>
+		                ) FCRM
 		        INNER  JOIN FTA_MASTER FM
 		        ON     FM.FTA_CODE = FCRM.FTA_CODE
 		        AND    FM.DELETE_YN &lt;&gt; 'Y'

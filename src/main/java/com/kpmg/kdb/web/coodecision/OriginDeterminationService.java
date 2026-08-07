@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.web.createfcr.CreateFcrService;
 import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
@@ -52,15 +53,21 @@ public class OriginDeterminationService extends GeneralService {
 	 * 레거시 COO_DECISION(P_COMPANY_CODE, P_SALES_NO, O_RETURN_CODE) 이관.
 	 * 원본과 동일하게 최상위에서 모든 예외를 흡수하고 로그만 남긴다(재발생 없음) — 호출자는 매출 1건
 	 * 처리 실패가 배치 전체를 중단시키지 않는다는 것을 전제로 사용할 수 있다.
+	 *
+	 * @param productCodes 판정 대상 제품 코드 목록. null/빈 리스트면 salesNo 전체 제품(월 판정),
+	 *                      값이 있으면 그 제품들만(개별 판정) 대상으로 한다. {@link CreateFcrService}
+	 *                      호출 시 넘긴 것과 같은 값을 넘겨야 같은 스코프의 FCR_MST 를 판정한다.
 	 */
-	public void determineOrigin(String companyCode, String salesNo, OriginDeterminationMode mode) {
+	public void determineOrigin(String companyCode, String salesNo, OriginDeterminationMode mode,
+			List<String> productCodes) {
 		try {
 			OriginDeterminationCursorDao dao = sqlSession.getMapper(OriginDeterminationCursorDao.class);
 
 			String invoiceDate = dao.selectInvoiceDate(companyCode, salesNo);
 			String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
 
-			List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo);
+			List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo,
+					productCodes);
 			for (OriginDeterminationTarget fmData : fmListRows) {
 				decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode);
 			}

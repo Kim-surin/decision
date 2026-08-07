@@ -21,9 +21,11 @@ public interface OriginDeterminationCursorDao {
 	/**
 	 * 레거시 CURSOR C_FCR_MST 이관. 판정대상 매출(SALES_NO) 1건에 대해 존재하는 FTA_CODE 후보 전체를
 	 * 한 번에 조회한다(매출 1건당 1회 호출 — FM_LIST 커서를 여는 시점과 동일한 호출 빈도).
+	 * productCodes 가 null/빈 리스트면 salesNo 전체 제품(월 판정), 값이 있으면 그 제품들만(개별 판정)
+	 * 대상으로 한다 — CreateFcrDao 가 같은 스코프로 (재)생성한 FCR_MST 행만 골라 판정하기 위함이다.
 	 */
 	List<OriginDeterminationTarget> selectOriginDeterminationTargets(@Param("companyCode") String companyCode,
-			@Param("salesNo") String salesNo);
+			@Param("salesNo") String salesNo, @Param("productCodes") List<String> productCodes);
 
 	/** 기판정된 결과 삭제 (COO_DECISION 메인루프, FM_LIST 1건당 1회) */
 	void deletePriorFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,

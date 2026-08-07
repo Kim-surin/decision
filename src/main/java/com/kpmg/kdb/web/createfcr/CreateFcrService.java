@@ -73,9 +73,15 @@ public class CreateFcrService extends GeneralService {
 	private ItemOriginRateService itemOriginRateService;
 
 	/**
+	 * @param productCodes 판정 대상 제품 코드 목록. null/빈 리스트면 salesNo 의 전체 제품(월 판정),
+	 *                      값이 있으면 그 제품들만(개별 판정) 대상으로 한다. 예전에는 호출 전 SALES_DTL.
+	 *                      DECISION_YN='Y' 를 세팅해두는 방식으로 이 스코프를 전달했는데, 이 스코프를
+	 *                      메서드 파라미터로 직접 받도록 바꿔 그 마킹-조회 2단계 과정 자체를 없앴다
+	 *                      (DECISION_YN 값을 다른 화면/리포트가 읽지 않는 것을 확인함).
 	 * @return 원본 P_ERR_CODE 와 동일한 상태 문자열: "successed" / "semisuccess" / "failed"
 	 */
-	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam) {
+	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam,
+			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);
 
 		// 1. 파라미터 셋업 작업
@@ -95,42 +101,44 @@ public class CreateFcrService extends GeneralService {
 		}
 
 		// 2. 실적 BOM 및 표준 BOM 확인 작업
-		int errCnt = checkBomAvailability(dao, companyCode, divisionCode, salesNo, bomType, bomPreviousYyyymm, yyyymm);
+		int errCnt = checkBomAvailability(dao, companyCode, divisionCode, salesNo, bomType, bomPreviousYyyymm, yyyymm,
+				productCodes);
 
 		// 3. FCR 생성 작업 (BOM 오류가 없거나, 포괄건이면 오류가 있어도 진행)
 		if (errCnt != 0 && !"Y".equals(virtualYn)) {
 			return "failed";
 		}
 
-		dao.deleteFcrDtl(salesNo, divisionCode, companyCode);
-		dao.deleteFcrResult(salesNo, divisionCode, companyCode);
-		dao.deleteFcrMst(salesNo, divisionCode, companyCode);
+		dao.deleteFcrDtl(salesNo, divisionCode, companyCode, productCodes);
+		dao.deleteFcrResult(salesNo, divisionCode, companyCode, productCodes);
+		dao.deleteFcrMst(salesNo, divisionCode, companyCode, productCodes);
 
 		Map<String, String> hsCodeCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> incotermsCache = new LinkedHashMap<>();
 
 		if ("D".equals(exportFlag)) {
-			createDomesticFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, hsCodeCache,
-					incotermsCache);
+			createDomesticFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
+					hsCodeCache, incotermsCache);
 		} else {
-			createExportFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, hsCodeCache,
-					incotermsCache);
+			createExportFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
+					hsCodeCache, incotermsCache);
 		}
 
-		createBomLeafFcrDtl(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate);
-		createProductFcrDtl(dao, companyCode, divisionCode, salesNo, invoiceDate);
+		createBomLeafFcrDtl(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes);
+		createProductFcrDtl(dao, companyCode, divisionCode, salesNo, invoiceDate, productCodes);
 
 		dao.mergeFcrMstOriginDetermination(salesNo, divisionCode, companyCode, invoiceDate);
-		dao.insertFcrResultForProducts(salesNo, divisionCode, companyCode);
-		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode);
+		dao.insertFcrResultForProducts(salesNo, divisionCode, companyCode, productCodes);
+		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
 
 		return errCnt > 0 ? "semisuccess" : "successed";
 	}
 
 	private int checkBomAvailability(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
-			String bomType, String bomPreviousYyyymm, String yyyymm) {
+			String bomType, String bomPreviousYyyymm, String yyyymm, List<String> productCodes) {
 		int errCnt = 0;
-		for (SalesDtlBomTarget target : dao.selectSalesDtlBomTargets(companyCode, divisionCode, salesNo)) {
+		for (SalesDtlBomTarget target : dao.selectSalesDtlBomTargets(companyCode, divisionCode, salesNo,
+				productCodes)) {
 			String status = "5".equals(target.getStatus()) ? "1" : "0";
 			String bomStatus;
 			String bomYyyymm = null;
@@ -163,9 +171,10 @@ public class CreateFcrService extends GeneralService {
 
 	/** 3-2(내수, EXPORT_FLAG='D'): SALES × 활성 FTA_MASTER 교차곱으로 FCR_MST 생성 */
 	private void createDomesticFcrMst(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
-			String bomType, String invoiceDate, Map<String, String> hsCodeCache,
+			String bomType, String invoiceDate, List<String> productCodes, Map<String, String> hsCodeCache,
 			Map<String, BigDecimal> incotermsCache) {
-		List<DomesticSalesLine> salesLines = dao.selectDomesticSalesLines(companyCode, divisionCode, salesNo);
+		List<DomesticSalesLine> salesLines = dao.selectDomesticSalesLines(companyCode, divisionCode, salesNo,
+				productCodes);
 		List<FtaMasterActive> ftaMasters = dao.selectActiveFtaMasters();
 		String stdYyyy = invoiceDate.substring(0, 4);
 
@@ -225,9 +234,10 @@ public class CreateFcrService extends GeneralService {
 	 * "고치지 않고" 그대로 재현했다 — 업무팀 확인 후 필요 시 별도로 수정 요청 바람.
 	 */
 	private void createExportFcrMst(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
-			String bomType, String invoiceDate, Map<String, String> hsCodeCache,
+			String bomType, String invoiceDate, List<String> productCodes, Map<String, String> hsCodeCache,
 			Map<String, BigDecimal> incotermsCache) {
-		List<ExportSalesLine> salesLines = dao.selectExportSalesLines(companyCode, divisionCode, salesNo);
+		List<ExportSalesLine> salesLines = dao.selectExportSalesLines(companyCode, divisionCode, salesNo,
+				productCodes);
 		String stdYyyy = invoiceDate.substring(0, 4);
 
 		List<FcrMstInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
@@ -275,8 +285,8 @@ public class CreateFcrService extends GeneralService {
 
 	/** 3-3: BOM 최말단 자재를 (itemCode,ftaCode,salesNo,salesSeq,productCode,divisionCode,companyCode,hsCode) 로 집계해 FCR_DTL 생성 */
 	private void createBomLeafFcrDtl(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
-			String bomType, String invoiceDate) {
-		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType);
+			String bomType, String invoiceDate, List<String> productCodes) {
+		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
 
 		Map<String, BigDecimal> priceCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
@@ -391,8 +401,9 @@ public class CreateFcrService extends GeneralService {
 
 	/** 3-4: 상품/부산물(원자재가 아닌 완제품 자체)을 자재 1건처럼 취급해 FCR_DTL 생성 */
 	private void createProductFcrDtl(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
-			String invoiceDate) {
-		List<ProductFcrDtlSourceRow> rows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode);
+			String invoiceDate, List<String> productCodes) {
+		List<ProductFcrDtlSourceRow> rows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode,
+				productCodes);
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
 
 		List<FcrDtlInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);

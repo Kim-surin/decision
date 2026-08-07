@@ -88,20 +88,25 @@ public class MonthlyDecisionService extends GeneralService {
 		}
 	}
 
-	/** 레거시 C_SALES_MST 커서 루프 1회 반복(5. 원산지판정) 이관 */
+	/**
+	 * 레거시 C_SALES_MST 커서 루프 1회 반복(5. 원산지판정) 이관.
+	 *
+	 * <p>원본은 이 자리에서 SALES_DTL.DECISION_YN='Y' 를 먼저 세팅해 "이번에 판정할 제품 범위"를
+	 * DB 컬럼에 마킹해두고, CREATE_FCR/COO_DECISION 이 그 값을 다시 조회해 스코프를 알아내는
+	 * 2단계 과정을 거쳤다. 월 판정은 salesNo 의 전체 제품을 대상으로 하므로("전체판정"), 그 스코프를
+	 * DB 마킹 대신 productCodes=null 파라미터로 직접 전달한다 — 마킹 UPDATE 자체가 필요 없어진다.
+	 * DECISION_YN 컬럼은 다른 화면/리포트도 읽지 않는 것으로 확인되어 안전하다.
+	 */
 	private void decideOneSalesHeader(MonthlyDecisionDao dao, SalesTarget target, OriginDeterminationMode mode) {
-		// 원산지 판정 Flag UPDATE (전체판정이기 때문에)
-		dao.markSalesDtlForDecision(target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo());
-
 		// FCR 생성 (V_RETURN_CODE 는 원본도 이 시점에는 검사하지 않고 COO_DECISION 으로 그대로 진행한다)
-		createFcrService.createFcr(target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(), "F");
+		createFcrService.createFcr(target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(), "F", null);
 
 		// 원산지 판정
-		originDeterminationService.determineOrigin(target.getCompanyCode(), target.getSalesNo(), mode);
+		originDeterminationService.determineOrigin(target.getCompanyCode(), target.getSalesNo(), mode, null);
 
 		// 상태값 변경 4: 판정완료
 		dao.updateSalesMstDecisionComplete(target.getCompanyCode(), target.getSalesNo());
-		dao.updateSalesDtlDecisionComplete(target.getCompanyCode(), target.getSalesNo());
-		dao.updateFcrMstDecisionComplete(target.getCompanyCode(), target.getSalesNo());
+		dao.updateSalesDtlDecisionComplete(target.getCompanyCode(), target.getSalesNo(), null);
+		dao.updateFcrMstDecisionComplete(target.getCompanyCode(), target.getSalesNo(), null);
 	}
 }

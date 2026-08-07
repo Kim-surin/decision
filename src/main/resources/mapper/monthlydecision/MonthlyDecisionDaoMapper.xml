@@ -198,16 +198,14 @@
 		ORDER  BY EXPORT_FLAG, CUSTOMER_CODE
 	</select>
 
-	<!-- ===================== 5. 원산지판정 (판정대상 1건 처리) ===================== -->
-
-	<update id="markSalesDtlForDecision">
-		UPDATE SALES_DTL
-		SET    DECISION_YN = 'Y'
-		      ,STATUS      = '1'
-		WHERE  COMPANY_CODE = #{companyCode}
-		AND    DIVISION_CODE = #{divisionCode}
-		AND    SALES_NO = #{salesNo}
-	</update>
+	<!--
+		===================== 5. 원산지판정 (판정대상 1건 처리) =====================
+		원본의 "SALES_DTL.DECISION_YN='Y' 마킹 -> 그 값을 다시 조회해 스코프 판단" 2단계 과정은
+		제거했다. 판정 대상 제품 스코프는 CreateFcrService/OriginDeterminationService 호출 시 넘긴
+		productCodes 파라미터로 이미 결정되며, 아래 마무리 갱신 쿼리들도 DECISION_YN 조건 대신
+		productCodes(null 이면 salesNo 전체 제품)로 스코프를 맞춘다. DECISION_YN 컬럼은 다른
+		화면/리포트도 읽지 않는 것으로 확인되어 이 값에 더 이상 의미를 두지 않는다.
+	-->
 
 	<update id="updateSalesMstDecisionComplete">
 		UPDATE SALES_MST
@@ -232,24 +230,31 @@
 		                          WHERE  FM.SALES_NO = DTL.SALES_NO
 		                          AND    FM.DIVISION_CODE = DTL.DIVISION_CODE
 		                          AND    FM.COMPANY_CODE = DTL.COMPANY_CODE
-		                          AND    FM.SALES_SEQ = DTL.SALES_SEQ
-		                          AND    FM.DECISION_YN = 'Y') > 0 THEN '5'
+		                          AND    FM.SALES_SEQ = DTL.SALES_SEQ) > 0 THEN '5'
 		                    ELSE '4'
 		                END
-		      ,DECISION_YN = ''
 		      ,UPDATE_DATE = CURRENT_TIMESTAMP
 		      ,UPDATE_BY   = 'MONTHLY_DECISION_PROC'
 		WHERE  COMPANY_CODE = #{companyCode}
 		AND    SALES_NO = #{salesNo}
-		AND    DECISION_YN = 'Y'
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
 	</update>
 
 	<update id="updateFcrMstDecisionComplete">
 		UPDATE FCR_MST
-		SET    COO_DATE    = CURRENT_TIMESTAMP
-		      ,DECISION_YN = ''
+		SET    COO_DATE = CURRENT_TIMESTAMP
 		WHERE  COMPANY_CODE = #{companyCode}
 		AND    SALES_NO = #{salesNo}
-		AND    DECISION_YN = 'Y'
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
 	</update>
 </mapper>

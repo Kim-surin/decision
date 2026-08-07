@@ -32,10 +32,15 @@
 		      ,STATUS             AS status
 		FROM   SALES_DTL
 		WHERE  SALES_NO = #{salesNo}
-		AND    DECISION_YN = 'Y'
 		AND    DIVISION_CODE = #{divisionCode}
 		AND    COMPANY_CODE = #{companyCode}
 		AND    PRODUCT_ASSETS_TYPE IN ('P', 'H')
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
 	</select>
 
 	<!--
@@ -108,7 +113,13 @@
 		               AND    SD.SALES_NO = #{salesNo}
 		               AND    SD.DIVISION_CODE = #{divisionCode}
 		               AND    SD.COMPANY_CODE = #{companyCode}
-		               AND    SD.DECISION_YN = 'Y')
+		               <if test="productCodes != null and !productCodes.isEmpty()">
+		               AND    SD.PRODUCT_CODE IN
+		                      <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                          #{productCode}
+		                      </foreach>
+		               </if>
+		               )
 	</delete>
 
 	<delete id="deleteFcrResult">
@@ -125,7 +136,13 @@
 		               AND    SD.SALES_NO = #{salesNo}
 		               AND    SD.DIVISION_CODE = #{divisionCode}
 		               AND    SD.COMPANY_CODE = #{companyCode}
-		               AND    SD.DECISION_YN = 'Y')
+		               <if test="productCodes != null and !productCodes.isEmpty()">
+		               AND    SD.PRODUCT_CODE IN
+		                      <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                          #{productCode}
+		                      </foreach>
+		               </if>
+		               )
 	</delete>
 
 	<delete id="deleteFcrMst">
@@ -142,7 +159,13 @@
 		               AND    SD.SALES_NO = #{salesNo}
 		               AND    SD.DIVISION_CODE = #{divisionCode}
 		               AND    SD.COMPANY_CODE = #{companyCode}
-		               AND    SD.DECISION_YN = 'Y')
+		               <if test="productCodes != null and !productCodes.isEmpty()">
+		               AND    SD.PRODUCT_CODE IN
+		                      <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                          #{productCode}
+		                      </foreach>
+		               </if>
+		               )
 	</delete>
 
 	<!-- ===================== 3-2. FCR_MST 데이터 생성 ===================== -->
@@ -169,12 +192,17 @@
 		ON     SM.SALES_NO = SD.SALES_NO
 		AND    SM.COMPANY_CODE = SD.COMPANY_CODE
 		AND    SM.DIVISION_CODE = SD.DIVISION_CODE
-		AND    SD.DECISION_YN = 'Y'
 		WHERE  SM.SALES_NO = #{salesNo}
 		AND    SM.DIVISION_CODE = #{divisionCode}
 		AND    SM.COMPANY_CODE = #{companyCode}
 		AND    SD.QUANTITY > 0
 		AND    SD.BOM_STATUS &lt;&gt; '1'
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    SD.PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
 	</select>
 
 	<select id="selectActiveFtaMasters" resultType="com.kpmg.kdb.web.createfcr.dto.FtaMasterActive">
@@ -229,14 +257,20 @@
 		        ON     SM.SALES_NO = SD.SALES_NO
 		        AND    SM.DIVISION_CODE = SD.DIVISION_CODE
 		        AND    SM.COMPANY_CODE = SD.COMPANY_CODE
-		        AND    SD.DECISION_YN = 'Y'
 		        AND    SD.BOM_STATUS &lt;&gt; '1'
 		        INNER  JOIN CUSTOMER C
 		        ON     SM.CUSTOMER_CODE = C.CUSTOMER_CODE
 		        AND    SM.COMPANY_CODE = C.COMPANY_CODE
 		        WHERE  SM.SALES_NO = #{salesNo}
 		        AND    SM.DIVISION_CODE = #{divisionCode}
-		        AND    SM.COMPANY_CODE = #{companyCode}) SALES
+		        AND    SM.COMPANY_CODE = #{companyCode}
+		        <if test="productCodes != null and !productCodes.isEmpty()">
+		        AND    SD.PRODUCT_CODE IN
+		               <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                   #{productCode}
+		               </foreach>
+		        </if>
+		        ) SALES
 		INNER  JOIN FTA_APPLY_NATION FAN
 		ON     FAN.NATION_CODE = SALES.ARRIVAL_NATION
 		AND    FAN.EFFECT_DATE &lt;= SALES.INVOICE_DATE
@@ -247,6 +281,12 @@
 		AND    FM.FTA_STATUS = '4'
 	</select>
 
+	<!--
+		DECISION_YN 컬럼: 판정 대상 스코프는 더 이상 이 컬럼으로 표시하지 않고 호출부가 넘기는
+		productCodes 파라미터로 직접 제어한다(마킹-조회 2단계 대신 파라미터 전달). 이 컬럼은 다른
+		화면/리포트도 읽지 않아 값 자체엔 의미가 없지만, 스키마상 NOT NULL 일 가능성을 배제할 수
+		없어 안전하게 'Y' 리터럴만 계속 기록한다.
+	-->
 	<insert id="insertFcrMstRows">
 		INSERT INTO FCR_MST
 			(FTA_CODE, SALES_NO, SALES_SEQ, PRODUCT_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, STANDARD,
@@ -295,7 +335,13 @@
 		        AND    SD.DIVISION_CODE = #{divisionCode}
 		        AND    SD.COMPANY_CODE = #{companyCode}
 		        AND    SD.BOM_STATUS &lt;&gt; '1'
-		        AND    SD.DECISION_YN = 'Y') SD
+		        <if test="productCodes != null and !productCodes.isEmpty()">
+		        AND    SD.PRODUCT_CODE IN
+		               <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                   #{productCode}
+		               </foreach>
+		        </if>
+		        ) SD
 		INNER  JOIN FCR_MST FM
 		ON     SD.SALES_NO = FM.SALES_NO
 		AND    SD.SALES_SEQ = FM.SALES_SEQ
@@ -313,7 +359,6 @@
 		AND    FBD.COMPANY_CODE = IM.COMPANY_CODE
 		AND    IM.DELETE_YN = 'N'
 		WHERE  FM.PRODUCT_ASSETS_TYPE IN ('P', 'H')
-		AND    FM.DECISION_YN = 'Y'
 		AND    FBD.TXN_TYPE = #{bomType}
 		AND    FBD.REQ_QTY >= 0
 		AND    NOT EXISTS (SELECT 1
@@ -322,6 +367,8 @@
 		                    AND    FM.FTA_CODE = E.FTA_CODE
 		                    AND    E.COMPANY_CODE = #{companyCode})
 	</select>
+	<!-- FM(FCR_MST)은 SD.PRODUCT_CODE=FM.PRODUCT_CODE 로 이미 SD 와 1:1 상관되어 있어(위 SD 서브쿼리가
+	     productCodes 로 스코프를 잡음) FM 쪽에 별도 제품 필터가 필요 없다. -->
 
 	<!-- ===================== 3-4. 상품/부산물 FCR_DTL ===================== -->
 
@@ -354,7 +401,12 @@
 		AND    SD.DIVISION_CODE = #{divisionCode}
 		AND    SD.COMPANY_CODE = #{companyCode}
 		AND    SD.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
-		AND    SD.DECISION_YN = 'Y'
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    SD.PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
 	</select>
 
 	<insert id="insertFcrDtlRows">
@@ -489,7 +541,12 @@
 		AND    SD.DIVISION_CODE = #{divisionCode}
 		AND    SD.COMPANY_CODE = #{companyCode}
 		AND    SD.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
-		AND    SD.DECISION_YN = 'Y'
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    SD.PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
 	</insert>
 
 	<!-- ===================== 3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE ===================== -->
@@ -513,7 +570,12 @@
 		       WHERE  FCM.SALES_NO = #{salesNo}
 		       AND    FCM.DIVISION_CODE = #{divisionCode}
 		       AND    FCM.COMPANY_CODE = #{companyCode}
-		       AND    FCM.DECISION_YN = 'Y'
+		       <if test="productCodes != null and !productCodes.isEmpty()">
+		       AND    FCM.PRODUCT_CODE IN
+		              <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                  #{productCode}
+		              </foreach>
+		       </if>
 		       GROUP  BY FCM.FTA_CODE, FCM.SALES_NO, FCM.SALES_SEQ, FCM.DIVISION_CODE, FCM.COMPANY_CODE) FMD
 		ON (FM.FTA_CODE = FMD.FTA_CODE AND FM.SALES_NO = FMD.SALES_NO AND FM.SALES_SEQ = FMD.SALES_SEQ
 		    AND FM.DIVISION_CODE = FMD.DIVISION_CODE AND FM.COMPANY_CODE = FMD.COMPANY_CODE)
