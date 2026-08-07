@@ -202,8 +202,60 @@ public interface BasisDao {
 	 * @param param
 	 * @return
 	 */
-	public List retrieveMissingHsCodeCount(Map param);
+	public Map retrieveMissingHsCodeCount(Map param);
+
 	
+	
+	/**
+	 * 자재관리 - 상세 - 마스터정보 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveItemDetailMasterInfo(Map param);
+	
+	/**
+	 * 자재관리 - 상세 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveItemDetailList(Map param);
+	
+	/**
+	 * 자재관리 - 상세 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public int checkHsCodeExists(Map param);
+	
+	/**
+	 * 
+	 * @param param
+	 * @return
+	 */
+	public int updateItemHsCode(Map param);
+	
+	
+	/**
+	 * 자재관리 - 상세 - 마스터정보 조회
+	 * @param param
+	 * @return
+	 */
+	public Map retrieveHsCodeDetail(Map param);
+	
+	/**
+	 * 자재관리 - 협정별  hscode 팝업 데이터 리스트 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveAgreementHsCodeList(Map param);
+	
+	
+	/**
+	 * 자재관리 - 국가별 hscode 팝업 데이터 리스트 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveNationHsCodeList(Map param);
 }
 
 

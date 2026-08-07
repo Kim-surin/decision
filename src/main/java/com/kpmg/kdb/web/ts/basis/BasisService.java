@@ -683,8 +683,158 @@ public class BasisService extends GeneralService {
     	Result result = new Result();
     	
     	try {
-    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveMissingHsCodeCount(param);
+    		Map<String, Object> resultMap = sqlSession.getMapper(BasisDao.class).retrieveMissingHsCodeCount(param);
     		//회사 버퍼 설정 기준 값
+    		result.setValue(resultMap);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 자재관리 - 상세 - 마스터정보 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveItemDetailMasterInfo(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveItemDetailMasterInfo(param);
+    		
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    /**
+     * 자재관리 - 상세 - 목록조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveItemDetailList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveItemDetailList(param);
+    		
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 자재관리 - 상세 - 마스터정보 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public int checkHsCodeExists(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	int count = 0;
+    	try {
+    		count =  sqlSession.getMapper(BasisDao.class).checkHsCodeExists(param);
+    		
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return count;
+    }
+    
+    /**
+     * 자재관리 - 상세 - 마스터정보 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result updateItemHsCode(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	int count = 0;
+    	try {
+    		count =  sqlSession.getMapper(BasisDao.class).updateItemHsCode(param);
+    		
+    		if(count > 0 ) {
+    			result.setSuccess(true);
+        		result.setMessage(DEFAULT_MESSAGE_OK);
+    		}else {
+    			result.setSuccess(false);
+        		result.setMessage(DEFAULT_MESSAGE_ERROR);
+    		}
+    		
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 자재관리 - 협정별 / 국가별 hscode 팝업 hscode 데이터 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveHsCodeDetail(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		Map<String, Object> returnMap = sqlSession.getMapper(BasisDao.class).retrieveHsCodeDetail(param);
+    		
+    		result.setValue(returnMap);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    /**
+     * 자재관리 - 협정별 / 국가별 hscode 팝업 데이터 리스트 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveAgreementNationHsCodeList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		String search_type = param.get("search_type")+"";
+    		List<Map<String, Object>> list = null;
+    		if("FTA".equalsIgnoreCase(search_type)) {
+    			list = sqlSession.getMapper(BasisDao.class).retrieveAgreementHsCodeList(param);
+    		}else if("NA".equalsIgnoreCase(search_type)) {
+    			list = sqlSession.getMapper(BasisDao.class).retrieveNationHsCodeList(param);    			
+    		}
     		result.setValue(list);
     		result.setSuccess(true);
     		result.setMessage(DEFAULT_MESSAGE_OK);

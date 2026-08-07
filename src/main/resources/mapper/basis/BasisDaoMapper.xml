@@ -216,6 +216,7 @@
 		  FROM signature 
 		 WHERE company_code = #{company_code}
 		   AND emp_no = #{emp_no}
+		   AND end_date is null
 		 ORDER BY update_date DESC
 	     LIMIT 1
 	</select>
@@ -479,7 +480,7 @@
     </update>
     
     
-	<select id="retrieveItemList" parameterType="map" resultType="map">
+	<select id="retrieveItemList" parameterType="HashMap" resultType="map">
 	    SELECT 
 	        im.item_code,
 	        case #{lang}
@@ -559,31 +560,166 @@
 	</select>
 
 
-	<select id="retrieveMissingHsCodeCount" parameterType="map" resultType="map">
-		select
-		    count(*) filter (where hs_code is not null and trim(hs_code) != '') as hs_code_exists_count,
-		    count(*) filter (where hs_code is null or trim(hs_code) = '') as hs_code_missing_count
-		from (
-		    select distinct
-		        im.item_code,
-		        im.hs_code
-		    from item_mst im
-		    join item_dtl id
-		        on im.item_code = id.item_code
-		       and im.company_code = id.company_code
-		    join division di
-		        on id.division_code = di.division_code
-		       and id.company_code = di.company_code
-		    left join product_line pl
-		        on im.company_code = pl.company_code
-		       and im.product_code = pl.product_code
-		    left join code_dtl cd
-		        on id.company_code = cd.company_code
-		       and id.assets_type = cd.code
-		       and cd.category = 'AT'
-		     where im.delete_yn = 'N'
-		       and im.company_code = #{company_code}
+	<select id="retrieveMissingHsCodeCount" parameterType="HashMap" resultType="map">
+		SELECT
+		    COUNT(*) FILTER (where hs_code is not null and trim(hs_code) != '') as hs_code_exists_count,
+		    COUNT(*) FILTER (where hs_code is null or trim(hs_code) = '') as hs_code_missing_count
+		FROM (
+		    SELECT DISTINCT
+		           im.item_code,
+		           im.hs_code
+		      FROM item_mst im
+		      JOIN item_dtl id
+		        ON im.item_code = id.item_code
+		       AND im.company_code = id.company_code
+		      JOIN division di
+		        ON id.division_code = di.division_code
+		       AND id.company_code = di.company_code
+		      LEFT join product_line pl
+		        ON im.company_code = pl.company_code
+		       AND im.product_code = pl.product_code
+		      LEFT join code_dtl cd
+		        ON id.company_code = cd.company_code
+		       AND id.assets_type = cd.code
+		       AND cd.category = 'AT'
+		     WHERE im.delete_yn = 'N'
+		       AND im.company_code = #{company_code}
+		  <if test="search_division_code != null and search_division_code != ''">
+	          AND di.division_code = #{search_division_code}
+	      </if>
+	
+	      <if test="hs_code_missing_yn != null and hs_code_missing_yn == 'YY'">
+	          AND (im.hs_code IS NULL OR TRIM(im.hs_code) = '')
+	      </if>
+	
+	      <if test="serch_keyword != null and serch_keyword != '' and search_item != null and search_item != ''">
+	          <choose>
+	              <when test="search_item == 'ITEM_CODE'">
+	                  AND UPPER(im.item_code) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+	              </when>
+	              <when test="search_item == 'ITEM_NAME'">
+	                  AND (
+	                      UPPER(im.item_name) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+	                      OR UPPER(im.item_name_eng) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+	                  )
+	              </when>
+	              <when test="search_item == 'HS_CODE'">
+	                  AND UPPER(im.hs_code) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+	              </when>
+	          </choose>
+	      </if>
 		) t
+	</select>
+	
+	
+	<select id="retrieveItemDetailMasterInfo" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		    item_code,
+		    item_name,
+		    weight,
+		    unit,
+		    product_code,
+		    hs_code
+		FROM item_mst
+		WHERE company_code = #{company_code}
+		  AND item_code = #{item_code}
+		  AND delete_yn = 'N'
+	</select>
+	
+	<select id="retrieveItemDetailList" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		    mst.item_code,
+		    mst.item_name,
+		    mst.weight,
+		    mst.unit,
+		    mst.product_code,
+		    mst.hs_code,
+		    dtl.division_code,
+		    dtl.assets_type,
+		    dtl.po_group,
+		    dtl.category1,
+		    dtl.category2,
+		    dtl.category3,
+		    dtl.importance_mgt_yn,
+		    dtl.mail_send_yn
+		FROM item_mst mst
+		LEFT OUTER JOIN item_dtl dtl
+		       ON mst.company_code = dtl.company_code
+		      AND mst.item_code = dtl.item_code
+		      AND dtl.delete_yn = 'N'
+		WHERE mst.company_code = #{company_code}
+		  AND mst.item_code = #{item_code}
+		  AND mst.delete_yn = 'N'
+	</select>
+	
+	
+	<select id="checkHsCodeExists" parameterType="HashMap" resultType="int">
+	    SELECT COUNT(1)
+	    FROM hs_code
+	    WHERE hs_code = #{hs_code}
+	      AND delete_yn = 'N'
+	</select>
+	
+	<update id="updateItemHsCode" parameterType="HashMap">
+	    UPDATE item_mst
+	       SET hs_code = #{hs_code},
+	           update_date = NOW(),
+	           update_by = #{update_by}
+	     WHERE item_code = #{item_code}
+	       AND company_code = #{company_code}
+	</update>
+	
+	
+	<select id="retrieveHsCodeDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		    hs_code,
+		    hs_code_name,
+		    hs_code_name_eng,
+		    hs_code_desc
+		FROM hs_code
+		WHERE hs_code = #{hs_code}
+		  AND COALESCE(delete_yn, 'N') = 'N'
+	</select>
+	
+	
+	<select id="retrieveAgreementHsCodeList" parameterType="HashMap" resultType="HashMap">
+		SELECT item.item_code
+		     , item.item_name || '/' || COALESCE(item.spec, '') AS item_name
+		     , item.hs_code
+		     , nation.code_name AS div_type
+		     , fta_hs.fta_hs_code as conv_hs_code
+		  FROM fta_hs_code fta_hs 
+		 INNER JOIN item_mst item
+		    ON fta_hs.item_code = item.item_code
+		   AND fta_hs.company_code = item.company_code
+		 INNER JOIN code_dtl nation
+		    ON fta_hs.nation_code = nation.code
+		   AND fta_hs.company_code = nation.company_code
+		   AND nation.category = 'NA'
+		   AND nation.delete_yn = 'N'
+		 WHERE fta_hs.company_code = #{company_code}
+		   AND fta_hs.item_code = #{item_code}
+		 ORDER BY item.item_name
+		        , item.hs_code
+	</select>
+	
+	
+	<select id="retrieveNationHsCodeList" parameterType="HashMap" resultType="HashMap">
+		SELECT DISTINCT
+		       item.item_code
+		     , item.item_name || '/' || COALESCE(item.spec, '') AS item_name
+		     , item.hs_code
+		     , fta.fta_name AS div_type
+		     , agm_hs.fta_agm_hs_code AS conv_hs_code
+		  FROM fta_agm_hs_code agm_hs
+		 INNER JOIN item_mst item
+		    ON agm_hs.item_code = item.item_code
+		   AND agm_hs.company_code = item.company_code
+		 INNER JOIN fta_master fta
+		    ON agm_hs.fta_code = fta.fta_code
+		 WHERE agm_hs.company_code = #{company_code}
+		   AND agm_hs.item_code = #{item_code}
+		 ORDER BY div_type, conv_hs_code
 	</select>
 
 

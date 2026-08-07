@@ -25,18 +25,18 @@
 	
 	<select id="retrievePlantCombo" parameterType="HashMap" resultType="HashMap">
 		<if test="OPTION_ALL == 'Y'.toString()">
-		SELECT '' CODE
-		       ,'선택' NAME
-		       ,'000' SORT_NO
-		 UNION ALL
+		select '' code
+		       ,'선택' name
+		       ,'000' sort_no
+		 union all
 		</if>
-		SELECT C.DIVISION_CODE AS  CODE
-		      ,C.DIVISION_NAME AS  NAME
-		      ,DIVISION_CODE AS SORT_NO
-		  FROM PLANT C
-		 WHERE C.STATUS = 'Y'
-		   AND C.COMPANY_CODE = #{COMPANY_CODE}
-		ORDER  BY SORT_NO ASC
+		select c.division_code as  code
+		      ,c.division_name as  name
+		      ,division_code as sort_no
+		  from division c
+		 where c.status = 'Y'
+		   and c.company_code = #{company_code}
+		order  by sort_no asc
 	</select>
 	
 	<select id="retrieveCodeCombo" parameterType="HashMap" resultType="HashMap">

@@ -74,7 +74,7 @@
 				                <small>HS 코드누락 비율</small>
 				            </span>
 				            <span id="hsCodeRateText" class="fw-500 fs-xl d-flex align-items-center text-success">
-				                50%
+				                -- %
 				                <svg class="sa-icon sa-bold sa-icon-success ms-1">
 				                    <use href="img/sprite.svg#trending-up"></use>
 				                </svg>
@@ -86,7 +86,7 @@
 	    	<div class="col-5">
 				<div class="frame-wrap">
 				    <div class="demo" style="text-align: right;">
-				    	<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.dialog.open('previewPopup','가운데팝업','/sample-001-pop02',1000,700);;">
+				    	<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="BASIS002.openItemDetail();">
 				            상세조회
 				        </button>
 				    </div>
@@ -156,7 +156,7 @@
 			            type: "ButtonRenderer",
 			            labelText: "협정별HSCODE",
 			            onClick: function(event) {
-			                BASIS002.fnOpenFtaHsCodePopup(event.item.item_code);
+			                BASIS002.fnOpenFtaHsCodePopup(event.item.hs_code, event.item.item_code);
 			            }
 			        }
 			    },
@@ -169,7 +169,7 @@
 			            type: "ButtonRenderer",
 			            labelText: "국가별HSCODE",
 			            onClick: function(event) {
-			                BASIS002.fnOpenNationHsCodePopup(event.item.item_code);
+			                BASIS002.fnOpenNationHsCodePopup(event.item.hs_code, event.item.item_code);
 			            }
 			        }
 			    }
@@ -199,6 +199,10 @@
 			
 			// 더블클릭 이벤트 
 			AUIGrid.bind(BASIS002.grid_BASIS002_01, "cellDoubleClick", function( event ) {
+				var clickRow = event.item;
+				
+				
+				KpackageOBJ.dialog.open('BASIS00201_ItemDetailPopup','아이템 상세정보','/basis/itemDetail' + getParam,1100,530);
 				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " dbl clicked");
 			});
 		};
@@ -210,37 +214,99 @@
 			KpackageOBJ.auiGrid.retrieve(BASIS002.grid_BASIS002_01, "/basis/retrieveItemList", params);
 			
 			/*HS CODE 누락 비율 chart UPDATE*/
-			
-			/*
-			KpackageOBJ.ajax.doSubmit("/basis/retrieveUserinfoList", params, (result) => {
-				var data = result.value;
-			});
-			*/
+			BASIS002.drawSmallChart();
 			
 		}
 		
+		
+		this.openItemDetail = function(){
+			
+			var checkedArray = KpackageOBJ.auiGrid.getCheckedRowItems(BASIS002.grid_BASIS002_01);
+			if (!checkedArray || checkedArray.length < 1) {
+		        alert("선택된 데이터가 없습니다.");
+		        return;
+		    }
+
+		    if (checkedArray.length > 1) {
+		        alert("한개의 데이터만 선택할 수 있습니다.");
+		        return;
+		    }
+		    
+		    var selected = checkedArray[0];
+		    var item = selected.item ? selected.item : selected;
+		    
+			var getParam = "?dialog_id="           + "itemMasterDetail_Popup"
+   				            + "&opener_pgm_id="    +  "BASIS002" 
+   				            + "&item_code=" + item.item_code;
+			KpackageOBJ.dialog.open('BASIS00201_ItemDetailPopup','아이템 상세정보','/basis/itemDetail' + getParam,1100,530);
+		}
 		
 		
 		/**
 		* HS CODE 누락 비율 UPDATE
 		retrieveMissingHsCodeCount xml 만들어놨음 
-		
 		*/
-		this.updateHsCodeDonut = function(normalCnt, missingCnt) {
-		    const total = normalCnt + missingCnt;
-		    const rate = total > 0 ? Math.round((missingCnt / total) * 100) : 0;
+		this.drawSmallChart = function(){
+			var params = KpackageOBJ.data.makePostData("BASIS002-form");
+			params["hs_code_missing_yn"] = $("#hs_code_missing_yn").is(":checked") ? "YY" : "NN";
+			
+			KpackageOBJ.ajax.doSubmit("/basis/retrieveMissingHsCodeCount", params, function(result) {
+	            
+				if(result.success){
+					var data = result.value;
+					var normalCnt = data.hs_code_exists_count;
+					var missingCnt = data.hs_code_missing_count;
+					const total = normalCnt + missingCnt;
+				    const rate = total > 0 ? Math.round((missingCnt / total) * 100) : 0;
 
-		    $("#hsCodeDonut").text(normalCnt + "," + missingCnt);
-		    $("#hsCodeDonut").peity("donut", {
-		        fill: ["var(--success-300)", "var(--danger-300)"],
-		        height: 34,
-		        width: 34
-		    });
+				    $("#hsCodeDonut").text(normalCnt + "," + missingCnt);
+				    $("#hsCodeDonut").peity("donut", {
+				        fill: ["var(--success-300)", "var(--danger-300)"],
+				        height: 34,
+				        width: 34
+				    });
 
-		    $("#hsCodeRateText").html(
-		        rate + '% <svg class="sa-icon sa-bold sa-icon-success ms-1"><use href="img/sprite.svg#trending-up"></use></svg>'
-		    );
+				    $("#hsCodeRateText").html(
+				        rate + '% <svg class="sa-icon sa-bold sa-icon-success ms-1"><use href="img/sprite.svg#trending-up"></use></svg>'
+				    );
+				}
+				
+				
+	        });
 		}
+		
+		this.fnOpenFtaHsCodePopup = function(pHsCode, item_code){
+			if (!pHsCode || $.trim(pHsCode) === "") {
+		        alert("HS Code 정보가 없습니다.");
+		        return;
+		    }
+
+		    var hsCode = $.trim(pHsCode);
+			var getParam = "?dialog_id="           + "ftaHsCode_Popup"
+	            + "&opener_pgm_id="    +  "BASIS002" 
+	            + "&search_type="    +  "FTA"
+	            + "&item_code=" + encodeURIComponent(item_code)
+	            + "&hs_code=" + hsCode;
+			KpackageOBJ.dialog.open('BASIS00202_FtaHsCodeopup','협정별 HS Code 정보','/basis/itemAgreemenNationtHsCode' + getParam,1100,700);
+			
+		}
+		
+		this.fnOpenNationHsCodePopup = function(pHsCode, item_code){
+			if (!pHsCode || $.trim(pHsCode) === "") {
+		        alert("HS Code 정보가 없습니다.");
+		        return;
+		    }
+			
+			var hsCode = $.trim(pHsCode);
+			var getParam = "?dialog_id="           + "nationHsCode_Popup"
+            + "&opener_pgm_id="    +  "BASIS002" 
+            + "&search_type="    +  "NA"
+            + "&item_code=" + encodeURIComponent(item_code)
+			+ "&hs_code=" + hsCode;
+			KpackageOBJ.dialog.open('BASIS00202_NationHsCodePopup','국가별 HS Code 정보','/basis/itemAgreemenNationtHsCode' + getParam,1100,700);
+		}
+		
+		
 	};
 	
 	$(document).ready(function() {

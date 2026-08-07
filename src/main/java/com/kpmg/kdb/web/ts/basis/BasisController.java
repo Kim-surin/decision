@@ -562,4 +562,187 @@ public class BasisController extends GenericController {
 		return result;
 	}
 	
+	
+	/**
+	 * 기초정보관리 > 자재관리 > 상세
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/basis/itemDetail")
+	public String basis00201_view(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);  
+		return "basis/itemDetail";
+	}
+	
+	
+	/**
+	 * 기초정보관리 > 자재관리 > 협정별 / 국가별 HS CODE
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/basis/itemAgreemenNationtHsCode")
+	public String basis00202_view(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);
+		return "basis/itemAgreemenNationtHsCode";
+	}
+	
+	
+	/**
+	 * 자재관리 - 상세 - 마스터정보 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveItemDetailMasterInfo")
+	@ResponseBody
+	public Result retrieveItemDetailMasterInfo(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveItemDetailMasterInfo ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveItemDetailMasterInfo(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveItemDetailMasterInfo END");
+		
+		return result;
+	}
+	
+	/**
+	 * 자재관리 - 상세 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveItemDetailList")
+	@ResponseBody
+	public Result retrieveItemDetailList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveItemDetailList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveItemDetailList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveItemDetailList END");
+		
+		return result;
+	}
+	
+	
+	
+	/**
+	 * 자재관리 - 상세 - 마스터정보 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/checkHsCodeExists")
+	@ResponseBody
+	public Result checkHsCodeExists(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "checkHsCodeExists ");
+		Result result = new Result();
+		try {
+			
+			int cnt = service.checkHsCodeExists(super.extendsMap(param));
+			result.setValue(cnt > 0 ? "Y" : "N");
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "checkHsCodeExists END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * 자재관리 - 상세 - hscode 저장
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/updateItemHsCode")
+	@ResponseBody
+	public Result updateItemHsCode(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "updateItemHsCode ");
+		Result result = new Result();
+		try {
+			
+			result = service.updateItemHsCode(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "updateItemHsCode END");
+		
+		return result;
+	}
+	
+	
+	
+	/**
+	 * 자재관리 - 협정별 / 국가별 hscode 팝업 hscode 데이터 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveHsCodeDetail")
+	@ResponseBody
+	public Result retrieveHsCodeDetail(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveHsCodeDetail ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveHsCodeDetail(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveHsCodeDetail END");
+		
+		return result;
+	}
+	
+	/**
+	 * 자재관리 - 협정별 / 국가별 hscode 팝업 데이터 리스트 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveAgreementNationHsCodeList")
+	@ResponseBody
+	public Result retrieveAgreementNationHsCodeList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveAgreementNationHsCodeList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveAgreementNationHsCodeList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveAgreementNationHsCodeList END");
+		
+		return result;
+	}
+	
 }
