@@ -228,6 +228,42 @@ public class TestController extends GenericController {
 		return result;
 	}
 
+	/**
+	 * OriginDecisionPipeline 의 수출 개별 판정(CREATE_FCR -> COO_DECISION -> STATUS 업데이트) 흐름을
+	 * 실제로 실행해보는 테스트 엔드포인트. 이미 존재하는 실제 SALES_NO 를 그대로 대상으로 삼으므로
+	 * 가상매출 생성 단계가 없다(generateVirtualSales() 호출 없이 바로 createFcr() 부터 시작). 제품
+	 * 스코프도 좁히지 않아(productCodes=null) salesNo 전체 제품이 대상이다. DB 에 실제로 반영되므로
+	 * 운영 DB 에서는 호출하지 않는다.
+	 *
+	 * companyCode=MRV100, divisionCode=MRV101, salesNo=2026040858.
+	 */
+	@RequestMapping(value = "/origin/compliance/test/export-decision")
+	@ResponseBody
+	public Result runExportDecision() {
+		Result result = new Result();
+		try {
+			OriginDecisionPipeline pipeline = pipelineFactory
+					.forExport("MRV100", "MRV101", "2026040858", null)
+					.createFcr()
+					.determineOrigin()
+					.updateStatus();
+
+			Map<String, Object> value = new LinkedHashMap<>();
+			value.put("targets", pipeline.targets().stream().map(this::describeTarget).collect(Collectors.toList()));
+			value.put("failedTargets",
+					pipeline.failedTargets().stream().map(this::describeTarget).collect(Collectors.toList()));
+
+			result.setSuccess(pipeline.failedTargets().isEmpty());
+			result.setMessage(pipeline.failedTargets().isEmpty() ? "수출 판정 완료" : "일부 판정대상 실패 - value 확인");
+			result.setValue(value);
+		} catch (Exception e) {
+			logger.error("수출 판정 테스트 실행 중 오류", e);
+			result.setSuccess(false);
+			result.setMessage("수출 판정 테스트 실행 중 오류: " + e.getMessage());
+		}
+		return result;
+	}
+
 	private String describeTarget(SalesTarget target) {
 		return target.getCompanyCode() + "/" + target.getDivisionCode() + "/" + target.getSalesNo();
 	}
