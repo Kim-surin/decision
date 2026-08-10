@@ -32,6 +32,7 @@ import com.kpmg.kdb.web.originbasis.dto.HsCodeCriteria;
 import com.kpmg.kdb.web.originbasis.dto.IncotermsChangeRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
+import com.kpmg.kdb.web.originbasis.dto.OriginRatePrecheck;
 import com.kpmg.kdb.web.origindecision.FcrCreator;
 
 /**
@@ -292,14 +293,16 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 
 		Map<String, BigDecimal> priceCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
+		Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
 		Map<String, String> priceNoteCache = new LinkedHashMap<>();
 
 		Map<String, List<ResolvedLeaf>> grouped = new LinkedHashMap<>();
 		for (BomLeafRow leaf : leafRows) {
 			BigDecimal unitPrice = resolveItemPriceCached(priceCache, leaf.getCompanyCode(),
 					leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
-			BigDecimal originRate = resolveOriginRateCached(originRateCache, leaf.getCompanyCode(),
-					leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
+			BigDecimal originRate = resolveOriginRateCached(originRateCache, originRatePrecheckCache,
+					leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(),
+					invoiceDate);
 			String priceNote = resolvePriceNoteCached(priceNoteCache, leaf.getCompanyCode(),
 					leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
 			String hsCodeYn = leaf.getItemHsCode() == null ? "N" : "Y";
@@ -407,12 +410,13 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		List<ProductFcrDtlSourceRow> rows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode,
 				productCodes);
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
+		Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
 
 		List<FcrDtlInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
 		for (ProductFcrDtlSourceRow src : rows) {
 			BigDecimal originRate = "B".equals(src.getProductAssetsType()) ? BigDecimal.ONE
-					: nvl(resolveOriginRateCached(originRateCache, src.getCompanyCode(), src.getProdDivisionCode(),
-							src.getProductCode(), src.getFtaCode(), invoiceDate));
+					: nvl(resolveOriginRateCached(originRateCache, originRatePrecheckCache, src.getCompanyCode(),
+							src.getProdDivisionCode(), src.getProductCode(), src.getFtaCode(), invoiceDate));
 			BigDecimal inputAmount = nvl(src.getUnitPrice());
 			boolean fullyOriginating = originRate.compareTo(BigDecimal.ONE) == 0;
 
@@ -469,25 +473,43 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 				stdYyyy, companyCode, divisionCode, exportFlag, ftaCode, fromIncoterms, toIncoterms)));
 	}
 
+	/**
+	 * ItemPriceCriteria.ftaCode 는 실제 조회 조건에 쓰이지 않는다(원본 FC10_GET_ITEM_PRICE 도 마찬가지 —
+	 * {@link ItemPriceCriteria} 클래스 주석 참고). 그래서 캐시 키에서 ftaCode 를 뺀다 — BOM 리프
+	 * 자재는 같은 품목이 협정(FTA) 수만큼 반복 등장하므로, 뺴지 않으면 이 캐시가 사실상 항상 miss 난다.
+	 */
 	private BigDecimal resolveItemPriceCached(Map<String, BigDecimal> cache, String companyCode, String divisionCode,
 			String itemCode, String ftaCode, String baseDate) {
-		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(ftaCode), nz(baseDate));
+		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
 		return cache.computeIfAbsent(key, k -> itemPriceService
 				.resolveItemPrice(new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate)));
 	}
 
+	/** ftaCode 를 캐시 키에서 빼는 이유는 {@link #resolveItemPriceCached} 참고. */
 	private String resolvePriceNoteCached(Map<String, String> cache, String companyCode, String divisionCode,
 			String itemCode, String ftaCode, String baseDate) {
-		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(ftaCode), nz(baseDate));
+		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
 		return cache.computeIfAbsent(key, k -> itemPriceService
 				.resolveItemPriceNote(new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate)));
 	}
 
-	private BigDecimal resolveOriginRateCached(Map<String, BigDecimal> cache, String companyCode,
-			String divisionCode, String itemCode, String ftaCode, String baseDate) {
+	/**
+	 * FTA_CODE 별 최종 원산지비율은 (companyCode, divisionCode, itemCode, ftaCode, baseDate) 로 캐싱하고,
+	 * 그 계산에 필요한 FTA_CODE 무관 사전조회(precheck)는 (companyCode, divisionCode, itemCode, baseDate)
+	 * 로 별도 캐싱한다 — 같은 품목이 협정(FTA) 수만큼 반복되는 BOM 리프 루프에서 사전조회를 한 번만
+	 * 하도록 하기 위함이다({@link ItemOriginRateService} 클래스 주석 참고).
+	 */
+	private BigDecimal resolveOriginRateCached(Map<String, BigDecimal> cache,
+			Map<String, OriginRatePrecheck> precheckCache, String companyCode, String divisionCode, String itemCode,
+			String ftaCode, String baseDate) {
 		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(ftaCode), nz(baseDate));
-		return cache.computeIfAbsent(key, k -> itemOriginRateService.resolveOriginRate(
-				new ItemOriginRateCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate)));
+		return cache.computeIfAbsent(key, k -> {
+			String precheckKey = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
+			OriginRatePrecheck precheck = precheckCache.computeIfAbsent(precheckKey, pk -> itemOriginRateService
+					.precheckOriginRate(new ItemOriginRateCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate)));
+			return itemOriginRateService.resolveOriginRate(
+					new ItemOriginRateCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), precheck);
+		});
 	}
 
 	private static String minusMonthsYyyymm(String invoiceDateYyyymmdd, int months) {
