@@ -210,6 +210,7 @@
 		      ,INTERMEDIATE_YN AS intermediateYn
 		FROM   FTA_MASTER
 		WHERE  DELETE_YN = 'N'
+		AND    COMPANY_CODE = #{companyCode}
 	</select>
 
 	<select id="selectExportSalesLines" resultType="com.kpmg.kdb.web.createfcr.dto.ExportSalesLine">

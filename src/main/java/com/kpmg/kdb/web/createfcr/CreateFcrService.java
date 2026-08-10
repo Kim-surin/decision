@@ -177,7 +177,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 			Map<String, BigDecimal> incotermsCache) {
 		List<DomesticSalesLine> salesLines = dao.selectDomesticSalesLines(companyCode, divisionCode, salesNo,
 				productCodes);
-		List<FtaMasterActive> ftaMasters = dao.selectActiveFtaMasters();
+		List<FtaMasterActive> ftaMasters = dao.selectActiveFtaMasters(companyCode);
 		String stdYyyy = invoiceDate.substring(0, 4);
 
 		List<FcrMstInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);

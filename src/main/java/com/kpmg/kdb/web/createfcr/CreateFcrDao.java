@@ -67,7 +67,7 @@ public interface CreateFcrDao {
 			@Param("productCodes") List<String> productCodes);
 
 	/** 내수 분기에서 SALES 와 교차조인되는 활성 FTA_MASTER(DELETE_YN='N') 목록 */
-	List<FtaMasterActive> selectActiveFtaMasters();
+	List<FtaMasterActive> selectActiveFtaMasters(@Param("companyCode") String companyCode);
 
 	/** "3-2. FCR_MST 데이터 생성" 수출 원시 데이터(FTA_APPLY_NATION/FTA_MASTER 매칭 결과 포함) */
 	List<ExportSalesLine> selectExportSalesLines(@Param("companyCode") String companyCode,
