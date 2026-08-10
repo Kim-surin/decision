@@ -33,8 +33,13 @@ public interface MonthlyDecisionDao {
 	/** "4. 판정대상 커서" (C_SALES_MST) */
 	List<SalesTarget> selectDecisionTargets(@Param("p") VirtualSalesGenerationParams params);
 
-	/** 판정완료 SALES_MST 상태값 갱신(STATUS='4', COO_DATE=NOW) */
-	void updateSalesMstDecisionComplete(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo);
+	/**
+	 * 판정완료 SALES_MST 상태값 갱신. 가상매출(VIRTUAL_YN='Y')이면 무조건 '4', 실제매출(수출 판정대상)이면
+	 * FCR_MST/FCR_RESULT 오류 존재 여부에 따라 '4' 또는 '5'. productCodes 가 null/빈 리스트면 salesNo
+	 * 전체 제품(월 판정) 대상.
+	 */
+	void updateSalesMstDecisionComplete(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo,
+			@Param("productCodes") List<String> productCodes);
 
 	/**
 	 * 판정완료 SALES_DTL 상태값 갱신(FCR_MST/FCR_RESULT 오류 존재 여부에 따라 '4' 또는 '5').

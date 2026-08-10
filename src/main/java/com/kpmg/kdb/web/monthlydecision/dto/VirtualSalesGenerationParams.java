@@ -5,8 +5,10 @@ import java.util.List;
 /**
  * 레거시 MONTHLY_DECISION_PROC 의 파라미터 목록(P_YYYYMMDD, P_COMPANY_CODE, ...) 대체 객체.
  * 가상매출 생성(OriginDecisionPipeline#generateVirtualSales) 호출 시 넘기는 조건으로, 월 판정/개별
- * 판정이 공용으로 쓴다 — 월 판정은 yyyymmdd(매출년월) 범위 전체를, 개별 판정은 productCodes 로 특정
- * 매출건만 좁혀서 호출한다.
+ * 판정이 공용으로 쓴다 — 월 판정은 yyyymmdd(매출년월) 범위 전체 실매출을 집계해 가상매출을 만들고,
+ * 개별 판정은 sourceSalesNo(실제 SALES_NO) 1건의 헤더를 복사하고 productCodes 로 특정 제품만 좁혀서
+ * 가상매출을 만든다(둘은 서로 다른 VirtualSalesGenerator 구현이 처리 — AggregatedVirtualSalesGenerator/
+ * IndividualVirtualSalesGenerator 참고).
  */
 public class VirtualSalesGenerationParams {
 
@@ -19,6 +21,11 @@ public class VirtualSalesGenerationParams {
 	/** null/빈 리스트면 제품 필터 없음(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상으로 한다. */
 	private List<String> productCodes;
 	private String exportFlag;
+	/**
+	 * 개별 판정 전용: 가상 SALES_MST 헤더 정보(거래처/생산자/INKOTERMS 등)를 복사해올 실제 SALES_NO.
+	 * 월 판정(가상매출을 여러 실매출 집계로 새로 만드는 경우)에서는 사용하지 않는다.
+	 */
+	private String sourceSalesNo;
 
 	public String getYyyymmdd() {
 		return yyyymmdd;
@@ -74,6 +81,14 @@ public class VirtualSalesGenerationParams {
 
 	public void setExportFlag(String exportFlag) {
 		this.exportFlag = exportFlag;
+	}
+
+	public String getSourceSalesNo() {
+		return sourceSalesNo;
+	}
+
+	public void setSourceSalesNo(String sourceSalesNo) {
+		this.sourceSalesNo = sourceSalesNo;
 	}
 
 	/** V_YYYYMM = SUBSTR(P_YYYYMMDD, 1, 6) */

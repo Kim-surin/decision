@@ -1,0 +1,146 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindecision.IndividualVirtualSalesDao">
+
+	<!--
+		===================== 2. SALES_MST 가상 매출 생성(개별 판정) =====================
+		원본은 USING 서브쿼리에서 '1' AS STATUS 를 뽑아두고도 정작 INSERT 시엔 그 값을 쓰지 않고
+		'4' 를 직접 박아 넣는다(죽은 컬럼) — 여기서는 그 죽은 컬럼을 빼고 바로 '4' 를 VALUES 에 적어
+		결과는 동일하게 유지했다. COMPANY/DIVISION INNER JOIN 은 SELECT 목록엔 없지만 존재 검증
+		필터로 동작하므로(레코드가 없으면 매칭 실패) 그대로 남겨뒀다.
+	-->
+	<insert id="mergeIndividualSalesMst">
+		MERGE INTO SALES_MST SM
+		USING (SELECT #{virtualSalesNo}                     AS SALES_NO
+		             ,#{p.divisionCode}                      AS DIVISION_CODE
+		             ,#{p.companyCode}                       AS COMPANY_CODE
+		             ,#{p.customerCode}                      AS CUSTOMER_CODE
+		             ,SMI.EXPORT_FLAG                        AS EXPORT_FLAG
+		             ,SMI.DEPARTMENT_CODE                    AS DEPARTMENT_CODE
+		             ,#{p.yyyymm} || '01'                    AS INVOICE_DATE
+		             ,CUST.CUSTOMER_NAME                     AS EXPORTER_NAME
+		             ,CUST.OFFICER_NAME                      AS EXPORTER_REPRESENTATIVE_NAME
+		             ,COALESCE(CUST.BUSINESS_NO, ' ')        AS EXPORTER_BIZ_NO
+		             ,COALESCE(CUST.TEL_NO, ' ')              AS EXPORTER_TEL_NO
+		             ,COALESCE(CUST.ADDRESS, ' ')             AS EXPORTER_ADDRESS
+		             ,SMI.PRODUCER_NAME                      AS PRODUCER_NAME
+		             ,SMI.PRODUCER_REPRESENTATIVE_NAME       AS PRODUCER_REPRESENTATIVE_NAME
+		             ,SMI.PRODUCER_BIZ_NO                    AS PRODUCER_BIZ_NO
+		             ,SMI.PRODUCER_TEL_NO                    AS PRODUCER_TEL_NO
+		             ,SMI.PRODUCER_ADDRESS                   AS PRODUCER_ADDRESS
+		             ,SMI.DELIVERY_CUSTOMER_CODE             AS DELIVERY_CUSTOMER_CODE
+		             ,SMI.INKOTERMS                          AS INKOTERMS
+		       FROM   SALES_MST SMI
+		       INNER  JOIN COMPANY COM
+		       ON     SMI.COMPANY_CODE = COM.COMPANY_CODE
+		       INNER  JOIN DIVISION D
+		       ON     SMI.COMPANY_CODE = D.COMPANY_CODE
+		       AND    SMI.DIVISION_CODE = D.DIVISION_CODE
+		       INNER  JOIN CUSTOMER CUST
+		       ON     SMI.COMPANY_CODE = CUST.COMPANY_CODE
+		       AND    SMI.CUSTOMER_CODE = CUST.CUSTOMER_CODE
+		       WHERE  SMI.SALES_NO = #{p.sourceSalesNo}
+		       AND    SMI.DIVISION_CODE = #{p.divisionCode}
+		       AND    SMI.COMPANY_CODE = #{p.companyCode}
+		       AND    SMI.DELETE_YN = 'N') VSM
+		ON (SM.SALES_NO = VSM.SALES_NO AND SM.COMPANY_CODE = VSM.COMPANY_CODE AND SM.DIVISION_CODE = VSM.DIVISION_CODE)
+		WHEN NOT MATCHED THEN
+			INSERT
+				(SALES_NO, DIVISION_CODE, COMPANY_CODE, CUSTOMER_CODE, EXPORT_FLAG, DEPARTMENT_CODE,
+				 INVOICE_DATE, STATUS, EXPORTER_NAME, EXPORTER_REPRESENTATIVE_NAME, EXPORTER_BIZ_NO,
+				 EXPORTER_TEL_NO, EXPORTER_ADDRESS, PRODUCER_NAME, PRODUCER_REPRESENTATIVE_NAME,
+				 PRODUCER_BIZ_NO, PRODUCER_TEL_NO, PRODUCER_ADDRESS, VIRTUAL_YN, DELIVERY_CUSTOMER_CODE,
+				 INKOTERMS, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY)
+			VALUES
+				(VSM.SALES_NO, VSM.DIVISION_CODE, VSM.COMPANY_CODE, VSM.CUSTOMER_CODE, VSM.EXPORT_FLAG,
+				 VSM.DEPARTMENT_CODE, VSM.INVOICE_DATE, '4', VSM.EXPORTER_NAME, VSM.EXPORTER_REPRESENTATIVE_NAME,
+				 VSM.EXPORTER_BIZ_NO, VSM.EXPORTER_TEL_NO, VSM.EXPORTER_ADDRESS, VSM.PRODUCER_NAME,
+				 VSM.PRODUCER_REPRESENTATIVE_NAME, VSM.PRODUCER_BIZ_NO, VSM.PRODUCER_TEL_NO, VSM.PRODUCER_ADDRESS,
+				 'Y', VSM.DELIVERY_CUSTOMER_CODE, VSM.INKOTERMS, CURRENT_TIMESTAMP, 'fta', CURRENT_TIMESTAMP, 'fta')
+	</insert>
+
+	<!--
+		===================== 3. SALES_DTL 가상 매출 생성(개별 판정, 제품 1건) =====================
+		SALES_SEQ 채번: 월 판정과 동일한 이유로 ROWNUM(스캔 순서 의존) 대신 ROW_NUMBER() OVER(...) 로
+		결정적 채번을 사용한다(사용자 요청에 따른 의도적 수정, 월 판정 mergeAggregatedSalesDtl 참고).
+		INVOICE_DATE 범위: 원본은 BETWEEN yyyymm||'01' AND LAST_DAY(...)(Oracle 전용) 였는데, 이미
+		다른 곳에서 쓰는 표준 SQL 패턴인 INVOICE_DATE LIKE yyyymm||'%' 로 교체했다(같은 결과, 이식성 확보).
+		단가 정책: 월 판정(가중평균, SUM(AMOUNT)/SUM(QUANTITY))과 달리 개별 판정은 보수적 판정을 위해
+		가장 작은 단가(MIN)를 쓴다 — 원본 정책 그대로 이관.
+	-->
+	<insert id="mergeIndividualSalesDtl">
+		MERGE INTO SALES_DTL SD
+		USING (SELECT #{virtualSalesNo} AS SALES_NO
+		             ,(COALESCE((SELECT MAX(SALES_SEQ) + 1
+		                         FROM   SALES_DTL
+		                         WHERE  SALES_NO = #{virtualSalesNo}
+		                         AND    COMPANY_CODE = #{p.companyCode}
+		                         AND    DIVISION_CODE = #{p.divisionCode}), 1)
+		               + ROW_NUMBER() OVER (ORDER BY VSD.DELIVERY_CUSTOMER_CODE, VSD.CUSTOMER_ITEM_CODE) - 1) AS SALES_SEQ
+		             ,VSD.DIVISION_CODE          AS DIVISION_CODE
+		             ,VSD.COMPANY_CODE           AS COMPANY_CODE
+		             ,VSD.PRODUCT_CODE           AS PRODUCT_CODE
+		             ,VSD.PRODUCT_NAME           AS PRODUCT_NAME
+		             ,VSD.HS_CODE                AS HS_CODE
+		             ,VSD.PRODUCT_UNIT           AS PRODUCT_UNIT
+		             ,VSD.PRODUCT_ASSETS_TYPE    AS PRODUCT_ASSETS_TYPE
+		             ,VSD.PROD_DIVISION_CODE     AS PROD_DIVISION_CODE
+		             ,VSD.QUANTITY               AS QUANTITY
+		             ,VSD.UNIT_PRICE             AS UNIT_PRICE
+		             ,VSD.AMOUNT                 AS AMOUNT
+		             ,VSD.DELIVERY_CUSTOMER_CODE AS DELIVERY_CUSTOMER_CODE
+		             ,VSD.CUSTOMER_ITEM_CODE     AS CUSTOMER_ITEM_CODE
+		       FROM   (SELECT SD.DIVISION_CODE
+		                     ,SD.COMPANY_CODE
+		                     ,SD.PRODUCT_CODE
+		                     ,SD.PRODUCT_NAME
+		                     ,IM.HS_CODE
+		                     ,SD.PRODUCT_UNIT
+		                     ,SD.PRODUCT_ASSETS_TYPE
+		                     ,SD.PROD_DIVISION_CODE
+		                     ,SUM(SD.QUANTITY) AS QUANTITY
+		                     ,COALESCE(MIN(SD.AMOUNT / NULLIF(SD.QUANTITY, 0)), 0) AS UNIT_PRICE
+		                     ,SUM(SD.AMOUNT) AS AMOUNT
+		                     ,SD.DELIVERY_CUSTOMER_CODE
+		                     ,SD.CUSTOMER_ITEM_CODE
+		               FROM   SALES_MST SM
+		               INNER  JOIN SALES_DTL SD
+		               ON     SM.SALES_NO = SD.SALES_NO
+		               AND    SM.COMPANY_CODE = SD.COMPANY_CODE
+		               AND    SM.DIVISION_CODE = SD.DIVISION_CODE
+		               INNER  JOIN ITEM_MST IM
+		               ON     IM.COMPANY_CODE = SD.COMPANY_CODE
+		               AND    IM.ITEM_CODE = SD.PRODUCT_CODE
+		               WHERE  SM.INVOICE_DATE LIKE #{p.yyyymm} || '%'
+		               AND    SD.PRODUCT_CODE = #{productCode}
+		               AND    SM.COMPANY_CODE = #{p.companyCode}
+		               AND    SM.DIVISION_CODE = #{p.divisionCode}
+		               AND    SM.CUSTOMER_CODE = #{p.customerCode}
+		               AND    SM.DELETE_YN = 'N'
+		               AND    SM.VIRTUAL_YN = 'N'
+		               GROUP  BY SD.DIVISION_CODE, SD.COMPANY_CODE, SD.PRODUCT_CODE, SD.PRODUCT_NAME,
+		                        SD.PRODUCT_UNIT, SD.PRODUCT_ASSETS_TYPE, IM.HS_CODE, SD.PROD_DIVISION_CODE,
+		                        SD.DELIVERY_CUSTOMER_CODE, SD.CUSTOMER_ITEM_CODE) VSD
+		       WHERE  VSD.QUANTITY > 0) VSD
+		ON (SD.SALES_NO = VSD.SALES_NO AND SD.PRODUCT_CODE = VSD.PRODUCT_CODE AND SD.DIVISION_CODE = VSD.DIVISION_CODE
+		    AND SD.COMPANY_CODE = VSD.COMPANY_CODE AND SD.DELIVERY_CUSTOMER_CODE = VSD.DELIVERY_CUSTOMER_CODE)
+		WHEN NOT MATCHED THEN
+			INSERT
+				(SALES_NO, SALES_SEQ, DIVISION_CODE, COMPANY_CODE, PRODUCT_CODE, PRODUCT_NAME, PRODUCT_UNIT,
+				 PRODUCT_ASSETS_TYPE, HS_CODE, PROD_DIVISION_CODE, QUANTITY, UNIT_PRICE, AMOUNT, BOM_STATUS,
+				 STATUS, DELIVERY_CUSTOMER_CODE, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY, CUSTOMER_ITEM_CODE)
+			VALUES
+				(VSD.SALES_NO, VSD.SALES_SEQ, VSD.DIVISION_CODE, VSD.COMPANY_CODE, VSD.PRODUCT_CODE,
+				 VSD.PRODUCT_NAME, VSD.PRODUCT_UNIT, VSD.PRODUCT_ASSETS_TYPE, VSD.HS_CODE, VSD.PROD_DIVISION_CODE,
+				 VSD.QUANTITY, VSD.UNIT_PRICE, VSD.AMOUNT, '0', '1', VSD.DELIVERY_CUSTOMER_CODE,
+				 CURRENT_TIMESTAMP, 'fta', CURRENT_TIMESTAMP, 'fta', VSD.CUSTOMER_ITEM_CODE)
+		WHEN MATCHED THEN
+			UPDATE
+			SET    HS_CODE     = VSD.HS_CODE
+			      ,QUANTITY    = VSD.QUANTITY
+			      ,UNIT_PRICE  = VSD.UNIT_PRICE
+			      ,AMOUNT      = VSD.AMOUNT
+			      ,UPDATE_DATE = CURRENT_TIMESTAMP
+			      ,UPDATE_BY   = 'fta'
+	</insert>
+</mapper>

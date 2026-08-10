@@ -24,8 +24,13 @@ import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 @Service
 public class OriginDecisionPipelineFactory extends GeneralService {
 
+	// AggregatedVirtualSalesGenerator/IndividualVirtualSalesGenerator 둘 다 VirtualSalesGenerator 를
+	// 구현하므로, 인터페이스 타입으로 주입받으면 어느 구현체를 쓸지 모호해진다(빈 2개) — 그래서 구체
+	// 타입으로 각각 주입받아 파이프라인 종류별로 명시적으로 골라 쓴다.
 	@Autowired
-	private VirtualSalesGenerator virtualSalesGenerator;
+	private AggregatedVirtualSalesGenerator aggregatedVirtualSalesGenerator;
+	@Autowired
+	private IndividualVirtualSalesGenerator individualVirtualSalesGenerator;
 	@Autowired
 	private FcrCreator fcrCreator;
 	@Autowired
@@ -34,12 +39,24 @@ public class OriginDecisionPipelineFactory extends GeneralService {
 	private DecisionStatusUpdater statusUpdater;
 
 	/**
-	 * 내수 판정 파이프라인. 판정 대상은 아직 비어 있으며, {@link OriginDecisionPipeline#generateVirtualSales}
-	 * 를 체인 첫 단계로 호출해야 채워진다.
+	 * 월 판정 파이프라인. 판정 대상은 아직 비어 있으며, {@link OriginDecisionPipeline#generateVirtualSales}
+	 * 를 체인 첫 단계로 호출해야 채워진다(params 는 yyyymmdd 범위 전체 실매출을 집계할 조건).
 	 */
 	public OriginDecisionPipeline forDomestic(String companyCode, List<String> productCodes) {
 		OriginDeterminationMode mode = resolveMode(companyCode);
-		return new OriginDecisionPipeline(Collections.emptyList(), mode, productCodes, virtualSalesGenerator,
+		return new OriginDecisionPipeline(Collections.emptyList(), mode, productCodes, aggregatedVirtualSalesGenerator,
+				fcrCreator, originDecider, statusUpdater);
+	}
+
+	/**
+	 * 개별 판정 파이프라인. forDomestic 과 마찬가지로 판정 대상은 아직 비어 있으며,
+	 * {@link OriginDecisionPipeline#generateVirtualSales} 를 체인 첫 단계로 호출해야 채워진다. 이 때
+	 * 넘기는 params 에는 companyCode/divisionCode/customerCode/yyyymmdd(매출년월)/sourceSalesNo
+	 * (헤더를 복사해올 실제 SALES_NO)/productCodes 를 모두 채워야 한다.
+	 */
+	public OriginDecisionPipeline forIndividual(String companyCode, List<String> productCodes) {
+		OriginDeterminationMode mode = resolveMode(companyCode);
+		return new OriginDecisionPipeline(Collections.emptyList(), mode, productCodes, individualVirtualSalesGenerator,
 				fcrCreator, originDecider, statusUpdater);
 	}
 
@@ -54,8 +71,8 @@ public class OriginDecisionPipelineFactory extends GeneralService {
 		target.setCompanyCode(companyCode);
 		target.setDivisionCode(divisionCode);
 		target.setSalesNo(salesNo);
-		return new OriginDecisionPipeline(List.of(target), mode, productCodes, virtualSalesGenerator, fcrCreator,
-				originDecider, statusUpdater);
+		return new OriginDecisionPipeline(List.of(target), mode, productCodes, aggregatedVirtualSalesGenerator,
+				fcrCreator, originDecider, statusUpdater);
 	}
 
 	private OriginDeterminationMode resolveMode(String companyCode) {
