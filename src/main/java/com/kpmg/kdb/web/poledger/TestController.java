@@ -180,6 +180,54 @@ public class TestController extends GenericController {
 		return result;
 	}
 
+	/**
+	 * OriginDecisionPipeline 의 개별 판정(가상매출 생성 -> CREATE_FCR -> COO_DECISION -> STATUS 업데이트)
+	 * 흐름을 실제로 실행해보는 테스트 엔드포인트. 월 판정과 달리 sourceSalesNo(이미 존재하는 실제
+	 * SALES_NO) 1건의 헤더를 복사하고, 요청한 productCodes 만큼만 가상 SALES_DTL 을 만든다. DB 에
+	 * 실제로 반영되므로 운영 DB 에서는 호출하지 않는다.
+	 *
+	 * companyCode=FRT100, divisionCode=FRT101, customerCode=1018116406, yyyymm=202604,
+	 * sourceSalesNo=202604304521, productCodes=[091103S100, 091103X100] 로 가상매출을 만든다 ->
+	 * 결과 SALES_NO 는 "1018116406FRT101202604"(customerCode+divisionCode+yyyymm).
+	 */
+	@RequestMapping(value = "/origin/compliance/test/individual-decision")
+	@ResponseBody
+	public Result runIndividualDecision() {
+		Result result = new Result();
+		try {
+			String companyCode = "FRT100";
+			List<String> productCodes = List.of("091103S100", "091103X100");
+
+			VirtualSalesGenerationParams params = new VirtualSalesGenerationParams();
+			params.setCompanyCode(companyCode);
+			params.setDivisionCode("FRT101");
+			params.setCustomerCode("1018116406");
+			params.setYyyymmdd("202604");
+			params.setSourceSalesNo("202604304521");
+			params.setProductCodes(productCodes);
+
+			OriginDecisionPipeline pipeline = pipelineFactory.forIndividual(companyCode, productCodes)
+					.generateVirtualSales(params)
+					.createFcr()
+					.determineOrigin()
+					.updateStatus();
+
+			Map<String, Object> value = new LinkedHashMap<>();
+			value.put("targets", pipeline.targets().stream().map(this::describeTarget).collect(Collectors.toList()));
+			value.put("failedTargets",
+					pipeline.failedTargets().stream().map(this::describeTarget).collect(Collectors.toList()));
+
+			result.setSuccess(pipeline.failedTargets().isEmpty());
+			result.setMessage(pipeline.failedTargets().isEmpty() ? "개별 판정 완료" : "일부 판정대상 실패 - value 확인");
+			result.setValue(value);
+		} catch (Exception e) {
+			logger.error("개별 판정 테스트 실행 중 오류", e);
+			result.setSuccess(false);
+			result.setMessage("개별 판정 테스트 실행 중 오류: " + e.getMessage());
+		}
+		return result;
+	}
+
 	private String describeTarget(SalesTarget target) {
 		return target.getCompanyCode() + "/" + target.getDivisionCode() + "/" + target.getSalesNo();
 	}

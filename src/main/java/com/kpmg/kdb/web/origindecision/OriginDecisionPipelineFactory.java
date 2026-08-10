@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.coodecision.OriginDeterminationMode;
-import com.kpmg.kdb.web.monthlydecision.MonthlyDecisionDao;
 import com.kpmg.kdb.web.monthlydecision.dto.CompanyDecisionFlags;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 
@@ -37,6 +36,8 @@ public class OriginDecisionPipelineFactory extends GeneralService {
 	private OriginDecider originDecider;
 	@Autowired
 	private DecisionStatusUpdater statusUpdater;
+	@Autowired
+	private CompanyDecisionFlagsService companyDecisionFlagsService;
 
 	/**
 	 * 월 판정 파이프라인. 판정 대상은 아직 비어 있으며, {@link OriginDecisionPipeline#generateVirtualSales}
@@ -76,8 +77,7 @@ public class OriginDecisionPipelineFactory extends GeneralService {
 	}
 
 	private OriginDeterminationMode resolveMode(String companyCode) {
-		MonthlyDecisionDao dao = sqlSession.getMapper(MonthlyDecisionDao.class);
-		CompanyDecisionFlags flags = dao.selectCompanyDecisionFlags(companyCode);
+		CompanyDecisionFlags flags = companyDecisionFlagsService.getDecisionFlags(companyCode);
 
 		if ("Y".equals(flags.getMaterialUseYn())) {
 			logger.warn(

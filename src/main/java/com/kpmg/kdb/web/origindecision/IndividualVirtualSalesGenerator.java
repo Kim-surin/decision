@@ -2,6 +2,7 @@ package com.kpmg.kdb.web.origindecision;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
@@ -14,11 +15,14 @@ import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
  * 헤더를 복사하고 요청받은 제품(productCodes)만큼 가상 SALES_DTL 을 만든다. 그 결과 판정 대상은 언제나
  * 정확히 1건(방금 만든 가상 SALES_NO)이다.
  *
- * <p>"1. 가상 매출 번호 채번"은 원본처럼 DB 조회가 필요 없다 — CUSTOMER_CODE+DIVISION_CODE+YYYYMM
- * 단순 문자열 조합이라 이 자리에서 바로 계산한다.
+ * <p>"1. 가상 매출 번호 채번"은 {@link VirtualSalesNoGenerator} 에 위임한다(원본처럼 DB 조회는 필요
+ * 없지만, 채번 규칙 자체가 나중에 바뀔 수 있어 부품으로 분리했다).
  */
 @Service
 public class IndividualVirtualSalesGenerator extends GeneralService implements VirtualSalesGenerator {
+
+	@Autowired
+	private VirtualSalesNoGenerator salesNoGenerator;
 
 	@Override
 	public List<SalesTarget> generate(VirtualSalesGenerationParams params) {
@@ -27,7 +31,7 @@ public class IndividualVirtualSalesGenerator extends GeneralService implements V
 		}
 
 		// 1. 가상 매출 번호 채번
-		String virtualSalesNo = params.getCustomerCode() + params.getDivisionCode() + params.getYyyymm();
+		String virtualSalesNo = salesNoGenerator.generate(params);
 
 		IndividualVirtualSalesDao dao = sqlSession.getMapper(IndividualVirtualSalesDao.class);
 
