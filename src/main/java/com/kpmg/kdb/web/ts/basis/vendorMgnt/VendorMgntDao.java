@@ -13,7 +13,13 @@ public interface VendorMgntDao {
 	
 	public List retrieveVendorList(Map param);
 	public List retrieveVendorInChargeList(Map param);
+	public int updateVendorData(Map param);	
+	public int insertVendorIncharge(Map param);
+	public int updateVendorIncharge(Map param);
+	public int deleteVendorIncharge(Map param);
+	
 	public List retrieveCustomerList(Map param);
+	public int updateCustomerData(Map param);
 }
 
 

@@ -96,7 +96,54 @@ public class VendorMgntController extends GenericController {
 		return result;
 	}
 	
+	/**
+	 *  기초 정보 관리 > 협력업체 > 협력업체 정보저장
+	 * 
+	 * @author osw
+	 * @return 
+	 */
+	@RequestMapping(value="/origin/basis/vendorMgnt/updateVendorData")
+	@ResponseBody
+	public Result updateVendorData(@RequestBody Map param) {
+		Result result = new Result();
+		try {
+			
+			result = vendorMgntService.updateVendorData(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		
+		return result;
+	}
 	
+	
+	/**
+	 * 기초 정보 관리 > 협력업체 > 협력업체 담당자 정보 저장
+	 * 
+	 * @author osw
+	 * @return 
+	 */
+	@RequestMapping(value="/origin/basis/vendorMgnt/saveVendorInchargeList")
+	@ResponseBody
+	public Result saveVendorInchargeList(@RequestBody Map param) {
+		Result result = new Result();
+		try {
+			
+			result = vendorMgntService.saveVendorInchargeList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		
+		return result;
+	}
 	
 	
 	/**
@@ -123,6 +170,30 @@ public class VendorMgntController extends GenericController {
 		return result;
 	}
 	
+	
+	/**
+	 *  기초 정보 관리 > 협력업체 > 리스트 조회(Customer) > 협력업체 정보저장
+	 * 
+	 * @author osw
+	 * @return 
+	 */
+	@RequestMapping(value="/origin/basis/vendorMgnt/updateCustomerData")
+	@ResponseBody
+	public Result updateCustomerData(@RequestBody Map param) {
+		Result result = new Result();
+		try {
+			
+			result = vendorMgntService.updateCustomerData(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		
+		return result;
+	}
 	
 	
 	
