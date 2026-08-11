@@ -35,10 +35,7 @@ public interface OriginDeterminationSupportDao {
 	/** 해당 FTA 협정 적용대상 회원국 코드 목록 (GET_RCEP_NATION / GET_RCEP_RVC_NATION 공용) */
 	List<String> selectFtaApplyNations(@Param("ftaCode") String ftaCode);
 
-	/** FCR_RESULT_SEQ_S.NEXTVAL 대체 */
-	Long selectNextFcrResultSeq();
-
-	/** INSERT_FRD_PROCESS 의 FCR_RESULT INSERT */
+	/** INSERT_FRD_PROCESS 의 FCR_RESULT INSERT. SEQ 컬럼은 넘기지 않고 DB 컬럼 DEFAULT(시퀀스)로 채번한다 */
 	void insertFcrResult(OriginDeterminationResult record);
 
 	/** UPDATE_FRM_PROCEDURE 1단계: 역내산(COMPANY_COO_YN='Y') 판정결과 조회 */

@@ -84,15 +84,18 @@
 		기록했으므로), 이제 이 INSERT 를 실행하는 주체가 COO_DECISION(OriginDeterminationService)이라
 		제품(P,H) FCR_RESULT 기록과 동일하게 호출한 판정 모드의 원본 패키지명(#{createBy},
 		OriginDeterminationMode#getProcedureName)을 기록하도록 맞췄다.
+
+		SEQ 컬럼은 INSERT 대상 목록에서 뺐다 — 컬럼 DEFAULT(시퀀스)로 채번한다. 원래 있던 "SELECT 1
+		AS SEQ" 는 매 행마다 같은 값(1)을 넣는 잘못된 채번이었다(여러 행을 한 번의 INSERT...SELECT 로
+		넣는 이 쿼리 특성상 실제로는 그대로 두면 문제가 됐을 코드).
 	-->
 	<insert id="insertFcrResultForProducts">
 		INSERT INTO FCR_RESULT
-			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			(SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
 			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
 			 RVC_RATE, CTC_YN, COMPANY_RVC_YN, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE,
 			 CREATE_BY, UPDATE_DATE, UPDATE_BY)
-		SELECT 1                AS SEQ
-		      ,FM.SALES_NO
+		SELECT FM.SALES_NO
 		      ,FM.SALES_SEQ
 		      ,FM.FTA_CODE
 		      ,FM.DIVISION_CODE

@@ -177,7 +177,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 		try {
 			OriginDeterminationSupportDao dao = sqlSession.getMapper(OriginDeterminationSupportDao.class);
 
-			rec.setSeq(dao.selectNextFcrResultSeq());
 			rec.setBufferOption(ctx.getOptionValue());
 			rec.setDeMinimisRate(ctx.getCompanyCtcRate());
 			rec.setRvcRate(ctx.getCompanyRvcRate());

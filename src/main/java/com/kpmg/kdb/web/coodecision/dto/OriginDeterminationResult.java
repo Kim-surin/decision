@@ -12,7 +12,6 @@ import java.math.BigDecimal;
  */
 public class OriginDeterminationResult {
 
-	private Long seq;
 	private String salesNo;
 	private int salesSeq;
 	private String ftaCode;
@@ -52,14 +51,6 @@ public class OriginDeterminationResult {
 	private BigDecimal rvcFtaResultRate;
 	private BigDecimal rvcCompanyResultRate;
 	private String rcepCooNation;
-
-	public Long getSeq() {
-		return seq;
-	}
-
-	public void setSeq(Long seq) {
-		this.seq = seq;
-	}
 
 	public String getSalesNo() {
 		return salesNo;
@@ -378,7 +369,6 @@ public class OriginDeterminationResult {
 	 * INSERT 직후 다음 룰 판정을 위해 상태값만 남기고 모두 초기화한다(STATUS='N').
 	 */
 	public void resetForNextRule() {
-		this.seq = null;
 		this.salesNo = null;
 		this.salesSeq = 0; // 다음 룰 처리 직전에 FM_LIST.SALES_SEQ 로 재설정되므로 0은 실제로 읽히지 않는다
 		this.ftaCode = null;

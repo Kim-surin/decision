@@ -72,15 +72,14 @@
 		WHERE  FTA_CODE = #{ftaCode}
 	</select>
 
-	<!-- ===================== INSERT_FRD_PROCESS ===================== -->
-
-	<select id="selectNextFcrResultSeq" resultType="long">
-		SELECT FCR_RESULT_SEQ_S.NEXTVAL
-	</select>
-
+	<!--
+		===================== INSERT_FRD_PROCESS =====================
+		SEQ 컬럼은 넘기지 않는다 — 컬럼 DEFAULT(시퀀스)로 채번하도록 INSERT 대상 목록에서 아예 뺐다
+		(Oracle 전용 FCR_RESULT_SEQ_S.NEXTVAL 을 매번 별도 SELECT 로 조회해 바인딩하던 것을 없앰).
+	-->
 	<insert id="insertFcrResult" parameterType="com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult">
 		INSERT INTO FCR_RESULT
-			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			(SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
 			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
 			 RVC_RATE, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE, CREATE_BY, UPDATE_DATE,
 			 UPDATE_BY, SP_COO_YN, WO_COO_YN, CTC_YN, FTA_DE_MINIMIS_YN, COMPANY_DE_MINIMIS_YN,
@@ -88,7 +87,7 @@
 			 CTC_FTA_RESULT_RATE, CTC_COMPANY_RESULT_RATE, RVC_RESULT_RATE, RVC_FTA_RESULT_RATE,
 			 RVC_COMPANY_RESULT_RATE, RCEP_COO_NATION)
 		VALUES
-			(#{seq}, #{salesNo}, #{salesSeq}, #{ftaCode}, #{divisionCode}, #{companyCode}, #{hsCode},
+			(#{salesNo}, #{salesSeq}, #{ftaCode}, #{divisionCode}, #{companyCode}, #{hsCode},
 			 #{productCode}, #{standard}, #{ruleSeq}, #{ruleCode}, #{ftaCooYn}, #{companyCooYn},
 			 #{bufferOption}, #{deMinimisRate}, #{rvcRate}, #{status}, #{errorCode}, #{errorMsg},
 			 #{deleteYn}, CURRENT_TIMESTAMP, #{createBy}, CURRENT_TIMESTAMP, #{updateBy}, #{spCooYn},
