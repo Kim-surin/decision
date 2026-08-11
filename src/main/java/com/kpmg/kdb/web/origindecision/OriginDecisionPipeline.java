@@ -107,10 +107,10 @@ public class OriginDecisionPipeline {
 						productCodes));
 	}
 
-	/** "4. PKG99_COO_DECISION.COO_DECISION". 현재 판정 대상 각각에 대해 원산지를 판정한다. */
+	/** "4. PKG99_COO_DECISION.COO_DECISION". 현재 판정 대상 각각에 대해 원산지를 판정한다(제품+상품). */
 	public OriginDecisionPipeline determineOrigin() {
-		return forEachTarget("COO_DECISION",
-				t -> originDecider.determineOrigin(t.getCompanyCode(), t.getSalesNo(), mode, productCodes));
+		return forEachTarget("COO_DECISION", t -> originDecider.determineOrigin(t.getCompanyCode(),
+				t.getDivisionCode(), t.getSalesNo(), mode, productCodes));
 	}
 
 	/** "5. SALES_DTL STATUS 업데이트". 현재 판정 대상 각각의 상태값을 판정완료로 갱신한다. */

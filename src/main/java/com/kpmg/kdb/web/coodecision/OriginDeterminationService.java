@@ -51,22 +51,28 @@ public class OriginDeterminationService extends GeneralService implements Origin
 	private ItemNationService itemNationService;
 
 	/**
-	 * 레거시 COO_DECISION(P_COMPANY_CODE, P_SALES_NO, O_RETURN_CODE) 이관.
-	 * 원본과 동일하게 최상위에서 모든 예외를 흡수하고 로그만 남긴다(재발생 없음) — 호출자는 매출 1건
-	 * 처리 실패가 배치 전체를 중단시키지 않는다는 것을 전제로 사용할 수 있다.
+	 * 레거시 COO_DECISION(P_COMPANY_CODE, P_SALES_NO, O_RETURN_CODE) 이관 + 원본에서 CREATE_FCR 안에
+	 * 있던 상품(PRODUCT_ASSETS_TYPE IN ('M','R','B')) 원산지 판정(과거 3-5/3-6 단계, {@link
+	 * CommodityOriginDeterminationDao} 참고)까지 함께 수행한다 — 판정 관련 로직을 한 곳에 모으기 위해
+	 * 이관 시 재구성했다. 원본과 동일하게 최상위에서 모든 예외를 흡수하고 로그만 남긴다(재발생 없음)
+	 * — 호출자는 매출 1건 처리 실패가 배치 전체를 중단시키지 않는다는 것을 전제로 사용할 수 있다(상품
+	 * 판정 쪽 SQL 오류도 이제 이 예외 흡수 정책을 그대로 따른다 — CREATE_FCR 안에 있을 때는 흡수되지
+	 * 않고 호출자까지 전파됐던 것과 달라진 부분이니 유의).
 	 *
 	 * @param productCodes 판정 대상 제품 코드 목록. null/빈 리스트면 salesNo 전체 제품(월 판정),
 	 *                      값이 있으면 그 제품들만(개별 판정) 대상으로 한다. {@link CreateFcrService}
 	 *                      호출 시 넘긴 것과 같은 값을 넘겨야 같은 스코프의 FCR_MST 를 판정한다.
 	 */
 	@Override
-	public void determineOrigin(String companyCode, String salesNo, OriginDeterminationMode mode,
+	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
 		try {
 			OriginDeterminationCursorDao dao = sqlSession.getMapper(OriginDeterminationCursorDao.class);
 
 			String invoiceDate = dao.selectInvoiceDate(companyCode, salesNo);
 			String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
+
+			decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
 
 			List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo,
 					productCodes);
@@ -76,6 +82,18 @@ public class OriginDeterminationService extends GeneralService implements Origin
 		} catch (Exception e) {
 			logger.error("COO_DECISION 실패. companyCode={}, salesNo={}", companyCode, salesNo, e);
 		}
+	}
+
+	/**
+	 * 상품(M,R,B) 원산지 판정. 제품(P,H)과 달리 FTA_CODE 후보/룰을 하나씩 순회하는 대신, 구매처
+	 * 원산지확인서·FTA_RULE 조회 결과를 FCR_MST 에 반영한 뒤 그 결과를 FCR_RESULT 에 그대로 기록하는
+	 * 집합 연산 2단계로 끝난다({@link CommodityOriginDeterminationDao} 클래스 주석 참고).
+	 */
+	private void decideCommodityOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
+			List<String> productCodes, OriginDeterminationMode mode) {
+		CommodityOriginDeterminationDao dao = sqlSession.getMapper(CommodityOriginDeterminationDao.class);
+		dao.mergeFcrMstOriginDetermination(salesNo, divisionCode, companyCode, invoiceDate);
+		dao.insertFcrResultForProducts(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
 	}
 
 	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmData, String invoiceDate,

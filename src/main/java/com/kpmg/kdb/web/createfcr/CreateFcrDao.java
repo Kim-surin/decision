@@ -90,15 +90,12 @@ public interface CreateFcrDao {
 	/** 계산이 끝난 FCR_DTL 행을 청크 단위로 일괄 INSERT (3-3, 3-4 공용) */
 	void insertFcrDtlRows(@Param("rows") List<FcrDtlInsertRow> rows);
 
-	/** "3-5. FCR MST UPDATE -- 상품 원산지 판정" */
-	void mergeFcrMstOriginDetermination(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
-			@Param("companyCode") String companyCode, @Param("invoiceDate") String invoiceDate);
-
-	/** "3-6. FCR RESULT UPDATE -- 상품 원산지 판정" */
-	void insertFcrResultForProducts(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
-			@Param("companyCode") String companyCode, @Param("productCodes") List<String> productCodes);
-
-	/** "3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE" */
+	/**
+	 * "3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE". 상품(M,R,B) 원산지 판정(과거 3-5/3-6 단계)은
+	 * {@link com.kpmg.kdb.web.coodecision.CommodityOriginDeterminationDao} 로 옮겨
+	 * {@link com.kpmg.kdb.web.coodecision.OriginDeterminationService#determineOrigin} 에서 수행한다
+	 * — CREATE_FCR 은 FCR_MST/FCR_DTL 데이터 생성까지만 담당한다.
+	 */
 	void mergeFcrMstMaterialAmountTotals(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode, @Param("productCodes") List<String> productCodes);
 }

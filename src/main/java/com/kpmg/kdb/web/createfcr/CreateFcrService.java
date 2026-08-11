@@ -43,6 +43,12 @@ import com.kpmg.kdb.web.origindecision.FcrCreator;
  * 이관에서는 이 함수들이 이미 Layer3 서비스({@link HsCodeService} 등)로 옮겨져 있으므로, SQL 은
  * 순수 집합 연산(조인/집계)만 담당하고 함수 호출이 필요한 부분은 Java 스트림에서 처리한다.
  *
+ * <p>이 클래스는 FCR_MST/FCR_DTL 데이터 생성까지만 담당한다. 원본에서 CREATE_FCR 안에 있던 상품
+ * (PRODUCT_ASSETS_TYPE IN ('M','R','B')) 원산지 판정(과거 3-5/3-6 단계)은 판정 관련 로직을 한 곳에
+ * 모으기 위해 {@link com.kpmg.kdb.web.coodecision.OriginDeterminationService#determineOrigin} 으로
+ * 옮겼다 — 제품(P,H) 판정(PKG99_COO_DECISION.COO_DECISION)과 상품 판정이 이제 그 메서드 하나에서
+ * 함께 처리된다.
+ *
  * <p>같은 (회사/사업부/품목/FTA/기준일) 조합이 BOM 전개 과정에서 여러 행에 반복 등장하는 경우가 흔해
  * (동일 원자재가 여러 완제품 BOM 에 공통으로 쓰임) {@link #createFcr} 호출 1건 동안만 유효한 로컬
  * 메모이제이션 맵을 사용해 반복 DB 호출을 제거한다. Spring 전역 캐시(@Cacheable)를 쓰지 않는 이유는
@@ -130,8 +136,6 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		createBomLeafFcrDtl(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes);
 		createProductFcrDtl(dao, companyCode, divisionCode, salesNo, invoiceDate, productCodes);
 
-		dao.mergeFcrMstOriginDetermination(salesNo, divisionCode, companyCode, invoiceDate);
-		dao.insertFcrResultForProducts(salesNo, divisionCode, companyCode, productCodes);
 		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
 
 		return errCnt > 0 ? "semisuccess" : "successed";
