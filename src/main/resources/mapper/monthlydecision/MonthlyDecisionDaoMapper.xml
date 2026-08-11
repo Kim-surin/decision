@@ -87,16 +87,18 @@
 		하나의 카운터를 사용해 이식성/결정성이 없었다)을 사용했다. ROW_NUMBER() OVER(PARTITION BY
 		CUSTOMER_CODE, DIVISION_CODE ORDER BY ...) 로 교체해 그룹(매출번호)별로 결정적인 연속 채번이
 		되도록 개선했다 — 사용자 요청(표준 SQL 사용)에 따른 의도적 수정.
+
+		기존 MAX(SALES_SEQ)+1 조회는 SELECT 목록의 상관 서브쿼리(VSD 참조)로 작성했었는데, PostgreSQL
+		이 MERGE 의 USING 서브쿼리 안에서는 그 서브쿼리 자신의 FROM 절 별칭(VSD)을 상관 서브쿼리가
+		보지 못한다("missing FROM-clause entry" 오류, mergeFcrMstOriginDetermination 에서 처음
+		확인됨). LATERAL 조인으로 바꿔 상관관계를 명시적인 JOIN 으로 표현했다 — MAX 는 GROUP BY 없이
+		항상 정확히 1행을 반환하므로(매칭 없으면 NULL) LEFT JOIN LATERAL ... ON TRUE 로도 매 VSD
+		행마다 정확히 1행이 매칭되어 기존 상관 서브쿼리와 동일하게 동작한다.
 	-->
 	<insert id="mergeAggregatedSalesDtl">
 		MERGE INTO SALES_DTL SD
 		USING (SELECT VSD.CUSTOMER_CODE || VSD.DIVISION_CODE || #{p.yyyymm} AS SALES_NO
-		             ,(COALESCE((SELECT MAX(SALES_SEQ) + 1
-		                         FROM   SALES_DTL
-		                         WHERE  SALES_NO = VSD.CUSTOMER_CODE || VSD.DIVISION_CODE || #{p.yyyymm}
-		                         AND    COMPANY_CODE = VSD.COMPANY_CODE
-		                         AND    DIVISION_CODE = VSD.DIVISION_CODE), 1)
-		               + ROW_NUMBER() OVER (PARTITION BY VSD.CUSTOMER_CODE, VSD.DIVISION_CODE
+		             ,(NS.NEXT_SEQ + ROW_NUMBER() OVER (PARTITION BY VSD.CUSTOMER_CODE, VSD.DIVISION_CODE
 		                                     ORDER BY VSD.PRODUCT_CODE, VSD.PROD_DIVISION_CODE,
 		                                              VSD.DELIVERY_CUSTOMER_CODE) - 1) AS SALES_SEQ
 		             ,VSD.DIVISION_CODE          AS DIVISION_CODE
@@ -153,6 +155,11 @@
 		               GROUP  BY SD.DIVISION_CODE, SD.COMPANY_CODE, SD.PRODUCT_CODE, SM.CUSTOMER_CODE,
 		                        SD.PRODUCT_NAME, SD.PRODUCT_UNIT, SD.PRODUCT_ASSETS_TYPE, IM.HS_CODE,
 		                        SD.PROD_DIVISION_CODE, SD.DELIVERY_CUSTOMER_CODE) VSD
+		       LEFT   JOIN LATERAL (SELECT COALESCE(MAX(SALES_SEQ) + 1, 1) AS NEXT_SEQ
+		                            FROM   SALES_DTL
+		                            WHERE  SALES_NO = VSD.CUSTOMER_CODE || VSD.DIVISION_CODE || #{p.yyyymm}
+		                            AND    COMPANY_CODE = VSD.COMPANY_CODE
+		                            AND    DIVISION_CODE = VSD.DIVISION_CODE) NS ON TRUE
 		       WHERE  VSD.QUANTITY > 0) VSD
 		ON (SD.SALES_NO = VSD.SALES_NO AND SD.PRODUCT_CODE = VSD.PRODUCT_CODE AND SD.DIVISION_CODE = VSD.DIVISION_CODE
 		    AND SD.PROD_DIVISION_CODE = VSD.PROD_DIVISION_CODE AND SD.COMPANY_CODE = VSD.COMPANY_CODE
