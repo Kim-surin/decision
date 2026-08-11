@@ -103,7 +103,7 @@
 		      ,FM.HS_CODE
 		      ,FM.PRODUCT_CODE
 		      ,FM.STANDARD
-		      ,'-1'              AS RULE_SEQ
+		      ,-1                AS RULE_SEQ
 		      ,FM.RULE_CONTENTS AS RULE_CODE
 		      ,FM.FTA_COO_YN
 		      ,FM.COMPANY_COO_YN

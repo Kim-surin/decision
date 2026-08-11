@@ -8,7 +8,7 @@ import java.math.BigDecimal;
  */
 public class OriginCriteria {
 
-	private String ruleId;
+	private Integer ruleId;
 	private String ftaCode;
 	private String hsCode;
 	private String hsCodeSubCategory;
@@ -30,11 +30,11 @@ public class OriginCriteria {
 	private BigDecimal deMinimisRate;
 	private String exclusionRuleYn;
 
-	public String getRuleId() {
+	public Integer getRuleId() {
 		return ruleId;
 	}
 
-	public void setRuleId(String ruleId) {
+	public void setRuleId(Integer ruleId) {
 		this.ruleId = ruleId;
 	}
 

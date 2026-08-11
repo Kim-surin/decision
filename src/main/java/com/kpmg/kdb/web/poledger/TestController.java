@@ -417,7 +417,7 @@ public class TestController extends GenericController {
 	 */
 	private OriginCriteria buildSampleOriginCriteria() {
 		OriginCriteria fr = new OriginCriteria();
-		fr.setRuleId("4168");
+		fr.setRuleId(4168);
 		fr.setFtaCode("PKRAP");
 		fr.setHsCode("8425");
 		fr.setHsCodeSubCategory("1");

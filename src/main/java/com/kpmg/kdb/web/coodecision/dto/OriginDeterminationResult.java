@@ -20,7 +20,7 @@ public class OriginDeterminationResult {
 	private String hsCode;
 	private String productCode;
 	private String standard;
-	private String ruleSeq;
+	private Integer ruleSeq;
 	private String ruleCode;
 	private String ftaCooYn;
 	private String companyCooYn;
@@ -116,11 +116,11 @@ public class OriginDeterminationResult {
 		this.standard = standard;
 	}
 
-	public String getRuleSeq() {
+	public Integer getRuleSeq() {
 		return ruleSeq;
 	}
 
-	public void setRuleSeq(String ruleSeq) {
+	public void setRuleSeq(Integer ruleSeq) {
 		this.ruleSeq = ruleSeq;
 	}
 
