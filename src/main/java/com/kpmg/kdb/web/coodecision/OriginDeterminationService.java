@@ -59,6 +59,10 @@ public class OriginDeterminationService extends GeneralService implements Origin
 	 * 판정 쪽 SQL 오류도 이제 이 예외 흡수 정책을 그대로 따른다 — CREATE_FCR 안에 있을 때는 흡수되지
 	 * 않고 호출자까지 전파됐던 것과 달라진 부분이니 유의).
 	 *
+	 * <p>FCR_MST 에 실제로 존재하는 PRODUCT_ASSETS_TYPE 을 먼저 확인해, 상품(M,R,B) 대상이 없으면
+	 * 상품 판정 쿼리 2개를, 제품(P,H) 대상이 없으면 제품 판정 커서 조회 자체를 건너뛴다 — 판정대상이
+	 * 한쪽 자산유형뿐인 매출건(대부분)에서 불필요한 조회/쓰기를 없앤다.
+	 *
 	 * @param productCodes 판정 대상 제품 코드 목록. null/빈 리스트면 salesNo 전체 제품(월 판정),
 	 *                      값이 있으면 그 제품들만(개별 판정) 대상으로 한다. {@link CreateFcrService}
 	 *                      호출 시 넘긴 것과 같은 값을 넘겨야 같은 스코프의 FCR_MST 를 판정한다.
@@ -69,19 +73,37 @@ public class OriginDeterminationService extends GeneralService implements Origin
 		try {
 			OriginDeterminationCursorDao dao = sqlSession.getMapper(OriginDeterminationCursorDao.class);
 
-			String invoiceDate = dao.selectInvoiceDate(companyCode, salesNo);
-			String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
-
-			decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
-
-			List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo,
+			List<String> assetTypes = dao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
 					productCodes);
-			for (OriginDeterminationTarget fmData : fmListRows) {
-				decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode);
+			boolean hasCommodity = containsAny(assetTypes, "M", "R", "B");
+			boolean hasProduct = containsAny(assetTypes, "P", "H");
+
+			String invoiceDate = dao.selectInvoiceDate(companyCode, salesNo);
+
+			if (hasCommodity) {
+				decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+			}
+
+			if (hasProduct) {
+				String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
+				List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo,
+						productCodes);
+				for (OriginDeterminationTarget fmData : fmListRows) {
+					decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode);
+				}
 			}
 		} catch (Exception e) {
 			logger.error("COO_DECISION 실패. companyCode={}, salesNo={}", companyCode, salesNo, e);
 		}
+	}
+
+	private static boolean containsAny(List<String> assetTypes, String... candidates) {
+		for (String candidate : candidates) {
+			if (assetTypes.contains(candidate)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

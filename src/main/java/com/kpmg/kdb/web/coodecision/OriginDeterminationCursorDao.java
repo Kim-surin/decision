@@ -19,6 +19,14 @@ public interface OriginDeterminationCursorDao {
 	String selectInvoiceDate(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo);
 
 	/**
+	 * 판정대상 스코프(FCR_MST)에 실제로 존재하는 PRODUCT_ASSETS_TYPE 목록. 제품(P,H)/상품(M,R,B) 판정을
+	 * 분기 호출하기 위한 사전 확인용 — {@link OriginDeterminationService#determineOrigin} 참고.
+	 */
+	List<String> selectDistinctProductAssetsTypes(@Param("companyCode") String companyCode,
+			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
+			@Param("productCodes") List<String> productCodes);
+
+	/**
 	 * 레거시 CURSOR C_FCR_MST 이관. 판정대상 매출(SALES_NO) 1건에 대해 존재하는 FTA_CODE 후보 전체를
 	 * 한 번에 조회한다(매출 1건당 1회 호출 — FM_LIST 커서를 여는 시점과 동일한 호출 빈도).
 	 * productCodes 가 null/빈 리스트면 salesNo 전체 제품(월 판정), 값이 있으면 그 제품들만(개별 판정)
