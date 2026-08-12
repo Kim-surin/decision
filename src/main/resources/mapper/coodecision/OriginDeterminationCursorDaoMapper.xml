@@ -190,8 +190,17 @@
 		WHERE  HS_CODE = SUBSTRING(#{hsCode} FROM 1 FOR FRL.HS_CODE_LENGTH)
 		AND    FTA_CODE = #{ftaCode}
 		AND    HS_CODE_SUB_CATEGORY = #{hsCodeSubCategory}
-		<!-- 2018.07.03 APTA NEW PSR 적용: INVOICE_DATE 기준 V_NEW_APTA_PSR_FLAG 에 따라 APTA 협정만 추가 PSR 적용여부를 다르게 한다 -->
-		AND    RULE_SEQ = CASE WHEN FTA_CODE = 'PKRAP' AND #{newAptaPsrFlag} = '0' THEN '1' ELSE RULE_SEQ END
+		<!--
+			2018.07.03 APTA NEW PSR 적용: INVOICE_DATE 기준 V_NEW_APTA_PSR_FLAG 에 따라 APTA 협정만 추가
+			PSR 적용여부를 다르게 한다. 원래 "RULE_SEQ = CASE WHEN A THEN '1' ELSE RULE_SEQ END" 형태였는데,
+			PostgreSQL 이 컬럼을 자기 자신이 포함된 CASE 식과 비교하는 조건은 sargable 하지 않아 인덱스를
+			못 쓰고 훨씬 느린 계획을 선택하는 문제가 있었다(배치 버전에서 조회시간 2분 이상 -> 아래 동치
+			OR 조건으로 바꾼 뒤 0.3초, selectApplicableOriginCriteriaBatch 참고). RULE_SEQ IS NOT NULL 로
+			감싸 원본의 "RULE_SEQ 가 NULL이면 어느 분기든 비교가 NULL이 되어 제외"되는 동작까지 그대로
+			보존했다.
+		-->
+		AND    RULE_SEQ IS NOT NULL
+		AND    (FTA_CODE &lt;&gt; 'PKRAP' OR #{newAptaPsrFlag} &lt;&gt; '0' OR RULE_SEQ = '1')
 		ORDER  BY RULE_SEQ
 	</select>
 
@@ -243,7 +252,8 @@
 		ON     FR.HS_CODE = SUBSTRING(V.HS_CODE FROM 1 FOR FRL.HS_CODE_LENGTH)
 		AND    FR.FTA_CODE = V.FTA_CODE
 		AND    FR.HS_CODE_SUB_CATEGORY = V.HS_CODE_SUB_CATEGORY
-		AND    FR.RULE_SEQ = CASE WHEN FR.FTA_CODE = 'PKRAP' AND V.NEW_APTA_PSR_FLAG = '0' THEN '1' ELSE FR.RULE_SEQ END
+		AND    FR.RULE_SEQ IS NOT NULL
+		AND    (FR.FTA_CODE &lt;&gt; 'PKRAP' OR V.NEW_APTA_PSR_FLAG &lt;&gt; '0' OR FR.RULE_SEQ = '1')
 		ORDER  BY V.HS_CODE, V.FTA_CODE, V.HS_CODE_SUB_CATEGORY, FR.RULE_SEQ
 	</select>
 </mapper>
