@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.createfcr.CreateFcrService;
+import com.kpmg.kdb.web.coodecision.dto.BufferRates;
 import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
@@ -90,8 +91,15 @@ public class OriginDeterminationService extends GeneralService implements Origin
 						productCodes);
 				ExclusionRuleCache exclusionRuleCache = new ExclusionRuleCache(
 						sqlSession.getMapper(ExclusionRuleDao.class));
+				// 같은 (hsCode,ftaCode,hsCodeSubCategory) 조합이 FM_LIST 행마다(제품 × FTA 후보 ~25개) 반복되므로
+				// FTA_RULE 조회를 이 호출 시작 시점에 한 번의 배치 쿼리로 전부 가져온다(OriginCriteriaCache 참고).
+				OriginCriteriaCache originCriteriaCache = OriginCriteriaCache.prefetch(dao, fmListRows, newAptaPsrFlag);
+				// GET_BUFFER 의 PRD(제품군) 소스는 ITEM_MST 를 조인해 품목 수만큼 고카디널리티라 전역
+				// 캐싱은 부적합하지만, 같은 제품이 FTA 후보 수만큼 반복되므로 이 호출 범위에서만 메모이즈한다.
+				Map<String, BufferRates> productLineBufferCache = new HashMap<>();
 				for (OriginDeterminationTarget fmData : fmListRows) {
-					decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode, exclusionRuleCache);
+					decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode, exclusionRuleCache,
+							originCriteriaCache, productLineBufferCache);
 				}
 			}
 		} catch (Exception e) {
@@ -121,12 +129,13 @@ public class OriginDeterminationService extends GeneralService implements Origin
 	}
 
 	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmData, String invoiceDate,
-			String newAptaPsrFlag, OriginDeterminationMode mode, ExclusionRuleCache exclusionRuleCache) {
+			String newAptaPsrFlag, OriginDeterminationMode mode, ExclusionRuleCache exclusionRuleCache,
+			OriginCriteriaCache originCriteriaCache, Map<String, BufferRates> productLineBufferCache) {
 		OriginDeterminationContext ctx = new OriginDeterminationContext();
 		ctx.setFmData(fmData);
 
 		supportService.loadBuffer(ctx, fmData.getCompanyCode(), fmData.getDivisionCode(), fmData.getFtaCode(),
-				fmData.getProductCode());
+				fmData.getProductCode(), productLineBufferCache);
 
 		// 원본에는 "기판정된 결과가 있는 경우 삭제"가 FM_LIST 1건당 1회(FTA_CODE 후보 수만큼) 있었으나,
 		// determineOrigin() 은 항상 CreateFcrService.createFcr() 직후에 호출되고 그 안에서 이미
@@ -142,7 +151,7 @@ public class OriginDeterminationService extends GeneralService implements Origin
 			resolveItemCooNationForRcep(ctx, invoiceDate);
 		}
 
-		List<OriginCriteria> rules = dao.selectApplicableOriginCriteria(fmData.getHsCode(), fmData.getFtaCode(),
+		List<OriginCriteria> rules = originCriteriaCache.get(fmData.getHsCode(), fmData.getFtaCode(),
 				fmData.getHsCodeSubCategory(), newAptaPsrFlag);
 
 		if (rules.isEmpty()) {
@@ -339,7 +348,7 @@ public class OriginDeterminationService extends GeneralService implements Origin
 				supportService.resolveRcepRvcNation(ctx, fmData.getAmount());
 				rec.setRcepCooNation("Y".equals(ctx.getRcepKrYn()) ? "KR" : ctx.getRcepCooNation());
 			} else {
-				String mpItemYn = supportService.getMinimalProcessItemYn(fmData.getCompanyCode(),
+				String mpItemYn = supportService.getMinimalProcessItemYn(ctx, fmData.getCompanyCode(),
 						fmData.getDivisionCode(), fmData.getSalesNo(), fmData.getSalesSeq());
 				if ("N".equals(mpItemYn)) {
 					rec.setRcepCooNation("KR");

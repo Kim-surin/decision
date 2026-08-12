@@ -50,16 +50,28 @@ public class ItemNationService extends GeneralService {
 		List<MaterialBalanceRow> materials = materialDao.selectMaterialCandidates(materialCriteria,
 				fromMonth.format(YYYYMM), toMonth.format(YYYYMM));
 
-		String cooNation = null;
+		// selectLastInputYyyyMm 의 바인딩 파라미터(companyCode/divisionCode/itemCode/toMonth)는 자재(material)와
+		// 무관하게 criteria 하나로 고정돼 있어 루프 안에서 매번 다시 조회해도 같은 값이 나온다. 자재가 여러 건
+		// (BOM + 대체자재)이어도 최초 1회만 조회하도록 루프 밖으로 뺐다(지연 초기화 — 필요 없으면 아예 안 부른다).
+		String lastInputYyyyMm = null;
+		boolean lastInputYyyyMmLoaded = false;
+		// COO_NATION 조회 결과는 원본에서도 루프마다 덮어써져 "마지막으로 유효 구간을 만든 자재"의 값만
+		// 최종 반환값으로 남는다 — 중간 자재들의 조회 결과는 어차피 버려지므로, 조회 자체를 뒤로 미뤄
+		// 마지막 유효 구간 하나만 기억해뒀다가 루프가 끝난 뒤 딱 1번만 조회한다(반환값은 동일, DB 호출은
+		// 자재 건수와 무관하게 최대 1회로 줄어든다).
+		String finalFromDate = null;
+		String finalLookupEnd = null;
 
 		for (MaterialBalanceRow material : materials) {
 			String lookupStart = null;
 			String lookupEnd = null;
-			String lastInputYyyyMm = null;
 
 			if (material.getMatYyyyMm() != null) {
-				lastInputYyyyMm = materialDao.selectLastInputYyyyMm(criteria.getCompanyCode(),
-						criteria.getDivisionCode(), criteria.getItemCode(), toMonth.format(YYYYMM));
+				if (!lastInputYyyyMmLoaded) {
+					lastInputYyyyMm = materialDao.selectLastInputYyyyMm(criteria.getCompanyCode(),
+							criteria.getDivisionCode(), criteria.getItemCode(), toMonth.format(YYYYMM));
+					lastInputYyyyMmLoaded = true;
+				}
 
 				if (material.hasPositiveInitialQty()) {
 					if (material.hasNegativeAgingPeriod()) {
@@ -86,19 +98,23 @@ public class ItemNationService extends GeneralService {
 				continue;
 			}
 
-			String fromDate = earliest(plusDay01(lastInputYyyyMm), lookupStart);
-
-			try {
-				cooNation = nationDao.selectCooNation(criteria.getCompanyCode(), criteria.getItemCode(),
-						criteria.getHsCode(), fromDate, lookupEnd);
-			} catch (Exception e) {
-				// 원본 EXCEPTION WHEN NO_DATA_FOUND / WHEN OTHERS 모두 V_COO_NATION := '' 과 동일하게 처리
-				logger.warn("FC01_GET_ITEM_NATION COO_NATION 조회 실패, 빈 값으로 처리. criteria={}", criteria, e);
-				cooNation = "";
-			}
+			finalFromDate = earliest(plusDay01(lastInputYyyyMm), lookupStart);
+			finalLookupEnd = lookupEnd;
 		}
 
-		return cooNation;
+		if (finalFromDate == null) {
+			// 원본 V_COO_NATION 초기값(NULL) 그대로 반환: 유효한 조회구간을 만든 자재가 하나도 없었던 경우
+			return null;
+		}
+
+		try {
+			return nationDao.selectCooNation(criteria.getCompanyCode(), criteria.getItemCode(), criteria.getHsCode(),
+					finalFromDate, finalLookupEnd);
+		} catch (Exception e) {
+			// 원본 EXCEPTION WHEN NO_DATA_FOUND / WHEN OTHERS 모두 V_COO_NATION := '' 과 동일하게 처리
+			logger.warn("FC01_GET_ITEM_NATION COO_NATION 조회 실패, 빈 값으로 처리. criteria={}", criteria, e);
+			return "";
+		}
 	}
 
 	private static String firstDay(String yyyyMm) {

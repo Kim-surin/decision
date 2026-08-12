@@ -41,9 +41,15 @@ public class OriginDeterminationSupportService extends GeneralService {
 	/**
 	 * 레거시 GET_BUFFER 이관. COMPANY_OPTION.OPTION_CODE='BF' 산정기준에 따라
 	 * 회사/사업부/제품군/FTA 4개 소스 중 하나에서 RVC·미소기준 버퍼율을 조회해 컨텍스트에 채운다.
+	 *
+	 * <p>PRD(제품군) 소스만 {@link CooDecisionReferenceDataService} 의 {@code @Cacheable} 을 타지 않는다
+	 * — ITEM_MST 를 조인해 조회 키(productCode)가 품목 수만큼 고카디널리티라 전역 캐시에 담기엔
+	 * 부적합하기 때문이다(클래스 상단 COM/DIV/FTA 와의 비교 참고). 대신 determineOrigin() 1회 호출
+	 * 범위에서만 유효한 productLineBufferCache 로 그 안에서의 반복 조회만 없앤다 — 같은 제품이 FTA
+	 * 후보 수만큼(FM_LIST 행) 반복되는 경우가 대상이다.
 	 */
 	public void loadBuffer(OriginDeterminationContext ctx, String companyCode, String divisionCode, String ftaCode,
-			String productCode) {
+			String productCode, Map<String, BufferRates> productLineBufferCache) {
 		try {
 			String optionValue = referenceDataService.getBufferOptionValue(companyCode);
 			ctx.setOptionValue(optionValue);
@@ -51,7 +57,9 @@ public class OriginDeterminationSupportService extends GeneralService {
 			BufferRates rates = switch (optionValue == null ? "" : optionValue) {
 				case "COM" -> referenceDataService.getCompanyBuffer(companyCode);
 				case "DIV" -> referenceDataService.getDivisionBuffer(companyCode, divisionCode);
-				case "PRD" -> sqlSession.getMapper(OriginDeterminationSupportDao.class).selectProductLineBuffer(companyCode, productCode);
+				case "PRD" -> productLineBufferCache.computeIfAbsent(companyCode + ":" + productCode,
+						k -> sqlSession.getMapper(OriginDeterminationSupportDao.class)
+								.selectProductLineBuffer(companyCode, productCode));
 				case "FTA" -> referenceDataService.getFtaBuffer(ftaCode);
 				default -> null;
 			};
@@ -69,11 +77,19 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 	}
 
-	/** 레거시 GET_MP_ITEM 이관: 최소공정 제외 품목 해당 여부('Y'/'N') */
-	public String getMinimalProcessItemYn(String companyCode, String divisionCode, String salesNo, int salesSeq) {
-		long count = sqlSession.getMapper(OriginDeterminationSupportDao.class).selectMinimalProcessItemCount(companyCode,
-				divisionCode, salesNo, salesSeq);
-		return count > 0 ? "Y" : "N";
+	/**
+	 * 레거시 GET_MP_ITEM 이관: 최소공정 제외 품목 해당 여부('Y'/'N'). 조회 키(companyCode/divisionCode/
+	 * salesNo/salesSeq)가 FM_LIST 1건(=ctx)의 모든 룰에서 항상 동일해, ctx 에 결과를 캐싱해 룰마다
+	 * 반복 조회하지 않는다(원본은 PKRRC 후보의 매 룰 판정마다 다시 조회했다).
+	 */
+	public String getMinimalProcessItemYn(OriginDeterminationContext ctx, String companyCode, String divisionCode,
+			String salesNo, int salesSeq) {
+		if (!ctx.isMinimalProcessItemYnLoaded()) {
+			long count = sqlSession.getMapper(OriginDeterminationSupportDao.class)
+					.selectMinimalProcessItemCount(companyCode, divisionCode, salesNo, salesSeq);
+			ctx.setMinimalProcessItemYn(count > 0 ? "Y" : "N");
+		}
+		return ctx.getMinimalProcessItemYn();
 	}
 
 	/**

@@ -70,15 +70,22 @@ public class ItemOriginRateService extends GeneralService {
 					toMonth.format(YYYYMM));
 
 			List<OriginRateStage> stages = new ArrayList<>();
+			// selectLastInputYyyyMm 의 바인딩 파라미터(companyCode/divisionCode/itemCode/toMonth)는 자재(material)와
+			// 무관하게 criteria 하나로 고정돼 있어 루프 안에서 매번 다시 조회해도 같은 값이 나온다. 자재가 여러 건
+			// (BOM + 대체자재)이어도 최초 1회만 조회하도록 루프 밖으로 뺐다(지연 초기화 — 필요 없으면 아예 안 부른다).
+			String lastInputYyyyMm = null;
+			boolean lastInputYyyyMmLoaded = false;
 
 			for (MaterialBalanceRow material : materials) {
 				String lookupStart = null;
 				String lookupEnd = null;
-				String lastInputYyyyMm = null;
 
 				if (material.getMatYyyyMm() != null) {
-					lastInputYyyyMm = dao.selectLastInputYyyyMm(criteria.getCompanyCode(), criteria.getDivisionCode(),
-							criteria.getItemCode(), toMonth.format(YYYYMM));
+					if (!lastInputYyyyMmLoaded) {
+						lastInputYyyyMm = dao.selectLastInputYyyyMm(criteria.getCompanyCode(), criteria.getDivisionCode(),
+								criteria.getItemCode(), toMonth.format(YYYYMM));
+						lastInputYyyyMmLoaded = true;
+					}
 
 					if (material.hasPositiveInitialQty()) {
 						if (material.hasNegativeAgingPeriod()) {

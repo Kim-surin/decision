@@ -194,4 +194,56 @@
 		AND    RULE_SEQ = CASE WHEN FTA_CODE = 'PKRAP' AND #{newAptaPsrFlag} = '0' THEN '1' ELSE RULE_SEQ END
 		ORDER  BY RULE_SEQ
 	</select>
+
+	<!--
+		selectApplicableOriginCriteria 의 배치 버전. 같은 salesNo 안에서 (hsCode,hsCodeSubCategory)가 같은
+		제품이 FTA_CODE 후보(~25개)마다 FM_LIST 행을 만들어 이 조회가 반복되므로, 요청받은 조합 전체를
+		UNION ALL 파생 테이블(V)로 한 번에 던진다. CTSH&gt;CTH&gt;CC 매칭에 쓰는 "최대 HS_CODE 길이" 서브쿼리는
+		조합(V 의 각 행)마다 다시 계산해야 해서 LATERAL 조인으로 상관관계를 명시했다(단건 쿼리의 콤마 조인은
+		V 자신의 컬럼을 상관 서브쿼리가 볼 수 없어 그대로 쓸 수 없다).
+
+		V.HS_CODE(요청 원본 HS코드)와 FR.HS_CODE(매칭된 룰의 HS코드, 더 짧은 접두어일 수 있음)는 다른
+		값이라 결과를 요청별로 다시 묶으려면 reqHsCode/reqFtaCode/reqHsCodeSubCategory 로 요청 키를
+		그대로 돌려줘야 한다(OriginCriteriaBatchResult 클래스 주석 참고).
+	-->
+	<select id="selectApplicableOriginCriteriaBatch" resultType="com.kpmg.kdb.web.coodecision.dto.OriginCriteriaBatchResult">
+		SELECT V.HS_CODE                                            AS reqHsCode
+		      ,V.FTA_CODE                                           AS reqFtaCode
+		      ,V.HS_CODE_SUB_CATEGORY                                AS reqHsCodeSubCategory
+		      ,FR.RULE_ID                                            AS ruleId
+		      ,FR.FTA_CODE                                           AS ftaCode
+		      ,FR.HS_CODE                                            AS hsCode
+		      ,FR.HS_CODE_SUB_CATEGORY                                AS hsCodeSubCategory
+		      ,FR.RULE_SEQ                                           AS ruleSeq
+		      ,FR.HS_CODE_DESCRIPTION                                AS hsCodeDescription
+		      ,FR.RULE_DESCRIPTION                                   AS ruleDescription
+		      ,FR.RULE_CONTENTS                                      AS ruleContents
+		      ,CASE WHEN POSITION('SP' IN FR.RULE_CONTENTS) = 0 THEN '*' ELSE 'SP' END AS spRule
+		      ,COALESCE(FR.WO_RULE, '*')                              AS woRule
+		      ,COALESCE(FR.CTH_RULE, '*')                             AS cthRule
+		      ,COALESCE(FR.BD_RULE, 0)                                AS bdRule
+		      ,COALESCE(FR.BU_RULE, 0)                                AS buRule
+		      ,COALESCE(FR.NC_RULE, 0)                                AS ncRule
+		      ,COALESCE(FR.MC_RULE, 0)                                AS mcRule
+		      ,FR.DE_MINIMIS_UNIT                                    AS deMinimisUnit
+		      ,FR.DE_MINIMIS_RATE                                    AS deMinimisRate
+		      ,FR.EXCLUSION_RULE_YN                                  AS exclusionRuleYn
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.hsCode} AS HS_CODE, #{r.ftaCode} AS FTA_CODE, #{r.hsCodeSubCategory} AS HS_CODE_SUB_CATEGORY,
+		              #{r.newAptaPsrFlag} AS NEW_APTA_PSR_FLAG
+		       </foreach>
+		       ) V
+		INNER  JOIN LATERAL (SELECT MAX(LENGTH(HS_CODE)) AS HS_CODE_LENGTH
+		                      FROM   FTA_RULE
+		                      WHERE  HS_CODE = SUBSTRING(V.HS_CODE FROM 1 FOR LENGTH(HS_CODE))
+		                      AND    FTA_CODE = V.FTA_CODE
+		                      AND    HS_CODE_SUB_CATEGORY = V.HS_CODE_SUB_CATEGORY) FRL ON TRUE
+		INNER  JOIN FTA_RULE FR
+		ON     FR.HS_CODE = SUBSTRING(V.HS_CODE FROM 1 FOR FRL.HS_CODE_LENGTH)
+		AND    FR.FTA_CODE = V.FTA_CODE
+		AND    FR.HS_CODE_SUB_CATEGORY = V.HS_CODE_SUB_CATEGORY
+		AND    FR.RULE_SEQ = CASE WHEN FR.FTA_CODE = 'PKRAP' AND V.NEW_APTA_PSR_FLAG = '0' THEN '1' ELSE FR.RULE_SEQ END
+		ORDER  BY V.HS_CODE, V.FTA_CODE, V.HS_CODE_SUB_CATEGORY, FR.RULE_SEQ
+	</select>
 </mapper>

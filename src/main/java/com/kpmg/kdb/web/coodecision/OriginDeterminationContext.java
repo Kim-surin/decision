@@ -65,6 +65,14 @@ public class OriginDeterminationContext {
 	/** RCEP 원산지 재료비 최대 기여국 (원본 VG_RCEP_COO_NATION) */
 	private String rcepCooNation;
 
+	/**
+	 * GET_MP_ITEM(최소공정 제외 품목 여부) 결과 캐시. 이 값의 조회 키(companyCode/divisionCode/salesNo/
+	 * salesSeq)는 FM_LIST 1건(=이 컨텍스트) 안의 모든 룰에서 항상 동일해, 룰마다 다시 조회할 필요가
+	 * 없다(OriginDeterminationSupportService#getMinimalProcessItemYn 참고).
+	 */
+	private String minimalProcessItemYn;
+	private boolean minimalProcessItemYnLoaded;
+
 	public OriginDeterminationTarget getFmData() {
 		return fmData;
 	}
@@ -199,5 +207,18 @@ public class OriginDeterminationContext {
 
 	public List<OriginDeterminationResult> getPendingResults() {
 		return pendingResults;
+	}
+
+	public String getMinimalProcessItemYn() {
+		return minimalProcessItemYn;
+	}
+
+	public void setMinimalProcessItemYn(String minimalProcessItemYn) {
+		this.minimalProcessItemYn = minimalProcessItemYn;
+		this.minimalProcessItemYnLoaded = true;
+	}
+
+	public boolean isMinimalProcessItemYnLoaded() {
+		return minimalProcessItemYnLoaded;
 	}
 }

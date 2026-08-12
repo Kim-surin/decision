@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Param;
 import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
+import com.kpmg.kdb.web.coodecision.dto.OriginCriteriaBatchRequest;
+import com.kpmg.kdb.web.coodecision.dto.OriginCriteriaBatchResult;
 
 /**
  * 레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 의 메인 프로시저 COO_DECISION 이 사용하는
@@ -57,4 +59,12 @@ public interface OriginDeterminationCursorDao {
 	 */
 	List<OriginCriteria> selectApplicableOriginCriteria(@Param("hsCode") String hsCode, @Param("ftaCode") String ftaCode,
 			@Param("hsCodeSubCategory") String hsCodeSubCategory, @Param("newAptaPsrFlag") String newAptaPsrFlag);
+
+	/**
+	 * {@link #selectApplicableOriginCriteria} 의 배치 버전. 같은 salesNo 안에서 (hsCode,hsCodeSubCategory)가
+	 * 같은 제품이 FTA_CODE 후보(~25개)마다 FM_LIST 행을 만들어 반복 조회를 유발하므로, determineOrigin()
+	 * 1회 호출에 필요한 조합 전체를 한 번에 가져온다 — 전역 캐시가 아니라 이 호출 범위에서만 쓰고 버리는
+	 * 사전조회다(OriginDeterminationService#determineOrigin 참고).
+	 */
+	List<OriginCriteriaBatchResult> selectApplicableOriginCriteriaBatch(@Param("requests") List<OriginCriteriaBatchRequest> requests);
 }
