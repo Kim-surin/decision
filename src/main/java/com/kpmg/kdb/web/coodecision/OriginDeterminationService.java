@@ -88,8 +88,10 @@ public class OriginDeterminationService extends GeneralService implements Origin
 				String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
 				List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo,
 						productCodes);
+				ExclusionRuleCache exclusionRuleCache = new ExclusionRuleCache(
+						sqlSession.getMapper(ExclusionRuleDao.class));
 				for (OriginDeterminationTarget fmData : fmListRows) {
-					decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode);
+					decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode, exclusionRuleCache);
 				}
 			}
 		} catch (Exception e) {
@@ -119,16 +121,18 @@ public class OriginDeterminationService extends GeneralService implements Origin
 	}
 
 	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmData, String invoiceDate,
-			String newAptaPsrFlag, OriginDeterminationMode mode) {
+			String newAptaPsrFlag, OriginDeterminationMode mode, ExclusionRuleCache exclusionRuleCache) {
 		OriginDeterminationContext ctx = new OriginDeterminationContext();
 		ctx.setFmData(fmData);
 
 		supportService.loadBuffer(ctx, fmData.getCompanyCode(), fmData.getDivisionCode(), fmData.getFtaCode(),
 				fmData.getProductCode());
 
-		// 기판정된 결과가 있는 경우 삭제
-		dao.deletePriorFcrResult(fmData.getSalesNo(), fmData.getSalesSeq(), fmData.getFtaCode(),
-				fmData.getCompanyCode());
+		// 원본에는 "기판정된 결과가 있는 경우 삭제"가 FM_LIST 1건당 1회(FTA_CODE 후보 수만큼) 있었으나,
+		// determineOrigin() 은 항상 CreateFcrService.createFcr() 직후에 호출되고 그 안에서 이미
+		// FTA_CODE 무관하게 이 salesNo/스코프의 FCR_RESULT 를 통째로 지운다(CreateFcrDao.deleteFcrResult).
+		// FCR_RESULT 는 이 메서드(및 상품판정)만 기록하므로 같은 determineOrigin() 호출 안에서는
+		// FM_LIST 행별 삭제가 지울 대상이 이미 없다 — 완전히 중복된 반복 쿼리라 제거했다.
 
 		// FCR_INFO_TEMP 대체: FM_LIST 1건당 1회만 조회해 메모리에 적재(반복 SQL 제거)
 		ctx.setMaterialOriginRows(dao.selectMaterialOriginRows(fmData.getFtaCode(), fmData.getDivisionCode(),
@@ -146,7 +150,7 @@ public class OriginDeterminationService extends GeneralService implements Origin
 			insertNoRuleFoundResult(ctx, fmData, mode);
 		} else {
 			for (OriginCriteria frData : rules) {
-				decideOneRule(ctx, fmData, frData, mode);
+				decideOneRule(ctx, fmData, frData, mode, exclusionRuleCache);
 			}
 		}
 
@@ -175,7 +179,8 @@ public class OriginDeterminationService extends GeneralService implements Origin
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
-	private void decideOneRule(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginCriteria frData, OriginDeterminationMode mode) {
+	private void decideOneRule(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginCriteria frData, OriginDeterminationMode mode,
+			ExclusionRuleCache exclusionRuleCache) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		rec.setSalesNo(fmData.getSalesNo());
 		rec.setSalesSeq(fmData.getSalesSeq());
@@ -218,7 +223,7 @@ public class OriginDeterminationService extends GeneralService implements Origin
 		boolean stop = false;
 
 		if ("Y".equals(frData.getExclusionRuleYn())) {
-			exclusionRuleDecisionService.decide(ctx, frData, mode);
+			exclusionRuleDecisionService.decide(ctx, frData, mode, exclusionRuleCache);
 			if (ctx.getReturnCode() < 0) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);

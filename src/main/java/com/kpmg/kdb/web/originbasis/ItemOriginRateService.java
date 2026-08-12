@@ -6,7 +6,11 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +19,8 @@ import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.common.CompanySettingService;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceRow;
+import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryRequest;
+import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult;
 import com.kpmg.kdb.web.originbasis.dto.OriginRatePrecheck;
 import com.kpmg.kdb.web.originbasis.dto.OriginRateStage;
 import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary;
@@ -41,6 +47,8 @@ public class ItemOriginRateService extends GeneralService {
 	private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.BASIC_ISO_DATE;
 	/** 원본 V_MAX_MONTHS NUMBER := 6; (다른 FC10_* 함수와 달리 회사설정값이 아닌 고정값) */
 	private static final int MAX_MONTHS = 6;
+	/** {@link #prefetchNonCertifiedOriginSummaries} 배치 조회 1회당 최대 요청 건수(바인드 파라미터 상한 방지) */
+	private static final int BATCH_CHUNK_SIZE = 500;
 
 	@Autowired
 	private CompanySettingService companySettingService;
@@ -117,6 +125,17 @@ public class ItemOriginRateService extends GeneralService {
 
 	/** FTA_CODE 에 의존하는 마지막 단계. precheck 는 같은 (회사/사업부/품목/기준일) 조합이면 재사용 가능. */
 	public BigDecimal resolveOriginRate(ItemOriginRateCriteria criteria, OriginRatePrecheck precheck) {
+		return resolveOriginRate(criteria, precheck, Map.of());
+	}
+
+	/**
+	 * @param summaryCache {@link #prefetchNonCertifiedOriginSummaries} 로 미리 배치 조회해둔 결과.
+	 *                      캐시에 없는 조합(호출자가 미리 넘기지 않았거나 비어있는 맵인 경우)은 그 자리에서
+	 *                      바로 단건 조회로 대체한다 — 배치 사전조회는 성능 최적화일 뿐이라 누락돼도 결과가
+	 *                      틀려지지 않는다.
+	 */
+	public BigDecimal resolveOriginRate(ItemOriginRateCriteria criteria, OriginRatePrecheck precheck,
+			Map<String, PurchaseLedgerSummary> summaryCache) {
 		if (precheck.isZero()) {
 			return BigDecimal.ZERO;
 		}
@@ -125,8 +144,12 @@ public class ItemOriginRateService extends GeneralService {
 			BigDecimal originRate = BigDecimal.ZERO;
 
 			for (OriginRateStage stage : precheck.getStages()) {
-				PurchaseLedgerSummary nonCertified = dao.selectNonCertifiedOriginSummary(criteria.getCompanyCode(),
-						stage.getItemCode(), criteria.getFtaCode(), stage.getFromDate(), stage.getLookupEnd());
+				String key = summaryKey(stage.getItemCode(), criteria.getFtaCode(), stage.getFromDate(), stage.getLookupEnd());
+				PurchaseLedgerSummary nonCertified = summaryCache.get(key);
+				if (nonCertified == null) {
+					nonCertified = dao.selectNonCertifiedOriginSummary(criteria.getCompanyCode(), stage.getItemCode(),
+							criteria.getFtaCode(), stage.getFromDate(), stage.getLookupEnd());
+				}
 
 				boolean amountBasedCalc = companySettingService.isSettingValue(criteria.getCompanyCode(), "ME", "IA");
 				if (amountBasedCalc) {
@@ -153,6 +176,92 @@ public class ItemOriginRateService extends GeneralService {
 			logger.error("원재료 역내산 비율 조회 실패. criteria={}", criteria, e);
 			return BigDecimal.ZERO;
 		}
+	}
+
+	/**
+	 * {@link ItemOriginRateDao#selectNonCertifiedOriginSummary} 가 (품목,FTA_CODE) 조합마다 반복 호출되던
+	 * 것(예: CreateFcrService 의 BOM 리프 자재 루프 — 자재 수 × FTA_CODE 후보 수만큼 반복)을 배치 조회
+	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveOriginRate(ItemOriginRateCriteria,
+	 * OriginRatePrecheck, Map)} 에 그대로 넘기면 그 안에서 추가 DB 호출 없이 값을 재사용한다.
+	 *
+	 * <p>precheck 는 FTA_CODE 와 무관하므로 (companyCode,divisionCode,itemCode,baseDate) 조합별로 1회만
+	 * 계산해 precheckCache 에 채운다 — 호출자가 이후 resolveOriginRateCached 등에서 같은 맵을 계속
+	 * 재사용할 수 있도록 호출자가 만든 맵을 그대로 받는다. 이미 0으로 확정된(precheck.isZero()) 조합은
+	 * 배치 요청에서 제외한다(어차피 FTA_CODE 조회 없이 0이 확정되므로).
+	 *
+	 * <p>기존 단건 경로는 자재의 여러 단계(stages) 중 앞 단계에서 이미 비율이 0으로 확정되면 뒤 단계는
+	 * 조회를 건너뛰는 단락평가를 했지만, 이 배치 조회는 어차피 한 번의 SQL 호출로 묶이므로 그 단락평가로
+	 * 아낄 수 있었던 개별 쿼리 1~2건보다 (품목×FTA_CODE) 조합 수만큼의 왕복을 통째로 없애는 효과가 훨씬
+	 * 크다고 판단해 모든 단계를 한 번에 조회한다 — 최종 계산 결과(originRate)는 어느 단계를 조회했는지가
+	 * 아니라 단계별 결과를 어떻게 조합하는지로 결정되므로 동일하다.
+	 */
+	public Map<String, PurchaseLedgerSummary> prefetchNonCertifiedOriginSummaries(
+			List<ItemOriginRateCriteria> criteriaList, Map<String, OriginRatePrecheck> precheckCache) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return Map.of();
+		}
+
+		// 배치 호출 1회는 항상 같은 회사 스코프(createFcr() 1회 호출)에서만 이뤄지므로 첫 건의 companyCode 를 사용한다.
+		String companyCode = criteriaList.get(0).getCompanyCode();
+		List<NonCertifiedOriginSummaryRequest> requests = new ArrayList<>();
+		Set<String> seenRequestKeys = new HashSet<>();
+
+		for (ItemOriginRateCriteria criteria : criteriaList) {
+			String precheckKey = precheckKey(criteria.getCompanyCode(), criteria.getDivisionCode(),
+					criteria.getItemCode(), criteria.getBaseDate());
+			OriginRatePrecheck precheck = precheckCache.computeIfAbsent(precheckKey, k -> precheckOriginRate(criteria));
+			if (precheck.isZero()) {
+				continue;
+			}
+			for (OriginRateStage stage : precheck.getStages()) {
+				String requestKey = summaryKey(stage.getItemCode(), criteria.getFtaCode(), stage.getFromDate(),
+						stage.getLookupEnd());
+				if (seenRequestKeys.add(requestKey)) {
+					requests.add(new NonCertifiedOriginSummaryRequest(stage.getItemCode(), criteria.getFtaCode(),
+							stage.getFromDate(), stage.getLookupEnd()));
+				}
+			}
+		}
+
+		if (requests.isEmpty()) {
+			return Map.of();
+		}
+
+		try {
+			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
+			Map<String, PurchaseLedgerSummary> summaryCache = new HashMap<>();
+			// 요청 건수가 아주 많은 경우(대량 BOM 자재 x 다수 FTA_CODE)를 대비해 CreateFcrService 의 다건
+			// INSERT 청크 크기(500)와 동일한 단위로 나눠 호출한다(바인드 파라미터 수 상한 방지).
+			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
+				List<NonCertifiedOriginSummaryRequest> chunk = requests.subList(from,
+						Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+				List<NonCertifiedOriginSummaryResult> results = dao.selectNonCertifiedOriginSummaryBatch(companyCode,
+						chunk);
+				for (NonCertifiedOriginSummaryResult r : results) {
+					summaryCache.put(summaryKey(r.getItemCode(), r.getFtaCode(), r.getFromDate(), r.getToDate()),
+							r.toSummary());
+				}
+			}
+			return summaryCache;
+		} catch (Exception e) {
+			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
+			// resolveOriginRate 가 그 자리에서 단건 조회로 대체한다(클래스 상단 summaryCache 파라미터 설명 참고).
+			logger.error("비인증 원산지 구매 집계 배치조회 실패. requestCount={}", requests.size(), e);
+			return Map.of();
+		}
+	}
+
+	/** {@link #prefetchNonCertifiedOriginSummaries} 와 {@link #resolveOriginRate} 가 공유하는 캐시 키 규칙. */
+	public static String precheckKey(String companyCode, String divisionCode, String itemCode, String baseDate) {
+		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
+	}
+
+	private static String summaryKey(String itemCode, String ftaCode, String fromDate, String toDate) {
+		return String.join("|", nz(itemCode), nz(ftaCode), nz(fromDate), nz(toDate));
+	}
+
+	private static String nz(String value) {
+		return value == null ? "" : value;
 	}
 
 	private static String firstDay(String yyyyMm) {

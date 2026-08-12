@@ -10,8 +10,14 @@ import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 
 /**
  * 레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 의 메인 프로시저 COO_DECISION 이 사용하는
- * 커서(C_FCR_MST, C_FTA_RULE)와 FCR_INFO_TEMP/FCR_RESULT 조회·삭제를 담당한다.
+ * 커서(C_FCR_MST, C_FTA_RULE)와 FCR_INFO_TEMP 조회를 담당한다.
  * 실제 오케스트레이션은 {@link OriginDeterminationService} 참고.
+ *
+ * <p>원본에 있던 "기판정 FCR_RESULT 삭제"(FM_LIST 1건당 1회)는 제거했다 — determineOrigin() 은
+ * 항상 CreateFcrService.createFcr() 직후에 호출되고, 그 안에서 이미 이 salesNo/스코프의 FCR_RESULT 를
+ * FTA_CODE 무관하게 통째로 지운다(CreateFcrDao.deleteFcrResult). FCR_RESULT 를 기록하는 곳은
+ * {@link OriginDeterminationService} 뿐이라 같은 determineOrigin() 호출 안에서는 FM_LIST 행별
+ * 삭제가 지울 대상이 이미 없었다.
  */
 public interface OriginDeterminationCursorDao {
 
@@ -34,10 +40,6 @@ public interface OriginDeterminationCursorDao {
 	 */
 	List<OriginDeterminationTarget> selectOriginDeterminationTargets(@Param("companyCode") String companyCode,
 			@Param("salesNo") String salesNo, @Param("productCodes") List<String> productCodes);
-
-	/** 기판정된 결과 삭제 (COO_DECISION 메인루프, FM_LIST 1건당 1회) */
-	void deletePriorFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
-			@Param("ftaCode") String ftaCode, @Param("companyCode") String companyCode);
 
 	/**
 	 * 레거시 "INSERT INTO FCR_INFO_TEMP SELECT ... FROM FCR_DTL" 이관.

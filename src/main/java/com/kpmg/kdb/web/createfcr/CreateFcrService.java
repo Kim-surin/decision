@@ -33,6 +33,7 @@ import com.kpmg.kdb.web.originbasis.dto.IncotermsChangeRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
 import com.kpmg.kdb.web.originbasis.dto.OriginRatePrecheck;
+import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary;
 import com.kpmg.kdb.web.origindecision.FcrCreator;
 
 /**
@@ -300,13 +301,23 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
 		Map<String, String> priceNoteCache = new LinkedHashMap<>();
 
+		// 자재 수 x FTA_CODE 후보 수만큼 반복되던 selectNonCertifiedOriginSummary 호출을 배치 1회로 선조회
+		// (ItemOriginRateService.prefetchNonCertifiedOriginSummaries 클래스 주석 참고)
+		List<ItemOriginRateCriteria> originRateLookups = new ArrayList<>(leafRows.size());
+		for (BomLeafRow leaf : leafRows) {
+			originRateLookups.add(new ItemOriginRateCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(),
+					leaf.getItemCode(), leaf.getFtaCode(), invoiceDate));
+		}
+		Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache = itemOriginRateService
+				.prefetchNonCertifiedOriginSummaries(originRateLookups, originRatePrecheckCache);
+
 		Map<String, List<ResolvedLeaf>> grouped = new LinkedHashMap<>();
 		for (BomLeafRow leaf : leafRows) {
 			BigDecimal unitPrice = resolveItemPriceCached(priceCache, leaf.getCompanyCode(),
 					leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
 			BigDecimal originRate = resolveOriginRateCached(originRateCache, originRatePrecheckCache,
-					leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(),
-					invoiceDate);
+					nonCertifiedSummaryCache, leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
+					leaf.getFtaCode(), invoiceDate);
 			String priceNote = resolvePriceNoteCached(priceNoteCache, leaf.getCompanyCode(),
 					leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
 			String hsCodeYn = leaf.getItemHsCode() == null ? "N" : "Y";
@@ -416,11 +427,23 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
 		Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
 
+		// "B"(부산물)는 originRate 조회 자체가 필요 없어(항상 ONE) 배치 요청 대상에서 제외한다.
+		List<ItemOriginRateCriteria> originRateLookups = new ArrayList<>(rows.size());
+		for (ProductFcrDtlSourceRow src : rows) {
+			if (!"B".equals(src.getProductAssetsType())) {
+				originRateLookups.add(new ItemOriginRateCriteria(src.getCompanyCode(), src.getProdDivisionCode(),
+						src.getProductCode(), src.getFtaCode(), invoiceDate));
+			}
+		}
+		Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache = itemOriginRateService
+				.prefetchNonCertifiedOriginSummaries(originRateLookups, originRatePrecheckCache);
+
 		List<FcrDtlInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
 		for (ProductFcrDtlSourceRow src : rows) {
 			BigDecimal originRate = "B".equals(src.getProductAssetsType()) ? BigDecimal.ONE
-					: nvl(resolveOriginRateCached(originRateCache, originRatePrecheckCache, src.getCompanyCode(),
-							src.getProdDivisionCode(), src.getProductCode(), src.getFtaCode(), invoiceDate));
+					: nvl(resolveOriginRateCached(originRateCache, originRatePrecheckCache, nonCertifiedSummaryCache,
+							src.getCompanyCode(), src.getProdDivisionCode(), src.getProductCode(), src.getFtaCode(),
+							invoiceDate));
 			BigDecimal inputAmount = nvl(src.getUnitPrice());
 			boolean fullyOriginating = originRate.compareTo(BigDecimal.ONE) == 0;
 
@@ -502,17 +525,22 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	 * 그 계산에 필요한 FTA_CODE 무관 사전조회(precheck)는 (companyCode, divisionCode, itemCode, baseDate)
 	 * 로 별도 캐싱한다 — 같은 품목이 협정(FTA) 수만큼 반복되는 BOM 리프 루프에서 사전조회를 한 번만
 	 * 하도록 하기 위함이다({@link ItemOriginRateService} 클래스 주석 참고).
+	 *
+	 * <p>nonCertifiedSummaryCache 는 {@link ItemOriginRateService#prefetchNonCertifiedOriginSummaries} 로
+	 * 루프 시작 전에 미리 배치 조회해둔 결과다 — 캐시 적중 시 resolveOriginRate 내부에서 추가 DB 호출이
+	 * 전혀 발생하지 않는다.
 	 */
 	private BigDecimal resolveOriginRateCached(Map<String, BigDecimal> cache,
-			Map<String, OriginRatePrecheck> precheckCache, String companyCode, String divisionCode, String itemCode,
-			String ftaCode, String baseDate) {
+			Map<String, OriginRatePrecheck> precheckCache, Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache,
+			String companyCode, String divisionCode, String itemCode, String ftaCode, String baseDate) {
 		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(ftaCode), nz(baseDate));
 		return cache.computeIfAbsent(key, k -> {
-			String precheckKey = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
+			String precheckKey = ItemOriginRateService.precheckKey(companyCode, divisionCode, itemCode, baseDate);
 			OriginRatePrecheck precheck = precheckCache.computeIfAbsent(precheckKey, pk -> itemOriginRateService
 					.precheckOriginRate(new ItemOriginRateCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate)));
 			return itemOriginRateService.resolveOriginRate(
-					new ItemOriginRateCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), precheck);
+					new ItemOriginRateCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), precheck,
+					nonCertifiedSummaryCache);
 		});
 	}
 

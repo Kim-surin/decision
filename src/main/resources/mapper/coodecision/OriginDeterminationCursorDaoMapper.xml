@@ -133,16 +133,6 @@
 		AND    IHSC.FTA_CODE = FTAFM.FTA_CODE
 	</select>
 
-	<!-- ===================== COO_DECISION 메인루프: 기판정 결과 삭제 ===================== -->
-
-	<delete id="deletePriorFcrResult">
-		DELETE FROM FCR_RESULT
-		WHERE  SALES_NO = #{salesNo}
-		AND    SALES_SEQ = #{salesSeq}
-		AND    FTA_CODE = #{ftaCode}
-		AND    COMPANY_CODE = #{companyCode}
-	</delete>
-
 	<!-- ===================== FCR_INFO_TEMP 대체 (FCR_DTL 조회) ===================== -->
 
 	<select id="selectMaterialOriginRows" resultType="com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow">
