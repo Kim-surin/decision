@@ -63,7 +63,7 @@
 		                            FROM   FTA_RULE FR
 		                            WHERE  FR.HS_CODE = SUBSTRING(FM.HS_CODE FROM 1 FOR LENGTH(FR.HS_CODE))
 		                            AND    FR.FTA_CODE = FM.FTA_CODE
-		                            AND    HS_CODE_SUB_CATEGORY = 1
+		                            AND    HS_CODE_SUB_CATEGORY = '1'
 		                            FETCH FIRST 1 ROW ONLY) FRU ON TRUE
 		       WHERE  FM.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
 		       AND    FM.SALES_NO = #{salesNo}
