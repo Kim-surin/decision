@@ -114,7 +114,7 @@ public class OriginDeterminationService extends GeneralService implements Origin
 	private void decideCommodityOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
 			List<String> productCodes, OriginDeterminationMode mode) {
 		CommodityOriginDeterminationDao dao = sqlSession.getMapper(CommodityOriginDeterminationDao.class);
-		dao.mergeFcrMstOriginDetermination(salesNo, divisionCode, companyCode, invoiceDate);
+		dao.mergeFcrMstOriginDetermination(salesNo, divisionCode, companyCode, invoiceDate, productCodes);
 		dao.insertFcrResultForProducts(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
 	}
 

@@ -19,7 +19,8 @@ public interface CommodityOriginDeterminationDao {
 
 	/** 구매처 원산지확인서(EXT_COO_CERTIFY_*)/FTA_RULE 조회 결과로 FCR_MST.FTA_COO_YN/COMPANY_COO_YN/RULE_CONTENTS 갱신 */
 	void mergeFcrMstOriginDetermination(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
-			@Param("companyCode") String companyCode, @Param("invoiceDate") String invoiceDate);
+			@Param("companyCode") String companyCode, @Param("invoiceDate") String invoiceDate,
+			@Param("productCodes") List<String> productCodes);
 
 	/** 위에서 갱신된 FCR_MST 를 바탕으로 FCR_RESULT(판정결과) 기록 */
 	void insertFcrResultForProducts(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,

@@ -68,7 +68,13 @@
 		       WHERE  FM.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
 		       AND    FM.SALES_NO = #{salesNo}
 		       AND    FM.DIVISION_CODE = #{divisionCode}
-		       AND    FM.COMPANY_CODE = #{companyCode}) SUB
+		       AND    FM.COMPANY_CODE = #{companyCode}
+		       <if test="productCodes != null and !productCodes.isEmpty()">
+		       AND    FM.PRODUCT_CODE IN
+		              <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                  #{productCode}
+		              </foreach>
+		       </if>) SUB
 		ON (FM.FTA_CODE = SUB.FTA_CODE AND FM.SALES_NO = SUB.SALES_NO AND FM.SALES_SEQ = SUB.SALES_SEQ
 		    AND FM.DIVISION_CODE = SUB.DIVISION_CODE AND FM.COMPANY_CODE = SUB.COMPANY_CODE)
 		WHEN MATCHED THEN
