@@ -31,6 +31,14 @@ public class OriginDeterminationContext {
 	/** 현재 판정 룰 1건 처리 중 누적되는 판정결과 레코드 (원본 VG_FRD_REC) */
 	private OriginDeterminationResult frdRec = new OriginDeterminationResult();
 
+	/**
+	 * FM_LIST 1건(=이 컨텍스트) 처리 중 룰별로 확정된 판정결과의 스냅샷을 즉시 INSERT 하지 않고
+	 * 모아뒀다가 한 번에 배치 저장하기 위한 버퍼(OriginDeterminationSupportService#insertFrdAndReset).
+	 * UPDATE_FRM_PROCEDURE(updateFrm)가 방금 저장한 FCR_RESULT 를 다시 조회해 사용하므로, salesNo
+	 * 전체가 아니라 FM_LIST 1건 단위로 flush 해야 한다 — updateFrm 직전에 flush 한다.
+	 */
+	private final List<OriginDeterminationResult> pendingResults = new ArrayList<>();
+
 	/** GET_BUFFER 결과: 버퍼 산정기준(COM/DIV/PRD/FTA) (원본 VG_OPTION_VALUE) */
 	private String optionValue;
 	/** GET_BUFFER 결과: RVC 버퍼율 (원본 VG_COMPANY_RVC_RATE) */
@@ -183,5 +191,13 @@ public class OriginDeterminationContext {
 
 	public void setRcepCooNation(String rcepCooNation) {
 		this.rcepCooNation = rcepCooNation;
+	}
+
+	public void addPendingResult(OriginDeterminationResult snapshot) {
+		pendingResults.add(snapshot);
+	}
+
+	public List<OriginDeterminationResult> getPendingResults() {
+		return pendingResults;
 	}
 }

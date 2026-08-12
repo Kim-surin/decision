@@ -365,6 +365,56 @@ public class OriginDeterminationResult {
 	}
 
 	/**
+	 * 현재 필드값을 그대로 복사한 새 인스턴스를 만든다. 이 객체는 판정 룰 1건 처리마다 같은 인스턴스가
+	 * 재사용되며(원본 VG_FRD_REC 전역변수 대체) {@link #resetForNextRule()} 로 매 룰마다 초기화되므로,
+	 * INSERT 를 즉시 실행하지 않고 여러 건 모았다가 배치로 저장하려면(OriginDeterminationSupportService
+	 * 참고) reset 되기 전에 이렇게 스냅샷을 떠 둬야 한다.
+	 */
+	public OriginDeterminationResult copy() {
+		OriginDeterminationResult copy = new OriginDeterminationResult();
+		copy.salesNo = this.salesNo;
+		copy.salesSeq = this.salesSeq;
+		copy.ftaCode = this.ftaCode;
+		copy.divisionCode = this.divisionCode;
+		copy.companyCode = this.companyCode;
+		copy.hsCode = this.hsCode;
+		copy.productCode = this.productCode;
+		copy.standard = this.standard;
+		copy.ruleSeq = this.ruleSeq;
+		copy.ruleCode = this.ruleCode;
+		copy.ftaCooYn = this.ftaCooYn;
+		copy.companyCooYn = this.companyCooYn;
+		copy.bufferOption = this.bufferOption;
+		copy.deMinimisRate = this.deMinimisRate;
+		copy.rvcRate = this.rvcRate;
+		copy.status = this.status;
+		copy.errorCode = this.errorCode;
+		copy.errorMsg = this.errorMsg;
+		copy.deleteYn = this.deleteYn;
+		copy.createDate = this.createDate;
+		copy.createBy = this.createBy;
+		copy.updateDate = this.updateDate;
+		copy.updateBy = this.updateBy;
+		copy.spCooYn = this.spCooYn;
+		copy.woCooYn = this.woCooYn;
+		copy.ctcYn = this.ctcYn;
+		copy.ftaDeMinimisYn = this.ftaDeMinimisYn;
+		copy.companyDeMinimisYn = this.companyDeMinimisYn;
+		copy.ftaRvcYn = this.ftaRvcYn;
+		copy.companyRvcYn = this.companyRvcYn;
+		copy.exclusionYn = this.exclusionYn;
+		copy.exclusionCondition = this.exclusionCondition;
+		copy.ctcResultRate = this.ctcResultRate;
+		copy.ctcFtaResultRate = this.ctcFtaResultRate;
+		copy.ctcCompanyResultRate = this.ctcCompanyResultRate;
+		copy.rvcResultRate = this.rvcResultRate;
+		copy.rvcFtaResultRate = this.rvcFtaResultRate;
+		copy.rvcCompanyResultRate = this.rvcCompanyResultRate;
+		copy.rcepCooNation = this.rcepCooNation;
+		return copy;
+	}
+
+	/**
 	 * 레거시 INSERT_FRD_PROCESS 말미의 VG_FRD_REC 필드 초기화 블록을 그대로 이관.
 	 * INSERT 직후 다음 룰 판정을 위해 상태값만 남기고 모두 초기화한다(STATUS='N').
 	 */

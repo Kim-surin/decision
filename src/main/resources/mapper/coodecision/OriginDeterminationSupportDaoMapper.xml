@@ -76,8 +76,12 @@
 		===================== INSERT_FRD_PROCESS =====================
 		SEQ 컬럼은 넘기지 않는다 — 컬럼 DEFAULT(시퀀스)로 채번하도록 INSERT 대상 목록에서 아예 뺐다
 		(Oracle 전용 FCR_RESULT_SEQ_S.NEXTVAL 을 매번 별도 SELECT 로 조회해 바인딩하던 것을 없앰).
+
+		원본은 룰 1건 판정이 끝날 때마다 단건 INSERT 였지만, FM_LIST 1건(FTA 후보)에 걸린 룰 전체의
+		결과를 애플리케이션에서 모았다가 한 번의 배치 INSERT 로 저장한다 — INSERT 순서에 의미가 없어
+		최종 저장 결과는 동일하다(OriginDeterminationSupportService#insertFrdAndReset/#flushPendingResults 참고).
 	-->
-	<insert id="insertFcrResult" parameterType="com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult">
+	<insert id="insertFcrResults">
 		INSERT INTO FCR_RESULT
 			(SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
 			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
@@ -87,14 +91,16 @@
 			 CTC_FTA_RESULT_RATE, CTC_COMPANY_RESULT_RATE, RVC_RESULT_RATE, RVC_FTA_RESULT_RATE,
 			 RVC_COMPANY_RESULT_RATE, RCEP_COO_NATION)
 		VALUES
-			(#{salesNo}, #{salesSeq}, #{ftaCode}, #{divisionCode}, #{companyCode}, #{hsCode},
-			 #{productCode}, #{standard}, #{ruleSeq}, #{ruleCode}, #{ftaCooYn}, #{companyCooYn},
-			 #{bufferOption}, #{deMinimisRate}, #{rvcRate}, #{status}, #{errorCode}, #{errorMsg},
-			 #{deleteYn}, CURRENT_TIMESTAMP, #{createBy}, CURRENT_TIMESTAMP, #{updateBy}, #{spCooYn},
-			 #{woCooYn}, #{ctcYn}, #{ftaDeMinimisYn}, #{companyDeMinimisYn}, #{ftaRvcYn}, #{companyRvcYn},
-			 #{exclusionYn}, #{exclusionCondition}, #{ctcResultRate}, #{ctcFtaResultRate},
-			 #{ctcCompanyResultRate}, #{rvcResultRate}, #{rvcFtaResultRate}, #{rvcCompanyResultRate},
-			 #{rcepCooNation})
+		<foreach collection="records" item="rec" separator=",">
+			(#{rec.salesNo}, #{rec.salesSeq}, #{rec.ftaCode}, #{rec.divisionCode}, #{rec.companyCode}, #{rec.hsCode},
+			 #{rec.productCode}, #{rec.standard}, #{rec.ruleSeq}, #{rec.ruleCode}, #{rec.ftaCooYn}, #{rec.companyCooYn},
+			 #{rec.bufferOption}, #{rec.deMinimisRate}, #{rec.rvcRate}, #{rec.status}, #{rec.errorCode}, #{rec.errorMsg},
+			 #{rec.deleteYn}, CURRENT_TIMESTAMP, #{rec.createBy}, CURRENT_TIMESTAMP, #{rec.updateBy}, #{rec.spCooYn},
+			 #{rec.woCooYn}, #{rec.ctcYn}, #{rec.ftaDeMinimisYn}, #{rec.companyDeMinimisYn}, #{rec.ftaRvcYn}, #{rec.companyRvcYn},
+			 #{rec.exclusionYn}, #{rec.exclusionCondition}, #{rec.ctcResultRate}, #{rec.ctcFtaResultRate},
+			 #{rec.ctcCompanyResultRate}, #{rec.rvcResultRate}, #{rec.rvcFtaResultRate}, #{rec.rvcCompanyResultRate},
+			 #{rec.rcepCooNation})
+		</foreach>
 	</insert>
 
 	<!-- ===================== UPDATE_FRM_PROCEDURE ===================== -->

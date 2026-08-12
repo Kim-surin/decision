@@ -154,6 +154,10 @@ public class OriginDeterminationService extends GeneralService implements Origin
 			}
 		}
 
+		// 이 FM_LIST 행(FTA 후보) 처리 중 쌓인 판정결과를 배치로 저장한다. updateFrm 이 방금 저장한
+		// FCR_RESULT 를 다시 SELECT 해서 쓰므로 반드시 updateFrm 호출 전에 먼저 flush 해야 한다.
+		supportService.flushPendingResults(ctx);
+
 		// 원본 VG_RULE_COUNT: C_FTA_RULE 루프는 룰이 없어도 phantom 1회가 실행되어 항상 1 로 설정된다.
 		// UPDATE_FRM_PROCEDURE 의 "룰 없음(ruleCount<1)" 분기는 이 경로로는 사실상 도달하지 않는
 		// 원본 동작을 그대로 재현한다.

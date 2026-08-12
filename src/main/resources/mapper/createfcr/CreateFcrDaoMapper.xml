@@ -284,23 +284,22 @@
 
 	<!--
 		DECISION_YN 컬럼: 판정 대상 스코프는 더 이상 이 컬럼으로 표시하지 않고 호출부가 넘기는
-		productCodes 파라미터로 직접 제어한다(마킹-조회 2단계 대신 파라미터 전달). 이 컬럼은 다른
-		화면/리포트도 읽지 않아 값 자체엔 의미가 없지만, 스키마상 NOT NULL 일 가능성을 배제할 수
-		없어 안전하게 'Y' 리터럴만 계속 기록한다.
+		productCodes 파라미터로 직접 제어하며, 이제 이 컬럼이 완전히 미사용임이 확인되어 INSERT
+		대상에서도 제거했다.
 	-->
 	<insert id="insertFcrMstRows">
 		INSERT INTO FCR_MST
 			(FTA_CODE, SALES_NO, SALES_SEQ, PRODUCT_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, STANDARD,
 			 AMOUNT, NET_COST_AMOUNT, EXWORK_AMOUNT, FOB_AMOUNT, INAREA_AMOUNT, OUTAREA_AMOUNT, SP_COO_YN,
 			 WO_COO_YN, PRODUCT_UNIT, PRODUCT_ASSETS_TYPE, PROD_DIVISION_CODE, IM_APPLY_YN, CREATE_DATE,
-			 CREATE_BY, UPDATE_DATE, UPDATE_BY, DECISION_YN)
+			 CREATE_BY, UPDATE_DATE, UPDATE_BY)
 		VALUES
 		<foreach collection="rows" item="row" separator=",">
 			(#{row.ftaCode}, #{row.salesNo}, #{row.salesSeq}, #{row.productCode}, #{row.divisionCode},
 			 #{row.companyCode}, #{row.hsCode}, #{row.standard}, #{row.amount}, #{row.netCostAmount},
 			 #{row.exworkAmount}, #{row.fobAmount}, 0, 0, #{row.spCooYn}, #{row.woCooYn}, #{row.productUnit},
 			 #{row.productAssetsType}, #{row.prodDivisionCode}, #{row.imApplyYn}, CURRENT_TIMESTAMP,
-			 'CREATE_FCR', CURRENT_TIMESTAMP, 'CREATE_FCR', 'Y')
+			 'CREATE_FCR', CURRENT_TIMESTAMP, 'CREATE_FCR')
 		</foreach>
 	</insert>
 

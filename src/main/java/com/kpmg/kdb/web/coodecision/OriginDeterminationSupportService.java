@@ -171,12 +171,15 @@ public class OriginDeterminationSupportService extends GeneralService {
 		ctx.setErrorCode("");
 	}
 
-	/** 레거시 INSERT_FRD_PROCESS 이관: 판정결과 1건 저장 후 다음 룰 판정을 위해 레코드를 초기화한다 */
+	/**
+	 * 레거시 INSERT_FRD_PROCESS 이관: 판정결과 1건을 저장 대기열에 담아두고 다음 룰 판정을 위해
+	 * 레코드를 초기화한다. 실제 INSERT 는 즉시 실행하지 않고 {@link #flushPendingResults} 가
+	 * FM_LIST 1건(=ctx) 처리가 끝난 시점에 한 번에 배치로 실행한다 — 원본은 룰마다 단건 INSERT였지만,
+	 * 여러 룰의 결과를 모았다가 한 번에 저장해도 (INSERT 순서에 의미가 없어) 최종 저장 결과는 같다.
+	 */
 	public void insertFrdAndReset(OriginDeterminationContext ctx, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		try {
-			OriginDeterminationSupportDao dao = sqlSession.getMapper(OriginDeterminationSupportDao.class);
-
 			rec.setBufferOption(ctx.getOptionValue());
 			rec.setDeMinimisRate(ctx.getCompanyCtcRate());
 			rec.setRvcRate(ctx.getCompanyRvcRate());
@@ -184,7 +187,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 			rec.setCreateBy(mode.getProcedureName());
 			rec.setUpdateBy(mode.getProcedureName());
 
-			dao.insertFcrResult(rec);
+			ctx.addPendingResult(rec.copy());
 		} catch (Exception e) {
 			ctx.setErrorCode("DECISION01");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
@@ -194,6 +197,29 @@ public class OriginDeterminationSupportService extends GeneralService {
 
 		ctx.setReturnCode(0);
 		rec.resetForNextRule();
+	}
+
+	/**
+	 * {@link #insertFrdAndReset} 이 쌓아둔 판정결과를 한 번의 배치 INSERT 로 저장한다. FM_LIST 1건에
+	 * 대한 모든 룰 판정이 끝난 뒤, {@link #updateFrm} 호출 전에 반드시 먼저 실행해야 한다 — updateFrm
+	 * 이 방금 저장한 FCR_RESULT 를 SELECT 로 재조회해 사용하기 때문이다(salesNo 전체가 아니라 FM_LIST
+	 * 1건 단위로 flush 해야 하는 이유).
+	 */
+	public void flushPendingResults(OriginDeterminationContext ctx) {
+		List<OriginDeterminationResult> pending = ctx.getPendingResults();
+		if (pending.isEmpty()) {
+			return;
+		}
+		try {
+			sqlSession.getMapper(OriginDeterminationSupportDao.class).insertFcrResults(pending);
+		} catch (Exception e) {
+			ctx.setErrorCode("DECISION01");
+			ctx.setErrorMsg(String.valueOf(e.getMessage()));
+			ctx.setReturnCode(-1);
+			logger.error("INSERT_FRD_PROCESS(배치) 실패. count={}", pending.size(), e);
+		} finally {
+			pending.clear();
+		}
 	}
 
 	/**
