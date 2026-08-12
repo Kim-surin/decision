@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.common.CompanySettingService;
+import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
+import com.kpmg.kdb.web.originbasis.dto.LastInputYyyyMmResult;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceRow;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryRequest;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult;
@@ -59,6 +61,15 @@ public class ItemOriginRateService extends GeneralService {
 
 	/** FTA_CODE 와 무관한 부분만 미리 계산. {@link OriginRatePrecheck} 클래스 주석 참고. */
 	public OriginRatePrecheck precheckOriginRate(ItemOriginRateCriteria criteria) {
+		return precheckOriginRate(criteria, Map.of());
+	}
+
+	/**
+	 * @param lastInputYyyyMmCache {@link #prefetchLastInputYyyyMm} 로 미리 배치 조회해둔 결과. 캐시에 없는
+	 *                              조합(호출자가 미리 넘기지 않았거나 비어있는 맵인 경우)은 그 자리에서 바로
+	 *                              단건 조회로 대체한다.
+	 */
+	public OriginRatePrecheck precheckOriginRate(ItemOriginRateCriteria criteria, Map<String, String> lastInputYyyyMmCache) {
 		try {
 			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
 
@@ -82,8 +93,14 @@ public class ItemOriginRateService extends GeneralService {
 
 				if (material.getMatYyyyMm() != null) {
 					if (!lastInputYyyyMmLoaded) {
-						lastInputYyyyMm = dao.selectLastInputYyyyMm(criteria.getCompanyCode(), criteria.getDivisionCode(),
+						String key = lastInputYyyyMmKey(criteria.getCompanyCode(), criteria.getDivisionCode(),
 								criteria.getItemCode(), toMonth.format(YYYYMM));
+						if (lastInputYyyyMmCache.containsKey(key)) {
+							lastInputYyyyMm = lastInputYyyyMmCache.get(key);
+						} else {
+							lastInputYyyyMm = dao.selectLastInputYyyyMm(criteria.getCompanyCode(),
+									criteria.getDivisionCode(), criteria.getItemCode(), toMonth.format(YYYYMM));
+						}
 						lastInputYyyyMmLoaded = true;
 					}
 
@@ -210,13 +227,20 @@ public class ItemOriginRateService extends GeneralService {
 
 		// 배치 호출 1회는 항상 같은 회사 스코프(createFcr() 1회 호출)에서만 이뤄지므로 첫 건의 companyCode 를 사용한다.
 		String companyCode = criteriaList.get(0).getCompanyCode();
+		// precheckOriginRate 내부에서 자재(material) 건별로 반복 조회되던 selectLastInputYyyyMm 도
+		// 여기서 미리 한 번에 배치 조회해둔다(자재와 무관하게 (company,division,item,baseDate) 조합
+		// 하나로 고정된 값이라 자재 루프 안에서는 최초 1회만 쓰이지만, 서로 다른 품목끼리는 여전히
+		// 품목 수만큼 반복 호출되고 있었다).
+		Map<String, String> lastInputYyyyMmCache = prefetchLastInputYyyyMm(criteriaList);
+
 		List<NonCertifiedOriginSummaryRequest> requests = new ArrayList<>();
 		Set<String> seenRequestKeys = new HashSet<>();
 
 		for (ItemOriginRateCriteria criteria : criteriaList) {
 			String precheckKey = precheckKey(criteria.getCompanyCode(), criteria.getDivisionCode(),
 					criteria.getItemCode(), criteria.getBaseDate());
-			OriginRatePrecheck precheck = precheckCache.computeIfAbsent(precheckKey, k -> precheckOriginRate(criteria));
+			OriginRatePrecheck precheck = precheckCache.computeIfAbsent(precheckKey,
+					k -> precheckOriginRate(criteria, lastInputYyyyMmCache));
 			if (precheck.isZero()) {
 				continue;
 			}
@@ -258,6 +282,57 @@ public class ItemOriginRateService extends GeneralService {
 		}
 	}
 
+	/**
+	 * {@link ItemOriginRateDao#selectLastInputYyyyMm} 이 서로 다른 품목마다(BOM 리프 자재 종류 수만큼)
+	 * 반복 호출되던 것을 배치 조회 1회로 대체하기 위한 사전조회. companyCode/uptoYyyyMm(기준월)은 이
+	 * 호출 범위(createFcr() 1회 호출, 단일 salesNo)에서 항상 같은 값이라 (divisionCode,itemCode)
+	 * 조합만 배치로 조회한다.
+	 */
+	public Map<String, String> prefetchLastInputYyyyMm(List<ItemOriginRateCriteria> criteriaList) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return Map.of();
+		}
+
+		String companyCode = criteriaList.get(0).getCompanyCode();
+		LocalDate baseDate = LocalDate.parse(criteriaList.get(0).getResolvedBaseDate(), YYYYMMDD);
+		String uptoYyyyMm = YearMonth.from(baseDate).format(YYYYMM);
+
+		List<DivisionItemKey> items = new ArrayList<>();
+		Set<String> seenKeys = new HashSet<>();
+		for (ItemOriginRateCriteria criteria : criteriaList) {
+			String key = lastInputYyyyMmKey(companyCode, criteria.getDivisionCode(), criteria.getItemCode(), uptoYyyyMm);
+			if (seenKeys.add(key)) {
+				items.add(new DivisionItemKey(criteria.getDivisionCode(), criteria.getItemCode()));
+			}
+		}
+
+		try {
+			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
+			Map<String, String> cache = new HashMap<>();
+			for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
+				List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+				List<LastInputYyyyMmResult> results = dao.selectLastInputYyyyMmBatch(companyCode, uptoYyyyMm, chunk);
+				for (LastInputYyyyMmResult r : results) {
+					cache.put(lastInputYyyyMmKey(companyCode, r.getDivisionCode(), r.getItemCode(), uptoYyyyMm),
+							r.getLastInputYyyyMm());
+				}
+				// 매칭되는 자재 원장이 없는 (divisionCode,itemCode) 는 GROUP BY 결과에 아예 나타나지 않는다.
+				// 그 값도 "조회 완료, 결과 NULL"로 명시해둬야 precheckOriginRate 가 불필요한 단건 폴백
+				// 조회를 다시 하지 않는다(원본 MAX(...)=NULL 1행과 동등한 결과이므로 null 로 채운다).
+				for (DivisionItemKey requested : chunk) {
+					cache.putIfAbsent(lastInputYyyyMmKey(companyCode, requested.getDivisionCode(), requested.getItemCode(),
+							uptoYyyyMm), null);
+				}
+			}
+			return cache;
+		} catch (Exception e) {
+			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
+			// precheckOriginRate 가 그 자리에서 단건 조회로 대체한다.
+			logger.error("최근 입고월 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
+			return Map.of();
+		}
+	}
+
 	/** {@link #prefetchNonCertifiedOriginSummaries} 와 {@link #resolveOriginRate} 가 공유하는 캐시 키 규칙. */
 	public static String precheckKey(String companyCode, String divisionCode, String itemCode, String baseDate) {
 		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
@@ -265,6 +340,10 @@ public class ItemOriginRateService extends GeneralService {
 
 	private static String summaryKey(String itemCode, String ftaCode, String fromDate, String toDate) {
 		return String.join("|", nz(itemCode), nz(ftaCode), nz(fromDate), nz(toDate));
+	}
+
+	private static String lastInputYyyyMmKey(String companyCode, String divisionCode, String itemCode, String uptoYyyyMm) {
+		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(uptoYyyyMm));
 	}
 
 	private static String nz(String value) {

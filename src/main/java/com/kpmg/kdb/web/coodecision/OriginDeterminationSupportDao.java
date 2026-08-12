@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import com.kpmg.kdb.web.coodecision.dto.BufferRates;
+import com.kpmg.kdb.web.coodecision.dto.FcrMstDecisionUpdateRow;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
 
 /**
@@ -52,10 +53,10 @@ public interface OriginDeterminationSupportDao {
 			@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode);
 
-	/** UPDATE_FRM_PROCEDURE 말미: FCR_MST 최종 판정결과 반영 */
-	void updateFcrMstDecisionResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
-			@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
-			@Param("companyCode") String companyCode, @Param("ruleContents") String ruleContents,
-			@Param("ftaCooYn") String ftaCooYn, @Param("companyCooYn") String companyCooYn,
-			@Param("rcepCooNation") String rcepCooNation);
+	/**
+	 * UPDATE_FRM_PROCEDURE 말미: FCR_MST 최종 판정결과 반영. FM_LIST 행(FTA 후보)마다 즉시 실행하는 대신
+	 * determineOrigin() 1회 호출 범위에서 모았다가 한 번의 배치 UPDATE 로 반영한다
+	 * (OriginDeterminationSupportService#updateFrm/#flushFcrMstUpdates 참고).
+	 */
+	void updateFcrMstDecisionResults(@Param("rows") List<FcrMstDecisionUpdateRow> rows);
 }

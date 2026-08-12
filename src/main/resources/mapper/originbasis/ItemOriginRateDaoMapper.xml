@@ -62,6 +62,26 @@
 		AND    ML.INPUT_QTY > 0
 	</select>
 
+	<!--
+		selectLastInputYyyyMm 의 배치 버전. 매칭되는 자재 원장이 없는 (divisionCode,itemCode) 조합은
+		GROUP BY 특성상 결과에 아예 나타나지 않는다 — 단건 조회가 그 경우 MAX(...)=NULL 인 1행을
+		돌려주던 것과 동일한 결과이므로, 호출자는 조회 결과 Map 에 키가 없으면 NULL 로 취급하면 된다.
+	-->
+	<select id="selectLastInputYyyyMmBatch" resultType="com.kpmg.kdb.web.originbasis.dto.LastInputYyyyMmResult">
+		SELECT ML.DIVISION_CODE               AS divisionCode
+		      ,ML.ITEM_CODE                   AS itemCode
+		      ,MAX(ML.YYYYMM)                 AS lastInputYyyyMm
+		FROM   MATERIAL_INV_BAL ML
+		WHERE  ML.COMPANY_CODE = #{companyCode}
+		AND    ML.YYYYMM &lt;= #{uptoYyyyMm}
+		AND    ML.INPUT_QTY > 0
+		AND    (ML.DIVISION_CODE, ML.ITEM_CODE) IN
+		       <foreach collection="items" item="i" open="(" separator="," close=")">
+		           (#{i.divisionCode}, #{i.itemCode})
+		       </foreach>
+		GROUP  BY ML.DIVISION_CODE, ML.ITEM_CODE
+	</select>
+
 	<select id="selectPurchaseLedgerSummary" resultType="com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary">
 		SELECT COUNT(*)                          AS poCount
 		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0) AS warehousingAmountSum

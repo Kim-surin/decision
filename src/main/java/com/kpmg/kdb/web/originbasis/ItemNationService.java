@@ -3,13 +3,20 @@ package com.kpmg.kdb.web.originbasis;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemNationCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
+import com.kpmg.kdb.web.originbasis.dto.LastInputYyyyMmResult;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceRow;
 
 /**
@@ -33,8 +40,18 @@ public class ItemNationService extends GeneralService {
 	private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.BASIC_ISO_DATE;
 	/** 원본 V_MAX_MONTHS NUMBER := 6 */
 	private static final int MAX_MONTHS = 6;
+	/** {@link #prefetchLastInputYyyyMm} 배치 조회 1회당 최대 요청 건수(바인드 파라미터 상한 방지) */
+	private static final int BATCH_CHUNK_SIZE = 500;
 
 	public String resolveItemNation(ItemNationCriteria criteria) {
+		return resolveItemNation(criteria, Map.of());
+	}
+
+	/**
+	 * @param lastInputYyyyMmCache {@link #prefetchLastInputYyyyMm} 로 미리 배치 조회해둔 결과. 캐시에
+	 *                              없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 */
+	public String resolveItemNation(ItemNationCriteria criteria, Map<String, String> lastInputYyyyMmCache) {
 		ItemOriginRateDao materialDao = sqlSession.getMapper(ItemOriginRateDao.class);
 		ItemNationDao nationDao = sqlSession.getMapper(ItemNationDao.class);
 
@@ -68,8 +85,14 @@ public class ItemNationService extends GeneralService {
 
 			if (material.getMatYyyyMm() != null) {
 				if (!lastInputYyyyMmLoaded) {
-					lastInputYyyyMm = materialDao.selectLastInputYyyyMm(criteria.getCompanyCode(),
-							criteria.getDivisionCode(), criteria.getItemCode(), toMonth.format(YYYYMM));
+					String key = lastInputYyyyMmKey(criteria.getCompanyCode(), criteria.getDivisionCode(),
+							criteria.getItemCode(), toMonth.format(YYYYMM));
+					if (lastInputYyyyMmCache.containsKey(key)) {
+						lastInputYyyyMm = lastInputYyyyMmCache.get(key);
+					} else {
+						lastInputYyyyMm = materialDao.selectLastInputYyyyMm(criteria.getCompanyCode(),
+								criteria.getDivisionCode(), criteria.getItemCode(), toMonth.format(YYYYMM));
+					}
 					lastInputYyyyMmLoaded = true;
 				}
 
@@ -115,6 +138,68 @@ public class ItemNationService extends GeneralService {
 			logger.warn("FC01_GET_ITEM_NATION COO_NATION 조회 실패, 빈 값으로 처리. criteria={}", criteria, e);
 			return "";
 		}
+	}
+
+	/**
+	 * {@link ItemOriginRateDao#selectLastInputYyyyMm} 이 서로 다른 품목마다 반복 호출되던 것을 배치 조회
+	 * 1회로 대체하기 위한 사전조회. companyCode 는 이 호출 범위(determineOrigin() 의 RCEP FM_LIST 행
+	 * 1건)에서 항상 같은 값이라 (divisionCode,itemCode,uptoYyyyMm) 조합만 배치로 조회한다 —
+	 * baseDate(=invoiceDate)가 criteria 마다 다를 수 있어 uptoYyyyMm 은 캐시 키에 포함한다.
+	 */
+	public Map<String, String> prefetchLastInputYyyyMm(List<ItemNationCriteria> criteriaList) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return Map.of();
+		}
+
+		String companyCode = criteriaList.get(0).getCompanyCode();
+		Map<String, List<DivisionItemKey>> itemsByUptoYyyyMm = new HashMap<>();
+		Set<String> seenKeys = new HashSet<>();
+		for (ItemNationCriteria criteria : criteriaList) {
+			LocalDate baseDate = LocalDate.parse(criteria.getResolvedBaseDate(), YYYYMMDD);
+			String uptoYyyyMm = YearMonth.from(baseDate).format(YYYYMM);
+			String key = lastInputYyyyMmKey(companyCode, criteria.getDivisionCode(), criteria.getItemCode(), uptoYyyyMm);
+			if (seenKeys.add(key)) {
+				itemsByUptoYyyyMm.computeIfAbsent(uptoYyyyMm, k -> new ArrayList<>())
+						.add(new DivisionItemKey(criteria.getDivisionCode(), criteria.getItemCode()));
+			}
+		}
+
+		try {
+			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
+			Map<String, String> cache = new HashMap<>();
+			for (Map.Entry<String, List<DivisionItemKey>> entry : itemsByUptoYyyyMm.entrySet()) {
+				String uptoYyyyMm = entry.getKey();
+				List<DivisionItemKey> items = entry.getValue();
+				for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
+					List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+					List<LastInputYyyyMmResult> results = dao.selectLastInputYyyyMmBatch(companyCode, uptoYyyyMm, chunk);
+					for (LastInputYyyyMmResult r : results) {
+						cache.put(lastInputYyyyMmKey(companyCode, r.getDivisionCode(), r.getItemCode(), uptoYyyyMm),
+								r.getLastInputYyyyMm());
+					}
+					// 매칭되는 자재 원장이 없는 조합은 GROUP BY 결과에 아예 나타나지 않는다 — "조회 완료,
+					// 결과 NULL"로 명시해둬야 resolveItemNation 이 불필요한 단건 폴백 조회를 다시 하지 않는다.
+					for (DivisionItemKey requested : chunk) {
+						cache.putIfAbsent(lastInputYyyyMmKey(companyCode, requested.getDivisionCode(),
+								requested.getItemCode(), uptoYyyyMm), null);
+					}
+				}
+			}
+			return cache;
+		} catch (Exception e) {
+			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
+			// resolveItemNation 이 그 자리에서 단건 조회로 대체한다.
+			logger.error("최근 입고월 배치조회 실패. companyCode={}", companyCode, e);
+			return Map.of();
+		}
+	}
+
+	private static String lastInputYyyyMmKey(String companyCode, String divisionCode, String itemCode, String uptoYyyyMm) {
+		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(uptoYyyyMm));
+	}
+
+	private static String nz(String value) {
+		return value == null ? "" : value;
 	}
 
 	private static String firstDay(String yyyyMm) {

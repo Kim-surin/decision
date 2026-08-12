@@ -1,7 +1,9 @@
 package com.kpmg.kdb.web.coodecision;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.createfcr.CreateFcrService;
 import com.kpmg.kdb.web.coodecision.dto.BufferRates;
+import com.kpmg.kdb.web.coodecision.dto.FcrMstDecisionUpdateRow;
 import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
@@ -97,10 +100,14 @@ public class OriginDeterminationService extends GeneralService implements Origin
 				// GET_BUFFER 의 PRD(제품군) 소스는 ITEM_MST 를 조인해 품목 수만큼 고카디널리티라 전역
 				// 캐싱은 부적합하지만, 같은 제품이 FTA 후보 수만큼 반복되므로 이 호출 범위에서만 메모이즈한다.
 				Map<String, BufferRates> productLineBufferCache = new HashMap<>();
+				// FM_LIST 행마다 즉시 실행하던 FCR_MST 최종결과 UPDATE 도 모았다가 루프가 끝난 뒤 한 번의
+				// 배치 UPDATE 로 반영한다(OriginDeterminationSupportService#updateFrm/#flushFcrMstUpdates 참고).
+				List<FcrMstDecisionUpdateRow> fcrMstUpdateBatch = new ArrayList<>();
 				for (OriginDeterminationTarget fmData : fmListRows) {
 					decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode, exclusionRuleCache,
-							originCriteriaCache, productLineBufferCache);
+							originCriteriaCache, productLineBufferCache, fcrMstUpdateBatch);
 				}
+				supportService.flushFcrMstUpdates(fcrMstUpdateBatch);
 			}
 		} catch (Exception e) {
 			logger.error("COO_DECISION 실패. companyCode={}, salesNo={}", companyCode, salesNo, e);
@@ -130,7 +137,8 @@ public class OriginDeterminationService extends GeneralService implements Origin
 
 	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmData, String invoiceDate,
 			String newAptaPsrFlag, OriginDeterminationMode mode, ExclusionRuleCache exclusionRuleCache,
-			OriginCriteriaCache originCriteriaCache, Map<String, BufferRates> productLineBufferCache) {
+			OriginCriteriaCache originCriteriaCache, Map<String, BufferRates> productLineBufferCache,
+			List<FcrMstDecisionUpdateRow> fcrMstUpdateBatch) {
 		OriginDeterminationContext ctx = new OriginDeterminationContext();
 		ctx.setFmData(fmData);
 
@@ -171,7 +179,7 @@ public class OriginDeterminationService extends GeneralService implements Origin
 		// UPDATE_FRM_PROCEDURE 의 "룰 없음(ruleCount<1)" 분기는 이 경로로는 사실상 도달하지 않는
 		// 원본 동작을 그대로 재현한다.
 		ctx.setRuleCount(1);
-		supportService.updateFrm(ctx, mode);
+		supportService.updateFrm(ctx, mode, fcrMstUpdateBatch);
 	}
 
 	private void insertNoRuleFoundResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode) {
@@ -376,14 +384,33 @@ public class OriginDeterminationService extends GeneralService implements Origin
 	 * (회사/사업부/품목/HS코드) 조합의 중복 호출을 제거한다.
 	 */
 	private void resolveItemCooNationForRcep(OriginDeterminationContext ctx, String invoiceDate) {
-		Map<String, String> cache = new HashMap<>();
+		// 1단계: 대상 자재의 (회사/사업부/품목/HS코드) distinct 조합을 먼저 모은다.
+		Map<String, ItemNationCriteria> distinctCriteria = new LinkedHashMap<>();
 		for (MaterialOriginRow row : ctx.getMaterialOriginRows()) {
 			if (row.getOriginatingAmount() != null && row.getOriginatingAmount().signum() > 0) {
 				String key = String.join("|", nz(row.getCompanyCode()), nz(row.getDivisionCode()),
 						nz(row.getItemCode()), nz(row.getHsCode()));
-				String cooNation = cache.computeIfAbsent(key, k -> itemNationService.resolveItemNation(
-						new ItemNationCriteria(row.getCompanyCode(), row.getDivisionCode(), row.getItemCode(),
-								row.getFtaCode(), row.getHsCode(), invoiceDate)));
+				distinctCriteria.putIfAbsent(key, new ItemNationCriteria(row.getCompanyCode(), row.getDivisionCode(),
+						row.getItemCode(), row.getFtaCode(), row.getHsCode(), invoiceDate));
+			}
+		}
+		if (distinctCriteria.isEmpty()) {
+			return;
+		}
+
+		// resolveItemNation 내부에서 자재(BOM/대체자재) 건별로 반복되던 selectLastInputYyyyMm 을
+		// distinct 품목 전체에 대해 한 번에 배치 조회해둔다(ItemNationService 클래스 주석 참고).
+		Map<String, String> lastInputYyyyMmCache = itemNationService
+				.prefetchLastInputYyyyMm(new ArrayList<>(distinctCriteria.values()));
+
+		// 2단계: distinct 조합별로 1회만 resolveItemNation 호출(FM_LIST 1건 처리 범위의 로컬 캐시).
+		Map<String, String> cooNationCache = new HashMap<>();
+		for (MaterialOriginRow row : ctx.getMaterialOriginRows()) {
+			if (row.getOriginatingAmount() != null && row.getOriginatingAmount().signum() > 0) {
+				String key = String.join("|", nz(row.getCompanyCode()), nz(row.getDivisionCode()),
+						nz(row.getItemCode()), nz(row.getHsCode()));
+				String cooNation = cooNationCache.computeIfAbsent(key,
+						k -> itemNationService.resolveItemNation(distinctCriteria.get(k), lastInputYyyyMmCache));
 				row.setCooNation(cooNation);
 			}
 		}

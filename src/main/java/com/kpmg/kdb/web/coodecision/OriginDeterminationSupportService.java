@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.coodecision.dto.BufferRates;
+import com.kpmg.kdb.web.coodecision.dto.FcrMstDecisionUpdateRow;
 import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
@@ -240,12 +241,16 @@ public class OriginDeterminationSupportService extends GeneralService {
 
 	/**
 	 * 레거시 UPDATE_FRM_PROCEDURE 이관: 매출 1건(FM_LIST)에 대한 모든 룰 판정이 끝난 뒤
-	 * 최종 판정결과를 FCR_MST 에 반영한다.
+	 * 최종 판정결과를 FCR_MST 에 반영할 갱신 1건을 확정한다. 실제 UPDATE 는 즉시 실행하지 않고
+	 * {@link #flushFcrMstUpdates} 가 determineOrigin() 1회 호출이 끝난 시점에 한 번에 배치로
+	 * 실행한다 — FM_LIST 행마다 서로 다른 FCR_MST 행을 갱신해 행 사이에 순서 의존성이 없으므로
+	 * 모아뒀다 배치로 반영해도 결과는 동일하다.
 	 *
 	 * @param mode RVC_CTC 인 경우에만 "재료비가 없는 자재 존재" 오류를 검사한다(CTC 전용 모드에서는
 	 *             원본에서 이 검사 블록 전체가 주석 처리되어 비활성화되어 있었다).
 	 */
-	public void updateFrm(OriginDeterminationContext ctx, OriginDeterminationMode mode) {
+	public void updateFrm(OriginDeterminationContext ctx, OriginDeterminationMode mode,
+			List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates) {
 		OriginDeterminationTarget fm = ctx.getFmData();
 		// 원본은 이 프로시저 안에서 지역변수 V_FRD_REC(FCR_RESULT%ROWTYPE)를 새로 선언해 사용한다.
 		// (판정 누적용 VG_FRD_REC 과는 별개의 변수)
@@ -291,14 +296,31 @@ public class OriginDeterminationSupportService extends GeneralService {
 				}
 			}
 
-			dao.updateFcrMstDecisionResult(fm.getSalesNo(), fm.getSalesSeq(), fm.getFtaCode(), fm.getDivisionCode(),
-					fm.getCompanyCode(), rec.getRuleCode(), rec.getFtaCooYn(), rec.getCompanyCooYn(),
-					rec.getRcepCooNation());
+			pendingFcrMstUpdates.add(new FcrMstDecisionUpdateRow(fm.getSalesNo(), fm.getSalesSeq(), fm.getFtaCode(),
+					fm.getDivisionCode(), fm.getCompanyCode(), rec.getRuleCode(), rec.getFtaCooYn(),
+					rec.getCompanyCooYn(), rec.getRcepCooNation()));
 		} catch (Exception e) {
 			ctx.setErrorCode("FCRMST01");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			ctx.setReturnCode(-1);
 			logger.error("UPDATE_FRM_PROCEDURE 실패. salesNo={}, salesSeq={}", fm.getSalesNo(), fm.getSalesSeq(), e);
+		}
+	}
+
+	/**
+	 * {@link #updateFrm} 이 쌓아둔 FCR_MST 갱신을 한 번의 배치 UPDATE 로 반영한다. determineOrigin()
+	 * 의 FM_LIST 루프 전체가 끝난 뒤 한 번만 호출한다.
+	 */
+	public void flushFcrMstUpdates(List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates) {
+		if (pendingFcrMstUpdates.isEmpty()) {
+			return;
+		}
+		try {
+			sqlSession.getMapper(OriginDeterminationSupportDao.class).updateFcrMstDecisionResults(pendingFcrMstUpdates);
+		} catch (Exception e) {
+			logger.error("UPDATE_FRM_PROCEDURE(배치) 실패. count={}", pendingFcrMstUpdates.size(), e);
+		} finally {
+			pendingFcrMstUpdates.clear();
 		}
 	}
 

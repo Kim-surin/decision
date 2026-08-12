@@ -147,16 +147,30 @@
 		AND    FRD.STATUS = 'N'
 	</select>
 
-	<update id="updateFcrMstDecisionResult">
-		UPDATE FCR_MST
-		SET    RULE_CONTENTS   = #{ruleContents}
-		      ,FTA_COO_YN      = #{ftaCooYn}
-		      ,COMPANY_COO_YN  = #{companyCooYn}
-		      ,RCEP_COO_NATION = #{rcepCooNation}
-		WHERE  SALES_NO = #{salesNo}
-		AND    SALES_SEQ = #{salesSeq}
-		AND    FTA_CODE = #{ftaCode}
-		AND    DIVISION_CODE = #{divisionCode}
-		AND    COMPANY_CODE = #{companyCode}
+	<!--
+		원본은 FM_LIST 행(FTA 후보)마다 단건 UPDATE 였지만, determineOrigin() 1회 호출에서 나온 모든
+		FM_LIST 행의 갱신을 모았다가 UPDATE...FROM(VALUES) 로 한 번에 반영한다. FM_LIST 행은 서로 다른
+		(SALES_SEQ,FTA_CODE) 조합의 FCR_MST 행을 갱신하므로 행 사이에 순서 의존성이 없어 배치로 묶어도
+		결과는 동일하다.
+	-->
+	<update id="updateFcrMstDecisionResults">
+		UPDATE FCR_MST FM
+		SET    RULE_CONTENTS   = V.RULE_CONTENTS
+		      ,FTA_COO_YN      = V.FTA_COO_YN
+		      ,COMPANY_COO_YN  = V.COMPANY_COO_YN
+		      ,RCEP_COO_NATION = V.RCEP_COO_NATION
+		FROM   (
+		       <foreach collection="rows" item="r" separator="UNION ALL">
+		       SELECT #{r.salesNo} AS SALES_NO, #{r.salesSeq} AS SALES_SEQ, #{r.ftaCode} AS FTA_CODE,
+		              #{r.divisionCode} AS DIVISION_CODE, #{r.companyCode} AS COMPANY_CODE,
+		              #{r.ruleContents} AS RULE_CONTENTS, #{r.ftaCooYn} AS FTA_COO_YN,
+		              #{r.companyCooYn} AS COMPANY_COO_YN, #{r.rcepCooNation} AS RCEP_COO_NATION
+		       </foreach>
+		       ) V
+		WHERE  FM.SALES_NO = V.SALES_NO
+		AND    FM.SALES_SEQ = V.SALES_SEQ
+		AND    FM.FTA_CODE = V.FTA_CODE
+		AND    FM.DIVISION_CODE = V.DIVISION_CODE
+		AND    FM.COMPANY_CODE = V.COMPANY_CODE
 	</update>
 </mapper>

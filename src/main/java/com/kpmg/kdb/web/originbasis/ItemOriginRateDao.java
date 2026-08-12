@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
+import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
+import com.kpmg.kdb.web.originbasis.dto.LastInputYyyyMmResult;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceRow;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryRequest;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult;
@@ -19,6 +21,15 @@ public interface ItemOriginRateDao {
 	/** 대상 품목의 최근 입고월(INPUT_QTY > 0) 조회 */
 	String selectLastInputYyyyMm(@Param("companyCode") String companyCode, @Param("divisionCode") String divisionCode,
 			@Param("itemCode") String itemCode, @Param("uptoYyyyMm") String uptoYyyyMm);
+
+	/**
+	 * {@link #selectLastInputYyyyMm} 의 배치 버전. companyCode/uptoYyyyMm 는 호출 범위(같은 salesNo 의
+	 * createFcr()/determineOrigin() 1회 호출) 안에서 항상 고정값이라 단일 파라미터로 받고,
+	 * (divisionCode,itemCode) 조합만 배치로 받는다. 매칭되는 자재 원장이 없는 조합은 결과에 아예
+	 * 나타나지 않는다(단건 조회의 MAX(...)=NULL 1행과 동등 — 호출자가 Map 조회 결과 null 로 처리).
+	 */
+	List<LastInputYyyyMmResult> selectLastInputYyyyMmBatch(@Param("companyCode") String companyCode,
+			@Param("uptoYyyyMm") String uptoYyyyMm, @Param("items") List<DivisionItemKey> items);
 
 	/** 구매원장 건수/입고금액 합계(원산지확인서 여부 무관) */
 	PurchaseLedgerSummary selectPurchaseLedgerSummary(@Param("companyCode") String companyCode,
