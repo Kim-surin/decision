@@ -81,6 +81,8 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	private ItemPriceService itemPriceService;
 	@Autowired
 	private ItemOriginRateService itemOriginRateService;
+	@Autowired
+	private CreateFcrReferenceDataService referenceDataService;
 
 	/**
 	 * @param productCodes 판정 대상 제품 코드 목록. null/빈 리스트면 salesNo 의 전체 제품(월 판정),
@@ -219,7 +221,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 			Map<String, BigDecimal> incotermsCache) {
 		List<DomesticSalesLine> salesLines = dao.selectDomesticSalesLines(companyCode, divisionCode, salesNo,
 				productCodes);
-		List<FtaMasterActive> ftaMasters = dao.selectActiveFtaMasters(companyCode);
+		List<FtaMasterActive> ftaMasters = referenceDataService.selectActiveFtaMasters(companyCode);
 		String stdYyyy = invoiceDate.substring(0, 4);
 
 		// 같은 제품이 FTA_CODE 후보 수만큼(salesLines × ftaMasters) 반복 조회되던 selectHsCodeCandidates 를

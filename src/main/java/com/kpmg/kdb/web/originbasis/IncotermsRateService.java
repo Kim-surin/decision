@@ -2,6 +2,7 @@ package com.kpmg.kdb.web.originbasis;
 
 import java.math.BigDecimal;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
@@ -20,9 +21,12 @@ public class IncotermsRateService extends GeneralService {
 
 	private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
 
+	@Autowired
+	private IncotermsReferenceDataService referenceDataService;
+
 	public BigDecimal calculateChangeRate(IncotermsChangeRateCriteria criteria) {
 		try {
-			IncotermsRateRow row = sqlSession.getMapper(IncotermsRateDao.class).selectIncotermsInfo(criteria);
+			IncotermsRateRow row = referenceDataService.selectIncotermsInfo(criteria);
 			if (row == null) {
 				return BigDecimal.ONE;
 			}
