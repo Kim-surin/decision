@@ -3,6 +3,10 @@
 <mapper namespace="com.kpmg.kdb.web.originbasis.ItemPriceDao">
 	<!--
 		레거시 FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 이관.
+		- FC10_GET_ITEM_PRICE_NOTE 는 별도 조회하지 않는다. ItemPriceService.resolveItemPriceWithNote 가
+		  FC10_GET_ITEM_PRICE 조회 과정에서 가격을 찾은 그 행의 데이터로 근거 텍스트를 함께 만든다
+		  (ItemPriceService 클래스 주석 참고 — 두 함수의 단계별 조회조건이 완전히 같지는 않았으나 가격을
+		  찾기 위해 이미 조회한 행을 그대로 근거로 쓰기로 함).
 		- ADD_MONTHS/TO_CHAR/TO_DATE 등 Oracle 날짜 함수는 제거하고, 조회 기간(YYYYMM/YYYYMMDD 범위)은
 		  ItemPriceService 에서 java.time 으로 계산하여 단순 문자열 파라미터로 전달한다.
 		- 단가 계산(CASE WHEN 우선순위 등)은 SQL이 아닌 MaterialBalanceTierRow 에서 Java로 수행한다.
@@ -57,51 +61,6 @@
 		                         AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0))
 		       )
 		ORDER  BY CASE WHEN ML.DIVISION_CODE = #{c.divisionCode} THEN 0 ELSE 1 END, ML.DIVISION_CODE
-		FETCH FIRST 1 ROW ONLY
-	</select>
-
-	<select id="selectOwnDivisionBalanceForNote" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
-		SELECT ML.YYYYMM          AS yyyymm
-		      ,ML.DIVISION_CODE   AS divisionCode
-		      ,ML.ISSUE_AMOUNT    AS issueAmount
-		      ,ML.ISSUE_QTY       AS issueQty
-		      ,ML.INVENTORY_AMOUNT AS inventoryAmount
-		      ,ML.INVENTORY_QTY   AS inventoryQty
-		      ,ML.EXTRA_ISSUE_AMOUNT AS extraIssueAmount
-		      ,ML.EXTRA_ISSUE_QTY AS extraIssueQty
-		FROM   MATERIAL_INV_BAL ML
-		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
-		                    FROM   MATERIAL_INV_BAL ML2
-		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
-		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
-		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
-		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
-		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY + ML2.INVENTORY_QTY) > 0)
-		AND    ML.ITEM_CODE = #{c.itemCode}
-		AND    ML.DIVISION_CODE = #{c.divisionCode}
-		AND    ML.COMPANY_CODE = #{c.companyCode}
-		FETCH FIRST 1 ROW ONLY
-	</select>
-
-	<select id="selectOtherDivisionBalanceForNote" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
-		SELECT ML.YYYYMM          AS yyyymm
-		      ,ML.DIVISION_CODE   AS divisionCode
-		      ,ML.ISSUE_AMOUNT    AS issueAmount
-		      ,ML.ISSUE_QTY       AS issueQty
-		      ,ML.INVENTORY_AMOUNT AS inventoryAmount
-		      ,ML.INVENTORY_QTY   AS inventoryQty
-		      ,ML.EXTRA_ISSUE_AMOUNT AS extraIssueAmount
-		      ,ML.EXTRA_ISSUE_QTY AS extraIssueQty
-		FROM   MATERIAL_INV_BAL ML
-		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
-		                    FROM   MATERIAL_INV_BAL ML2
-		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
-		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
-		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
-		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY + ML2.INVENTORY_QTY) > 0)
-		AND    ML.ITEM_CODE = #{c.itemCode}
-		AND    ML.COMPANY_CODE = #{c.companyCode}
-		ORDER  BY ML.DIVISION_CODE
 		FETCH FIRST 1 ROW ONLY
 	</select>
 

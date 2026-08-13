@@ -27,14 +27,6 @@ public interface ItemPriceDao {
 	MaterialBalanceTierRow selectDivisionBalanceForPrice(@Param("c") ItemPriceCriteria criteria,
 			@Param("fromYyyyMm") String fromYyyyMm, @Param("toYyyyMm") String toYyyyMm);
 
-	/** 1단계(자기 PLANT) - FC10_GET_ITEM_PRICE_NOTE 용. MAX(YYYYMM) 조건 = 출고+재고수량 기준(원본 그대로) */
-	MaterialBalanceTierRow selectOwnDivisionBalanceForNote(@Param("c") ItemPriceCriteria criteria,
-			@Param("fromYyyyMm") String fromYyyyMm, @Param("toYyyyMm") String toYyyyMm);
-
-	/** 2단계(타 PLANT) - FC10_GET_ITEM_PRICE_NOTE 용 */
-	MaterialBalanceTierRow selectOtherDivisionBalanceForNote(@Param("c") ItemPriceCriteria criteria,
-			@Param("fromYyyyMm") String fromYyyyMm, @Param("toYyyyMm") String toYyyyMm);
-
 	/** 3단계(구매단가) - 두 함수 공용 */
 	PoLedgerPriceRow selectRecentPurchasePrice(@Param("c") ItemPriceCriteria criteria,
 			@Param("fromYyyyMmdd") String fromYyyyMmdd, @Param("toYyyyMmdd") String toYyyyMmdd);

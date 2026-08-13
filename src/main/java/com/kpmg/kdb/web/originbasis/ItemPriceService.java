@@ -18,6 +18,7 @@ import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.common.CompanySettingService;
 import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
+import com.kpmg.kdb.web.originbasis.dto.ItemPriceWithNote;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
@@ -25,17 +26,18 @@ import com.kpmg.kdb.web.originbasis.dto.StandardCostBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.StandardCostRow;
 
 /**
- * 레거시 FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 이관.
+ * 레거시 FC10_GET_ITEM_PRICE 이관. FC10_GET_ITEM_PRICE_NOTE(근거 텍스트)는 별도로 조회하지 않는다.
  *
- * 두 원본 함수는 "재료 단가"와 "그 근거"를 각각 독립적으로 4단계 fallback(수불부-자기PLANT →
- * 수불부-타PLANT → 구매단가 → 표준원가)으로 조회한다. 조회 조건/공식이 완전히 동일하지 않아(코드 주석 참고)
- * 하나의 쿼리로 강제 통합하지 않고 각 단계를 그대로 이관했다. 다만 3단계(구매단가)는 두 함수가 완전히
- * 동일한 조회이므로 쿼리를 공유해 중복 호출을 없앴다.
+ * 원본은 "재료 단가"(FC10_GET_ITEM_PRICE)와 "그 근거"(FC10_GET_ITEM_PRICE_NOTE)가 각각 독립적으로
+ * 4단계 fallback(수불부-자기PLANT → 수불부-타PLANT → 구매단가 → 표준원가)을 조회하는 별개 함수였고,
+ * 단계별 조회조건/공식이 완전히 같지는 않았다(예: 수불부 단계의 MAX(YYYYMM) 판단 기준이 서로 다름).
+ * 이 이관에서는 근거 텍스트를 위한 별도 조회를 하지 않고, {@link #resolveItemPriceWithNote} 가
+ * FC10_GET_ITEM_PRICE 쪽 조회에서 가격(price &gt; 0)을 찾은 바로 그 행의 데이터로 근거 텍스트를
+ * 함께 만든다 — 쿼리 결과가 원본 NOTE 함수의 것과 정확히 일치하지 않을 수 있음을 감수한 단순화다.
  *
- * <p>FC10_GET_ITEM_PRICE(재료 단가)쪽의 1~2단계(자기 PLANT/전체 PLANT)는 결과가 완전히 동일하도록
- * {@link ItemPriceDao#selectDivisionBalanceForPrice} 단일 쿼리로 통합했다(왕복 1회로 축소 —
- * ItemPriceDaoMapper.xml 의 쿼리 주석 참고). FC10_GET_ITEM_PRICE_NOTE(근거 텍스트)쪽은 통합 대상이
- * 아니라 selectOwnDivisionBalanceForNote/selectOtherDivisionBalanceForNote 2단계 그대로 둔다.
+ * <p>1~2단계(자기 PLANT/전체 PLANT)는 {@link ItemPriceDao#selectDivisionBalanceForPrice} 단일 쿼리로
+ * 통합했다(왕복 1회로 축소 — ItemPriceDaoMapper.xml 의 쿼리 주석 참고). 3단계(구매단가)는 원본에서도
+ * 두 함수가 완전히 동일한 조회였다.
  */
 @Service
 public class ItemPriceService extends GeneralService {
@@ -66,77 +68,58 @@ public class ItemPriceService extends GeneralService {
 	 */
 	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache,
 			Map<String, StandardCostRow> standardCostCache) {
+		return resolveItemPriceWithNote(criteria, purchasePriceCache, standardCostCache).getPrice();
+	}
+
+	public ItemPriceWithNote resolveItemPriceWithNote(ItemPriceCriteria criteria) {
+		return resolveItemPriceWithNote(criteria, Map.of(), Map.of());
+	}
+
+	/**
+	 * FC10_GET_ITEM_PRICE 4단계 fallback(수불부-자기/전체PLANT → 구매단가 → 표준원가-division → 표준원가-전체)을
+	 * 순서대로 조회하다 가격(price &gt; 0)을 찾으면, 별도 조회 없이 그 행의 데이터로 근거 텍스트(NOTE)도
+	 * 함께 만들어 돌려준다 — 클래스 주석 참고.
+	 *
+	 * @param purchasePriceCache {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
+	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 * @param standardCostCache  {@link #prefetchStandardCostByDivision} 로 미리 배치 조회해둔 4단계(표준원가)
+	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 */
+	public ItemPriceWithNote resolveItemPriceWithNote(ItemPriceCriteria criteria,
+			Map<String, PoLedgerPriceRow> purchasePriceCache, Map<String, StandardCostRow> standardCostCache) {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
 
-			BigDecimal price = priceIfPositive(dao.selectDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm),
-					MaterialBalanceTierRow::calculatePriceForPrice);
+			MaterialBalanceTierRow division = dao.selectDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm);
+			BigDecimal price = priceIfPositive(division, MaterialBalanceTierRow::calculatePriceForPrice);
 			if (price != null) {
-				return price;
-			}
-
-			price = priceIfPositive(lookupRecentPurchasePrice(dao, criteria, window, purchasePriceCache),
-					PoLedgerPriceRow::getUnitPrice);
-			if (price != null) {
-				return price;
-			}
-
-			price = priceIfPositive(lookupStandardCostByDivision(dao, criteria, standardCostCache),
-					StandardCostRow::getStandardCostAmount);
-			if (price != null) {
-				return price;
-			}
-
-			return priceIfPositive(dao.selectStandardCostAnyDivision(criteria), StandardCostRow::getStandardCostAmount);
-		} catch (Exception e) {
-			// 원본 EXCEPTION WHEN OTHERS THEN RETURN NULL; 과 동일
-			logger.error("재료비 조회 실패. criteria={}", criteria, e);
-			return null;
-		}
-	}
-
-	public String resolveItemPriceNote(ItemPriceCriteria criteria) {
-		return resolveItemPriceNote(criteria, Map.of(), Map.of());
-	}
-
-	/** @param purchasePriceCache {@link #resolveItemPrice(ItemPriceCriteria, Map, Map)} 와 동일한 사전조회 캐시 */
-	public String resolveItemPriceNote(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache) {
-		return resolveItemPriceNote(criteria, purchasePriceCache, Map.of());
-	}
-
-	/** @param purchasePriceCache/standardCostCache {@link #resolveItemPrice(ItemPriceCriteria, Map, Map)} 와 동일한 사전조회 캐시 */
-	public String resolveItemPriceNote(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache,
-			Map<String, StandardCostRow> standardCostCache) {
-		try {
-			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
-			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
-
-			MaterialBalanceTierRow own = dao.selectOwnDivisionBalanceForNote(criteria, window.fromYyyyMm, window.toYyyyMm);
-			if (own != null && isPositive(own.calculatePriceForNote())) {
-				return own.buildPriceNoteText();
-			}
-
-			MaterialBalanceTierRow other = dao.selectOtherDivisionBalanceForNote(criteria, window.fromYyyyMm, window.toYyyyMm);
-			if (other != null && isPositive(other.calculatePriceForNote())) {
-				return other.buildPriceNoteText();
+				return new ItemPriceWithNote(price, division.buildPriceNoteText());
 			}
 
 			PoLedgerPriceRow purchase = lookupRecentPurchasePrice(dao, criteria, window, purchasePriceCache);
-			if (purchase != null && isPositive(purchase.getUnitPrice())) {
-				return purchase.buildPriceNoteText();
+			price = priceIfPositive(purchase, PoLedgerPriceRow::getUnitPrice);
+			if (price != null) {
+				return new ItemPriceWithNote(price, purchase.buildPriceNoteText());
 			}
 
 			StandardCostRow standard = lookupStandardCostByDivision(dao, criteria, standardCostCache);
-			if (standard != null && isPositive(standard.getStandardCostAmount())) {
-				return standard.buildPriceNoteText();
+			price = priceIfPositive(standard, StandardCostRow::getStandardCostAmount);
+			if (price != null) {
+				return new ItemPriceWithNote(price, standard.buildPriceNoteText());
 			}
 
-			// 원본에는 division 필터 없는 4b 단계가 존재하지 않는다(FC10_GET_ITEM_PRICE 에만 있음)
-			return null;
+			StandardCostRow anyDivision = dao.selectStandardCostAnyDivision(criteria);
+			price = priceIfPositive(anyDivision, StandardCostRow::getStandardCostAmount);
+			if (price != null) {
+				return new ItemPriceWithNote(price, anyDivision.buildPriceNoteText());
+			}
+
+			return new ItemPriceWithNote(null, null);
 		} catch (Exception e) {
-			logger.error("재료비 근거(NOTE) 조회 실패. criteria={}", criteria, e);
-			return null;
+			// 원본 EXCEPTION WHEN OTHERS THEN RETURN NULL; 과 동일
+			logger.error("재료비 조회 실패. criteria={}", criteria, e);
+			return new ItemPriceWithNote(null, null);
 		}
 	}
 
@@ -163,8 +146,8 @@ public class ItemPriceService extends GeneralService {
 	/**
 	 * {@link ItemPriceDao#selectRecentPurchasePrice} 가 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
 	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map)}/
-	 * {@link #resolveItemPriceNote(ItemPriceCriteria, Map)} 에 그대로 넘기면 그 안에서 추가 DB 호출
-	 * 없이 값을 재사용한다.
+	 * {@link #resolveItemPriceWithNote(ItemPriceCriteria, Map, Map)} 에 그대로 넘기면 그 안에서 추가 DB
+	 * 호출 없이 값을 재사용한다.
 	 *
 	 * <p>이 조회는 1~2단계(수불부)에서 이미 가격을 찾은 자재에는 필요 없지만, 어떤 자재가 거기서 실패해
 	 * 3단계까지 내려올지는 그 단계를 먼저 실행해봐야 알 수 있다. 그래서 대상 자재 전체에 대해 미리
@@ -205,7 +188,7 @@ public class ItemPriceService extends GeneralService {
 			return cache;
 		} catch (Exception e) {
 			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// resolveItemPrice/resolveItemPriceNote 가 그 자리에서 단건 조회로 대체한다.
+			// resolveItemPrice/resolveItemPriceWithNote 가 그 자리에서 단건 조회로 대체한다.
 			logger.error("최근 구매단가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
 			return Map.of();
 		}
@@ -214,8 +197,8 @@ public class ItemPriceService extends GeneralService {
 	/**
 	 * {@link ItemPriceDao#selectStandardCostByDivision} 이 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
 	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map, Map)}/
-	 * {@link #resolveItemPriceNote(ItemPriceCriteria, Map, Map)} 에 그대로 넘기면 그 안에서 추가 DB 호출
-	 * 없이 값을 재사용한다.
+	 * {@link #resolveItemPriceWithNote(ItemPriceCriteria, Map, Map)} 에 그대로 넘기면 그 안에서 추가 DB
+	 * 호출 없이 값을 재사용한다.
 	 *
 	 * <p>{@link #prefetchRecentPurchasePrices} 와 동일한 이유로(1~3단계에서 이미 가격을 찾은 자재에는
 	 * 이 4단계 조회가 애초에 필요 없지만, 어떤 자재가 거기까지 내려올지는 먼저 실행해봐야 안다) 대상
@@ -254,7 +237,7 @@ public class ItemPriceService extends GeneralService {
 			return cache;
 		} catch (Exception e) {
 			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// resolveItemPrice/resolveItemPriceNote 가 그 자리에서 단건 조회로 대체한다.
+			// resolveItemPrice/resolveItemPriceWithNote 가 그 자리에서 단건 조회로 대체한다.
 			logger.error("표준원가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
 			return Map.of();
 		}

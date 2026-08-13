@@ -77,9 +77,10 @@ public class TestController extends GenericController {
 							.resolveItemPrice(new ItemPriceCriteria("FRT100", "FRT101", "091853X310", "PKRCO", "20260430")),
 					"468"));
 
-			cases.add(runCase("ItemPriceService.resolveItemPriceNote",
+			cases.add(runCase("ItemPriceService.resolveItemPriceWithNote",
 					() -> itemPriceService
-							.resolveItemPriceNote(new ItemPriceCriteria("FRT100", "FRT101", "091853X310", "PKRCO", "20260430")),
+							.resolveItemPriceWithNote(new ItemPriceCriteria("FRT100", "FRT101", "091853X310", "PKRCO", "20260430"))
+							.getPriceNote(),
 					"구매 단가 (20260430,FRT101,1228177943)"));
 
 			cases.add(runCase("IncotermsRateService.calculateChangeRate",

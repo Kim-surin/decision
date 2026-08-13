@@ -5,7 +5,7 @@ import java.math.RoundingMode;
 
 /**
  * MATERIAL_INV_BAL(원재료 수불부) 조회 결과 한 행.
- * FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 의 단가 산출 공식을 Java에서 계산하기 위한 원본 컬럼.
+ * FC10_GET_ITEM_PRICE 의 단가 산출 공식을 Java에서 계산하기 위한 원본 컬럼.
  */
 public class MaterialBalanceTierRow {
 
@@ -86,10 +86,6 @@ public class MaterialBalanceTierRow {
 		return value == null ? BigDecimal.ZERO : value;
 	}
 
-	private static boolean positive(BigDecimal value) {
-		return value != null && value.signum() > 0;
-	}
-
 	/**
 	 * FC10_GET_ITEM_PRICE 공식: (ISSUE_AMOUNT + EXTRA_ISSUE_AMOUNT) / (ISSUE_QTY + EXTRA_ISSUE_QTY)
 	 * 분모가 0이면 0 (기말재고 기반 단가는 더 이상 사용하지 않음 - 2018-04-04 변경분 반영)
@@ -101,27 +97,6 @@ public class MaterialBalanceTierRow {
 			return BigDecimal.ZERO;
 		}
 		return amount.divide(qty, 10, RoundingMode.HALF_UP);
-	}
-
-	/**
-	 * FC10_GET_ITEM_PRICE_NOTE 공식(원본 그대로 유지 - 출고 &gt; 재고 &gt; 기타출고 우선순위 3분기):
-	 * issue &gt; 0 ? issueAmt/issueQty : inventory &gt; 0 ? invAmt/invQty : extraIssue &gt; 0 ? extraAmt/extraQty : 0
-	 *
-	 * 주의: FC10_GET_ITEM_PRICE 와 다른 공식이다(레거시에 존재하던 두 함수 간 불일치, 마이그레이션에서 임의로
-	 * 통일하지 않고 원본 그대로 보존함). 실제 반환되는 가격(calculatePriceForPrice)과 이 근거값이 다를 수 있으므로
-	 * 업무팀 확인이 필요하다.
-	 */
-	public BigDecimal calculatePriceForNote() {
-		if (positive(issueAmount) && positive(issueQty)) {
-			return issueAmount.divide(issueQty, 10, RoundingMode.HALF_UP);
-		}
-		if (positive(inventoryAmount) && positive(inventoryQty)) {
-			return inventoryAmount.divide(inventoryQty, 10, RoundingMode.HALF_UP);
-		}
-		if (positive(extraIssueAmount) && positive(extraIssueQty)) {
-			return extraIssueAmount.divide(extraIssueQty, 10, RoundingMode.HALF_UP);
-		}
-		return BigDecimal.ZERO;
 	}
 
 	public String buildPriceNoteText() {

@@ -32,6 +32,7 @@ import com.kpmg.kdb.web.originbasis.dto.HsCodeCriteria;
 import com.kpmg.kdb.web.originbasis.dto.IncotermsChangeRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
+import com.kpmg.kdb.web.originbasis.dto.ItemPriceWithNote;
 import com.kpmg.kdb.web.originbasis.dto.OriginRatePrecheck;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
 import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary;
@@ -366,19 +367,19 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 			Map<String, OriginRatePrecheck> originRatePrecheckCache,
 			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache,
 			Map<String, PoLedgerPriceRow> purchasePriceCache, Map<String, StandardCostRow> standardCostCache) {
-		Map<String, BigDecimal> priceCache = new LinkedHashMap<>();
+		Map<String, ItemPriceWithNote> priceWithNoteCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
-		Map<String, String> priceNoteCache = new LinkedHashMap<>();
 
 		Map<String, List<ResolvedLeaf>> grouped = new LinkedHashMap<>();
 		for (BomLeafRow leaf : leafRows) {
-			BigDecimal unitPrice = resolveItemPriceCached(priceCache, purchasePriceCache, standardCostCache,
-					leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
+			ItemPriceWithNote priceWithNote = resolveItemPriceWithNoteCached(priceWithNoteCache, purchasePriceCache,
+					standardCostCache, leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
+					leaf.getFtaCode(), invoiceDate);
+			BigDecimal unitPrice = priceWithNote.getPrice();
 			BigDecimal originRate = resolveOriginRateCached(originRateCache, originRatePrecheckCache,
 					nonCertifiedSummaryCache, leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
 					leaf.getFtaCode(), invoiceDate);
-			String priceNote = resolvePriceNoteCached(priceNoteCache, purchasePriceCache, standardCostCache,
-					leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
+			String priceNote = priceWithNote.getPriceNote();
 			String hsCodeYn = leaf.getItemHsCode() == null ? "N" : "Y";
 
 			String key = String.join("|", nz(leaf.getItemCode()), nz(leaf.getFtaCode()), nz(leaf.getSalesNo()),
@@ -556,21 +557,11 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	 * {@link ItemPriceCriteria} 클래스 주석 참고). 그래서 캐시 키에서 ftaCode 를 뺀다 — BOM 리프
 	 * 자재는 같은 품목이 협정(FTA) 수만큼 반복 등장하므로, 뺴지 않으면 이 캐시가 사실상 항상 miss 난다.
 	 */
-	private BigDecimal resolveItemPriceCached(Map<String, BigDecimal> cache, Map<String, PoLedgerPriceRow> purchasePriceCache,
-			Map<String, StandardCostRow> standardCostCache, String companyCode, String divisionCode, String itemCode,
-			String ftaCode, String baseDate) {
+	private ItemPriceWithNote resolveItemPriceWithNoteCached(Map<String, ItemPriceWithNote> cache,
+			Map<String, PoLedgerPriceRow> purchasePriceCache, Map<String, StandardCostRow> standardCostCache,
+			String companyCode, String divisionCode, String itemCode, String ftaCode, String baseDate) {
 		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
-		return cache.computeIfAbsent(key, k -> itemPriceService.resolveItemPrice(
-				new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), purchasePriceCache,
-				standardCostCache));
-	}
-
-	/** ftaCode 를 캐시 키에서 빼는 이유는 {@link #resolveItemPriceCached} 참고. */
-	private String resolvePriceNoteCached(Map<String, String> cache, Map<String, PoLedgerPriceRow> purchasePriceCache,
-			Map<String, StandardCostRow> standardCostCache, String companyCode, String divisionCode, String itemCode,
-			String ftaCode, String baseDate) {
-		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
-		return cache.computeIfAbsent(key, k -> itemPriceService.resolveItemPriceNote(
+		return cache.computeIfAbsent(key, k -> itemPriceService.resolveItemPriceWithNote(
 				new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), purchasePriceCache,
 				standardCostCache));
 	}
