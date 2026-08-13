@@ -13,12 +13,13 @@ import com.kpmg.kdb.web.originbasis.dto.StandardCostRow;
  */
 public interface ItemPriceDao {
 
-	/** 1단계(자기 PLANT) - FC10_GET_ITEM_PRICE 용. MAX(YYYYMM) 조건 = 출고수량 기준 */
-	MaterialBalanceTierRow selectOwnDivisionBalanceForPrice(@Param("c") ItemPriceCriteria criteria,
-			@Param("fromYyyyMm") String fromYyyyMm, @Param("toYyyyMm") String toYyyyMm);
-
-	/** 2단계(타 PLANT) - FC10_GET_ITEM_PRICE 용 */
-	MaterialBalanceTierRow selectOtherDivisionBalanceForPrice(@Param("c") ItemPriceCriteria criteria,
+	/**
+	 * 1~2단계(자기 PLANT 우선, 없으면 전체 PLANT) - FC10_GET_ITEM_PRICE 용. 자기 사업부에 조회기간 내
+	 * 출고실적(MAX YYYYMM 조건 = 출고수량 기준)이 있으면 그 사업부 데이터를, 없으면 전체 사업부를
+	 * 통틀은 최신월 데이터를 1건 반환한다(원래 별도 쿼리였던 1단계/2단계를 단일 쿼리로 통합 —
+	 * ItemPriceDaoMapper.xml 의 selectDivisionBalanceForPrice 주석 참고).
+	 */
+	MaterialBalanceTierRow selectDivisionBalanceForPrice(@Param("c") ItemPriceCriteria criteria,
 			@Param("fromYyyyMm") String fromYyyyMm, @Param("toYyyyMm") String toYyyyMm);
 
 	/** 1단계(자기 PLANT) - FC10_GET_ITEM_PRICE_NOTE 용. MAX(YYYYMM) 조건 = 출고+재고수량 기준(원본 그대로) */

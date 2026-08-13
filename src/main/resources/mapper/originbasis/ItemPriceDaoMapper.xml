@@ -11,7 +11,16 @@
 		  12개월) 내 구매이력이 많을수록 불필요하게 많은 행을 읽어오게 되므로 반드시 필요하다.
 	-->
 
-	<select id="selectOwnDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
+	<!--
+		selectOwnDivisionBalanceForPrice(자기 PLANT)/selectOtherDivisionBalanceForPrice(전체 PLANT,
+		DIVISION_CODE 순 1건) 2단계 순차 조회를 단일 쿼리로 통합. 자기 사업부(division)에 조회기간 내
+		출고실적이 있으면 그 사업부 안에서의 최신월(own-scoped MAX)을, 없으면(NOT EXISTS) 전체 사업부를
+		통틀은 최신월(global MAX, 기존 "Other" 쿼리와 동일한 상관 서브쿼리)을 기준으로 삼는다 — 자기
+		사업부 출고가 다른 사업부보다 오래된 경우에도 자기 사업부 데이터를 우선 사용하던 기존 2단계
+		동작과 결과가 동일하다(단순히 전체 최신월 1건만 조회해 자기 사업부 여부를 사후 필터링하면, 자기
+		사업부의 더 오래된 실적이 조회 대상에서 아예 빠져 결과가 달라질 수 있어 이 형태를 유지한다).
+	-->
+	<select id="selectDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
 		SELECT ML.YYYYMM          AS yyyymm
 		      ,ML.DIVISION_CODE   AS divisionCode
 		      ,ML.ISSUE_AMOUNT    AS issueAmount
@@ -21,38 +30,33 @@
 		      ,ML.EXTRA_ISSUE_AMOUNT AS extraIssueAmount
 		      ,ML.EXTRA_ISSUE_QTY AS extraIssueQty
 		FROM   MATERIAL_INV_BAL ML
-		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
-		                    FROM   MATERIAL_INV_BAL ML2
-		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
-		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
-		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
-		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
-		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
-		AND    ML.ITEM_CODE = #{c.itemCode}
-		AND    ML.DIVISION_CODE = #{c.divisionCode}
+		WHERE  ML.ITEM_CODE = #{c.itemCode}
 		AND    ML.COMPANY_CODE = #{c.companyCode}
-		FETCH FIRST 1 ROW ONLY
-	</select>
-
-	<select id="selectOtherDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow">
-		SELECT ML.YYYYMM          AS yyyymm
-		      ,ML.DIVISION_CODE   AS divisionCode
-		      ,ML.ISSUE_AMOUNT    AS issueAmount
-		      ,ML.ISSUE_QTY       AS issueQty
-		      ,ML.INVENTORY_AMOUNT AS inventoryAmount
-		      ,ML.INVENTORY_QTY   AS inventoryQty
-		      ,ML.EXTRA_ISSUE_AMOUNT AS extraIssueAmount
-		      ,ML.EXTRA_ISSUE_QTY AS extraIssueQty
-		FROM   MATERIAL_INV_BAL ML
-		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
-		                    FROM   MATERIAL_INV_BAL ML2
-		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
-		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
-		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
-		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
-		AND    ML.ITEM_CODE = #{c.itemCode}
-		AND    ML.COMPANY_CODE = #{c.companyCode}
-		ORDER  BY ML.DIVISION_CODE
+		AND    (
+		       (ML.DIVISION_CODE = #{c.divisionCode}
+		        AND ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                         FROM   MATERIAL_INV_BAL ML2
+		                         WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                         AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                         AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                         AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                         AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0))
+		       OR
+		       (NOT EXISTS (SELECT 1
+		                    FROM   MATERIAL_INV_BAL ML3
+		                    WHERE  ML3.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                    AND    ML3.ITEM_CODE = #{c.itemCode}
+		                    AND    ML3.DIVISION_CODE = #{c.divisionCode}
+		                    AND    ML3.COMPANY_CODE = #{c.companyCode}
+		                    AND    (ML3.ISSUE_QTY + ML3.EXTRA_ISSUE_QTY) > 0)
+		        AND ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                         FROM   MATERIAL_INV_BAL ML2
+		                         WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                         AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                         AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                         AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0))
+		       )
+		ORDER  BY CASE WHEN ML.DIVISION_CODE = #{c.divisionCode} THEN 0 ELSE 1 END, ML.DIVISION_CODE
 		FETCH FIRST 1 ROW ONLY
 	</select>
 

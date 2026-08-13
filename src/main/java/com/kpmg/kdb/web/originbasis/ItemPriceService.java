@@ -22,6 +22,11 @@ import com.kpmg.kdb.web.originbasis.dto.StandardCostRow;
  * 수불부-타PLANT → 구매단가 → 표준원가)으로 조회한다. 조회 조건/공식이 완전히 동일하지 않아(코드 주석 참고)
  * 하나의 쿼리로 강제 통합하지 않고 각 단계를 그대로 이관했다. 다만 3단계(구매단가)는 두 함수가 완전히
  * 동일한 조회이므로 쿼리를 공유해 중복 호출을 없앴다.
+ *
+ * <p>FC10_GET_ITEM_PRICE(재료 단가)쪽의 1~2단계(자기 PLANT/전체 PLANT)는 결과가 완전히 동일하도록
+ * {@link ItemPriceDao#selectDivisionBalanceForPrice} 단일 쿼리로 통합했다(왕복 1회로 축소 —
+ * ItemPriceDaoMapper.xml 의 쿼리 주석 참고). FC10_GET_ITEM_PRICE_NOTE(근거 텍스트)쪽은 통합 대상이
+ * 아니라 selectOwnDivisionBalanceForNote/selectOtherDivisionBalanceForNote 2단계 그대로 둔다.
  */
 @Service
 public class ItemPriceService extends GeneralService {
@@ -37,13 +42,7 @@ public class ItemPriceService extends GeneralService {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
 
-			BigDecimal price = priceIfPositive(dao.selectOwnDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm),
-					MaterialBalanceTierRow::calculatePriceForPrice);
-			if (price != null) {
-				return price;
-			}
-
-			price = priceIfPositive(dao.selectOtherDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm),
+			BigDecimal price = priceIfPositive(dao.selectDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm),
 					MaterialBalanceTierRow::calculatePriceForPrice);
 			if (price != null) {
 				return price;
