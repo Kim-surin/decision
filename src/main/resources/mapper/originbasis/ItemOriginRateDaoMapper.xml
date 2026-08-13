@@ -91,6 +91,33 @@
 		AND    PL.WAREHOUSING_DATE BETWEEN #{fromDate} AND #{toDate}
 	</select>
 
+	<!--
+		selectPurchaseLedgerSummary 의 배치 버전. ItemOriginRateService.precheckOriginRate 의 자재(material)
+		루프 안에서 자재별로 반복 호출되던 것을, 여러 품목(자재)에 걸친 조회구간 조합 전체를 UNION ALL
+		파생 테이블(V)로 한 번에 던지고 GROUP BY 로 조합별 집계를 한 번에 받는다.
+
+		NOT EXISTS 상관 서브쿼리가 없는 단순 COUNT/SUM 집계라 selectNonCertifiedOriginSummaryBatch 와
+		달리 V 를 드라이빙하는 LEFT JOIN 만으로 충분하다 — 매칭되는 PO_LEDGER 가 없는 조합도
+		COUNT(PL.WAREHOUSING_AMOUNT)=0, SUM=0 인 1행으로 집계되어 원본(무그룹 COUNT(*))과 동일하다.
+	-->
+	<select id="selectPurchaseLedgerSummaryBatch" resultType="com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummaryBatchResult">
+		SELECT V.ITEM_CODE                                    AS itemCode
+		      ,V.FROM_DATE                                    AS fromDate
+		      ,V.TO_DATE                                      AS toDate
+		      ,COUNT(PL.WAREHOUSING_AMOUNT)                    AS poCount
+		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0)         AS warehousingAmountSum
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.itemCode} AS ITEM_CODE, #{r.fromDate} AS FROM_DATE, #{r.toDate} AS TO_DATE
+		       </foreach>
+		       ) V
+		LEFT   OUTER JOIN PO_LEDGER PL
+		ON     PL.ITEM_CODE = V.ITEM_CODE
+		AND    PL.COMPANY_CODE = #{companyCode}
+		AND    PL.WAREHOUSING_DATE BETWEEN V.FROM_DATE AND V.TO_DATE
+		GROUP  BY V.ITEM_CODE, V.FROM_DATE, V.TO_DATE
+	</select>
+
 	<!-- 역내산 확인서(원산지확인서/증명서) 미수취 또는 요건 불충족 구매 건 집계 -->
 	<select id="selectNonCertifiedOriginSummary" resultType="com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary">
 		SELECT COUNT(*)                          AS poCount

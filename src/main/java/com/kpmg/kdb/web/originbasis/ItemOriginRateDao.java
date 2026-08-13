@@ -11,6 +11,8 @@ import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceRow;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryRequest;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult;
 import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary;
+import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummaryBatchResult;
+import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummaryRequest;
 
 public interface ItemOriginRateDao {
 
@@ -34,6 +36,14 @@ public interface ItemOriginRateDao {
 	/** 구매원장 건수/입고금액 합계(원산지확인서 여부 무관) */
 	PurchaseLedgerSummary selectPurchaseLedgerSummary(@Param("companyCode") String companyCode,
 			@Param("itemCode") String itemCode, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
+
+	/**
+	 * {@link #selectPurchaseLedgerSummary} 를 (itemCode,fromDate,toDate) 조합별로 반복 호출하는 대신 한 번에
+	 * 조회하는 배치 버전. {@link com.kpmg.kdb.web.originbasis.ItemOriginRateService#prefetchPurchaseLedgerSummaries}
+	 * 참고. 요청 목록에 없는 조합은 결과에 없다(호출자가 필요분만 넘긴다는 전제).
+	 */
+	List<PurchaseLedgerSummaryBatchResult> selectPurchaseLedgerSummaryBatch(@Param("companyCode") String companyCode,
+			@Param("requests") List<PurchaseLedgerSummaryRequest> requests);
 
 	/** 역내산 확인서 미수취(또는 역외산) 구매 건수/입고금액 합계 */
 	PurchaseLedgerSummary selectNonCertifiedOriginSummary(@Param("companyCode") String companyCode,

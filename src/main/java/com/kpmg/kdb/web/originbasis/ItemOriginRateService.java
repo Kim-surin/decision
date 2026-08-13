@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,8 @@ import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult;
 import com.kpmg.kdb.web.originbasis.dto.OriginRatePrecheck;
 import com.kpmg.kdb.web.originbasis.dto.OriginRateStage;
 import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary;
+import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummaryBatchResult;
+import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummaryRequest;
 
 /**
  * 레거시 FC10_GET_ITEM_ORIGIN_RATE 이관 (원재료 역내산 비율 조회).
@@ -80,71 +83,107 @@ public class ItemOriginRateService extends GeneralService {
 			List<MaterialBalanceRow> materials = dao.selectMaterialCandidates(criteria, fromMonth.format(YYYYMM),
 					toMonth.format(YYYYMM));
 
-			List<OriginRateStage> stages = new ArrayList<>();
-			// selectLastInputYyyyMm 의 바인딩 파라미터(companyCode/divisionCode/itemCode/toMonth)는 자재(material)와
-			// 무관하게 criteria 하나로 고정돼 있어 루프 안에서 매번 다시 조회해도 같은 값이 나온다. 자재가 여러 건
-			// (BOM + 대체자재)이어도 최초 1회만 조회하도록 루프 밖으로 뺐다(지연 초기화 — 필요 없으면 아예 안 부른다).
-			String lastInputYyyyMm = null;
-			boolean lastInputYyyyMmLoaded = false;
-
-			for (MaterialBalanceRow material : materials) {
-				String lookupStart = null;
-				String lookupEnd = null;
-
-				if (material.getMatYyyyMm() != null) {
-					if (!lastInputYyyyMmLoaded) {
-						String key = lastInputYyyyMmKey(criteria.getCompanyCode(), criteria.getDivisionCode(),
-								criteria.getItemCode(), toMonth.format(YYYYMM));
-						if (lastInputYyyyMmCache.containsKey(key)) {
-							lastInputYyyyMm = lastInputYyyyMmCache.get(key);
-						} else {
-							lastInputYyyyMm = dao.selectLastInputYyyyMm(criteria.getCompanyCode(),
-									criteria.getDivisionCode(), criteria.getItemCode(), toMonth.format(YYYYMM));
-						}
-						lastInputYyyyMmLoaded = true;
-					}
-
-					if (material.hasPositiveInitialQty()) {
-						if (material.hasNegativeAgingPeriod()) {
-							return OriginRatePrecheck.zero(); // 재고회전 계산 불능 -> 역외 확정
-						}
-						lookupStart = firstDayMinusMonths(material.getMatYyyyMm(), material.getMatAgingPeriod() + 1);
-					}
-
-					if (material.hasPositiveInputQty()) {
-						if (lookupStart == null) {
-							lookupStart = firstDay(material.getMatYyyyMm());
-						}
-						lookupEnd = lastDay(material.getMatYyyyMm());
-					} else if (material.hasPositiveInitialQty()) {
-						lookupEnd = firstDayMinusOneDay(material.getMatYyyyMm());
-					} else if (material.hasPositiveAgingPeriod()) {
-						lookupStart = firstDayMinusMonths(material.getMatYyyyMm(), material.getMatAgingPeriod() + 1);
-						lookupEnd = firstDayMinusOneDay(material.getMatYyyyMm());
-					}
-				}
-
-				if (lookupStart == null || lookupEnd == null) {
-					continue;
-				}
-
-				String fromDate = earliest(plusDay01(lastInputYyyyMm), lookupStart);
-
-				PurchaseLedgerSummary poSummary = dao.selectPurchaseLedgerSummary(criteria.getCompanyCode(),
-						material.getItemCode(), fromDate, lookupEnd);
-				if (poSummary.getPoCount() == 0) {
-					return OriginRatePrecheck.zero();
-				}
-
-				stages.add(new OriginRateStage(material.getItemCode(), fromDate, lookupEnd, poSummary));
-			}
-
-			return OriginRatePrecheck.stages(stages);
+			LookupPlan plan = buildLookupPlan(dao, criteria, materials, toMonth, lastInputYyyyMmCache);
+			return assemblePrecheck(dao, criteria, plan, Map.of());
 		} catch (Exception e) {
 			// 원본 EXCEPTION WHEN OTHERS THEN RETURN 0; 과 동일
 			logger.error("원재료 역내산 비율 사전조회 실패. criteria={}", criteria, e);
 			return OriginRatePrecheck.zero();
 		}
+	}
+
+	/**
+	 * precheckOriginRate 의 순수 계산부(DB 는 selectLastInputYyyyMm 캐시 폴백만 필요하면 호출)만 떼어낸 것.
+	 * {@link #prefetchPurchaseLedgerSummaries} 가 구매원장 배치 조회 전에 "어떤 (itemCode,조회구간) 조합이
+	 * 필요한지"를 실제 조회 없이 먼저 계산(dry run)하기 위해 쓴다 — 자재 루프의 단락평가(재고회전 계산
+	 * 불능 -> 즉시 0 확정)만 여기서 그대로 재현하고, selectPurchaseLedgerSummary 호출 자체는 하지 않는다.
+	 */
+	private LookupPlan buildLookupPlan(ItemOriginRateDao dao, ItemOriginRateCriteria criteria,
+			List<MaterialBalanceRow> materials, YearMonth toMonth, Map<String, String> lastInputYyyyMmCache) {
+		List<StageCandidate> candidates = new ArrayList<>();
+		// selectLastInputYyyyMm 의 바인딩 파라미터(companyCode/divisionCode/itemCode/toMonth)는 자재(material)와
+		// 무관하게 criteria 하나로 고정돼 있어 루프 안에서 매번 다시 조회해도 같은 값이 나온다. 자재가 여러 건
+		// (BOM + 대체자재)이어도 최초 1회만 조회하도록 루프 밖으로 뺐다(지연 초기화 — 필요 없으면 아예 안 부른다).
+		String lastInputYyyyMm = null;
+		boolean lastInputYyyyMmLoaded = false;
+
+		for (MaterialBalanceRow material : materials) {
+			String lookupStart = null;
+			String lookupEnd = null;
+
+			if (material.getMatYyyyMm() != null) {
+				if (!lastInputYyyyMmLoaded) {
+					String key = lastInputYyyyMmKey(criteria.getCompanyCode(), criteria.getDivisionCode(),
+							criteria.getItemCode(), toMonth.format(YYYYMM));
+					if (lastInputYyyyMmCache.containsKey(key)) {
+						lastInputYyyyMm = lastInputYyyyMmCache.get(key);
+					} else {
+						lastInputYyyyMm = dao.selectLastInputYyyyMm(criteria.getCompanyCode(),
+								criteria.getDivisionCode(), criteria.getItemCode(), toMonth.format(YYYYMM));
+					}
+					lastInputYyyyMmLoaded = true;
+				}
+
+				if (material.hasPositiveInitialQty()) {
+					if (material.hasNegativeAgingPeriod()) {
+						return LookupPlan.zero(); // 재고회전 계산 불능 -> 역외 확정
+					}
+					lookupStart = firstDayMinusMonths(material.getMatYyyyMm(), material.getMatAgingPeriod() + 1);
+				}
+
+				if (material.hasPositiveInputQty()) {
+					if (lookupStart == null) {
+						lookupStart = firstDay(material.getMatYyyyMm());
+					}
+					lookupEnd = lastDay(material.getMatYyyyMm());
+				} else if (material.hasPositiveInitialQty()) {
+					lookupEnd = firstDayMinusOneDay(material.getMatYyyyMm());
+				} else if (material.hasPositiveAgingPeriod()) {
+					lookupStart = firstDayMinusMonths(material.getMatYyyyMm(), material.getMatAgingPeriod() + 1);
+					lookupEnd = firstDayMinusOneDay(material.getMatYyyyMm());
+				}
+			}
+
+			if (lookupStart == null || lookupEnd == null) {
+				continue;
+			}
+
+			String fromDate = earliest(plusDay01(lastInputYyyyMm), lookupStart);
+			candidates.add(new StageCandidate(material.getItemCode(), fromDate, lookupEnd));
+		}
+
+		return LookupPlan.of(candidates);
+	}
+
+	/**
+	 * {@link #buildLookupPlan} 이 세운 계획을 실제 구매원장 집계(poSummaryCache 우선, 없으면 단건 폴백 조회)로
+	 * 채워 최종 {@link OriginRatePrecheck} 를 조립한다 — 원본의 자재 순회 순서/단락평가(poCount==0 -> 즉시
+	 * 0 확정)를 그대로 재현한다.
+	 */
+	private OriginRatePrecheck assemblePrecheck(ItemOriginRateDao dao, ItemOriginRateCriteria criteria,
+			LookupPlan plan, Map<String, PurchaseLedgerSummary> poSummaryCache) {
+		if (plan.isZero()) {
+			return OriginRatePrecheck.zero();
+		}
+
+		List<OriginRateStage> stages = new ArrayList<>();
+		for (StageCandidate candidate : plan.getCandidates()) {
+			String key = poSummaryKey(criteria.getCompanyCode(), candidate.getItemCode(), candidate.getFromDate(),
+					candidate.getLookupEnd());
+			PurchaseLedgerSummary poSummary = poSummaryCache.get(key);
+			if (poSummary == null) {
+				poSummary = dao.selectPurchaseLedgerSummary(criteria.getCompanyCode(), candidate.getItemCode(),
+						candidate.getFromDate(), candidate.getLookupEnd());
+			}
+			if (poSummary.getPoCount() == 0) {
+				return OriginRatePrecheck.zero();
+			}
+
+			stages.add(new OriginRateStage(candidate.getItemCode(), candidate.getFromDate(), candidate.getLookupEnd(),
+					poSummary));
+		}
+
+		return OriginRatePrecheck.stages(stages);
 	}
 
 	/** FTA_CODE 에 의존하는 마지막 단계. precheck 는 같은 (회사/사업부/품목/기준일) 조합이면 재사용 가능. */
@@ -232,6 +271,10 @@ public class ItemOriginRateService extends GeneralService {
 		// 하나로 고정된 값이라 자재 루프 안에서는 최초 1회만 쓰이지만, 서로 다른 품목끼리는 여전히
 		// 품목 수만큼 반복 호출되고 있었다).
 		Map<String, String> lastInputYyyyMmCache = prefetchLastInputYyyyMm(criteriaList);
+		// precheckOriginRate 안에서 자재(material) 건별로 반복 조회되던 selectPurchaseLedgerSummary 도 여기서
+		// 미리 배치 조회해 precheckCache 를 채운다 — 아래 루프의 computeIfAbsent 는 이미 채워진 항목에 대해
+		// 폴백 단건 호출 없이 바로 캐시를 재사용하게 된다(prefetchPurchaseLedgerSummaries 클래스 주석 참고).
+		prefetchPurchaseLedgerSummaries(criteriaList, lastInputYyyyMmCache, precheckCache);
 
 		List<NonCertifiedOriginSummaryRequest> requests = new ArrayList<>();
 		Set<String> seenRequestKeys = new HashSet<>();
@@ -333,6 +376,120 @@ public class ItemOriginRateService extends GeneralService {
 		}
 	}
 
+	/**
+	 * {@link ItemOriginRateDao#selectPurchaseLedgerSummary} 가 precheckOriginRate 의 자재(material) 루프
+	 * 안에서 자재별로(그리고 서로 다른 품목끼리는 품목 수만큼) 반복 호출되던 것을 배치 조회 1회로 대체하기
+	 * 위한 사전조회.
+	 *
+	 * <p>이 조회는 자재 루프 도중 poCount==0 을 만나면 즉시 0으로 확정하고 뒤 자재는 조회조차 하지 않는
+	 * 단락평가 구조라(precheckOriginRate 주석 참고), 무엇을 조회해야 하는지 자체가 "먼저 조회해봐야" 알 수
+	 * 있는 순서 의존적 구조다. 이를 3단계로 나눠 해결한다.
+	 * <ol>
+	 *   <li>계획 수립(dry run): distinct (company,division,item,baseDate) 조합마다 {@link #buildLookupPlan}
+	 *       으로 실제 구매원장 조회 없이 "필요한 (itemCode,조회구간) 후보 목록"만 계산한다(재고회전 계산
+	 *       불능으로 인한 0 확정은 이 단계에서 이미 반영됨).</li>
+	 *   <li>배치 조회: 모든 조합의 후보를 합집합으로 모아 {@link ItemOriginRateDao#selectPurchaseLedgerSummaryBatch}
+	 *       로 한 번에 조회한다.</li>
+	 *   <li>조립(assemble): {@link #assemblePrecheck} 로 원본과 동일한 자재 순회 순서 및 단락평가
+	 *       (poCount==0 을 만나는 자재에서 즉시 0 확정, 그 뒤 자재는 결과에 반영하지 않음)를 그대로
+	 *       재현해 최종 {@link OriginRatePrecheck} 를 만든다.</li>
+	 * </ol>
+	 *
+	 * <p>원래 단락평가로 아낄 수 있었던 건 조합당 자재 후반부의 개별 쿼리 몇 건인데, 이 배치 조회는 그
+	 * 자재들의 조회구간도 (어차피 한 번의 SQL 호출에 묶이므로) 함께 조회해버린다 — 소량 추가 조회를
+	 * 대가로 (품목 수)만큼의 왕복 자체를 없애는 효과가 훨씬 크다고 판단했다(다른 배치화 지점과 동일한
+	 * 트레이드오프).
+	 *
+	 * <p>결과는 {@code precheckCache} 에 (계획을 세울 수 있었던 조합에 한해) 직접 채워 넣는다 — 이 맵은
+	 * {@link #prefetchNonCertifiedOriginSummaries} 가 이어서 쓰는 것과 같은 맵이라, 그쪽의
+	 * {@code computeIfAbsent} 호출이 이미 채워진 항목에 대해 폴백 단건 조회 없이 캐시를 그대로 재사용하게
+	 * 된다(계획 수립 단계에서 예외가 나 caching 되지 못한 조합만 그 폴백 경로로 처리됨 — defensive).
+	 */
+	public void prefetchPurchaseLedgerSummaries(List<ItemOriginRateCriteria> criteriaList,
+			Map<String, String> lastInputYyyyMmCache, Map<String, OriginRatePrecheck> precheckCache) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return;
+		}
+
+		ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
+		String companyCode = criteriaList.get(0).getCompanyCode();
+
+		Map<String, ItemOriginRateCriteria> distinctCriteria = new LinkedHashMap<>();
+		for (ItemOriginRateCriteria criteria : criteriaList) {
+			String precheckKey = precheckKey(criteria.getCompanyCode(), criteria.getDivisionCode(),
+					criteria.getItemCode(), criteria.getBaseDate());
+			distinctCriteria.putIfAbsent(precheckKey, criteria);
+		}
+
+		Map<String, LookupPlan> plans = new HashMap<>();
+		List<PurchaseLedgerSummaryRequest> requests = new ArrayList<>();
+		Set<String> seenRequestKeys = new HashSet<>();
+
+		for (Map.Entry<String, ItemOriginRateCriteria> entry : distinctCriteria.entrySet()) {
+			String precheckKey = entry.getKey();
+			ItemOriginRateCriteria criteria = entry.getValue();
+			try {
+				LocalDate baseDate = LocalDate.parse(criteria.getResolvedBaseDate(), YYYYMMDD);
+				YearMonth toMonth = YearMonth.from(baseDate);
+				YearMonth fromMonth = toMonth.minusMonths(MAX_MONTHS);
+				List<MaterialBalanceRow> materials = dao.selectMaterialCandidates(criteria, fromMonth.format(YYYYMM),
+						toMonth.format(YYYYMM));
+				LookupPlan plan = buildLookupPlan(dao, criteria, materials, toMonth, lastInputYyyyMmCache);
+				plans.put(precheckKey, plan);
+
+				if (!plan.isZero()) {
+					for (StageCandidate candidate : plan.getCandidates()) {
+						String requestKey = poSummaryKey(companyCode, candidate.getItemCode(), candidate.getFromDate(),
+								candidate.getLookupEnd());
+						if (seenRequestKeys.add(requestKey)) {
+							requests.add(new PurchaseLedgerSummaryRequest(candidate.getItemCode(), candidate.getFromDate(),
+									candidate.getLookupEnd()));
+						}
+					}
+				}
+			} catch (Exception e) {
+				// 이 조합만 계획 수립 실패 -> plans 에 없으므로 아래 조립 단계에서 precheckCache 에 채워지지
+				// 않고, prefetchNonCertifiedOriginSummaries 의 computeIfAbsent 가 단건 precheckOriginRate 로
+				// 재시도한다(defensive fallback).
+				logger.error("구매원장 집계 사전조회 계획 수립 실패. precheckKey={}", precheckKey, e);
+			}
+		}
+
+		Map<String, PurchaseLedgerSummary> poSummaryCache = new HashMap<>();
+		if (!requests.isEmpty()) {
+			try {
+				// CreateFcrService 의 다건 INSERT 청크 크기(500)와 동일한 단위로 나눠 호출한다(바인드
+				// 파라미터 수 상한 방지).
+				for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
+					List<PurchaseLedgerSummaryRequest> chunk = requests.subList(from,
+							Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+					List<PurchaseLedgerSummaryBatchResult> results = dao.selectPurchaseLedgerSummaryBatch(companyCode,
+							chunk);
+					for (PurchaseLedgerSummaryBatchResult r : results) {
+						poSummaryCache.put(poSummaryKey(companyCode, r.getItemCode(), r.getFromDate(), r.getToDate()),
+								r.toSummary());
+					}
+				}
+			} catch (Exception e) {
+				// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — poSummaryCache 가
+				// 비어있으면 assemblePrecheck 가 그 자리에서 단건 조회로 대체한다.
+				logger.error("구매원장 집계 배치조회 실패. requestCount={}", requests.size(), e);
+			}
+		}
+
+		for (Map.Entry<String, LookupPlan> entry : plans.entrySet()) {
+			String precheckKey = entry.getKey();
+			ItemOriginRateCriteria criteria = distinctCriteria.get(precheckKey);
+			try {
+				precheckCache.put(precheckKey, assemblePrecheck(dao, criteria, entry.getValue(), poSummaryCache));
+			} catch (Exception e) {
+				// 원본 EXCEPTION WHEN OTHERS THEN RETURN 0; 과 동일
+				logger.error("원재료 역내산 비율 사전조회(배치 조립) 실패. precheckKey={}", precheckKey, e);
+				precheckCache.put(precheckKey, OriginRatePrecheck.zero());
+			}
+		}
+	}
+
 	/** {@link #prefetchNonCertifiedOriginSummaries} 와 {@link #resolveOriginRate} 가 공유하는 캐시 키 규칙. */
 	public static String precheckKey(String companyCode, String divisionCode, String itemCode, String baseDate) {
 		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
@@ -340,6 +497,10 @@ public class ItemOriginRateService extends GeneralService {
 
 	private static String summaryKey(String itemCode, String ftaCode, String fromDate, String toDate) {
 		return String.join("|", nz(itemCode), nz(ftaCode), nz(fromDate), nz(toDate));
+	}
+
+	private static String poSummaryKey(String companyCode, String itemCode, String fromDate, String toDate) {
+		return String.join("|", nz(companyCode), nz(itemCode), nz(fromDate), nz(toDate));
 	}
 
 	private static String lastInputYyyyMmKey(String companyCode, String divisionCode, String itemCode, String uptoYyyyMm) {
@@ -376,5 +537,66 @@ public class ItemOriginRateService extends GeneralService {
 
 	private static String earliest(String a, String b) {
 		return a.compareTo(b) < 0 ? a : b;
+	}
+
+	/**
+	 * {@link #buildLookupPlan} 결과: 이미 0(역외산)으로 확정됐는지, 아니면 구매원장 조회가 필요한 자재별
+	 * 후보(candidates) 목록인지. {@link OriginRatePrecheck} 와 형태는 비슷하지만 구매원장 집계값이 아직
+	 * 채워지지 않은 "조회 계획" 단계라는 점이 다르다 — dto 패키지로 옮기지 않고 이 클래스 내부 구현
+	 * 상세로만 쓴다.
+	 */
+	private static final class LookupPlan {
+
+		private static final LookupPlan ZERO = new LookupPlan(true, List.of());
+
+		private final boolean zero;
+		private final List<StageCandidate> candidates;
+
+		private LookupPlan(boolean zero, List<StageCandidate> candidates) {
+			this.zero = zero;
+			this.candidates = candidates;
+		}
+
+		static LookupPlan zero() {
+			return ZERO;
+		}
+
+		static LookupPlan of(List<StageCandidate> candidates) {
+			return new LookupPlan(false, candidates);
+		}
+
+		boolean isZero() {
+			return zero;
+		}
+
+		List<StageCandidate> getCandidates() {
+			return candidates;
+		}
+	}
+
+	/** {@link LookupPlan} 1건(자재 1건)이 필요로 하는 구매원장 조회 키(itemCode, 조회구간). */
+	private static final class StageCandidate {
+
+		private final String itemCode;
+		private final String fromDate;
+		private final String lookupEnd;
+
+		StageCandidate(String itemCode, String fromDate, String lookupEnd) {
+			this.itemCode = itemCode;
+			this.fromDate = fromDate;
+			this.lookupEnd = lookupEnd;
+		}
+
+		String getItemCode() {
+			return itemCode;
+		}
+
+		String getFromDate() {
+			return fromDate;
+		}
+
+		String getLookupEnd() {
+			return lookupEnd;
+		}
 	}
 }
