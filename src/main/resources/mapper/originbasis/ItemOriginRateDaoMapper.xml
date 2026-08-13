@@ -52,6 +52,83 @@
 		AND    FM.DELETE_YN = 'N'
 	</select>
 
+	<!--
+		selectMaterialCandidates 의 배치 버전. ItemOriginRateService.prefetchPurchaseLedgerSummaries 가
+		precheck 계획을 세우기 전 distinct 품목마다 반복 호출하던 것을, 요청받은 (divisionCode,itemCode,
+		조회구간) 조합 전체를 UNION ALL 파생 테이블(V)로 한 번에 던져 조회한다.
+
+		원본은 요청 1건당 0~N 행(BOM 자재 0/1건 + 대체(FUNGIBLE) 자재 0..N건)을 돌려주는 다중행 커서라,
+		다른 배치 쿼리들(selectRecentPurchasePriceBatch 등)처럼 LEFT JOIN LATERAL 로 "1건만" 뽑는 방식이
+		아니라 V 를 그대로 드라이빙하는 일반 JOIN(BOM)/JOIN(FUNGIBLE) 구조를 UNION ALL 로 합친다 — 원본의
+		두 SELECT 블록 구조를 그대로 유지하되 바인드 파라미터(#{c.xxx})만 V 의 해당 컬럼으로 바꿨다.
+		FUNGIBLE 쪽의 SELECT DISTINCT 는 V 의 요청 식별 컬럼(REQ_*)까지 포함해 적용되므로, 서로 다른
+		요청끼리 뒤섞이지 않고 원본처럼 "요청 1건 내에서"만 중복이 제거된다.
+	-->
+	<select id="selectMaterialCandidatesBatch" resultType="com.kpmg.kdb.web.originbasis.dto.MaterialCandidatesBatchResult">
+		SELECT V.REQ_DIVISION_CODE                   AS reqDivisionCode
+		      ,V.REQ_ITEM_CODE                       AS reqItemCode
+		      ,V.REQ_BASE_DATE                       AS reqBaseDate
+		      ,ML.ITEM_CODE                          AS itemCode
+		      ,ML.YYYYMM                             AS matYyyyMm
+		      ,ML.INITIAL_QTY                        AS matInitialQty
+		      ,(ML.INPUT_QTY + ML.EXTRA_INPUT_QTY)    AS matInputQty
+		      ,ML.AGING_PERIOD                        AS matAgingPeriod
+		      ,'BOM'                                  AS matItemType
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.divisionCode} AS DIVISION_CODE, #{r.itemCode} AS ITEM_CODE,
+		              #{r.fromYyyyMm} AS FROM_YYYYMM, #{r.toYyyyMm} AS TO_YYYYMM,
+		              #{r.divisionCode} AS REQ_DIVISION_CODE, #{r.itemCode} AS REQ_ITEM_CODE,
+		              #{r.baseDate} AS REQ_BASE_DATE
+		       </foreach>
+		       ) V
+		JOIN   MATERIAL_INV_BAL ML
+		ON     ML.ITEM_CODE = V.ITEM_CODE
+		AND    ML.DIVISION_CODE = V.DIVISION_CODE
+		AND    ML.COMPANY_CODE = #{companyCode}
+		AND    ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN V.FROM_YYYYMM AND V.TO_YYYYMM
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+		UNION ALL
+		SELECT DISTINCT V.REQ_DIVISION_CODE            AS reqDivisionCode
+		      ,V.REQ_ITEM_CODE                         AS reqItemCode
+		      ,V.REQ_BASE_DATE                         AS reqBaseDate
+		      ,ML.ITEM_CODE                            AS itemCode
+		      ,ML.YYYYMM                               AS matYyyyMm
+		      ,ML.INITIAL_QTY                          AS matInitialQty
+		      ,(ML.INPUT_QTY + ML.EXTRA_INPUT_QTY)      AS matInputQty
+		      ,ML.AGING_PERIOD                          AS matAgingPeriod
+		      ,'FUNGIBLE'                               AS matItemType
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.divisionCode} AS DIVISION_CODE, #{r.itemCode} AS ITEM_CODE,
+		              #{r.fromYyyyMm} AS FROM_YYYYMM, #{r.toYyyyMm} AS TO_YYYYMM,
+		              #{r.divisionCode} AS REQ_DIVISION_CODE, #{r.itemCode} AS REQ_ITEM_CODE,
+		              #{r.baseDate} AS REQ_BASE_DATE
+		       </foreach>
+		       ) V
+		INNER  JOIN FUNGIBLE_MATERIALS FM
+		ON     (FM.ITEM_CODE = V.ITEM_CODE OR FM.FUNGIBLE_ITEM_CODE = V.ITEM_CODE)
+		AND    FM.DIVISION_CODE = V.DIVISION_CODE
+		AND    FM.COMPANY_CODE = #{companyCode}
+		AND    FM.DELETE_YN = 'N'
+		INNER  JOIN MATERIAL_INV_BAL ML
+		ON     ML.ITEM_CODE = CASE WHEN FM.ITEM_CODE = V.ITEM_CODE THEN FM.FUNGIBLE_ITEM_CODE ELSE FM.ITEM_CODE END
+		AND    ML.DIVISION_CODE = FM.DIVISION_CODE
+		AND    ML.COMPANY_CODE = FM.COMPANY_CODE
+		AND    ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN V.FROM_YYYYMM AND V.TO_YYYYMM
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+	</select>
+
 	<select id="selectLastInputYyyyMm" resultType="string">
 		SELECT MAX(ML.YYYYMM)
 		FROM   MATERIAL_INV_BAL ML

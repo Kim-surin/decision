@@ -22,6 +22,8 @@ import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.LastInputYyyyMmResult;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceRow;
+import com.kpmg.kdb.web.originbasis.dto.MaterialCandidatesBatchResult;
+import com.kpmg.kdb.web.originbasis.dto.MaterialCandidatesRequest;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryRequest;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult;
 import com.kpmg.kdb.web.originbasis.dto.OriginRatePrecheck;
@@ -377,6 +379,68 @@ public class ItemOriginRateService extends GeneralService {
 	}
 
 	/**
+	 * {@link ItemOriginRateDao#selectMaterialCandidates}(C_MAT 커서)가 precheckOriginRate/
+	 * {@link #prefetchPurchaseLedgerSummaries} 안에서 distinct 품목마다 반복 호출되던 것을 배치 조회
+	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #buildLookupPlan} 호출 전에 조회해 넘기면 그 안에서
+	 * 추가 DB 호출 없이 값을 재사용한다.
+	 *
+	 * <p>단건 조회는 요청 1건당 0~N 행(BOM 자재 0/1건 + 대체(FUNGIBLE) 자재 0..N건)을 돌려주는 다중행
+	 * 커서라, 다른 배치 조회들(top-1 LATERAL 방식)과 달리 {@link ItemOriginRateDao#selectMaterialCandidatesBatch}
+	 * 는 요청받은 (divisionCode,itemCode,조회구간) 조합 전체를 UNION ALL 파생 테이블로 넘겨 원본과 동일한
+	 * JOIN 구조로 다중행을 그대로 받는다(ItemOriginRateDaoMapper.xml 의 쿼리 주석 참고). 매칭되는 자재가
+	 * 하나도 없는 요청은 결과에 나타나지 않으므로, 그 경우도 빈 리스트로 명시적으로 채워 "조회 완료, 결과
+	 * 없음"과 "아직 조회 안 함"을 구분한다.
+	 */
+	public Map<String, List<MaterialBalanceRow>> prefetchMaterialCandidates(List<ItemOriginRateCriteria> criteriaList) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return Map.of();
+		}
+
+		String companyCode = criteriaList.get(0).getCompanyCode();
+		Map<String, MaterialCandidatesRequest> distinctRequests = new LinkedHashMap<>();
+		for (ItemOriginRateCriteria criteria : criteriaList) {
+			String key = precheckKey(criteria.getCompanyCode(), criteria.getDivisionCode(), criteria.getItemCode(),
+					criteria.getBaseDate());
+			if (!distinctRequests.containsKey(key)) {
+				LocalDate baseDate = LocalDate.parse(criteria.getResolvedBaseDate(), YYYYMMDD);
+				YearMonth toMonth = YearMonth.from(baseDate);
+				YearMonth fromMonth = toMonth.minusMonths(MAX_MONTHS);
+				distinctRequests.put(key, new MaterialCandidatesRequest(criteria.getDivisionCode(),
+						criteria.getItemCode(), criteria.getBaseDate(), fromMonth.format(YYYYMM), toMonth.format(YYYYMM)));
+			}
+		}
+
+		List<MaterialCandidatesRequest> requests = new ArrayList<>(distinctRequests.values());
+
+		try {
+			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
+			Map<String, List<MaterialBalanceRow>> cache = new HashMap<>();
+			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
+				List<MaterialCandidatesRequest> chunk = requests.subList(from,
+						Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+				List<MaterialCandidatesBatchResult> results = dao.selectMaterialCandidatesBatch(companyCode, chunk);
+				for (MaterialCandidatesBatchResult r : results) {
+					String key = precheckKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(), r.getReqBaseDate());
+					cache.computeIfAbsent(key, k -> new ArrayList<>()).add(r.toMaterialBalanceRow());
+				}
+				// 매칭되는 자재가 하나도 없는 요청은 결과에 아예 나타나지 않는다 — "조회 완료, 결과 없음"을
+				// 명시적으로 빈 리스트로 채워둬야 호출자가 불필요한 단건 폴백 조회를 다시 하지 않는다.
+				for (MaterialCandidatesRequest requested : chunk) {
+					String key = precheckKey(companyCode, requested.getDivisionCode(), requested.getItemCode(),
+							requested.getBaseDate());
+					cache.putIfAbsent(key, List.of());
+				}
+			}
+			return cache;
+		} catch (Exception e) {
+			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
+			// prefetchPurchaseLedgerSummaries 가 그 자리에서 단건 조회로 대체한다.
+			logger.error("BOM/대체자재 후보 배치조회 실패. companyCode={}, itemCount={}", companyCode, requests.size(), e);
+			return Map.of();
+		}
+	}
+
+	/**
 	 * {@link ItemOriginRateDao#selectPurchaseLedgerSummary} 가 precheckOriginRate 의 자재(material) 루프
 	 * 안에서 자재별로(그리고 서로 다른 품목끼리는 품목 수만큼) 반복 호출되던 것을 배치 조회 1회로 대체하기
 	 * 위한 사전조회.
@@ -421,6 +485,11 @@ public class ItemOriginRateService extends GeneralService {
 			distinctCriteria.putIfAbsent(precheckKey, criteria);
 		}
 
+		// selectMaterialCandidates(C_MAT 커서) 도 distinct 품목 수만큼 반복 호출되던 것을 여기서 미리
+		// 배치 조회해둔다 — prefetchMaterialCandidates 클래스 주석 참고.
+		Map<String, List<MaterialBalanceRow>> materialCandidatesCache = prefetchMaterialCandidates(
+				new ArrayList<>(distinctCriteria.values()));
+
 		Map<String, LookupPlan> plans = new HashMap<>();
 		List<PurchaseLedgerSummaryRequest> requests = new ArrayList<>();
 		Set<String> seenRequestKeys = new HashSet<>();
@@ -432,8 +501,9 @@ public class ItemOriginRateService extends GeneralService {
 				LocalDate baseDate = LocalDate.parse(criteria.getResolvedBaseDate(), YYYYMMDD);
 				YearMonth toMonth = YearMonth.from(baseDate);
 				YearMonth fromMonth = toMonth.minusMonths(MAX_MONTHS);
-				List<MaterialBalanceRow> materials = dao.selectMaterialCandidates(criteria, fromMonth.format(YYYYMM),
-						toMonth.format(YYYYMM));
+				List<MaterialBalanceRow> materials = materialCandidatesCache.containsKey(precheckKey)
+						? materialCandidatesCache.get(precheckKey)
+						: dao.selectMaterialCandidates(criteria, fromMonth.format(YYYYMM), toMonth.format(YYYYMM));
 				LookupPlan plan = buildLookupPlan(dao, criteria, materials, toMonth, lastInputYyyyMmCache);
 				plans.put(precheckKey, plan);
 

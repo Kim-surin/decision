@@ -8,6 +8,8 @@ import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.LastInputYyyyMmResult;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceRow;
+import com.kpmg.kdb.web.originbasis.dto.MaterialCandidatesBatchResult;
+import com.kpmg.kdb.web.originbasis.dto.MaterialCandidatesRequest;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryRequest;
 import com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult;
 import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary;
@@ -19,6 +21,15 @@ public interface ItemOriginRateDao {
 	/** 원본 C_MAT 커서(BOM 원재료 + 대체자재 수불부 기초정보)를 한 번의 쿼리로 조회 */
 	List<MaterialBalanceRow> selectMaterialCandidates(@Param("c") ItemOriginRateCriteria criteria,
 			@Param("fromYyyyMm") String fromYyyyMm, @Param("toYyyyMm") String toYyyyMm);
+
+	/**
+	 * {@link #selectMaterialCandidates} 를 (divisionCode,itemCode,조회구간) 조합별로 반복 호출하는 대신 한 번에
+	 * 조회하는 배치 버전. {@link com.kpmg.kdb.web.originbasis.ItemOriginRateService#prefetchMaterialCandidates}
+	 * 참고. 요청 1건당 결과가 0~N 행(BOM 자재 0/1건 + 대체자재 0..N건)이라 요청 목록에 있어도 매칭되는 자재가
+	 * 없으면 결과에 아예 나타나지 않는다(단건 조회가 빈 리스트를 반환하던 것과 동일).
+	 */
+	List<MaterialCandidatesBatchResult> selectMaterialCandidatesBatch(@Param("companyCode") String companyCode,
+			@Param("requests") List<MaterialCandidatesRequest> requests);
 
 	/** 대상 품목의 최근 입고월(INPUT_QTY > 0) 조회 */
 	String selectLastInputYyyyMm(@Param("companyCode") String companyCode, @Param("divisionCode") String divisionCode,
