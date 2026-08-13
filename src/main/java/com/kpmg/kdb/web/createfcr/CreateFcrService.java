@@ -134,8 +134,33 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 					hsCodeCache, incotermsCache);
 		}
 
-		createBomLeafFcrDtl(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes);
-		createProductFcrDtl(dao, companyCode, divisionCode, salesNo, invoiceDate, productCodes);
+		// 3-3(BOM 리프 자재)/3-4(상품·부산물) 두 단계가 각자 따로 selectNonCertifiedOriginSummary/
+		// selectLastInputYyyyMm 를 선조회하던 것을(createFcr() 1회당 최대 2회 배치조회) 대상 행을 먼저
+		// 모두 조회해 하나로 합친 뒤 createFcr() 1회당 딱 1번만 배치조회하도록 통합했다. 두 조회
+		// (selectBomLeafRows/selectProductFcrDtlSourceRows) 는 서로 다른 테이블(FCR_DTL 미참조)만
+		// 읽어 순서를 바꿔도 결과에 영향이 없다.
+		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
+		List<ProductFcrDtlSourceRow> productRows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode,
+				productCodes);
+
+		List<ItemOriginRateCriteria> combinedOriginRateLookups = new ArrayList<>(leafRows.size() + productRows.size());
+		for (BomLeafRow leaf : leafRows) {
+			combinedOriginRateLookups.add(new ItemOriginRateCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(),
+					leaf.getItemCode(), leaf.getFtaCode(), invoiceDate));
+		}
+		for (ProductFcrDtlSourceRow src : productRows) {
+			// "B"(부산물)는 originRate 조회 자체가 필요 없어(항상 ONE) 배치 요청 대상에서 제외한다.
+			if (!"B".equals(src.getProductAssetsType())) {
+				combinedOriginRateLookups.add(new ItemOriginRateCriteria(src.getCompanyCode(), src.getProdDivisionCode(),
+						src.getProductCode(), src.getFtaCode(), invoiceDate));
+			}
+		}
+		Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
+		Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache = itemOriginRateService
+				.prefetchNonCertifiedOriginSummaries(combinedOriginRateLookups, originRatePrecheckCache);
+
+		createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
+		createProductFcrDtl(dao, productRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
 
 		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
 
@@ -291,25 +316,17 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		}
 	}
 
-	/** 3-3: BOM 최말단 자재를 (itemCode,ftaCode,salesNo,salesSeq,productCode,divisionCode,companyCode,hsCode) 로 집계해 FCR_DTL 생성 */
-	private void createBomLeafFcrDtl(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
-			String bomType, String invoiceDate, List<String> productCodes) {
-		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
-
+	/**
+	 * 3-3: BOM 최말단 자재를 (itemCode,ftaCode,salesNo,salesSeq,productCode,divisionCode,companyCode,hsCode) 로
+	 * 집계해 FCR_DTL 생성. selectNonCertifiedOriginSummary/selectLastInputYyyyMm 배치 사전조회는
+	 * createFcr() 가 3-4(상품) 대상과 합쳐 한 번만 수행해 원본/사전조회 캐시를 그대로 넘겨받는다.
+	 */
+	private void createBomLeafFcrDtl(CreateFcrDao dao, List<BomLeafRow> leafRows, String invoiceDate,
+			Map<String, OriginRatePrecheck> originRatePrecheckCache,
+			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache) {
 		Map<String, BigDecimal> priceCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
-		Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
 		Map<String, String> priceNoteCache = new LinkedHashMap<>();
-
-		// 자재 수 x FTA_CODE 후보 수만큼 반복되던 selectNonCertifiedOriginSummary 호출을 배치 1회로 선조회
-		// (ItemOriginRateService.prefetchNonCertifiedOriginSummaries 클래스 주석 참고)
-		List<ItemOriginRateCriteria> originRateLookups = new ArrayList<>(leafRows.size());
-		for (BomLeafRow leaf : leafRows) {
-			originRateLookups.add(new ItemOriginRateCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(),
-					leaf.getItemCode(), leaf.getFtaCode(), invoiceDate));
-		}
-		Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache = itemOriginRateService
-				.prefetchNonCertifiedOriginSummaries(originRateLookups, originRatePrecheckCache);
 
 		Map<String, List<ResolvedLeaf>> grouped = new LinkedHashMap<>();
 		for (BomLeafRow leaf : leafRows) {
@@ -419,24 +436,15 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		return row;
 	}
 
-	/** 3-4: 상품/부산물(원자재가 아닌 완제품 자체)을 자재 1건처럼 취급해 FCR_DTL 생성 */
-	private void createProductFcrDtl(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
-			String invoiceDate, List<String> productCodes) {
-		List<ProductFcrDtlSourceRow> rows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode,
-				productCodes);
+	/**
+	 * 3-4: 상품/부산물(원자재가 아닌 완제품 자체)을 자재 1건처럼 취급해 FCR_DTL 생성.
+	 * selectNonCertifiedOriginSummary/selectLastInputYyyyMm 배치 사전조회는 createFcr() 가 3-3(BOM
+	 * 리프) 대상과 합쳐 한 번만 수행해 원본/사전조회 캐시를 그대로 넘겨받는다.
+	 */
+	private void createProductFcrDtl(CreateFcrDao dao, List<ProductFcrDtlSourceRow> rows, String invoiceDate,
+			Map<String, OriginRatePrecheck> originRatePrecheckCache,
+			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache) {
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
-		Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
-
-		// "B"(부산물)는 originRate 조회 자체가 필요 없어(항상 ONE) 배치 요청 대상에서 제외한다.
-		List<ItemOriginRateCriteria> originRateLookups = new ArrayList<>(rows.size());
-		for (ProductFcrDtlSourceRow src : rows) {
-			if (!"B".equals(src.getProductAssetsType())) {
-				originRateLookups.add(new ItemOriginRateCriteria(src.getCompanyCode(), src.getProdDivisionCode(),
-						src.getProductCode(), src.getFtaCode(), invoiceDate));
-			}
-		}
-		Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache = itemOriginRateService
-				.prefetchNonCertifiedOriginSummaries(originRateLookups, originRatePrecheckCache);
 
 		List<FcrDtlInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
 		for (ProductFcrDtlSourceRow src : rows) {
