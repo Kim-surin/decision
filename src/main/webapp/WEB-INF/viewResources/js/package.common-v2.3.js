@@ -566,6 +566,423 @@ var KpackageOBJ = {
             return $("#" + arg[0] + " tr").length;
         },
     },
+    
+    /*******************************************************************
+     * 파일 업로드 관련 기능 공통 추가
+     *******************************************************************/
+    file : {
+	
+	    fileMap: {},
+	
+	    create: function(formId, targetObjectId, labelId, options) {
+	
+	        if (!formId || !targetObjectId) {
+	            return false;
+	        }
+	
+	        var $form = $("#" + formId);
+	        var $target = $form.find("#" + targetObjectId);
+	
+	        if ($form.length == 0 || $target.length == 0) {
+	            return false;
+	        }
+	
+	        var inputId = targetObjectId + "_file";
+	        var buttonId = inputId + "_btn";
+	        options = options || {};
+	
+	        // 공통 구조로 통일
+	        KpackageOBJ.file.fileMap[inputId] = {
+	            savedFiles: [],
+	            newFiles: [],
+	            deletedFiles: [],
+	            options: {
+			        downloadUrl: options.downloadUrl || "",
+			        fileNameField: options.fileNameField || "origin_file_name",
+			        keyFields: options.keyFields || []
+    			}
+	        };
+	
+	        var html = "";
+	
+	        html += '<input type="file"';
+	        html += '       id="' + inputId + '"';
+	        html += '       style="display:none;"';
+	        html += '       multiple>';
+	
+	        // labelId가 없을 경우 파일영역에 버튼 생성
+	        if (!labelId) {
+	            html += '<button type="button"';
+	            html += '        id="' + buttonId + '"';
+	            html += '        class="btn btn-sm btn-outline-secondary">';
+	            html += '    + 파일 추가';
+	            html += '</button>';
+	        }
+	
+	        html += '<div id="' + inputId + '_list"></div>';
+	
+	        $target.html(html);
+	
+	
+	        // labelId가 있을 경우 라벨에 + 버튼 생성
+	        if (labelId) {
+	
+	            var $label = $form.find("#" + labelId);
+	
+	            if ($label.length > 0) {
+	
+	                $label.css({
+	                    "display": "flex",
+	                    "align-items": "center",
+	                    "justify-content": "space-between"
+	                });
+	
+	                // create가 여러 번 호출돼도 버튼 중복 방지
+	                $label.find("#" + buttonId).remove();
+	
+	                $label.append(
+	                    '<button type="button"' +
+	                    '        id="' + buttonId + '"' +
+	                    '        class="btn btn-sm btn-outline-secondary"' +
+	                    '        style="padding:0 6px; margin-left:5px;">' +
+	                    '    +' +
+	                    '</button>'
+	                );
+	            }
+	        }
+	
+	        $form.find("#" + buttonId)
+	            .off("click")
+	            .on("click", function() {
+	                $form.find("#" + inputId).click();
+	            });
+	
+	        $form.find("#" + inputId)
+	            .off("change")
+	            .on("change", function() {
+					
+			        KpackageOBJ.file.addFiles(
+	                    formId,
+	                    inputId,
+	                    this.files
+	                );
+	
+	                $(this).val("");
+	            });
+	    },
+	
+	
+	    /**
+	     * 신규 파일 추가
+	     */
+	    addFiles: function(formId, inputId, files) {
+	
+	        if (!files) {
+	            return false;
+	        }
+	
+	        var fileData = KpackageOBJ.file.fileMap[inputId];
+	
+	        if (!fileData) {
+	            return false;
+	        }
+	
+	        var newFiles = fileData.newFiles;
+	
+	        for (var i = 0; i < files.length; i++) {
+	
+	            var file = files[i];
+	            var duplicate = false;
+	
+	            for (var j = 0; j < newFiles.length; j++) {
+	
+	                if (
+	                    newFiles[j].name == file.name &&
+	                    newFiles[j].size == file.size &&
+	                    newFiles[j].lastModified == file.lastModified
+	                ) {
+	                    duplicate = true;
+	                    break;
+	                }
+	            }
+	
+	            if (!duplicate) {
+	                newFiles.push(file);
+	            }
+	        }
+	
+	        KpackageOBJ.file.drawFileList(formId, inputId);
+	    },
+	
+	
+	    /**
+	     * 기존 DB 파일 세팅
+	     */
+	    setFiles: function(formId, targetObjectId, fileList) {
+	
+	        if (!formId || !targetObjectId) {
+	            return false;
+	        }
+	
+	        var inputId = targetObjectId + "_file";
+	        var fileData = KpackageOBJ.file.fileMap[inputId];
+	
+	        if (!fileData) {
+	            return false;
+	        }
+	        
+	        var fileNameField = fileData.options.fileNameField;
+			var keyFields = fileData.options.keyFields;
+	        var savedFiles = [];
+	
+		    fileList = fileList || [];
+		
+		    for (var i = 0; i < fileList.length; i++) {
+		
+		        var row = fileList[i];
+		
+		        var keyData = {};
+		
+		        for (var j = 0; j < keyFields.length; j++) {
+		
+		            var keyField = keyFields[j];
+		
+		            keyData[keyField] = row[keyField];
+		        }
+		
+		        savedFiles.push({ fileName: row[fileNameField], keyData: keyData});
+		    }
+		
+		    fileData.savedFiles = savedFiles;
+		    fileData.newFiles = [];
+		    fileData.deletedFiles = [];
+		
+		    KpackageOBJ.file.drawFileList(formId,inputId);
+	    },
+	
+	
+	    /**
+	     * 기존 + 신규 파일 목록 출력
+	     */
+	    drawFileList: function(formId, inputId) {
+	
+	        var $form = $("#" + formId);
+	        var $list = $form.find("#" + inputId + "_list");
+	
+	        var fileData = KpackageOBJ.file.fileMap[inputId];
+	
+	        if (!fileData) {
+	            return false;
+	        }
+	
+	        $list.empty();
+	
+	
+	        // 기존 DB 파일
+	        for (var i = 0; i < fileData.savedFiles.length; i++) {
+	
+	            var file = fileData.savedFiles[i];
+	
+			    var html = "";
+			
+			    html += '<div class="d-flex align-items-center gap-2" style="margin-bottom:3px;">';
+							
+				html += '<a href="javascript:void(0);"';
+				html += '   onclick="KpackageOBJ.file.downloadFile(\'' +
+				                inputId + '\', ' + i + ')">';
+				html +=       file.fileName;
+				html += '</a>';
+			
+			    html += '<button type="button"';
+			    html += '        class="btn btn-sm"';
+			    html += '        style="padding:0 4px; box-shadow:none;"';
+			    html += '        onclick="KpackageOBJ.file.removeSavedFile(\'' +
+			                    formId + '\', \'' +
+			                    inputId + '\', ' + i + ')">';
+			    html += '×';
+			    html += '</button>';
+			
+			    html += '</div>';
+			
+			    $list.append(html);
+	        }
+	
+	
+	        // 신규 파일
+	        for (var j = 0; j < fileData.newFiles.length; j++) {
+	
+	            var newFile = fileData.newFiles[j];
+	
+	            var html = "";
+	
+	            html += '<div class="d-flex align-items-center gap-2" style="margin-bottom:3px;">';
+	
+	            html += '<span style="font-size:10px;';
+	            html += '             font-weight:700;';
+	            html += '             color:#fff;';
+	            html += '             background:#e74c3c;';
+	            html += '             padding:1px 4px;';
+	            html += '             border-radius:3px;">';
+	            html += 'NEW';
+	            html += '</span>';
+	
+	            html += '<span>' + newFile.name + '</span>';
+	
+	            html += '<button type="button"';
+	            html += '        class="btn btn-sm"';
+	            html += '        style="padding:0 4px; box-shadow:none;"';
+	            html += '        onclick="KpackageOBJ.file.removeNewFile(\'' +
+	                            formId + '\', \'' +
+	                            inputId + '\', ' + j + ')">';
+	            html += '×';
+	            html += '</button>';
+	
+	            html += '</div>';
+	
+	            $list.append(html);
+	        }
+	    },
+	
+	
+	    /**
+	     * 신규 파일 삭제
+	     */
+	    removeNewFile: function(formId, inputId, index) {
+	
+	        var fileData = KpackageOBJ.file.fileMap[inputId];
+	
+	        if (!fileData) {
+	            return false;
+	        }
+	
+	        fileData.newFiles.splice(index, 1);
+	
+	        KpackageOBJ.file.drawFileList(formId, inputId);
+	    },
+	
+	
+	    /**
+	     * 기존 DB 파일 삭제 예정 처리
+	     */
+	    removeSavedFile: function(formId, inputId, index) {
+	
+	        var fileData = KpackageOBJ.file.fileMap[inputId];
+	
+	        if (!fileData) {
+	            return false;
+	        }
+	
+	        var deletedFile = fileData.savedFiles.splice(index, 1)[0];
+	
+	        fileData.deletedFiles.push(deletedFile);
+	
+	        KpackageOBJ.file.drawFileList(formId, inputId);
+	    },
+	
+	
+	    /**
+	     * 전체 파일정보 반환
+	     */
+	    getFiles: function(targetObjectId) {
+	
+	        var inputId = targetObjectId + "_file";
+	
+	        return KpackageOBJ.file.fileMap[inputId] || {
+	            savedFiles: [],
+	            newFiles: [],
+	            deletedFiles: []
+	        };
+	    },
+	    
+	    /**
+		 * 파일 전송용 FormData 생성
+		 */
+		getFormData: function(targetObjectId) {
+		
+		    var fileData = KpackageOBJ.file.getFiles(targetObjectId);
+		    var formData = new FormData();
+		
+		    // 신규 파일
+		    for (var i = 0; i < fileData.newFiles.length; i++) {
+		        formData.append(
+		            "files",
+		            fileData.newFiles[i]
+		        );
+		    }
+		
+		    // 삭제 대상 파일의 keyData만 추출
+		    var deletedFileList = [];
+		
+		    for (var i = 0; i < fileData.deletedFiles.length; i++) {
+		
+		        deletedFileList.push( fileData.deletedFiles[i].keyData);
+		    }
+		
+		    // 삭제 파일 키정보를 JSON 하나로 전송
+		    if (deletedFileList.length > 0) {
+		
+		        formData.append(
+		            "deletedFiles",
+		            new Blob(
+		                [JSON.stringify(deletedFileList)],
+		                { type: "application/json" }
+		            )
+		        );
+		    }
+		
+		    return formData;
+		},
+	
+	
+	    /**
+	     * 파일 초기화
+	     */
+	    clear: function(formId, targetObjectId) {
+	
+	        var inputId = targetObjectId + "_file";
+	        var fileData = KpackageOBJ.file.fileMap[inputId];
+	
+	        if (!fileData) {
+	            return false;
+	        }
+	
+	        fileData.savedFiles = [];
+	        fileData.newFiles = [];
+	        fileData.deletedFiles = [];
+	
+	        KpackageOBJ.file.drawFileList(formId, inputId);
+	    },
+	    
+		downloadFile: function(inputId, index) {
+		
+		    var fileData = KpackageOBJ.file.fileMap[inputId];
+		
+		    if (!fileData) {
+		        return false;
+		    }
+		
+		    var file = fileData.savedFiles[index];
+		
+		    if (!file) {
+		        return false;
+		    }
+		
+		    var downloadUrl = fileData.options.downloadUrl;
+		
+		    if (!downloadUrl) {
+		        console.warn("파일 다운로드 URL이 설정되지 않았습니다.");
+		        return false;
+		    }
+		
+		    KpackageOBJ.ajax.doFileDownload(
+		        inputId + "_downloadForm",
+		        downloadUrl,
+		        $.param(file.keyData)
+		    );
+		},
+	},
+    
+    
     /************************************************************************************************************************************/
     object: {
         /************************************************************************************************************************************/
@@ -737,6 +1154,7 @@ var KpackageOBJ = {
                 },
             });
         },
+        
         /**
          * Function Name : KpackageOBJ.object.drawFileList(targetObjecId, fileMasterSeq)
          *
@@ -2548,6 +2966,85 @@ var KpackageOBJ = {
                     .remove();
             }
         },
+        doMultipartSubmit: function(
+		    requrl,
+		    formData,
+		    successHandler,
+		    errorHandler,
+		    useProgress,
+		    p_async = true
+		) {
+		    if (useProgress == undefined) {
+		        useProgress = true;
+		    }
+		
+		    var token = $("meta[name='_csrf']").attr("content");
+		    var header = $("meta[name='_csrf_header']").attr("content");
+		
+		    formData.append("CURR_LOCALE", currentLocale);
+		
+		    $.ajax({
+		        url: requrl,
+		        type: "POST",
+		        cache: false,
+		        data: formData,
+		
+		        processData: false,
+		        contentType: false,
+		
+		        async: p_async,
+		        dataType: "json",
+		
+		        beforeSend: function(xhr) {
+		
+		            if (useProgress) {
+		                load_BlockUI2(true);
+		            }
+		
+		            if (
+		                token != "" &&
+		                header != "" &&
+		                token != undefined &&
+		                header != undefined
+		            ) {
+		                xhr.setRequestHeader(header, token);
+		            }
+		        },
+		
+		        success: function(result) {
+		
+		            if (useProgress) {
+		                load_BlockUI2(false);
+		            }
+		
+		            if (typeof successHandler === "function") {
+		                successHandler(result);
+		
+		            } else if (typeof successHandler === "string") {
+		
+		                var successHandlerFunction = window[successHandler];
+		
+		                if (typeof successHandlerFunction === "function") {
+		                    successHandlerFunction(result);
+		                }
+		            }
+		        },
+		
+		        error: function(result) {
+		
+		            if (useProgress) {
+		                load_BlockUI2(false);
+		            }
+		
+		            if (typeof errorHandler === "function") {
+		                errorHandler(result);
+		            } else {
+		                alert("서버와 통신 중 오류가 발생하였습니다.");
+		            }
+		        }
+		    });
+		},
+        
     }, // ajax End
     date: {
         getCurrDay: function(pDelimiter) {
@@ -2984,6 +3481,13 @@ var KpackageOBJ = {
 				console.log("POST 실제 전송 데이터 :", requestData);
 			
 				$body.load(url, requestData, loadCallback);
+			} else if (typeof postData === "string") {
+				requestData = {
+			    	data: postData
+			    };
+			    
+			    $body.load(url, requestData, loadCallback);
+			
 			} else {
 				$body.load(url, loadCallback);
 			}

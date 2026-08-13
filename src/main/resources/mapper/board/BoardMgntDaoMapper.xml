@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.board.boardMgnt.BoardMgntDao">
+	
+ 	<select id="retrieveBoardMgntList" parameterType="HashMap" resultType="HashMap">
+		SELECT B.BOARD_NO
+			 , B.BOARD_TYPE
+			 , CODE_NAME AS BOARD_TYPE_NAME
+			 , B.COMPANY_CODE
+			 , B.SUBJECT
+			 , B.CONTENTS
+			 , B.READ_COUNT
+			 , TO_CHAR(B.CREATE_DATE, 'YYYY-MM-DD') AS CREATE_DATE
+			 , B.CREATE_BY
+			 , B.PARENT_BOARD_NO
+		  FROM BOARD B
+		 INNER JOIN CODE_DTL CD
+		    ON B.COMPANY_CODE = CD.COMPANY_CODE
+		   AND B.BOARD_TYPE = CD.CODE
+		   AND CD.CATEGORY = 'BT'
+		 WHERE B.COMPANY_CODE = #{company_code}
+		 <if test="searchText != null and searchText != ''">
+	  	   AND (B.SUBJECT LIKE CONCAT('%', #{searchText}, '%') 
+	  	     OR B.CONTENTS LIKE CONCAT('%', #{searchText}, '%') )
+   		 </if>
+   		 <if test="searchBoadrType != null and searchBoadrType != ''">
+	  	   AND B.BOARD_TYPE = #{searchBoadrType}
+   		 </if> 
+      ORDER BY B.BOARD_NO
+ 	</select>
+
+ 	<select id="retrieveBoardMgntDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT B.BOARD_NO
+			 , B.BOARD_TYPE
+			 , CODE_NAME AS BOARD_TYPE_NAME
+			 , B.COMPANY_CODE
+			 , B.SUBJECT
+			 , B.CONTENTS
+			 , B.READ_COUNT
+			 , TO_CHAR(B.CREATE_DATE, 'YYYY-MM-DD') AS CREATE_DATE
+			 , TO_CHAR(TO_DATE(B.START_DATE, 'YYYYMMDD'),'YYYY-MM-DD') AS START_DATE
+			 , TO_CHAR(TO_DATE(B.END_DATE, 'YYYYMMDD'),'YYYY-MM-DD') AS END_DATE
+			 , B.CREATE_BY
+			 , B.PARENT_BOARD_NO
+			 , B.MAIN_POPUP_YN
+		  FROM BOARD B
+		 INNER JOIN CODE_DTL CD
+		    ON B.COMPANY_CODE = CD.COMPANY_CODE
+		   AND B.BOARD_TYPE = CD.CODE
+		   AND CD.CATEGORY = 'BT'
+		 WHERE B.COMPANY_CODE = #{company_code}
+		   AND B.BOARD_NO = #{board_no}
+ 	</select>
+ 	
+	<select id="retrieveBoardMgntFileList" parameterType="HashMap" resultType="HashMap"> 	
+ 		SELECT B.COMPANY_CODE
+ 		     , B.BOARD_NO
+ 		     , B.FILE_SEQ
+ 		     , B.ORIGIN_FILE_NAME
+ 		     , B.FILE_SIZE
+ 		     , B.CONTENT_TYPE
+ 		  FROM BOARD_FILE B
+		 WHERE B.COMPANY_CODE = #{company_code}
+		   AND B.BOARD_NO = #{board_no}
+ 	  ORDER BY FILE_SEQ DESC
+ 	</select>
+ 	
+ 	
+ 	<select id="retrieveNextBoardNo" resultType="java.lang.Long">
+	    SELECT COALESCE(MAX(BOARD_NO), 0) + 1
+	      FROM BOARD
+	     WHERE COMPANY_CODE = #{company_code}
+	</select>
+ 	
+ 	<insert id="insertBoardMgntDetail">
+		INSERT INTO BOARD
+		( BOARD_NO
+		, BOARD_TYPE
+		, COMPANY_CODE
+		, SUBJECT
+		, CONTENTS
+		, READ_COUNT
+		, START_DATE
+		, END_DATE
+		, CREATE_DATE
+		, CREATE_BY
+		, UPDATE_DATE
+		, UPDATE_BY
+		, PARENT_BOARD_NO
+		, IN_OUT_FLAG
+		, MAIN_POPUP_YN)
+		VALUES 
+		( #{boardNo}
+		, #{boardType}
+		, #{company_code}
+		, #{subject}
+		, #{contents}
+		, 0
+		, #{startDate}
+		, #{endDate}
+		, NOW()
+		, #{update_by}
+		, NOW()
+		, #{update_by}
+		, #{parentBoardNo}
+		, 'I'
+		, #{mainPopupYn})
+ 	</insert>
+ 	
+ 	<update id="updateBoardMgntDetail">
+ 		UPDATE BOARD
+ 		   SET SUBJECT = #{subject}
+ 		     , BOARD_TYPE = #{boardType}
+ 		     , MAIN_POPUP_YN = #{mainPopupYn}
+ 		     , START_DATE = #{startDate}
+ 		     , END_DATE = #{endDate}
+ 		     , CONTENTS = #{contents}
+ 		     , UPDATE_BY = #{update_by}
+ 		     , UPDATE_DATE = NOW()
+ 		 WHERE COMPANY_CODE = #{company_code}
+ 		   AND BOARD_NO = #{boardNo} 
+ 	</update>
+ 	
+ 	<insert id="insertBoardFile">
+	    INSERT INTO BOARD_FILE
+	    (
+	      COMPANY_CODE
+	    , BOARD_NO
+	    , FILE_SEQ
+	    , ORIGIN_FILE_NAME
+	    , FILE_SIZE
+	    , CONTENT_TYPE
+	    , BOARD_FILE_FIELD
+	    , CREATE_DATE
+	    , CREATE_BY
+	    )
+	    VALUES
+	    ( #{companyCode}
+	    , #{boardNo}
+	    , (SELECT COALESCE(MAX(FILE_SEQ), 0) + 1
+	         FROM BOARD_FILE
+	        WHERE COMPANY_CODE = #{companyCode}
+	          AND BOARD_NO = #{boardNo})
+	    , #{originFileName}
+	    , #{fileSize}
+	    , #{contentType}
+	    , #{fileData, jdbcType=BINARY}
+	    , NOW()
+	    , #{createBy}
+	    )
+	</insert>
+	
+	<delete id="deleteBoardFile" parameterType="map">
+	    DELETE FROM BOARD_FILE
+	     WHERE COMPANY_CODE = #{companyCode}
+	       AND BOARD_NO     = #{boardNo}
+	       AND FILE_SEQ     = #{fileSeq}
+	</delete>
+	
+	<select id="retrieveBoardFile" parameterType="map" resultType="map">
+	    SELECT COMPANY_CODE
+	         , BOARD_NO
+	         , FILE_SEQ
+	         , ORIGIN_FILE_NAME
+	         , FILE_SIZE
+	         , CONTENT_TYPE
+	         , BOARD_FILE_FIELD AS FILE_DATA
+	      FROM BOARD_FILE
+	     WHERE COMPANY_CODE = #{company_code}
+	       AND BOARD_NO     = CAST(#{board_no} AS BIGINT)
+	       AND FILE_SEQ     = CAST(#{file_seq} AS SMALLINT)
+	</select>
+ 	
+ 	
+</mapper>

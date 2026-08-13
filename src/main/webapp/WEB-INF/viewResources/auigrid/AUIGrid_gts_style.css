@@ -858,8 +858,7 @@
 .aui-grid-header-filter-icon {
 	border-left: 0px solid #c5dbec;
 	border-right: none;
-	/* background: url(./images/filter_ico.png) 50% 50% no-repeat; */
-	background: url(./images/gts_filter_off.svg) 50% 50% no-repeat;
+	background: url(./images/gts_filter_off_fil.svg) 50% 50% no-repeat; 
 	box-sizing: content-box;
 	cursor: pointer;
 }
@@ -868,7 +867,6 @@
 .aui-grid-header-filter-icon-filtered {
 	border-left: 0px solid #22741c;
 	border-right: none;
-	/* background: #22741c url(./images/filter_ico.png) 50% 50% no-repeat; */
 	background: url(./images/gts_filter_on.svg) 50% 50% no-repeat;
 	box-sizing: content-box;
 	cursor: pointer;
@@ -2207,7 +2205,7 @@
 	/* border-left: 1px solid #c5dbec; 필터버튼이랑 정렬버튼 사이 막대기 표시 */
     border-left: 0px;  /* 필터버튼이랑 정렬버튼 사이 막대기 표시안함 */
     border-right: none;
-    background: url(./images/gts_filter_off.svg) 50% 50% no-repeat;
+    background: url(./images/gts_filter_off_fil.svg) 50% 50% no-repeat;
     box-sizing: content-box;
     cursor: pointer;
 }

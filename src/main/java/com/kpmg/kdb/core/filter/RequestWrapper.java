@@ -23,10 +23,8 @@ public class RequestWrapper extends HttpServletRequestWrapper {
 		
 		String contentType = request.getContentType();
 
-		formRequest = contentType != null
-				&& contentType.toLowerCase()
-					.startsWith("application/x-www-form-urlencoded");
-
+		formRequest = contentType != null  && (contentType.toLowerCase().startsWith("application/x-www-form-urlencoded")
+		            						|| contentType.toLowerCase().startsWith("multipart/form-data") );
 		/*
 		 * 일반 폼 POST 요청은 Body를 읽지 않음.
 		 * 원본 request가 파라미터를 처리하도록 그대로 둠.
