@@ -222,6 +222,18 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		List<FtaMasterActive> ftaMasters = dao.selectActiveFtaMasters(companyCode);
 		String stdYyyy = invoiceDate.substring(0, 4);
 
+		// 같은 제품이 FTA_CODE 후보 수만큼(salesLines × ftaMasters) 반복 조회되던 selectHsCodeCandidates 를
+		// 배치 1회로 선조회해 hsCodeCache 를 미리 채워둔다(HsCodeService#prefetchHsCode 참고).
+		List<HsCodeCriteria> hsCodeLookups = new ArrayList<>(salesLines.size() * ftaMasters.size());
+		for (DomesticSalesLine sales : salesLines) {
+			for (FtaMasterActive fta : ftaMasters) {
+				hsCodeLookups.add(new HsCodeCriteria(sales.getCompanyCode(), sales.getProdDivisionCode(),
+						sales.getDeliveryCustomerCode(), sales.getProductCode(), sales.getArrivalNation(),
+						fta.getFtaCode(), sales.getInvoiceDate()));
+			}
+		}
+		hsCodeCache.putAll(hsCodeService.prefetchHsCode(hsCodeLookups));
+
 		List<FcrMstInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
 		for (DomesticSalesLine sales : salesLines) {
 			for (FtaMasterActive fta : ftaMasters) {
@@ -283,6 +295,17 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		List<ExportSalesLine> salesLines = dao.selectExportSalesLines(companyCode, divisionCode, salesNo,
 				productCodes);
 		String stdYyyy = invoiceDate.substring(0, 4);
+
+		// selectHsCodeCandidates 를 salesLines 전체 기준 배치 1회로 선조회한다. 위 클래스 주석의
+		// "원본 결함 재현"과 동일하게 ftaCode 자리엔 invoiceDate 를, baseDate 자리엔 null 을 그대로 넘긴다
+		// (HsCodeService#prefetchHsCode 참고).
+		List<HsCodeCriteria> hsCodeLookups = new ArrayList<>(salesLines.size());
+		for (ExportSalesLine sales : salesLines) {
+			hsCodeLookups.add(new HsCodeCriteria(sales.getCompanyCode(), sales.getProdDivisionCode(),
+					sales.getDeliveryCustomerCode(), sales.getProductCode(), sales.getArrivalNation(),
+					sales.getInvoiceDate(), null));
+		}
+		hsCodeCache.putAll(hsCodeService.prefetchHsCode(hsCodeLookups));
 
 		List<FcrMstInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
 		for (ExportSalesLine sales : salesLines) {
@@ -503,10 +526,11 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		return "Y".equals(intermediateYn) ? "MF" : "F";
 	}
 
+	/** 캐시 키 규칙은 {@link HsCodeService#hsCodeKey} 와 공유한다 — prefetchHsCode 로 미리 채운 항목과 키가 어긋나면 안 된다. */
 	private String resolveHsCodeCached(Map<String, String> cache, String companyCode, String divisionCode,
 			String customerCode, String itemCode, String nationCode, String ftaCode, String baseDate) {
-		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(customerCode), nz(itemCode),
-				nz(nationCode), nz(ftaCode), nz(baseDate));
+		String key = HsCodeService.hsCodeKey(companyCode, divisionCode, customerCode, itemCode, nationCode, ftaCode,
+				baseDate);
 		return cache.computeIfAbsent(key, k -> hsCodeService
 				.resolveHsCode(new HsCodeCriteria(companyCode, divisionCode, customerCode, itemCode, nationCode,
 						ftaCode, baseDate)));
