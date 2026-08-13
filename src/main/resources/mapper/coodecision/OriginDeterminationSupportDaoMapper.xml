@@ -148,6 +148,39 @@
 	</select>
 
 	<!--
+		selectOwnCooFcrResult(역내산 우선)/selectNonCooFcrResult(없으면 역외산만 존재) 2단계 순차 조회를
+		단일 배치 쿼리로 통합. FM_LIST 행(FTA 후보)마다 반복되던 것을, 요청받은 (salesSeq,ftaCode,
+		divisionCode) 조합 전체를 UNION ALL 파생 테이블(V)로 던지고 LATERAL 서브쿼리 안에서 두 조건을
+		OR 로 합친 뒤 ORDER BY 로 COMPANY_COO_YN='Y' 를 우선시켜 1건만 뽑는다 — 원본처럼 "역내산이 있으면
+		그 중 임의의 한 행(정렬기준 없음), 없으면 역외산만 존재하는 것 중 임의의 한 행"과 동일하게
+		동작한다. 매칭되는 행이 전혀 없는 조합도 결과에 포함되고(LEFT JOIN LATERAL), 그 경우 matchTier
+		를 포함한 모든 FCR_RESULT 컬럼이 NULL 이다(원본의 두 조회 모두 0건 -> cooYn='E' 분기에 대응 —
+		OriginDeterminationSupportService#resolveDeferredUpdateFrm 참고).
+	-->
+	<select id="selectOwnOrNonCooFcrResultBatch" resultType="com.kpmg.kdb.web.coodecision.dto.UpdateFrmBatchResult">
+		SELECT V.SALES_SEQ     AS reqSalesSeq
+		      ,V.FTA_CODE      AS reqFtaCode
+		      ,V.DIVISION_CODE AS reqDivisionCode
+		      ,R.*
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.salesSeq} AS SALES_SEQ, #{r.ftaCode} AS FTA_CODE, #{r.divisionCode} AS DIVISION_CODE
+		       </foreach>
+		       ) V
+		LEFT   JOIN LATERAL (SELECT <include refid="fcrResultColumns"/>
+		                            ,CASE WHEN FRD.COMPANY_COO_YN = 'Y' THEN 'Y' ELSE 'N' END AS matchTier
+		                      FROM   FCR_RESULT FRD
+		                      WHERE  FRD.SALES_NO = #{salesNo}
+		                      AND    FRD.SALES_SEQ = V.SALES_SEQ
+		                      AND    FRD.FTA_CODE = V.FTA_CODE
+		                      AND    FRD.DIVISION_CODE = V.DIVISION_CODE
+		                      AND    FRD.COMPANY_CODE = #{companyCode}
+		                      AND    (FRD.COMPANY_COO_YN = 'Y' OR (FRD.COMPANY_COO_YN = 'N' AND FRD.STATUS = 'N'))
+		                      ORDER  BY CASE WHEN FRD.COMPANY_COO_YN = 'Y' THEN 0 ELSE 1 END
+		                      FETCH FIRST 1 ROW ONLY) R ON TRUE
+	</select>
+
+	<!--
 		원본은 FM_LIST 행(FTA 후보)마다 단건 UPDATE 였지만, determineOrigin() 1회 호출에서 나온 모든
 		FM_LIST 행의 갱신을 모았다가 UPDATE...FROM(VALUES) 로 한 번에 반영한다. FM_LIST 행은 서로 다른
 		(SALES_SEQ,FTA_CODE) 조합의 FCR_MST 행을 갱신하므로 행 사이에 순서 의존성이 없어 배치로 묶어도

@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Param;
 import com.kpmg.kdb.web.coodecision.dto.BufferRates;
 import com.kpmg.kdb.web.coodecision.dto.FcrMstDecisionUpdateRow;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.coodecision.dto.UpdateFrmBatchResult;
+import com.kpmg.kdb.web.coodecision.dto.UpdateFrmLookupRequest;
 
 /**
  * PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 두 패키지에 완전 동일하게 존재하는
@@ -52,6 +54,16 @@ public interface OriginDeterminationSupportDao {
 	List<OriginDeterminationResult> selectNonCooFcrResult(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
 			@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode);
+
+	/**
+	 * {@link #selectOwnCooFcrResult}/{@link #selectNonCooFcrResult} 를 (salesSeq,ftaCode,divisionCode)
+	 * 조합별로 반복 호출(역내산 우선 조회 → 없으면 역외산만 존재 조회)하는 대신 한 번에 처리하는 배치
+	 * 버전. companyCode/salesNo 는 determineOrigin() 1회 호출 범위에서 항상 같은 값이라 별도 파라미터로
+	 * 받는다. 매칭되는 FCR_RESULT 행이 전혀 없는 요청도 결과에 포함되며(LEFT JOIN LATERAL), 그 경우
+	 * matchTier 가 null 이다 — {@link UpdateFrmBatchResult} 참고.
+	 */
+	List<UpdateFrmBatchResult> selectOwnOrNonCooFcrResultBatch(@Param("companyCode") String companyCode,
+			@Param("salesNo") String salesNo, @Param("requests") List<UpdateFrmLookupRequest> requests);
 
 	/**
 	 * UPDATE_FRM_PROCEDURE 말미: FCR_MST 최종 판정결과 반영. FM_LIST 행(FTA 후보)마다 즉시 실행하는 대신

@@ -5,6 +5,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRowBatchResult;
+import com.kpmg.kdb.web.coodecision.dto.MaterialOriginRowsRequest;
 import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 import com.kpmg.kdb.web.coodecision.dto.OriginCriteriaBatchRequest;
@@ -52,6 +54,15 @@ public interface OriginDeterminationCursorDao {
 	List<MaterialOriginRow> selectMaterialOriginRows(@Param("ftaCode") String ftaCode, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode, @Param("salesNo") String salesNo,
 			@Param("salesSeq") int salesSeq, @Param("parentHsCode") String parentHsCode);
+
+	/**
+	 * {@link #selectMaterialOriginRows} 의 배치 버전. companyCode/salesNo 는 determineOrigin() 1회 호출
+	 * 범위에서 항상 같은 값이라 (ftaCode,divisionCode,salesSeq) 조합만 배치로 받는다. 요청 1건당 결과가
+	 * 0~N 행(BOM 자재 수만큼)이라 매칭되는 자재가 없으면 결과에 아예 나타나지 않는다(단건 조회가 빈
+	 * 리스트를 반환하던 것과 동일 — {@link OriginDeterminationService} 참고).
+	 */
+	List<MaterialOriginRowBatchResult> selectMaterialOriginRowsBatch(@Param("companyCode") String companyCode,
+			@Param("salesNo") String salesNo, @Param("requests") List<MaterialOriginRowsRequest> requests);
 
 	/**
 	 * 레거시 CURSOR C_FTA_RULE 이관. CTSH&gt;CTH&gt;CC 순으로 가장 긴 HS_CODE 접두어가 일치하는 룰을 찾기

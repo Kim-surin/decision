@@ -159,6 +159,46 @@
 		AND    FI.SALES_SEQ = #{salesSeq}
 	</select>
 
+	<!--
+		selectMaterialOriginRows 의 배치 버전. FM_LIST 행(FTA 후보)마다 반복 호출되던 것을, 요청받은
+		(ftaCode,divisionCode,salesSeq) 조합 전체를 UNION ALL 파생 테이블(V)로 한 번에 던져 조회한다.
+		원본은 요청 1건당 0~N 행(BOM 자재 수만큼)을 돌려주는 다중행 조회라(selectMaterialCandidatesBatch
+		와 동일한 이유로) LEFT JOIN LATERAL(top-1) 이 아니라 V 를 그대로 드라이빙하는 일반 JOIN 을 쓴다.
+		parentHsCode 는 FI 조회조건이 아니라 결과에 그대로 echo 되는 상수값이라 V 의 컬럼을 그대로 쓴다.
+	-->
+	<select id="selectMaterialOriginRowsBatch" resultType="com.kpmg.kdb.web.coodecision.dto.MaterialOriginRowBatchResult">
+		SELECT V.FTA_CODE         AS reqFtaCode
+		      ,V.DIVISION_CODE    AS reqDivisionCode
+		      ,V.SALES_SEQ        AS reqSalesSeq
+		      ,FI.FTA_CODE        AS ftaCode
+		      ,FI.DIVISION_CODE   AS divisionCode
+		      ,FI.COMPANY_CODE    AS companyCode
+		      ,FI.PRODUCT_CODE    AS productCode
+		      ,FI.ITEM_CODE       AS itemCode
+		      ,V.PARENT_HS_CODE   AS parentHsCode
+		      ,FI.HS_CODE         AS hsCode
+		      ,FI.STANDARD        AS standard
+		      ,FI.WEIGHT          AS weight
+		      ,FI.REQUIREMENT_QTY AS requirementQty
+		      ,FI.INPUT_AMOUNT    AS inputAmount
+		      ,FI.INAREA_QTY      AS originatingQty
+		      ,FI.INAREA_AMOUNT   AS originatingAmount
+		      ,FI.OUTAREA_QTY     AS nonOriginatingQty
+		      ,FI.OUTAREA_AMOUNT  AS nonOriginatingAmount
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.ftaCode} AS FTA_CODE, #{r.divisionCode} AS DIVISION_CODE, #{r.salesSeq} AS SALES_SEQ,
+		              #{r.parentHsCode} AS PARENT_HS_CODE
+		       </foreach>
+		       ) V
+		JOIN   FCR_DTL FI
+		ON     FI.FTA_CODE = V.FTA_CODE
+		AND    FI.DIVISION_CODE = V.DIVISION_CODE
+		AND    FI.COMPANY_CODE = #{companyCode}
+		AND    FI.SALES_NO = #{salesNo}
+		AND    FI.SALES_SEQ = V.SALES_SEQ
+	</select>
+
 	<!-- ===================== CURSOR C_FTA_RULE ===================== -->
 
 	<select id="selectApplicableOriginCriteria" resultType="com.kpmg.kdb.web.coodecision.dto.OriginCriteria">
