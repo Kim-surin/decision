@@ -31,6 +31,17 @@
 
 	<!-- ===================== CURSOR C_FCR_MST ===================== -->
 
+	<!--
+		[버그 수정] TARIFF_DIFFERENTIALS 를 LEFT OUTER JOIN 으로 붙이던 원래 구조(원본 Oracle 커서의
+		DECODE(FCRM.EXPORT_FLAG,'E',FCRM.ARRIVAL_NATION,TD.NATION_CODE) 를 그대로 이관한 것)는, 내수
+		(EXPORT_FLAG&lt;&gt;'E') 매출에서 TD.NATION_CODE = TD.NATION_CODE 가 되어(자기 자신과 비교) 사실상
+		"조건 없음"이 되는 항등식이었다 — 같은 (FTA_CODE,HS_CODE,기간)에 해당하는 TARIFF_DIFFERENTIALS
+		행이 여러 국가(NATION_CODE)에 걸쳐 여러 건 있으면 JOIN이 매칭 건수만큼 팬아웃되어 FM_LIST 행
+		자체가 통째로 중복 생성됐다(같은 FTA_CODE,SALES_SEQ 조합의 판정결과가 FCR_RESULT 에 여러 벌
+		중복 저장되는 형태로 관찰됨). TD 의 다른 컬럼은 쓰이지 않고 TARIFF_YN 플래그(존재 여부)로만
+		쓰이므로, JOIN 대신 EXISTS 로 바꿔 매칭 건수와 무관하게 FM_LIST 행은 항상 1건만 나오도록
+		고쳤다 — TARIFF_YN 값 자체(원본의 항등식 매칭 조건 포함)는 그대로 유지한다.
+	-->
 	<select id="selectOriginDeterminationTargets" resultType="com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget">
 		SELECT FTAFM.FTA_CODE                                                    AS ftaCode
 		      ,FTAFM.SALES_NO                                                    AS salesNo
@@ -78,7 +89,14 @@
 		              ,FCRM.OUTAREA_AMOUNT      AS OUTAREA_AMOUNT
 		              ,FCRM.SP_COO_YN           AS SP_COO_YN
 		              ,FCRM.WO_COO_YN           AS WO_COO_YN
-		              ,CASE WHEN TD.HS_CODE IS NULL THEN 'N' ELSE 'Y' END AS TARIFF_YN
+		              ,CASE WHEN EXISTS
+		                   (SELECT 1
+		                    FROM   TARIFF_DIFFERENTIALS TD
+		                    WHERE  TD.FTA_CODE = FCRM.FTA_CODE
+		                    AND    TD.HS_CODE = FCRM.HS_CODE
+		                    AND    TD.NATION_CODE = CASE WHEN FCRM.EXPORT_FLAG = 'E' THEN FCRM.ARRIVAL_NATION ELSE TD.NATION_CODE END
+		                    AND    FCRM.INVOICE_DATE BETWEEN TD.APPLY_DATE AND TD.END_DATE)
+		                   THEN 'Y' ELSE 'N' END  AS TARIFF_YN
 		        FROM   (SELECT FM.FTA_CODE            AS FTA_CODE
 		                      ,FM.SALES_NO            AS SALES_NO
 		                      ,FM.SALES_SEQ           AS SALES_SEQ
@@ -120,11 +138,6 @@
 		        INNER  JOIN FTA_MASTER FM
 		        ON     FM.FTA_CODE = FCRM.FTA_CODE
 		        AND    FM.DELETE_YN &lt;&gt; 'Y'
-		        LEFT OUTER JOIN TARIFF_DIFFERENTIALS TD
-		        ON     TD.FTA_CODE = FCRM.FTA_CODE
-		        AND    TD.HS_CODE = FCRM.HS_CODE
-		        AND    TD.NATION_CODE = CASE WHEN FCRM.EXPORT_FLAG = 'E' THEN FCRM.ARRIVAL_NATION ELSE TD.NATION_CODE END
-		        AND    FCRM.INVOICE_DATE BETWEEN TD.APPLY_DATE AND TD.END_DATE
 		       ) FTAFM
 		LEFT OUTER JOIN ITEM_HS_SUB_CATEGORY IHSC
 		ON     IHSC.ITEM_CODE = FTAFM.PRODUCT_CODE
