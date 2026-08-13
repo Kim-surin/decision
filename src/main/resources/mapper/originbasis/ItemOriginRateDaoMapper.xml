@@ -235,20 +235,70 @@
 		자재 수 × FTA_CODE 후보 수만큼 반복 호출되던 것을, 요청받은 (itemCode,ftaCode,fromDate,toDate)
 		조합 전체를 UNION ALL 파생 테이블(V)로 한 번에 던지고 GROUP BY 로 조합별 집계를 한 번에 받는다.
 
-		원본 단건 쿼리는 PO_LEDGER FROM 절 + WHERE NOT EXISTS 구조였지만, 조합별로 결과가 0건이어도
-		반드시 1행(count=0)을 돌려줘야 하므로(원본 COUNT(*) 무그룹 집계와 동일 동작) V 가 드라이빙하는
-		LEFT JOIN 으로 바꿨다. NOT EXISTS 상관 서브쿼리가 참조하는 PL/D 컬럼이 LEFT JOIN 으로 NULL
-		확장되면 서브쿼리 내부 비교(예: ECM.VENDOR_CODE = PL.VENDOR_CODE)가 전부 UNKNOWN이 되어
-		EXISTS 는 거짓 -> NOT EXISTS 는 참이 되므로, 매칭되는 PO_LEDGER 가 없는 조합도 자동으로
-		WHERE 절을 통과해 COUNT(PL.WAREHOUSING_AMOUNT)=0, SUM=0 인 1행으로 집계된다(원본과 동일 결과).
+		[버그 수정 이력] 최초 구현은 NOT EXISTS(...) 를 WHERE 절에 뒀는데, 이는 LEFT JOIN 뒤에 적용되는
+		"행 필터"라 어떤 V 조합의 PO_LEDGER 매칭 행이 있었더라도 그 행들이 전부 NOT EXISTS=거짓(=이미
+		확인서 있음)이면 그 V 조합에 대응하는 행이 WHERE 절에서 전부 걸러져 결과에서 통째로 사라졌다
+		(GROUP BY 이전에 행 자체가 없어지므로 poCount=0 집계조차 안 됨) — 무그룹 COUNT(*) 였던 원본과
+		달리 "요청마다 반드시 1행"이 보장되지 않아, 실사용 중 175건 요청에 60건만 돌아오고 나머지
+		115건이 매번 단건 폴백 쿼리로 새는 문제가 있었다(WHERE NOT EXISTS 로 인한 조용한 배치 무력화).
+
+		그래서 NOT EXISTS(...) 를 WHERE 절에서 빼서 COUNT/SUM 안의 CASE WHEN 조건으로 옮겼다 — 이제는
+		행을 걸러내는 대신 집계에 포함시킬지만 결정하므로, V 조합에 매칭되는 PO_LEDGER 행이 하나도
+		없거나(PL.ITEM_CODE IS NULL, LEFT JOIN으로 NULL 확장된 phantom 행) 전부 확인서가 있어 카운트
+		대상이 아니어도 그 V 조합의 GROUP 자체는 항상 살아남아 poCount=0 인 1행으로 집계된다(원본과
+		동일한 최종 결과이면서 그룹이 사라지지 않음). PL.ITEM_CODE IS NOT NULL 조건을 추가로 걸어
+		"실제 매칭 PO_LEDGER 행이 존재"함을 명시적으로 확인한다 — PL 이 NULL 확장된 phantom 행에서
+		NOT EXISTS(...) 만 단독으로는(모든 비교가 UNKNOWN이 되어) 참이 되어 잘못 카운트될 수 있기 때문.
 	-->
 	<select id="selectNonCertifiedOriginSummaryBatch" resultType="com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult">
 		SELECT V.ITEM_CODE                                    AS itemCode
 		      ,V.FTA_CODE                                     AS ftaCode
 		      ,V.FROM_DATE                                    AS fromDate
 		      ,V.TO_DATE                                      AS toDate
-		      ,COUNT(PL.WAREHOUSING_AMOUNT)                    AS poCount
-		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0)         AS warehousingAmountSum
+		      ,COUNT(CASE WHEN PL.ITEM_CODE IS NOT NULL AND NOT EXISTS
+		             (SELECT 1
+		              FROM   EXT_COO_CERTIFY_MST ECM
+		              INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		              ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		              AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		              AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		              AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		              AND    ECD.FTA_CODE = V.FTA_CODE
+		              AND    ECD.COO_YN = 'Y'
+		              WHERE  ECM.SUBMIT_STATUS = '4'
+		              AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		              AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		              AND    ECM.DIVISION_CODE = CASE
+		                         WHEN ECM.DOCUMENT_TYPE = 'F' THEN PL.DIVISION_CODE
+		                         WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A' THEN ECM.DIVISION_CODE
+		                         WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M' THEN D.COO_RECEIPT_DIVISION_CODE
+		                     END
+		              AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		                     OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
+		                         AND PL.SEQ = ECD.WAREHOUSING_SEQ))
+		              AND    ECD.ITEM_CODE = PL.ITEM_CODE) THEN 1 END) AS poCount
+		      ,COALESCE(SUM(CASE WHEN PL.ITEM_CODE IS NOT NULL AND NOT EXISTS
+		             (SELECT 1
+		              FROM   EXT_COO_CERTIFY_MST ECM
+		              INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		              ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		              AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		              AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		              AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		              AND    ECD.FTA_CODE = V.FTA_CODE
+		              AND    ECD.COO_YN = 'Y'
+		              WHERE  ECM.SUBMIT_STATUS = '4'
+		              AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		              AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		              AND    ECM.DIVISION_CODE = CASE
+		                         WHEN ECM.DOCUMENT_TYPE = 'F' THEN PL.DIVISION_CODE
+		                         WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A' THEN ECM.DIVISION_CODE
+		                         WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M' THEN D.COO_RECEIPT_DIVISION_CODE
+		                     END
+		              AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		                     OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
+		                         AND PL.SEQ = ECD.WAREHOUSING_SEQ))
+		              AND    ECD.ITEM_CODE = PL.ITEM_CODE) THEN PL.WAREHOUSING_AMOUNT END), 0) AS warehousingAmountSum
 		FROM   (
 		       <foreach collection="requests" item="r" separator="UNION ALL">
 		       SELECT #{r.itemCode} AS ITEM_CODE, #{r.ftaCode} AS FTA_CODE, #{r.fromDate} AS FROM_DATE, #{r.toDate} AS TO_DATE
@@ -261,28 +311,6 @@
 		LEFT   OUTER JOIN COO_DIVISION_V D
 		ON     D.DIVISION_CODE = PL.DIVISION_CODE
 		AND    D.COMPANY_CODE = PL.COMPANY_CODE
-		WHERE  NOT EXISTS
-		       (SELECT 1
-		        FROM   EXT_COO_CERTIFY_MST ECM
-		        INNER  JOIN EXT_COO_CERTIFY_DTL ECD
-		        ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
-		        AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
-		        AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
-		        AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
-		        AND    ECD.FTA_CODE = V.FTA_CODE
-		        AND    ECD.COO_YN = 'Y'
-		        WHERE  ECM.SUBMIT_STATUS = '4'
-		        AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
-		        AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
-		        AND    ECM.DIVISION_CODE = CASE
-		                   WHEN ECM.DOCUMENT_TYPE = 'F' THEN PL.DIVISION_CODE
-		                   WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A' THEN ECM.DIVISION_CODE
-		                   WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M' THEN D.COO_RECEIPT_DIVISION_CODE
-		               END
-		        AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
-		               OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
-		                   AND PL.SEQ = ECD.WAREHOUSING_SEQ))
-		        AND    ECD.ITEM_CODE = PL.ITEM_CODE)
 		GROUP  BY V.ITEM_CODE, V.FTA_CODE, V.FROM_DATE, V.TO_DATE
 	</select>
 </mapper>
