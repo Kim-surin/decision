@@ -723,4 +723,106 @@
 	</select>
 
 
+	<select id="retrieveCustomerModelList" parameterType="HashMap" resultType="HashMap">
+	    SELECT
+	          cm.company_code
+	        , cm.division_code
+	        , di.division_name
+	        , cm.item_code
+	        , im.item_name
+	        , im.hs_code
+	        , cm.customer_code
+	        , cu.customer_name
+	        , cm.customer_hs_code
+	        , cm.customer_item_code
+	        , cm.customer_item_name
+	        , cm.customer_standard
+	        , cm.remark
+	        , TO_CHAR(cm.create_date, 'YYYY-MM-DD HH24:MI:SS') AS create_date
+	        , cm.create_by
+	        , TO_CHAR(cm.update_date, 'YYYY-MM-DD HH24:MI:SS') AS update_date
+	        , cm.update_by
+	    FROM customer_model cm
+	    LEFT JOIN item_mst im
+	           ON cm.company_code = im.company_code
+	          AND cm.item_code = im.item_code
+	    LEFT JOIN division di
+	           ON cm.company_code = di.company_code
+	          AND cm.division_code = di.division_code
+	    LEFT JOIN customer cu
+	           ON cm.company_code = cu.company_code
+	          AND cm.customer_code = cu.customer_code	          	          
+	    WHERE 1 = 1
+	      AND cm.company_code = #{company_code}
+	    ORDER BY cm.division_code, cm.item_code, cm.customer_code
+	</select>
+	
+	
+	<select id="countCustomerModel" parameterType="HashMap" resultType="int">
+	    SELECT COUNT(*)
+	      FROM customer_model
+	     WHERE company_code  = #{company_code}
+	       AND division_code = #{division_code}
+	       AND item_code     = #{item_code}
+	       AND customer_code = #{customer_code}
+	</select>
+	
+	
+	<delete id="deleteCustomerModel" parameterType="HashMap">
+	    DELETE FROM customer_model
+	     WHERE company_code  = #{company_code}
+	       AND division_code = #{division_code}
+	       AND item_code     = #{item_code}
+	       AND customer_code = #{customer_code}
+	</delete>
+	
+	
+	<update id="updateCustomerModel" parameterType="HashMap">
+	    UPDATE customer_model
+	       SET customer_hs_code   = #{customer_hs_code}
+	         , customer_item_code = #{customer_item_code}
+	         , customer_item_name = #{customer_item_name}
+	         , customer_standard  = #{customer_standard}
+	         , remark             = #{remark}
+	         , update_date        = now()
+	         , update_by          = #{user_id}
+	     WHERE company_code  = #{company_code}
+	       AND division_code = #{division_code}
+	       AND item_code     = #{item_code}
+	       AND customer_code = #{customer_code}
+	</update>
+	
+	
+	<insert id="insertCustomerModel" parameterType="HashMap">
+	    INSERT INTO customer_model (
+	          company_code
+	        , division_code
+	        , item_code
+	        , customer_code
+	        , customer_hs_code
+	        , customer_item_code
+	        , customer_item_name
+	        , customer_standard
+	        , remark
+	        , create_date
+	        , create_by
+	        , update_date
+	        , update_by
+	    ) VALUES (
+	          #{company_code}
+	        , #{division_code}
+	        , #{item_code}
+	        , #{customer_code}
+	        , #{customer_hs_code}
+	        , #{customer_item_code}
+	        , #{customer_item_name}
+	        , #{customer_standard}
+	        , #{remark}
+	        , now()
+	        , #{user_id}
+	        , now()
+	        , #{user_id}
+	    )
+	</insert>
+
 </mapper>

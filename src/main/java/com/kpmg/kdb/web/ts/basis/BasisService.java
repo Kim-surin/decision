@@ -845,4 +845,83 @@ public class BasisService extends GeneralService {
     	
     	return result;
     }
+    /**
+     * 고객사 자재관리 목록 데이터 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveCustomerModelList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveCustomerModelList(param);
+    		
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 고객사 자재관리 저장
+     * @param param
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result saveCustomerModelList(Map<String, Object> param) {
+
+        Result result = new Result();
+
+        try {
+            List<Map<String, Object>> addList = (List<Map<String, Object>>) param.get("addList");
+            List<Map<String, Object>> updateList = (List<Map<String, Object>>) param.get("updateList");
+            List<Map<String, Object>> deleteList = (List<Map<String, Object>>) param.get("deleteList");
+
+            if (addList != null) {
+                for (Map<String, Object> row : addList) {
+                	super.putCommonFieldsIfAbsent(row, param, "company_code", "user_id");
+                    int cnt = sqlSession.getMapper(BasisDao.class).countCustomerModel(row);
+                    if (cnt > 0) {
+                        result.setSuccess(false);
+                        result.setMessage("이미 존재하는 고객사 자재 정보입니다. [" 
+                            + row.get("item_code") + " / " + row.get("customer_code") + "]");
+                        return result;
+                    }
+
+                    sqlSession.getMapper(BasisDao.class).insertCustomerModel(row);
+                }
+            }
+
+            if (updateList != null) {
+                for (Map<String, Object> row : updateList) {
+                	super.putCommonFieldsIfAbsent(row, param, "company_code", "user_id");
+                    sqlSession.getMapper(BasisDao.class).updateCustomerModel(row);
+                }
+            }
+
+            if (deleteList != null) {
+                for (Map<String, Object> row : deleteList) {
+                	super.putCommonFieldsIfAbsent(row, param, "company_code", "user_id");
+                    sqlSession.getMapper(BasisDao.class).deleteCustomerModel(row);
+                }
+            }
+
+            result.setSuccess(true);
+            result.setMessage(DEFAULT_MESSAGE_OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+        }
+
+        return result;
+    }
 }

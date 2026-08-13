@@ -256,6 +256,39 @@ public interface BasisDao {
 	 * @return
 	 */
 	public List retrieveNationHsCodeList(Map param);
+	
+	
+	/**
+	 * 고객사 자재관리 목록 데이터 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveCustomerModelList(Map param);
+	
+	
+	/**
+	 * 고객사 자재관리 등록
+	 * @param param
+	 * @return
+	 */
+	public int insertCustomerModel(Map param);
+
+	/**
+	 * 고객사 자재관리 수정
+	 * @param param
+	 * @return
+	 */
+	public int updateCustomerModel(Map param);
+
+	/**
+	 * 고객사 자재관리 삭제
+	 * @param param
+	 * @return
+	 */
+	public int deleteCustomerModel(Map param);
+	
+	
+	public int countCustomerModel(Map param);
 }
 
 

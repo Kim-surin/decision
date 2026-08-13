@@ -744,5 +744,67 @@ public class BasisController extends GenericController {
 		
 		return result;
 	}
+
+	
+	/**
+	 * 고객사 자재관리
+	 * @param param
+	 * @param model
+	 * @param session
+	 * @return
+	 */
+	@RequestMapping(value = "/basis/customerModelMgmt")
+	public String customerModel(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);
+		return "basis/customerModelMgmt";
+	}
+	
+	/**
+	 * 고객사 자재관리 목록 데이터 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveCustomerModelList")
+	@ResponseBody
+	public Result retrieveCustomerModelList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveCustomerModelList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveCustomerModelList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveCustomerModelList END");
+		
+		return result;
+	}
+	
+	/**
+	 * 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/saveCustomerModelList")
+	@ResponseBody
+	public Result saveCustomerModelList(@RequestBody Map param) {
+	    logger.debug("##### Request Type result Class : saveCustomerModelList");
+	    Result result = new Result();
+
+	    try {
+	        result = service.saveCustomerModelList(super.extendsMap(param));
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+	    }
+
+	    logger.debug("##### Request Type result Class : saveCustomerModelList END");
+	    return result;
+	}
+	
 	
 }
