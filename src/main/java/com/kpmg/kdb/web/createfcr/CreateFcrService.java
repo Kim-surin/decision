@@ -33,6 +33,7 @@ import com.kpmg.kdb.web.originbasis.dto.IncotermsChangeRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
 import com.kpmg.kdb.web.originbasis.dto.OriginRatePrecheck;
+import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
 import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary;
 import com.kpmg.kdb.web.origindecision.FcrCreator;
 
@@ -159,7 +160,17 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache = itemOriginRateService
 				.prefetchNonCertifiedOriginSummaries(combinedOriginRateLookups, originRatePrecheckCache);
 
-		createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
+		// 3단계(구매단가) selectRecentPurchasePrice 도 BOM 리프 자재 수만큼 반복 호출되던 것을 leafRows
+		// 전체 기준 배치 1회로 선조회한다(3-4 상품/부산물 쪽은 재료 단가를 조회하지 않아 대상이 아니다).
+		List<ItemPriceCriteria> priceLookups = new ArrayList<>(leafRows.size());
+		for (BomLeafRow leaf : leafRows) {
+			priceLookups.add(new ItemPriceCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
+					leaf.getFtaCode(), invoiceDate));
+		}
+		Map<String, PoLedgerPriceRow> purchasePriceCache = itemPriceService.prefetchRecentPurchasePrices(priceLookups);
+
+		createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache,
+				purchasePriceCache);
 		createProductFcrDtl(dao, productRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
 
 		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
@@ -323,19 +334,20 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	 */
 	private void createBomLeafFcrDtl(CreateFcrDao dao, List<BomLeafRow> leafRows, String invoiceDate,
 			Map<String, OriginRatePrecheck> originRatePrecheckCache,
-			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache) {
+			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache,
+			Map<String, PoLedgerPriceRow> purchasePriceCache) {
 		Map<String, BigDecimal> priceCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
 		Map<String, String> priceNoteCache = new LinkedHashMap<>();
 
 		Map<String, List<ResolvedLeaf>> grouped = new LinkedHashMap<>();
 		for (BomLeafRow leaf : leafRows) {
-			BigDecimal unitPrice = resolveItemPriceCached(priceCache, leaf.getCompanyCode(),
+			BigDecimal unitPrice = resolveItemPriceCached(priceCache, purchasePriceCache, leaf.getCompanyCode(),
 					leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
 			BigDecimal originRate = resolveOriginRateCached(originRateCache, originRatePrecheckCache,
 					nonCertifiedSummaryCache, leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
 					leaf.getFtaCode(), invoiceDate);
-			String priceNote = resolvePriceNoteCached(priceNoteCache, leaf.getCompanyCode(),
+			String priceNote = resolvePriceNoteCached(priceNoteCache, purchasePriceCache, leaf.getCompanyCode(),
 					leaf.getFromDivisionCode(), leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
 			String hsCodeYn = leaf.getItemHsCode() == null ? "N" : "Y";
 
@@ -513,19 +525,19 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	 * {@link ItemPriceCriteria} 클래스 주석 참고). 그래서 캐시 키에서 ftaCode 를 뺀다 — BOM 리프
 	 * 자재는 같은 품목이 협정(FTA) 수만큼 반복 등장하므로, 뺴지 않으면 이 캐시가 사실상 항상 miss 난다.
 	 */
-	private BigDecimal resolveItemPriceCached(Map<String, BigDecimal> cache, String companyCode, String divisionCode,
-			String itemCode, String ftaCode, String baseDate) {
+	private BigDecimal resolveItemPriceCached(Map<String, BigDecimal> cache, Map<String, PoLedgerPriceRow> purchasePriceCache,
+			String companyCode, String divisionCode, String itemCode, String ftaCode, String baseDate) {
 		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
-		return cache.computeIfAbsent(key, k -> itemPriceService
-				.resolveItemPrice(new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate)));
+		return cache.computeIfAbsent(key, k -> itemPriceService.resolveItemPrice(
+				new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), purchasePriceCache));
 	}
 
 	/** ftaCode 를 캐시 키에서 빼는 이유는 {@link #resolveItemPriceCached} 참고. */
-	private String resolvePriceNoteCached(Map<String, String> cache, String companyCode, String divisionCode,
-			String itemCode, String ftaCode, String baseDate) {
+	private String resolvePriceNoteCached(Map<String, String> cache, Map<String, PoLedgerPriceRow> purchasePriceCache,
+			String companyCode, String divisionCode, String itemCode, String ftaCode, String baseDate) {
 		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
-		return cache.computeIfAbsent(key, k -> itemPriceService
-				.resolveItemPriceNote(new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate)));
+		return cache.computeIfAbsent(key, k -> itemPriceService.resolveItemPriceNote(
+				new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), purchasePriceCache));
 	}
 
 	/**

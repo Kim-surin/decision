@@ -122,6 +122,40 @@
 	</select>
 
 	<!--
+		selectRecentPurchasePrice 의 배치 버전. BOM 리프 자재마다 반복 호출되던 것을, 요청받은
+		(divisionCode,itemCode) 조합 전체를 LEFT JOIN LATERAL 로 한 번에 조회한다. LATERAL 서브쿼리는
+		단건 쿼리와 동일하게 WAREHOUSING_DATE DESC, WAREHOUSING_NO DESC 순 1건만 가져온다. LEFT JOIN 이라
+		매칭되는 PO_LEDGER 행이 없는 조합도 결과에 포함되고(PL.* 는 NULL), 매칭 없는 조합까지 명시적으로
+		"조회 완료, 결과 없음"으로 캐싱해야 호출자가 불필요한 단건 폴백 조회를 다시 하지 않는다
+		(ItemPriceService#prefetchRecentPurchasePrices 참고).
+	-->
+	<select id="selectRecentPurchasePriceBatch" resultType="com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceBatchResult">
+		SELECT V.DIVISION_CODE     AS reqDivisionCode
+		      ,V.ITEM_CODE         AS reqItemCode
+		      ,PL.UNIT_PRICE       AS unitPrice
+		      ,PL.WAREHOUSING_DATE AS warehousingDate
+		      ,PL.DIVISION_CODE    AS divisionCode
+		      ,PL.VENDOR_CODE      AS vendorCode
+		FROM   (
+		       <foreach collection="items" item="i" separator="UNION ALL">
+		       SELECT #{i.divisionCode} AS DIVISION_CODE, #{i.itemCode} AS ITEM_CODE
+		       </foreach>
+		       ) V
+		LEFT   JOIN LATERAL (SELECT PL2.UNIT_PRICE
+		                            ,PL2.WAREHOUSING_DATE
+		                            ,PL2.DIVISION_CODE
+		                            ,PL2.VENDOR_CODE
+		                      FROM   PO_LEDGER PL2
+		                      WHERE  PL2.COMPANY_CODE = #{companyCode}
+		                      AND    PL2.DIVISION_CODE = V.DIVISION_CODE
+		                      AND    PL2.ITEM_CODE = V.ITEM_CODE
+		                      AND    PL2.UNIT_PRICE > 0
+		                      AND    PL2.WAREHOUSING_DATE BETWEEN #{fromYyyyMmdd} AND #{toYyyyMmdd}
+		                      ORDER  BY PL2.WAREHOUSING_DATE DESC, PL2.WAREHOUSING_NO DESC
+		                      FETCH FIRST 1 ROW ONLY) PL ON TRUE
+	</select>
+
+	<!--
 		두 함수 공용(4단계, division 필터 있음). 원본은 두 함수의 STANDARD_COST_AMOUNT != 0 필터 유무가 달랐으나,
 		두 호출부 모두 결과값을 사용하기 전에 "금액 > 0" 을 재검증하므로(ItemPriceService) 필터 유무가 최종
 		결과에 영향을 주지 않는다. ORDER BY APPLY_DATE DESC 는 원본에 없던 명시적 정렬을 추가해 결정론적으로 만든 것.

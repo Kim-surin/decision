@@ -4,14 +4,22 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.common.CompanySettingService;
+import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow;
+import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
 import com.kpmg.kdb.web.originbasis.dto.StandardCostRow;
 
@@ -34,10 +42,21 @@ public class ItemPriceService extends GeneralService {
 	private static final DateTimeFormatter YYYYMM = DateTimeFormatter.ofPattern("yyyyMM");
 	private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.BASIC_ISO_DATE;
 
+	/** {@link #prefetchRecentPurchasePrices} 배치 조회 1회당 최대 요청 건수(바인드 파라미터 상한 방지) */
+	private static final int BATCH_CHUNK_SIZE = 500;
+
 	@Autowired
 	private CompanySettingService companySettingService;
 
 	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria) {
+		return resolveItemPrice(criteria, Map.of());
+	}
+
+	/**
+	 * @param purchasePriceCache {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
+	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 */
+	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache) {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
@@ -48,7 +67,7 @@ public class ItemPriceService extends GeneralService {
 				return price;
 			}
 
-			price = priceIfPositive(dao.selectRecentPurchasePrice(criteria, window.fromYyyyMmdd, window.toYyyyMmdd),
+			price = priceIfPositive(lookupRecentPurchasePrice(dao, criteria, window, purchasePriceCache),
 					PoLedgerPriceRow::getUnitPrice);
 			if (price != null) {
 				return price;
@@ -68,6 +87,11 @@ public class ItemPriceService extends GeneralService {
 	}
 
 	public String resolveItemPriceNote(ItemPriceCriteria criteria) {
+		return resolveItemPriceNote(criteria, Map.of());
+	}
+
+	/** @param purchasePriceCache {@link #resolveItemPrice(ItemPriceCriteria, Map)} 와 동일한 사전조회 캐시 */
+	public String resolveItemPriceNote(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache) {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
@@ -82,7 +106,7 @@ public class ItemPriceService extends GeneralService {
 				return other.buildPriceNoteText();
 			}
 
-			PoLedgerPriceRow purchase = dao.selectRecentPurchasePrice(criteria, window.fromYyyyMmdd, window.toYyyyMmdd);
+			PoLedgerPriceRow purchase = lookupRecentPurchasePrice(dao, criteria, window, purchasePriceCache);
 			if (purchase != null && isPositive(purchase.getUnitPrice())) {
 				return purchase.buildPriceNoteText();
 			}
@@ -98,6 +122,76 @@ public class ItemPriceService extends GeneralService {
 			logger.error("재료비 근거(NOTE) 조회 실패. criteria={}", criteria, e);
 			return null;
 		}
+	}
+
+	private PoLedgerPriceRow lookupRecentPurchasePrice(ItemPriceDao dao, ItemPriceCriteria criteria, LookupWindow window,
+			Map<String, PoLedgerPriceRow> purchasePriceCache) {
+		String key = purchasePriceKey(criteria.getCompanyCode(), criteria.getDivisionCode(), criteria.getItemCode(),
+				window.fromYyyyMmdd, window.toYyyyMmdd);
+		if (purchasePriceCache.containsKey(key)) {
+			return purchasePriceCache.get(key);
+		}
+		return dao.selectRecentPurchasePrice(criteria, window.fromYyyyMmdd, window.toYyyyMmdd);
+	}
+
+	/**
+	 * {@link ItemPriceDao#selectRecentPurchasePrice} 가 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
+	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map)}/
+	 * {@link #resolveItemPriceNote(ItemPriceCriteria, Map)} 에 그대로 넘기면 그 안에서 추가 DB 호출
+	 * 없이 값을 재사용한다.
+	 *
+	 * <p>이 조회는 1~2단계(수불부)에서 이미 가격을 찾은 자재에는 필요 없지만, 어떤 자재가 거기서 실패해
+	 * 3단계까지 내려올지는 그 단계를 먼저 실행해봐야 알 수 있다. 그래서 대상 자재 전체에 대해 미리
+	 * 한 번에 조회해두고, 실제로 3단계까지 내려온 자재만 캐시에서 값을 꺼내 쓴다 — 쓰이지 않는 조회
+	 * 결과가 일부 섞이더라도, 자재 수만큼 반복되던 왕복을 통째로 없애는 효과가 더 크다.
+	 */
+	public Map<String, PoLedgerPriceRow> prefetchRecentPurchasePrices(List<ItemPriceCriteria> criteriaList) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return Map.of();
+		}
+
+		ItemPriceCriteria first = criteriaList.get(0);
+		String companyCode = first.getCompanyCode();
+		LookupWindow window = LookupWindow.of(first, maxMonths(first));
+
+		List<DivisionItemKey> items = new ArrayList<>();
+		Set<String> seenKeys = new HashSet<>();
+		for (ItemPriceCriteria criteria : criteriaList) {
+			String key = purchasePriceKey(companyCode, criteria.getDivisionCode(), criteria.getItemCode(),
+					window.fromYyyyMmdd, window.toYyyyMmdd);
+			if (seenKeys.add(key)) {
+				items.add(new DivisionItemKey(criteria.getDivisionCode(), criteria.getItemCode()));
+			}
+		}
+
+		try {
+			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
+			Map<String, PoLedgerPriceRow> cache = new HashMap<>();
+			for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
+				List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+				List<PoLedgerPriceBatchResult> results = dao.selectRecentPurchasePriceBatch(companyCode,
+						window.fromYyyyMmdd, window.toYyyyMmdd, chunk);
+				for (PoLedgerPriceBatchResult r : results) {
+					cache.put(purchasePriceKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(),
+							window.fromYyyyMmdd, window.toYyyyMmdd), r.toRowOrNull());
+				}
+			}
+			return cache;
+		} catch (Exception e) {
+			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
+			// resolveItemPrice/resolveItemPriceNote 가 그 자리에서 단건 조회로 대체한다.
+			logger.error("최근 구매단가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
+			return Map.of();
+		}
+	}
+
+	private static String purchasePriceKey(String companyCode, String divisionCode, String itemCode, String fromYyyyMmdd,
+			String toYyyyMmdd) {
+		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(fromYyyyMmdd), nz(toYyyyMmdd));
+	}
+
+	private static String nz(String value) {
+		return value == null ? "" : value;
 	}
 
 	private int maxMonths(ItemPriceCriteria criteria) {
