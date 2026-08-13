@@ -173,6 +173,37 @@
 		FETCH FIRST 1 ROW ONLY
 	</select>
 
+	<!--
+		selectStandardCostByDivision 의 배치 버전. BOM 리프 자재마다 반복 호출되던 것을, 요청받은
+		(divisionCode,itemCode) 조합 전체를 LEFT JOIN LATERAL 로 한 번에 조회한다. LATERAL 서브쿼리는
+		단건 쿼리와 동일하게 ORDER BY APPLY_DATE DESC 순 1건만 가져온다. LEFT JOIN 이라 매칭되는
+		STANDARD_COST 행이 없는 조합도 결과에 포함되고(SC.* 는 NULL), 매칭 없는 조합까지 명시적으로
+		"조회 완료, 결과 없음"으로 캐싱해야 호출자가 불필요한 단건 폴백 조회를 다시 하지 않는다
+		(ItemPriceService#prefetchStandardCostByDivision 참고).
+	-->
+	<select id="selectStandardCostByDivisionBatch" resultType="com.kpmg.kdb.web.originbasis.dto.StandardCostBatchResult">
+		SELECT V.DIVISION_CODE        AS reqDivisionCode
+		      ,V.ITEM_CODE            AS reqItemCode
+		      ,SC.standardCostAmount  AS standardCostAmount
+		      ,SC.applyDate           AS applyDate
+		      ,SC.divisionCode        AS divisionCode
+		FROM   (
+		       <foreach collection="items" item="i" separator="UNION ALL">
+		       SELECT #{i.divisionCode} AS DIVISION_CODE, #{i.itemCode} AS ITEM_CODE
+		       </foreach>
+		       ) V
+		LEFT   JOIN LATERAL (SELECT SC2.STANDARD_COST_AMOUNT AS standardCostAmount
+		                            ,SC2.APPLY_DATE          AS applyDate
+		                            ,SC2.DIVISION_CODE       AS divisionCode
+		                      FROM   STANDARD_COST SC2
+		                      WHERE  SC2.COMPANY_CODE = #{companyCode}
+		                      AND    SC2.DIVISION_CODE = V.DIVISION_CODE
+		                      AND    SC2.ITEM_CODE = V.ITEM_CODE
+		                      AND    #{baseDate} BETWEEN SC2.APPLY_DATE AND COALESCE(SC2.END_DATE, '99991231')
+		                      ORDER  BY SC2.APPLY_DATE DESC
+		                      FETCH FIRST 1 ROW ONLY) SC ON TRUE
+	</select>
+
 	<!-- FC10_GET_ITEM_PRICE 전용 최종 fallback(division 필터 없음). NOTE 함수에는 대응 단계가 없다 -->
 	<select id="selectStandardCostAnyDivision" resultType="com.kpmg.kdb.web.originbasis.dto.StandardCostRow">
 		SELECT SC.STANDARD_COST_AMOUNT AS standardCostAmount

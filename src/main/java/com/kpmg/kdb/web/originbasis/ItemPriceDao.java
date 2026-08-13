@@ -9,6 +9,7 @@ import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
+import com.kpmg.kdb.web.originbasis.dto.StandardCostBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.StandardCostRow;
 
 /**
@@ -50,6 +51,15 @@ public interface ItemPriceDao {
 
 	/** 4단계(표준원가, division 필터 있음) - 두 함수 공용 */
 	StandardCostRow selectStandardCostByDivision(@Param("c") ItemPriceCriteria criteria);
+
+	/**
+	 * {@link #selectStandardCostByDivision} 의 배치 버전. companyCode/기준일자는 이 호출 범위(createFcr()
+	 * 1회 호출, 단일 salesNo)에서 항상 같은 값이라 (divisionCode,itemCode) 조합만 배치로 받는다. 매칭되는
+	 * STANDARD_COST 행이 없는 조합도 결과에 포함되며(LEFT JOIN LATERAL), 그 경우 standardCostAmount 등이
+	 * null 이다 — {@link StandardCostBatchResult#toRowOrNull()} 참고.
+	 */
+	List<StandardCostBatchResult> selectStandardCostByDivisionBatch(@Param("companyCode") String companyCode,
+			@Param("baseDate") String baseDate, @Param("items") List<DivisionItemKey> items);
 
 	/** 4단계 최종 fallback(표준원가, division 필터 없음) - FC10_GET_ITEM_PRICE 전용(원본에만 존재) */
 	StandardCostRow selectStandardCostAnyDivision(@Param("c") ItemPriceCriteria criteria);

@@ -21,6 +21,7 @@ import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
+import com.kpmg.kdb.web.originbasis.dto.StandardCostBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.StandardCostRow;
 
 /**
@@ -49,14 +50,22 @@ public class ItemPriceService extends GeneralService {
 	private CompanySettingService companySettingService;
 
 	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria) {
-		return resolveItemPrice(criteria, Map.of());
+		return resolveItemPrice(criteria, Map.of(), Map.of());
+	}
+
+	/** @param purchasePriceCache {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가) 결과 */
+	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache) {
+		return resolveItemPrice(criteria, purchasePriceCache, Map.of());
 	}
 
 	/**
 	 * @param purchasePriceCache {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
 	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 * @param standardCostCache  {@link #prefetchStandardCostByDivision} 로 미리 배치 조회해둔 4단계(표준원가)
+	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
 	 */
-	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache) {
+	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache,
+			Map<String, StandardCostRow> standardCostCache) {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
@@ -73,7 +82,8 @@ public class ItemPriceService extends GeneralService {
 				return price;
 			}
 
-			price = priceIfPositive(dao.selectStandardCostByDivision(criteria), StandardCostRow::getStandardCostAmount);
+			price = priceIfPositive(lookupStandardCostByDivision(dao, criteria, standardCostCache),
+					StandardCostRow::getStandardCostAmount);
 			if (price != null) {
 				return price;
 			}
@@ -87,11 +97,17 @@ public class ItemPriceService extends GeneralService {
 	}
 
 	public String resolveItemPriceNote(ItemPriceCriteria criteria) {
-		return resolveItemPriceNote(criteria, Map.of());
+		return resolveItemPriceNote(criteria, Map.of(), Map.of());
 	}
 
-	/** @param purchasePriceCache {@link #resolveItemPrice(ItemPriceCriteria, Map)} 와 동일한 사전조회 캐시 */
+	/** @param purchasePriceCache {@link #resolveItemPrice(ItemPriceCriteria, Map, Map)} 와 동일한 사전조회 캐시 */
 	public String resolveItemPriceNote(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache) {
+		return resolveItemPriceNote(criteria, purchasePriceCache, Map.of());
+	}
+
+	/** @param purchasePriceCache/standardCostCache {@link #resolveItemPrice(ItemPriceCriteria, Map, Map)} 와 동일한 사전조회 캐시 */
+	public String resolveItemPriceNote(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache,
+			Map<String, StandardCostRow> standardCostCache) {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
@@ -111,7 +127,7 @@ public class ItemPriceService extends GeneralService {
 				return purchase.buildPriceNoteText();
 			}
 
-			StandardCostRow standard = dao.selectStandardCostByDivision(criteria);
+			StandardCostRow standard = lookupStandardCostByDivision(dao, criteria, standardCostCache);
 			if (standard != null && isPositive(standard.getStandardCostAmount())) {
 				return standard.buildPriceNoteText();
 			}
@@ -132,6 +148,16 @@ public class ItemPriceService extends GeneralService {
 			return purchasePriceCache.get(key);
 		}
 		return dao.selectRecentPurchasePrice(criteria, window.fromYyyyMmdd, window.toYyyyMmdd);
+	}
+
+	private StandardCostRow lookupStandardCostByDivision(ItemPriceDao dao, ItemPriceCriteria criteria,
+			Map<String, StandardCostRow> standardCostCache) {
+		String key = standardCostKey(criteria.getCompanyCode(), criteria.getDivisionCode(), criteria.getItemCode(),
+				criteria.getResolvedBaseDate());
+		if (standardCostCache.containsKey(key)) {
+			return standardCostCache.get(key);
+		}
+		return dao.selectStandardCostByDivision(criteria);
 	}
 
 	/**
@@ -185,9 +211,62 @@ public class ItemPriceService extends GeneralService {
 		}
 	}
 
+	/**
+	 * {@link ItemPriceDao#selectStandardCostByDivision} 이 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
+	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map, Map)}/
+	 * {@link #resolveItemPriceNote(ItemPriceCriteria, Map, Map)} 에 그대로 넘기면 그 안에서 추가 DB 호출
+	 * 없이 값을 재사용한다.
+	 *
+	 * <p>{@link #prefetchRecentPurchasePrices} 와 동일한 이유로(1~3단계에서 이미 가격을 찾은 자재에는
+	 * 이 4단계 조회가 애초에 필요 없지만, 어떤 자재가 거기까지 내려올지는 먼저 실행해봐야 안다) 대상
+	 * 자재 전체에 대해 미리 한 번에 조회해두고, 실제로 4단계까지 내려온 자재만 캐시에서 값을 꺼내 쓴다.
+	 */
+	public Map<String, StandardCostRow> prefetchStandardCostByDivision(List<ItemPriceCriteria> criteriaList) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return Map.of();
+		}
+
+		ItemPriceCriteria first = criteriaList.get(0);
+		String companyCode = first.getCompanyCode();
+		String baseDate = first.getResolvedBaseDate();
+
+		List<DivisionItemKey> items = new ArrayList<>();
+		Set<String> seenKeys = new HashSet<>();
+		for (ItemPriceCriteria criteria : criteriaList) {
+			String key = standardCostKey(companyCode, criteria.getDivisionCode(), criteria.getItemCode(), baseDate);
+			if (seenKeys.add(key)) {
+				items.add(new DivisionItemKey(criteria.getDivisionCode(), criteria.getItemCode()));
+			}
+		}
+
+		try {
+			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
+			Map<String, StandardCostRow> cache = new HashMap<>();
+			for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
+				List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+				List<StandardCostBatchResult> results = dao.selectStandardCostByDivisionBatch(companyCode, baseDate,
+						chunk);
+				for (StandardCostBatchResult r : results) {
+					cache.put(standardCostKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(), baseDate),
+							r.toRowOrNull());
+				}
+			}
+			return cache;
+		} catch (Exception e) {
+			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
+			// resolveItemPrice/resolveItemPriceNote 가 그 자리에서 단건 조회로 대체한다.
+			logger.error("표준원가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
+			return Map.of();
+		}
+	}
+
 	private static String purchasePriceKey(String companyCode, String divisionCode, String itemCode, String fromYyyyMmdd,
 			String toYyyyMmdd) {
 		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(fromYyyyMmdd), nz(toYyyyMmdd));
+	}
+
+	private static String standardCostKey(String companyCode, String divisionCode, String itemCode, String baseDate) {
+		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
 	}
 
 	private static String nz(String value) {
