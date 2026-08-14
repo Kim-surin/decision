@@ -28,7 +28,7 @@ public interface OriginDeterminationSupportDao {
 	BufferRates selectProductLineBuffer(@Param("companyCode") String companyCode,
 			@Param("productCode") String productCode);
 
-	BufferRates selectFtaBuffer(@Param("ftaCode") String ftaCode);
+	BufferRates selectFtaBuffer(@Param("companyCode") String companyCode, @Param("ftaCode") String ftaCode);
 
 	/** 최소공정 제외 품목 해당 건수 (GET_MP_ITEM) */
 	long selectMinimalProcessItemCount(@Param("companyCode") String companyCode,

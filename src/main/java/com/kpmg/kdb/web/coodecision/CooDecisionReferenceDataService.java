@@ -38,9 +38,9 @@ public class CooDecisionReferenceDataService extends GeneralService {
 		return sqlSession.getMapper(OriginDeterminationSupportDao.class).selectDivisionBuffer(companyCode, divisionCode);
 	}
 
-	@Cacheable(cacheNames = "ftaBuffer", key = "#ftaCode")
-	public BufferRates getFtaBuffer(String ftaCode) {
-		return sqlSession.getMapper(OriginDeterminationSupportDao.class).selectFtaBuffer(ftaCode);
+	@Cacheable(cacheNames = "ftaBuffer", key = "#companyCode + ':' + #ftaCode")
+	public BufferRates getFtaBuffer(String companyCode, String ftaCode) {
+		return sqlSession.getMapper(OriginDeterminationSupportDao.class).selectFtaBuffer(companyCode, ftaCode);
 	}
 
 	@Cacheable(cacheNames = "ftaApplyNations", key = "#ftaCode")

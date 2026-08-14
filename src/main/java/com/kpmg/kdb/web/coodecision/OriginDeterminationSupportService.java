@@ -67,7 +67,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 				case "PRD" -> productLineBufferCache.computeIfAbsent(companyCode + ":" + productCode,
 						k -> sqlSession.getMapper(OriginDeterminationSupportDao.class)
 								.selectProductLineBuffer(companyCode, productCode));
-				case "FTA" -> referenceDataService.getFtaBuffer(ftaCode);
+				case "FTA" -> referenceDataService.getFtaBuffer(companyCode, ftaCode);
 				default -> null;
 			};
 

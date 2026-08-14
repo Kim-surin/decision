@@ -42,6 +42,7 @@
 		      ,COM_DE_MINIMIS_RATE AS deMinimisRate
 		FROM   FTA_MASTER
 		WHERE  FTA_CODE = #{ftaCode}
+		AND    COMPANY_CODE = #{companyCode}
 	</select>
 
 	<!-- ===================== GET_MP_ITEM ===================== -->
