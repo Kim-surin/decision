@@ -33,6 +33,7 @@ import com.kpmg.kdb.web.originbasis.dto.IncotermsChangeRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceWithNote;
+import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow;
 import com.kpmg.kdb.web.originbasis.dto.OriginRatePrecheck;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
 import com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary;
@@ -176,9 +177,13 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		// 반복 호출되던 것을 동일한 leafRows 기준으로 한 번에 선조회한다(어떤 자재가 4단계까지
 		// 내려올지는 먼저 실행해봐야 알 수 있어 대상 전체를 조회 — ItemPriceService 클래스 주석 참고).
 		Map<String, StandardCostRow> standardCostCache = itemPriceService.prefetchStandardCostByDivision(priceLookups);
+		// 1단계(수불부) selectDivisionBalanceForPrice 는 항상 시도되는 첫 단계라 leafRows 전체가 확정
+		// 대상이다 — leafRows 개수만큼 반복되던 왕복을 배치 1회로 없앤다.
+		Map<String, MaterialBalanceTierRow> divisionBalanceCache = itemPriceService
+				.prefetchDivisionBalanceForPrice(priceLookups);
 
 		createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache,
-				purchasePriceCache, standardCostCache);
+				divisionBalanceCache, purchasePriceCache, standardCostCache);
 		createProductFcrDtl(dao, productRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
 
 		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
@@ -366,15 +371,16 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	private void createBomLeafFcrDtl(CreateFcrDao dao, List<BomLeafRow> leafRows, String invoiceDate,
 			Map<String, OriginRatePrecheck> originRatePrecheckCache,
 			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache,
-			Map<String, PoLedgerPriceRow> purchasePriceCache, Map<String, StandardCostRow> standardCostCache) {
+			Map<String, MaterialBalanceTierRow> divisionBalanceCache, Map<String, PoLedgerPriceRow> purchasePriceCache,
+			Map<String, StandardCostRow> standardCostCache) {
 		Map<String, ItemPriceWithNote> priceWithNoteCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
 
 		Map<String, List<ResolvedLeaf>> grouped = new LinkedHashMap<>();
 		for (BomLeafRow leaf : leafRows) {
-			ItemPriceWithNote priceWithNote = resolveItemPriceWithNoteCached(priceWithNoteCache, purchasePriceCache,
-					standardCostCache, leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
-					leaf.getFtaCode(), invoiceDate);
+			ItemPriceWithNote priceWithNote = resolveItemPriceWithNoteCached(priceWithNoteCache, divisionBalanceCache,
+					purchasePriceCache, standardCostCache, leaf.getCompanyCode(), leaf.getFromDivisionCode(),
+					leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
 			BigDecimal unitPrice = priceWithNote.getPrice();
 			BigDecimal originRate = resolveOriginRateCached(originRateCache, originRatePrecheckCache,
 					nonCertifiedSummaryCache, leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
@@ -558,12 +564,13 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	 * 자재는 같은 품목이 협정(FTA) 수만큼 반복 등장하므로, 뺴지 않으면 이 캐시가 사실상 항상 miss 난다.
 	 */
 	private ItemPriceWithNote resolveItemPriceWithNoteCached(Map<String, ItemPriceWithNote> cache,
-			Map<String, PoLedgerPriceRow> purchasePriceCache, Map<String, StandardCostRow> standardCostCache,
-			String companyCode, String divisionCode, String itemCode, String ftaCode, String baseDate) {
+			Map<String, MaterialBalanceTierRow> divisionBalanceCache, Map<String, PoLedgerPriceRow> purchasePriceCache,
+			Map<String, StandardCostRow> standardCostCache, String companyCode, String divisionCode, String itemCode,
+			String ftaCode, String baseDate) {
 		String key = String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
 		return cache.computeIfAbsent(key, k -> itemPriceService.resolveItemPriceWithNote(
-				new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), purchasePriceCache,
-				standardCostCache));
+				new ItemPriceCriteria(companyCode, divisionCode, itemCode, ftaCode, baseDate), divisionBalanceCache,
+				purchasePriceCache, standardCostCache));
 	}
 
 	/**

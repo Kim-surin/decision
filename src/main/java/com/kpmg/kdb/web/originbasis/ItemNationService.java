@@ -10,9 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.web.originbasis.dto.CooNationBatchResult;
+import com.kpmg.kdb.web.originbasis.dto.CooNationLookupRequest;
 import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemNationCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemOriginRateCriteria;
@@ -43,6 +46,9 @@ public class ItemNationService extends GeneralService {
 	/** {@link #prefetchLastInputYyyyMm} 배치 조회 1회당 최대 요청 건수(바인드 파라미터 상한 방지) */
 	private static final int BATCH_CHUNK_SIZE = 500;
 
+	@Autowired
+	private ItemOriginRateService itemOriginRateService;
+
 	public String resolveItemNation(ItemNationCriteria criteria) {
 		return resolveItemNation(criteria, Map.of());
 	}
@@ -67,6 +73,117 @@ public class ItemNationService extends GeneralService {
 		List<MaterialBalanceRow> materials = materialDao.selectMaterialCandidates(materialCriteria,
 				fromMonth.format(YYYYMM), toMonth.format(YYYYMM));
 
+		LookupWindow window = computeLookupWindow(materialDao, materials, toMonth, lastInputYyyyMmCache,
+				criteria.getCompanyCode(), criteria.getDivisionCode(), criteria.getItemCode());
+		if (window.isZeroSentinel()) {
+			// 원본 RETURN 0(NUMBER) -> VARCHAR2 함수라 암묵적으로 "0" 문자열이 반환된다. 그대로 재현.
+			return "0";
+		}
+		if (window.isEmpty()) {
+			// 원본 V_COO_NATION 초기값(NULL) 그대로 반환: 유효한 조회구간을 만든 자재가 하나도 없었던 경우
+			return null;
+		}
+
+		try {
+			return nationDao.selectCooNation(criteria.getCompanyCode(), criteria.getItemCode(), criteria.getHsCode(),
+					window.fromDate, window.toDate);
+		} catch (Exception e) {
+			// 원본 EXCEPTION WHEN NO_DATA_FOUND / WHEN OTHERS 모두 V_COO_NATION := '' 과 동일하게 처리
+			logger.warn("FC01_GET_ITEM_NATION COO_NATION 조회 실패, 빈 값으로 처리. criteria={}", criteria, e);
+			return "";
+		}
+	}
+
+	/**
+	 * {@link #resolveItemNation} 의 배치 버전. determineOrigin() 1회 호출에서 PKRRC 후보로 모인 distinct
+	 * (companyCode,divisionCode,itemCode,hsCode) 조합 전체에 대해, 자재 목록 배치조회
+	 * ({@link ItemOriginRateService#prefetchMaterialCandidates} 재사용) -&gt; 조회구간 계산(순수 Java,
+	 * DB 호출 없음) -&gt; selectCooNation 배치조회 순으로 처리해, 조합 수만큼 반복되던 selectMaterialCandidates
+	 * + selectCooNation 왕복(조합당 최대 2회)을 청크 단위 상수 회로 줄인다.
+	 *
+	 * @param lastInputYyyyMmCache {@link #prefetchLastInputYyyyMm} 로 미리 배치 조회해둔 결과
+	 * @return (companyCode,divisionCode,itemCode,hsCode) 키(={@link #resolveItemNationResultKey}) -&gt;
+	 *         COO_NATION(원본 함수 반환값과 동일 — null/""/"0"/"TT"/실제 국가코드 모두 유효한 값)
+	 */
+	public Map<String, String> prefetchCooNations(List<ItemNationCriteria> criteriaList,
+			Map<String, String> lastInputYyyyMmCache) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return Map.of();
+		}
+
+		try {
+			List<ItemOriginRateCriteria> materialCriteriaList = new ArrayList<>(criteriaList.size());
+			for (ItemNationCriteria c : criteriaList) {
+				materialCriteriaList
+						.add(new ItemOriginRateCriteria(c.getCompanyCode(), c.getDivisionCode(), c.getItemCode(),
+								c.getFtaCode(), c.getBaseDate()));
+			}
+			Map<String, List<MaterialBalanceRow>> materialsCache = itemOriginRateService
+					.prefetchMaterialCandidates(materialCriteriaList);
+
+			ItemOriginRateDao materialDao = sqlSession.getMapper(ItemOriginRateDao.class);
+			Map<String, String> resolved = new HashMap<>();
+			List<CooNationLookupRequest> requests = new ArrayList<>();
+			Set<String> seenKeys = new HashSet<>();
+
+			for (ItemNationCriteria criteria : criteriaList) {
+				String resultKey = resolveItemNationResultKey(criteria);
+				if (!seenKeys.add(resultKey)) {
+					continue;
+				}
+
+				LocalDate baseDate = LocalDate.parse(criteria.getResolvedBaseDate(), YYYYMMDD);
+				YearMonth toMonth = YearMonth.from(baseDate);
+				String materialsKey = ItemOriginRateService.precheckKey(criteria.getCompanyCode(),
+						criteria.getDivisionCode(), criteria.getItemCode(), criteria.getBaseDate());
+				List<MaterialBalanceRow> materials = materialsCache.getOrDefault(materialsKey, List.of());
+
+				LookupWindow window = computeLookupWindow(materialDao, materials, toMonth, lastInputYyyyMmCache,
+						criteria.getCompanyCode(), criteria.getDivisionCode(), criteria.getItemCode());
+				if (window.isZeroSentinel()) {
+					resolved.put(resultKey, "0");
+				} else if (window.isEmpty()) {
+					resolved.put(resultKey, null);
+				} else {
+					requests.add(new CooNationLookupRequest(resultKey, criteria.getCompanyCode(), criteria.getItemCode(),
+							criteria.getHsCode(), window.fromDate, window.toDate));
+				}
+			}
+
+			ItemNationDao nationDao = sqlSession.getMapper(ItemNationDao.class);
+			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
+				List<CooNationLookupRequest> chunk = requests.subList(from, Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+				List<CooNationBatchResult> results = nationDao.selectCooNationBatch(chunk);
+				for (CooNationBatchResult r : results) {
+					resolved.put(r.getReqKey(), r.getCooNation());
+				}
+			}
+			return resolved;
+		} catch (Exception e) {
+			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
+			// resolveItemCooNationForRcep 이 그 자리에서 단건 조회(resolveItemNation)로 대체한다.
+			logger.error("RCEP 원산지국(COO_NATION) 배치조회 실패. itemCount={}", criteriaList.size(), e);
+			return Map.of();
+		}
+	}
+
+	/** {@link #prefetchCooNations} 결과 캐시 키. resolveItemCooNationForRcep 이 쓰는 itemNationKey 와 동일한 구성요소. */
+	public static String resolveItemNationResultKey(ItemNationCriteria criteria) {
+		return String.join("|", nz(criteria.getCompanyCode()), nz(criteria.getDivisionCode()), nz(criteria.getItemCode()),
+				nz(criteria.getHsCode()));
+	}
+
+	/**
+	 * 자재 목록(BOM + 대체자재)을 순회하며 조회구간(fromDate/toDate)을 계산한다 — {@link #resolveItemNation}
+	 * 원본 루프에서 DB 호출(selectMaterialCandidates/selectCooNation)만 뺀 순수 계산 부분을 분리한
+	 * 것으로, 단건 호출과 배치 사전조회({@link #prefetchCooNations}) 양쪽에서 공유한다.
+	 *
+	 * <p>selectLastInputYyyyMm 폴백만 예외적으로 DB 호출을 포함한다(lastInputYyyyMmCache 캐시 미스 시에만
+	 * — {@link #prefetchLastInputYyyyMm} 이 이미 채워뒀다면 발생하지 않는다).
+	 */
+	private LookupWindow computeLookupWindow(ItemOriginRateDao materialDao, List<MaterialBalanceRow> materials,
+			YearMonth toMonth, Map<String, String> lastInputYyyyMmCache, String companyCode, String divisionCode,
+			String itemCode) {
 		// selectLastInputYyyyMm 의 바인딩 파라미터(companyCode/divisionCode/itemCode/toMonth)는 자재(material)와
 		// 무관하게 criteria 하나로 고정돼 있어 루프 안에서 매번 다시 조회해도 같은 값이 나온다. 자재가 여러 건
 		// (BOM + 대체자재)이어도 최초 1회만 조회하도록 루프 밖으로 뺐다(지연 초기화 — 필요 없으면 아예 안 부른다).
@@ -85,21 +202,19 @@ public class ItemNationService extends GeneralService {
 
 			if (material.getMatYyyyMm() != null) {
 				if (!lastInputYyyyMmLoaded) {
-					String key = lastInputYyyyMmKey(criteria.getCompanyCode(), criteria.getDivisionCode(),
-							criteria.getItemCode(), toMonth.format(YYYYMM));
+					String key = lastInputYyyyMmKey(companyCode, divisionCode, itemCode, toMonth.format(YYYYMM));
 					if (lastInputYyyyMmCache.containsKey(key)) {
 						lastInputYyyyMm = lastInputYyyyMmCache.get(key);
 					} else {
-						lastInputYyyyMm = materialDao.selectLastInputYyyyMm(criteria.getCompanyCode(),
-								criteria.getDivisionCode(), criteria.getItemCode(), toMonth.format(YYYYMM));
+						lastInputYyyyMm = materialDao.selectLastInputYyyyMm(companyCode, divisionCode, itemCode,
+								toMonth.format(YYYYMM));
 					}
 					lastInputYyyyMmLoaded = true;
 				}
 
 				if (material.hasPositiveInitialQty()) {
 					if (material.hasNegativeAgingPeriod()) {
-						// 원본 RETURN 0(NUMBER) -> VARCHAR2 함수라 암묵적으로 "0" 문자열이 반환된다. 그대로 재현.
-						return "0";
+						return LookupWindow.zeroSentinel();
 					}
 					lookupStart = firstDayMinusMonths(material.getMatYyyyMm(), material.getMatAgingPeriod() + 1);
 				}
@@ -125,18 +240,44 @@ public class ItemNationService extends GeneralService {
 			finalLookupEnd = lookupEnd;
 		}
 
-		if (finalFromDate == null) {
-			// 원본 V_COO_NATION 초기값(NULL) 그대로 반환: 유효한 조회구간을 만든 자재가 하나도 없었던 경우
-			return null;
+		return finalFromDate == null ? LookupWindow.empty() : LookupWindow.of(finalFromDate, finalLookupEnd);
+	}
+
+	/** {@link #computeLookupWindow} 결과. 세 가지 상태(정상 구간/즉시 "0" 반환/구간 없음=null 반환)를 구분한다. */
+	private static final class LookupWindow {
+		private static final LookupWindow ZERO_SENTINEL = new LookupWindow(null, null, true, false);
+		private static final LookupWindow EMPTY = new LookupWindow(null, null, false, true);
+
+		final String fromDate;
+		final String toDate;
+		private final boolean zeroSentinel;
+		private final boolean empty;
+
+		private LookupWindow(String fromDate, String toDate, boolean zeroSentinel, boolean empty) {
+			this.fromDate = fromDate;
+			this.toDate = toDate;
+			this.zeroSentinel = zeroSentinel;
+			this.empty = empty;
 		}
 
-		try {
-			return nationDao.selectCooNation(criteria.getCompanyCode(), criteria.getItemCode(), criteria.getHsCode(),
-					finalFromDate, finalLookupEnd);
-		} catch (Exception e) {
-			// 원본 EXCEPTION WHEN NO_DATA_FOUND / WHEN OTHERS 모두 V_COO_NATION := '' 과 동일하게 처리
-			logger.warn("FC01_GET_ITEM_NATION COO_NATION 조회 실패, 빈 값으로 처리. criteria={}", criteria, e);
-			return "";
+		static LookupWindow of(String fromDate, String toDate) {
+			return new LookupWindow(fromDate, toDate, false, false);
+		}
+
+		static LookupWindow zeroSentinel() {
+			return ZERO_SENTINEL;
+		}
+
+		static LookupWindow empty() {
+			return EMPTY;
+		}
+
+		boolean isZeroSentinel() {
+			return zeroSentinel;
+		}
+
+		boolean isEmpty() {
+			return empty;
 		}
 	}
 

@@ -419,8 +419,17 @@ public class OriginDeterminationService extends GeneralService implements Origin
 				ItemNationCriteria criteria = rcepCache.distinctCriteria.computeIfAbsent(key,
 						k -> new ItemNationCriteria(row.getCompanyCode(), row.getDivisionCode(), row.getItemCode(),
 								row.getFtaCode(), row.getHsCode(), invoiceDate));
-				String cooNation = rcepCache.cooNationCache.computeIfAbsent(key,
-						k -> itemNationService.resolveItemNation(criteria, rcepCache.lastInputYyyyMmCache));
+				// cooNationBatchCache 는 prepareRcepCooNationCache 가 선조회해둔 배치 결과라, null 도
+				// "조회 완료, 결과 없음"이라는 유효한 값이다(containsKey 로 확인 — computeIfAbsent 는
+				// null 저장이 안 돼 캐시 히트를 매번 놓치므로 쓸 수 없다). 배치 사전조회가 이 조합을
+				// 못 봤을 때만(배치 실패 등) 단건 조회로 대체한다.
+				String cooNation;
+				if (rcepCache.cooNationBatchCache.containsKey(key)) {
+					cooNation = rcepCache.cooNationBatchCache.get(key);
+				} else {
+					cooNation = rcepCache.cooNationCache.computeIfAbsent(key,
+							k -> itemNationService.resolveItemNation(criteria, rcepCache.lastInputYyyyMmCache));
+				}
 				row.setCooNation(cooNation);
 			}
 		}
@@ -455,7 +464,12 @@ public class OriginDeterminationService extends GeneralService implements Origin
 		// 비어있으면 prefetchLastInputYyyyMm 이 그 자리에서 빈 Map 을 돌려주므로 별도 분기가 필요 없다.
 		Map<String, String> lastInputYyyyMmCache = itemNationService
 				.prefetchLastInputYyyyMm(new ArrayList<>(distinctCriteria.values()));
-		return new RcepCooNationCache(distinctCriteria, lastInputYyyyMmCache);
+		// resolveItemNation 이 조합마다 개별 호출하던 selectMaterialCandidates+selectCooNation(최대 2회
+		// 왕복)도 여기서 determineOrigin() 1회 호출 범위 전체를 한 번에 배치 선조회한다 —
+		// ItemNationService#prefetchCooNations 참고.
+		Map<String, String> cooNationBatchCache = itemNationService.prefetchCooNations(
+				new ArrayList<>(distinctCriteria.values()), lastInputYyyyMmCache);
+		return new RcepCooNationCache(distinctCriteria, lastInputYyyyMmCache, cooNationBatchCache);
 	}
 
 	/**
@@ -522,11 +536,16 @@ public class OriginDeterminationService extends GeneralService implements Origin
 	private static final class RcepCooNationCache {
 		final Map<String, ItemNationCriteria> distinctCriteria;
 		final Map<String, String> lastInputYyyyMmCache;
+		/** {@link #prepareRcepCooNationCache} 가 선조회해둔 배치 결과(정적, 조회 이후 변경 없음). */
+		final Map<String, String> cooNationBatchCache;
+		/** 배치 사전조회가 못 본 조합을 위한 단건 폴백 결과 캐시(동적, resolveItemCooNationForRcep 가 채움). */
 		final Map<String, String> cooNationCache = new HashMap<>();
 
-		RcepCooNationCache(Map<String, ItemNationCriteria> distinctCriteria, Map<String, String> lastInputYyyyMmCache) {
+		RcepCooNationCache(Map<String, ItemNationCriteria> distinctCriteria, Map<String, String> lastInputYyyyMmCache,
+				Map<String, String> cooNationBatchCache) {
 			this.distinctCriteria = distinctCriteria;
 			this.lastInputYyyyMmCache = lastInputYyyyMmCache;
+			this.cooNationBatchCache = cooNationBatchCache;
 		}
 	}
 

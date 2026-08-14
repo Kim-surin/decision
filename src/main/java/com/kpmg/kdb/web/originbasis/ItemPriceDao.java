@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
+import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
@@ -26,6 +27,16 @@ public interface ItemPriceDao {
 	 */
 	MaterialBalanceTierRow selectDivisionBalanceForPrice(@Param("c") ItemPriceCriteria criteria,
 			@Param("fromYyyyMm") String fromYyyyMm, @Param("toYyyyMm") String toYyyyMm);
+
+	/**
+	 * {@link #selectDivisionBalanceForPrice} 의 배치 버전. companyCode/조회기간은 이 호출 범위(createFcr()
+	 * 1회 호출, 단일 salesNo)에서 항상 같은 값이라 (divisionCode,itemCode) 조합만 배치로 받는다. 매칭되는
+	 * MATERIAL_INV_BAL 행이 없는 조합도 결과에 포함되며(LEFT JOIN LATERAL), 그 경우 yyyymm 등이 null 이다
+	 * — {@link MaterialBalanceTierBatchResult#toRowOrNull()} 참고.
+	 */
+	List<MaterialBalanceTierBatchResult> selectDivisionBalanceForPriceBatch(@Param("companyCode") String companyCode,
+			@Param("fromYyyyMm") String fromYyyyMm, @Param("toYyyyMm") String toYyyyMm,
+			@Param("items") List<DivisionItemKey> items);
 
 	/** 3단계(구매단가) - 두 함수 공용 */
 	PoLedgerPriceRow selectRecentPurchasePrice(@Param("c") ItemPriceCriteria criteria,

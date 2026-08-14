@@ -19,6 +19,7 @@ import com.kpmg.kdb.web.common.CompanySettingService;
 import com.kpmg.kdb.web.originbasis.dto.DivisionItemKey;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceCriteria;
 import com.kpmg.kdb.web.originbasis.dto.ItemPriceWithNote;
+import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.MaterialBalanceTierRow;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceBatchResult;
 import com.kpmg.kdb.web.originbasis.dto.PoLedgerPriceRow;
@@ -52,27 +53,24 @@ public class ItemPriceService extends GeneralService {
 	private CompanySettingService companySettingService;
 
 	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria) {
-		return resolveItemPrice(criteria, Map.of(), Map.of());
-	}
-
-	/** @param purchasePriceCache {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가) 결과 */
-	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache) {
-		return resolveItemPrice(criteria, purchasePriceCache, Map.of());
+		return resolveItemPrice(criteria, Map.of(), Map.of(), Map.of());
 	}
 
 	/**
-	 * @param purchasePriceCache {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
-	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
-	 * @param standardCostCache  {@link #prefetchStandardCostByDivision} 로 미리 배치 조회해둔 4단계(표준원가)
-	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 * @param divisionBalanceCache {@link #prefetchDivisionBalanceForPrice} 로 미리 배치 조회해둔 1단계(수불부)
+	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 * @param purchasePriceCache   {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
+	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 * @param standardCostCache    {@link #prefetchStandardCostByDivision} 로 미리 배치 조회해둔 4단계(표준원가)
+	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
 	 */
-	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, PoLedgerPriceRow> purchasePriceCache,
-			Map<String, StandardCostRow> standardCostCache) {
-		return resolveItemPriceWithNote(criteria, purchasePriceCache, standardCostCache).getPrice();
+	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, MaterialBalanceTierRow> divisionBalanceCache,
+			Map<String, PoLedgerPriceRow> purchasePriceCache, Map<String, StandardCostRow> standardCostCache) {
+		return resolveItemPriceWithNote(criteria, divisionBalanceCache, purchasePriceCache, standardCostCache).getPrice();
 	}
 
 	public ItemPriceWithNote resolveItemPriceWithNote(ItemPriceCriteria criteria) {
-		return resolveItemPriceWithNote(criteria, Map.of(), Map.of());
+		return resolveItemPriceWithNote(criteria, Map.of(), Map.of(), Map.of());
 	}
 
 	/**
@@ -80,18 +78,21 @@ public class ItemPriceService extends GeneralService {
 	 * 순서대로 조회하다 가격(price &gt; 0)을 찾으면, 별도 조회 없이 그 행의 데이터로 근거 텍스트(NOTE)도
 	 * 함께 만들어 돌려준다 — 클래스 주석 참고.
 	 *
-	 * @param purchasePriceCache {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
-	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
-	 * @param standardCostCache  {@link #prefetchStandardCostByDivision} 로 미리 배치 조회해둔 4단계(표준원가)
-	 *                            결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 * @param divisionBalanceCache {@link #prefetchDivisionBalanceForPrice} 로 미리 배치 조회해둔 1단계(수불부)
+	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 * @param purchasePriceCache   {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
+	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
+	 * @param standardCostCache    {@link #prefetchStandardCostByDivision} 로 미리 배치 조회해둔 4단계(표준원가)
+	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
 	 */
 	public ItemPriceWithNote resolveItemPriceWithNote(ItemPriceCriteria criteria,
-			Map<String, PoLedgerPriceRow> purchasePriceCache, Map<String, StandardCostRow> standardCostCache) {
+			Map<String, MaterialBalanceTierRow> divisionBalanceCache, Map<String, PoLedgerPriceRow> purchasePriceCache,
+			Map<String, StandardCostRow> standardCostCache) {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			LookupWindow window = LookupWindow.of(criteria, maxMonths(criteria));
 
-			MaterialBalanceTierRow division = dao.selectDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm);
+			MaterialBalanceTierRow division = lookupDivisionBalance(dao, criteria, window, divisionBalanceCache);
 			BigDecimal price = priceIfPositive(division, MaterialBalanceTierRow::calculatePriceForPrice);
 			if (price != null) {
 				return new ItemPriceWithNote(price, division.buildPriceNoteText());
@@ -123,6 +124,16 @@ public class ItemPriceService extends GeneralService {
 		}
 	}
 
+	private MaterialBalanceTierRow lookupDivisionBalance(ItemPriceDao dao, ItemPriceCriteria criteria, LookupWindow window,
+			Map<String, MaterialBalanceTierRow> divisionBalanceCache) {
+		String key = divisionBalanceKey(criteria.getCompanyCode(), criteria.getDivisionCode(), criteria.getItemCode(),
+				window.fromYyyyMm, window.toYyyyMm);
+		if (divisionBalanceCache.containsKey(key)) {
+			return divisionBalanceCache.get(key);
+		}
+		return dao.selectDivisionBalanceForPrice(criteria, window.fromYyyyMm, window.toYyyyMm);
+	}
+
 	private PoLedgerPriceRow lookupRecentPurchasePrice(ItemPriceDao dao, ItemPriceCriteria criteria, LookupWindow window,
 			Map<String, PoLedgerPriceRow> purchasePriceCache) {
 		String key = purchasePriceKey(criteria.getCompanyCode(), criteria.getDivisionCode(), criteria.getItemCode(),
@@ -144,9 +155,57 @@ public class ItemPriceService extends GeneralService {
 	}
 
 	/**
+	 * {@link ItemPriceDao#selectDivisionBalanceForPrice} 가 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
+	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map, Map, Map)}/
+	 * {@link #resolveItemPriceWithNote(ItemPriceCriteria, Map, Map, Map)} 에 그대로 넘기면 그 안에서 추가
+	 * DB 호출 없이 값을 재사용한다. 1단계(수불부)는 항상(무조건) 시도되는 첫 단계라 대상 자재 전체가
+	 * 그대로 배치 조회 대상이다(3~4단계 사전조회처럼 "어디까지 내려올지 몰라 전체를 미리 조회"하는
+	 * 것과 달리, 여기는 전량이 확실히 필요하다).
+	 */
+	public Map<String, MaterialBalanceTierRow> prefetchDivisionBalanceForPrice(List<ItemPriceCriteria> criteriaList) {
+		if (criteriaList == null || criteriaList.isEmpty()) {
+			return Map.of();
+		}
+
+		ItemPriceCriteria first = criteriaList.get(0);
+		String companyCode = first.getCompanyCode();
+		LookupWindow window = LookupWindow.of(first, maxMonths(first));
+
+		List<DivisionItemKey> items = new ArrayList<>();
+		Set<String> seenKeys = new HashSet<>();
+		for (ItemPriceCriteria criteria : criteriaList) {
+			String key = divisionBalanceKey(companyCode, criteria.getDivisionCode(), criteria.getItemCode(),
+					window.fromYyyyMm, window.toYyyyMm);
+			if (seenKeys.add(key)) {
+				items.add(new DivisionItemKey(criteria.getDivisionCode(), criteria.getItemCode()));
+			}
+		}
+
+		try {
+			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
+			Map<String, MaterialBalanceTierRow> cache = new HashMap<>();
+			for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
+				List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+				List<MaterialBalanceTierBatchResult> results = dao.selectDivisionBalanceForPriceBatch(companyCode,
+						window.fromYyyyMm, window.toYyyyMm, chunk);
+				for (MaterialBalanceTierBatchResult r : results) {
+					cache.put(divisionBalanceKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(),
+							window.fromYyyyMm, window.toYyyyMm), r.toRowOrNull());
+				}
+			}
+			return cache;
+		} catch (Exception e) {
+			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
+			// resolveItemPrice/resolveItemPriceWithNote 가 그 자리에서 단건 조회로 대체한다.
+			logger.error("수불부 단가(1단계) 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
+			return Map.of();
+		}
+	}
+
+	/**
 	 * {@link ItemPriceDao#selectRecentPurchasePrice} 가 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
-	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map)}/
-	 * {@link #resolveItemPriceWithNote(ItemPriceCriteria, Map, Map)} 에 그대로 넘기면 그 안에서 추가 DB
+	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map, Map, Map)}/
+	 * {@link #resolveItemPriceWithNote(ItemPriceCriteria, Map, Map, Map)} 에 그대로 넘기면 그 안에서 추가 DB
 	 * 호출 없이 값을 재사용한다.
 	 *
 	 * <p>이 조회는 1~2단계(수불부)에서 이미 가격을 찾은 자재에는 필요 없지만, 어떤 자재가 거기서 실패해
@@ -241,6 +300,11 @@ public class ItemPriceService extends GeneralService {
 			logger.error("표준원가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
 			return Map.of();
 		}
+	}
+
+	private static String divisionBalanceKey(String companyCode, String divisionCode, String itemCode, String fromYyyyMm,
+			String toYyyyMm) {
+		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(fromYyyyMm), nz(toYyyyMm));
 	}
 
 	private static String purchasePriceKey(String companyCode, String divisionCode, String itemCode, String fromYyyyMmdd,
