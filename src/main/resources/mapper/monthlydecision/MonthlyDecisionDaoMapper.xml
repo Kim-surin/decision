@@ -9,7 +9,37 @@
 		WHERE  COMPANY_CODE = #{companyCode}
 	</select>
 
-	<!-- ===================== 1. 내수 포괄 매출 생성 ===================== -->
+	<!--
+		mergeAggregatedSalesMst 가 MERGE 문의 USING 서브쿼리(WHERE + GROUP BY)로 감춰서 처리하던 대상
+		그룹을, 그와 동일한 WHERE 조건으로 먼저 SELECT DISTINCT 조회한다 — mergeAggregatedSalesMst 의
+		WHERE 절과 반드시 같이 맞춰야 한다(둘 중 하나만 고치면 그룹 발견 결과와 실제 집계 대상이 어긋난다).
+	-->
+	<select id="selectPendingDomesticGroups" resultType="com.kpmg.kdb.web.monthlydecision.dto.PendingDomesticGroup">
+		SELECT DISTINCT SM.COMPANY_CODE  AS companyCode
+		      ,SM.DIVISION_CODE         AS divisionCode
+		      ,SM.CUSTOMER_CODE         AS customerCode
+		FROM   SALES_MST SM
+		WHERE  SM.COMPANY_CODE = #{p.companyCode}
+		AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
+		AND    SM.EXPORT_FLAG = 'D'
+		AND    SM.VIRTUAL_YN = 'N'
+		AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE)
+		AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		AND    SM.DELIVERY_CUSTOMER_CODE = COALESCE(#{p.deliveryCustomerCode}, SM.DELIVERY_CUSTOMER_CODE)
+		ORDER  BY SM.DIVISION_CODE, SM.CUSTOMER_CODE
+	</select>
+
+	<!--
+		===================== 1. 내수 포괄 매출 생성 =====================
+		[버그 수정 이력] deleteAggregatedSalesDtl/deleteAggregatedSalesMst 는 원래 companyCode+기간
+		으로만 걸러 회사+기간의 기존 가상매출 전체를 지웠다(원본 MONTHLY_DECISION_PROC 도 동일 — 원래는
+		호출 1번이 회사+기간 전체를 한 번에 재생성하는 용도라 문제가 없었다). 그런데
+		DomesticBulkDecisionService 처럼 같은 회사+기간에 대해 고객사 그룹마다 generateVirtualSales 를
+		반복 호출하면, 그룹 B 처리 시의 삭제가 이미 처리 완료된 그룹 A 의 가상 SALES_MST/SALES_DTL 을
+		함께 지워버린다(FCR_MST 는 이미 그 SALES_NO 를 참조해 생성된 뒤라 orphan 이 됨). 그래서
+		mergeAggregatedSalesMst 와 동일하게 CUSTOMER_CODE/DIVISION_CODE COALESCE 조건을 추가했다 —
+		두 파라미터가 null 이면(기존 회사+기간 전체 호출) 조건이 무력화돼 원래 동작과 동일하다.
+	-->
 
 	<delete id="deleteAggregatedSalesDtl">
 		DELETE FROM SALES_DTL
@@ -18,7 +48,9 @@
 		                     WHERE  SM.COMPANY_CODE = #{p.companyCode}
 		                     AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
 		                     AND    SM.EXPORT_FLAG = 'D'
-		                     AND    SM.VIRTUAL_YN = 'Y')
+		                     AND    SM.VIRTUAL_YN = 'Y'
+		                     AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		                     AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE))
 	</delete>
 
 	<delete id="deleteAggregatedSalesMst">
@@ -28,7 +60,9 @@
 		                     WHERE  SM.COMPANY_CODE = #{p.companyCode}
 		                     AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
 		                     AND    SM.EXPORT_FLAG = 'D'
-		                     AND    SM.VIRTUAL_YN = 'Y')
+		                     AND    SM.VIRTUAL_YN = 'Y'
+		                     AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		                     AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE))
 	</delete>
 
 	<insert id="mergeAggregatedSalesMst">

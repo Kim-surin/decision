@@ -24,7 +24,7 @@ import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
-import com.kpmg.kdb.web.origindecision.IndividualBulkDecisionResult;
+import com.kpmg.kdb.web.origindecision.BulkDecisionResult;
 import com.kpmg.kdb.web.origindecision.IndividualBulkDecisionService;
 import com.kpmg.kdb.web.origindecision.IndividualDecisionRawLine;
 import com.kpmg.kdb.web.origindecision.OriginDecisionPipeline;
@@ -258,7 +258,7 @@ public class TestController extends GenericController {
 			String companyCode = "FRT100";
 			List<IndividualDecisionRawLine> rawLines = buildIndividualBulkMockLines();
 
-			IndividualBulkDecisionResult bulkResult = individualBulkDecisionService.run(companyCode, rawLines);
+			BulkDecisionResult bulkResult = individualBulkDecisionService.run(companyCode, rawLines);
 
 			Map<String, Object> value = new LinkedHashMap<>();
 			value.put("groupCount", bulkResult.getGroupCount());

@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import com.kpmg.kdb.web.monthlydecision.dto.CompanyDecisionFlags;
+import com.kpmg.kdb.web.monthlydecision.dto.PendingDomesticGroup;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 
@@ -12,6 +13,14 @@ import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 public interface MonthlyDecisionDao {
 
 	CompanyDecisionFlags selectCompanyDecisionFlags(@Param("companyCode") String companyCode);
+
+	/**
+	 * mergeAggregatedSalesMst 가 처리할 (companyCode,divisionCode,customerCode) 그룹 목록을 미리 조회한다
+	 * — mergeAggregatedSalesMst 의 WHERE 조건(EXPORT_FLAG='D', VIRTUAL_YN='N', 기간/사업부/고객사/
+	 * 배송처 필터)과 GROUP BY 대상을 그대로 SELECT DISTINCT 로 옮긴 것이다
+	 * ({@link com.kpmg.kdb.web.origindecision.DomesticDecisionGroupingService} 참고).
+	 */
+	List<PendingDomesticGroup> selectPendingDomesticGroups(@Param("p") VirtualSalesGenerationParams params);
 
 	/** "1. 내수 포괄 매출 생성" 전처리: 기존 가상 SALES_DTL 삭제 */
 	int deleteAggregatedSalesDtl(@Param("p") VirtualSalesGenerationParams params);

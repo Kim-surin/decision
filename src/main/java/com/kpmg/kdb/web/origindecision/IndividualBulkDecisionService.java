@@ -29,7 +29,7 @@ public class IndividualBulkDecisionService extends GeneralService {
 	@Autowired
 	private IndividualDecisionGroupingService groupingService;
 
-	public IndividualBulkDecisionResult run(String companyCode, List<IndividualDecisionRawLine> rawLines) {
+	public BulkDecisionResult run(String companyCode, List<IndividualDecisionRawLine> rawLines) {
 		List<VirtualSalesGenerationParams> groups = groupingService.prepare(rawLines);
 
 		List<SalesTarget> allTargets = new ArrayList<>();
@@ -56,6 +56,6 @@ public class IndividualBulkDecisionService extends GeneralService {
 		logger.info("개별판정 배치 완료. 그룹수={}, 대상건수={}, 실패건수={}", groups.size(), allTargets.size(),
 				allFailedTargets.size());
 
-		return new IndividualBulkDecisionResult(groups.size(), allTargets, allFailedTargets);
+		return new BulkDecisionResult(groups.size(), allTargets, allFailedTargets);
 	}
 }
