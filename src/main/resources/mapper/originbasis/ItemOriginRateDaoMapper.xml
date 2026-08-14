@@ -270,7 +270,16 @@
 		GROUP  BY V.ITEM_CODE, V.FROM_DATE, V.TO_DATE
 	</select>
 
-	<!-- 역내산 확인서(원산지확인서/증명서) 미수취 또는 요건 불충족 구매 건 집계 -->
+	<!--
+		역내산 확인서(원산지확인서/증명서) 미수취 또는 요건 불충족 구매 건 집계.
+
+		[버그 수정 이력] NOT EXISTS 서브쿼리 안의 ECM.DIVISION_CODE 조건은 원래 DOCUMENT_TYPE/APPLY_TYPE
+		값에 따라 비교 대상을 고르는 CASE WHEN 이었다(ItemNationDaoMapper.xml selectCooNation 과 동일한
+		조인 구조/버그 이력 — 그쪽 주석 참고). "컬럼을 CASE 로 비교"하는 패턴이 이번 세션에서 실제로
+		PostgreSQL 플래너를 오작동시킨 사례가 여러 번 있어 예방적으로 제거했다. CASE 를
+		DOCUMENT_TYPE/APPLY_TYPE 값으로 분기하는 OR-of-AND 로 풀어써서 원본과 동일한 3가지 분기,
+		동일한 무조건-참 의미(DOCUMENT_TYPE='D' AND APPLY_TYPE='A' 분기)를 그대로 보존했다.
+	-->
 	<select id="selectNonCertifiedOriginSummary" resultType="com.kpmg.kdb.web.originbasis.dto.PurchaseLedgerSummary">
 		SELECT COUNT(*)                          AS poCount
 		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0) AS warehousingAmountSum
@@ -291,11 +300,10 @@
 		        WHERE  ECM.SUBMIT_STATUS = '4'
 		        AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
 		        AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
-		        AND    ECM.DIVISION_CODE = CASE
-		                   WHEN ECM.DOCUMENT_TYPE = 'F' THEN PL.DIVISION_CODE
-		                   WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A' THEN ECM.DIVISION_CODE
-		                   WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M' THEN D.COO_RECEIPT_DIVISION_CODE
-		               END
+		        AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		               OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		               OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                   AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
 		        AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
 		               OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
 		                   AND PL.SEQ = ECD.WAREHOUSING_SEQ))
@@ -324,6 +332,9 @@
 		동일한 최종 결과이면서 그룹이 사라지지 않음). PL.ITEM_CODE IS NOT NULL 조건을 추가로 걸어
 		"실제 매칭 PO_LEDGER 행이 존재"함을 명시적으로 확인한다 — PL 이 NULL 확장된 phantom 행에서
 		NOT EXISTS(...) 만 단독으로는(모든 비교가 UNKNOWN이 되어) 참이 되어 잘못 카운트될 수 있기 때문.
+
+		[버그 수정 이력 2] NOT EXISTS 서브쿼리 안의 ECM.DIVISION_CODE 조건도 selectNonCertifiedOriginSummary
+		(단건)와 동일한 이유로 CASE WHEN 을 OR-of-AND 로 풀어썼다(자세한 이유는 단건 select 주석 참고).
 	-->
 	<select id="selectNonCertifiedOriginSummaryBatch" resultType="com.kpmg.kdb.web.originbasis.dto.NonCertifiedOriginSummaryResult">
 		SELECT V.ITEM_CODE                                    AS itemCode
@@ -343,11 +354,10 @@
 		              WHERE  ECM.SUBMIT_STATUS = '4'
 		              AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
 		              AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
-		              AND    ECM.DIVISION_CODE = CASE
-		                         WHEN ECM.DOCUMENT_TYPE = 'F' THEN PL.DIVISION_CODE
-		                         WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A' THEN ECM.DIVISION_CODE
-		                         WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M' THEN D.COO_RECEIPT_DIVISION_CODE
-		                     END
+		              AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                         AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
 		              AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
 		                     OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
 		                         AND PL.SEQ = ECD.WAREHOUSING_SEQ))
@@ -365,11 +375,10 @@
 		              WHERE  ECM.SUBMIT_STATUS = '4'
 		              AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
 		              AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
-		              AND    ECM.DIVISION_CODE = CASE
-		                         WHEN ECM.DOCUMENT_TYPE = 'F' THEN PL.DIVISION_CODE
-		                         WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A' THEN ECM.DIVISION_CODE
-		                         WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M' THEN D.COO_RECEIPT_DIVISION_CODE
-		                     END
+		              AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                         AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
 		              AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
 		                     OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
 		                         AND PL.SEQ = ECD.WAREHOUSING_SEQ))

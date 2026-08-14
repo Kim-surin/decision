@@ -10,6 +10,16 @@
 		P_ASSETS_TYPE 을 넘기지 않아(NULL) 항상 ELSE 분기(HS_CODE = 파라미터 값)로 귀결된다. 그 분기만
 		이관하고 P_ASSETS_TYPE 자체는 옮기지 않았다(호출부 조건에서 도달 불가능한 경로 생략).
 		FTA_CODE 는 원본처럼 'PKRRC' 로 하드코딩한다(원본도 파라미터를 쓰지 않고 하드코딩).
+
+		[버그 수정 이력] ECM.DIVISION_CODE 조건은 원래 DOCUMENT_TYPE/APPLY_TYPE 값에 따라 비교 대상을
+		고르는 CASE WHEN 이었다(원본 PL/SQL 도 동일 — DOCUMENT_TYPE='D' AND APPLY_TYPE='A' 분기는
+		ECM.DIVISION_CODE = ECM.DIVISION_CODE 로 자기 자신과 비교하는데, 이는 "확인서 전사 적용"일 때
+		DIVISION_CODE 제약이 없어야 한다는 의도된 무조건-참 설계다). 이번 세션에서 "조인/WHERE 조건에
+		컬럼을 CASE 로 비교"하는 패턴이 selectMaterialCandidates 등에서 실제로 PostgreSQL 플래너를
+		오작동시켜 특정 파라미터 조합에서만 수 초~수 분씩 튀는 사례를 여러 번 확인해서, 이 쿼리도 같은
+		위험을 예방적으로 제거했다 — CASE 를 DOCUMENT_TYPE/APPLY_TYPE 값으로 분기하는 OR-of-AND 로
+		풀어써서 ECM.DIVISION_CODE 비교가 항상 리터럴 컬럼 비교(또는 조건 자체가 없음)가 되도록
+		했다(원본 CASE 와 동일한 3가지 분기, 동일한 무조건-참 의미를 그대로 보존).
 	-->
 	<select id="selectCooNation" resultType="string">
 		SELECT CASE WHEN COUNT(*) > 1 THEN 'TT' ELSE MAX(COO_NATION) END
@@ -33,11 +43,10 @@
 		        WHERE  ECM.SUBMIT_STATUS = '4'
 		        AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
 		        AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
-		        AND    ECM.DIVISION_CODE = CASE
-		                   WHEN ECM.DOCUMENT_TYPE = 'F' THEN PL.DIVISION_CODE
-		                   WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A' THEN ECM.DIVISION_CODE
-		                   WHEN ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M' THEN D.COO_RECEIPT_DIVISION_CODE
-		               END
+		        AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		               OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		               OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                   AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
 		        AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
 		               OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
 		                   AND PL.SEQ = ECD.WAREHOUSING_SEQ))
