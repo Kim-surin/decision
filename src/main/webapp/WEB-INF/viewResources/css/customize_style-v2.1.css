@@ -1416,3 +1416,17 @@ Bootstrap CSS Style Add
 .overflow-x-auto { overflow-x:auto; }
 .overflow-y-auto { overflow-y:auto; }
 
+
+/* 검색팝업 열리는 검색조건 */
+.input-btn-search-group .form-control {
+    height: 35px !important;
+}
+
+.input-btn-search-group button {
+    height: 35px !important;
+    min-width: 54px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
