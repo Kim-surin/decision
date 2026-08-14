@@ -1,5 +1,7 @@
 package com.kpmg.kdb.web.origindecision;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 
 import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
@@ -21,11 +23,11 @@ public interface IndividualVirtualSalesDao {
 			@Param("p") VirtualSalesGenerationParams params);
 
 	/**
-	 * "3. SALES_DTL 가상 매출 생성": {@code productCode} 1건에 대해 요청 기간(p.yyyymm) 동안의 실매출을
-	 * 집계해 가상 SALES_DTL 을 MERGE 로 생성한다. 요청받은 제품 코드 개수만큼 반복 호출한다(월 판정과
-	 * 달리 IN 절로 한 번에 묶지 않는다 — 제품마다 단가 정책(MIN)과 SALES_SEQ 채번이 독립적이라 원본
-	 * PL/SQL 도 제품별로 별개의 MERGE 문을 실행했다).
+	 * "3. SALES_DTL 가상 매출 생성": {@code productCodes} 전체에 대해 요청 기간(p.yyyymm) 동안의 실매출을
+	 * 집계해 가상 SALES_DTL 을 한 번의 MERGE 로 생성한다(배치화 — 원본은 제품마다 별개의 MERGE 문을
+	 * 반복 실행했으나, GROUP BY 에 PRODUCT_CODE 가 포함돼 있어 여러 제품을 한 번에 넘겨도 상품별 집계
+	 * 결과와 SALES_SEQ 채번 방식은 동일하다).
 	 */
 	int mergeIndividualSalesDtl(@Param("virtualSalesNo") String virtualSalesNo,
-			@Param("p") VirtualSalesGenerationParams params, @Param("productCode") String productCode);
+			@Param("p") VirtualSalesGenerationParams params, @Param("productCodes") List<String> productCodes);
 }

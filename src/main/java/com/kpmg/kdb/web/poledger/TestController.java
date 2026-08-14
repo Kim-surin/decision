@@ -24,6 +24,9 @@ import com.kpmg.kdb.web.coodecision.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindecision.IndividualBulkDecisionResult;
+import com.kpmg.kdb.web.origindecision.IndividualBulkDecisionService;
+import com.kpmg.kdb.web.origindecision.IndividualDecisionRawLine;
 import com.kpmg.kdb.web.origindecision.OriginDecisionPipeline;
 import com.kpmg.kdb.web.origindecision.OriginDecisionPipelineFactory;
 import com.kpmg.kdb.web.originbasis.HsCodeService;
@@ -59,6 +62,8 @@ public class TestController extends GenericController {
 	private ExclusionRuleDecisionService exclusionRuleDecisionService;
 	@Autowired
 	private OriginDecisionPipelineFactory pipelineFactory;
+	@Autowired
+	private IndividualBulkDecisionService individualBulkDecisionService;
 
 	@RequestMapping(value = "/origin/compliance/test/test")
 	@ResponseBody
@@ -227,6 +232,75 @@ public class TestController extends GenericController {
 			result.setMessage("개별 판정 테스트 실행 중 오류: " + e.getMessage());
 		}
 		return result;
+	}
+
+	/**
+	 * 개별판정 배치 처리(Option A) 테스트 엔드포인트. 원본 (SALES_NO, PRODUCT_CODE) 행 목록을
+	 * {@link IndividualDecisionGroupingService} 로 CUSTOMER_CODE+DIVISION_CODE+YYYYMM+COMPANY_CODE
+	 * 기준 그룹핑하고, 그룹마다 {@link OriginDecisionPipeline} 을 새로 만들어 가상매출 생성부터 STATUS
+	 * 업데이트까지 수행한다({@link IndividualBulkDecisionService} 참고). DB 에 실제로 반영되므로 운영
+	 * DB 에서는 호출하지 않는다.
+	 *
+	 * <p>mock 데이터는 전부 companyCode=FRT100/divisionCode=FRT101/customerCode=1248533444/
+	 * yyyymm=202604 로 같은 그룹 1개에 속한다. PRODUCT_CODE=09100AT050 이 SALES_NO 10건에 걸쳐
+	 * 중복 등장하므로 그중 가장 먼저 나온 SALES_NO=202604302648 만 대표로 남고, PRODUCT_CODE=09100AT150
+	 * (SALES_NO=202604303126)까지 더해 그룹당 productCodes 는 2건([09100AT050, 09100AT150])이 된다.
+	 */
+	@RequestMapping(value = "/origin/compliance/test/individual-bulk-decision")
+	@ResponseBody
+	public Result runIndividualBulkDecision() {
+		Result result = new Result();
+		try {
+			String companyCode = "FRT100";
+			List<IndividualDecisionRawLine> rawLines = buildIndividualBulkMockLines();
+
+			IndividualBulkDecisionResult bulkResult = individualBulkDecisionService.run(companyCode, rawLines);
+
+			Map<String, Object> value = new LinkedHashMap<>();
+			value.put("groupCount", bulkResult.getGroupCount());
+			value.put("targets",
+					bulkResult.getTargets().stream().map(this::describeTarget).collect(Collectors.toList()));
+			value.put("failedTargets",
+					bulkResult.getFailedTargets().stream().map(this::describeTarget).collect(Collectors.toList()));
+
+			result.setSuccess(bulkResult.getFailedTargets().isEmpty());
+			result.setMessage(bulkResult.getFailedTargets().isEmpty() ? "개별판정 배치 완료" : "일부 판정대상 실패 - value 확인");
+			result.setValue(value);
+		} catch (Exception e) {
+			logger.error("개별판정 배치 테스트 실행 중 오류", e);
+			result.setSuccess(false);
+			result.setMessage("개별판정 배치 테스트 실행 중 오류: " + e.getMessage());
+		}
+		return result;
+	}
+
+	private List<IndividualDecisionRawLine> buildIndividualBulkMockLines() {
+		List<IndividualDecisionRawLine> lines = new ArrayList<>();
+		lines.add(rawLine("202604302648", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("202604303125", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("202604303658", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("202604303792", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("202604303909", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("202604304022", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("202604304091", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("202604304317", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("202604304960", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT050"));
+		lines.add(rawLine("1248533444FRT101202604", "FRT101", "FRT100", "1248533444", "D", "20260401", "09100AT050"));
+		lines.add(rawLine("202604303126", "FRT101", "FRT100", "1248533444", "D", "20260430", "09100AT150"));
+		return lines;
+	}
+
+	private IndividualDecisionRawLine rawLine(String salesNo, String divisionCode, String companyCode,
+			String customerCode, String exportFlag, String invoiceDate, String productCode) {
+		IndividualDecisionRawLine line = new IndividualDecisionRawLine();
+		line.setSalesNo(salesNo);
+		line.setDivisionCode(divisionCode);
+		line.setCompanyCode(companyCode);
+		line.setCustomerCode(customerCode);
+		line.setExportFlag(exportFlag);
+		line.setInvoiceDate(invoiceDate);
+		line.setProductCode(productCode);
+		return line;
 	}
 
 	/**

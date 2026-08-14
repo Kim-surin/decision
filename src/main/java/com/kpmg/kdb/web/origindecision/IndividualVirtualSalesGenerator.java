@@ -38,10 +38,8 @@ public class IndividualVirtualSalesGenerator extends GeneralService implements V
 		// 2. SALES_MST 가상 매출 생성
 		dao.mergeIndividualSalesMst(virtualSalesNo, params);
 
-		// 3. SALES_DTL 가상 매출 생성 (PRODUCT_CODE 만큼 반복)
-		for (String productCode : params.getProductCodes()) {
-			dao.mergeIndividualSalesDtl(virtualSalesNo, params, productCode);
-		}
+		// 3. SALES_DTL 가상 매출 생성 (요청받은 PRODUCT_CODE 전체를 1회 배치 MERGE 로 처리)
+		dao.mergeIndividualSalesDtl(virtualSalesNo, params, params.getProductCodes());
 
 		SalesTarget target = new SalesTarget();
 		target.setCompanyCode(params.getCompanyCode());
