@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -278,10 +279,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 				row.setImApplyYn(resolveImApplyYn(bomType, fta.getIntermediateYn()));
 
 				chunk.add(row);
-				if (chunk.size() >= INSERT_CHUNK_SIZE) {
-					dao.insertFcrMstRows(chunk);
-					chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
-				}
+				chunk = flushIfFull(chunk, dao::insertFcrMstRows);
 			}
 		}
 		if (!chunk.isEmpty()) {
@@ -353,10 +351,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 			row.setImApplyYn(resolveImApplyYn(bomType, sales.getIntermediateYn()));
 
 			chunk.add(row);
-			if (chunk.size() >= INSERT_CHUNK_SIZE) {
-				dao.insertFcrMstRows(chunk);
-				chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
-			}
+			chunk = flushIfFull(chunk, dao::insertFcrMstRows);
 		}
 		if (!chunk.isEmpty()) {
 			dao.insertFcrMstRows(chunk);
@@ -398,10 +393,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		List<FcrDtlInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
 		for (List<ResolvedLeaf> group : grouped.values()) {
 			chunk.add(aggregateLeafGroup(group));
-			if (chunk.size() >= INSERT_CHUNK_SIZE) {
-				dao.insertFcrDtlRows(chunk);
-				chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
-			}
+			chunk = flushIfFull(chunk, dao::insertFcrDtlRows);
 		}
 		if (!chunk.isEmpty()) {
 			dao.insertFcrDtlRows(chunk);
@@ -523,10 +515,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 			row.setPriceNote(null);
 
 			chunk.add(row);
-			if (chunk.size() >= INSERT_CHUNK_SIZE) {
-				dao.insertFcrDtlRows(chunk);
-				chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
-			}
+			chunk = flushIfFull(chunk, dao::insertFcrDtlRows);
 		}
 		if (!chunk.isEmpty()) {
 			dao.insertFcrDtlRows(chunk);
@@ -611,6 +600,21 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 
 	private static String nz(String value) {
 		return value == null ? "" : value;
+	}
+
+	/**
+	 * {@code chunk} 가 {@link #INSERT_CHUNK_SIZE} 에 도달했으면 {@code insert} 로 즉시 반영하고 새 청크를
+	 * 돌려준다(그렇지 않으면 {@code chunk} 를 그대로 돌려준다) — createDomesticFcrMst/createExportFcrMst/
+	 * createBomLeafFcrDtl/createProductFcrDtl 4곳에서 반복되던 "청크가 차면 즉시 INSERT" 패턴을 하나로
+	 * 모았다. 루프가 끝난 뒤 남은 자투리 청크는 호출측이 기존과 동일하게 {@code if (!chunk.isEmpty())} 로
+	 * 직접 반영해야 한다.
+	 */
+	private static <T> List<T> flushIfFull(List<T> chunk, Consumer<List<T>> insert) {
+		if (chunk.size() < INSERT_CHUNK_SIZE) {
+			return chunk;
+		}
+		insert.accept(chunk);
+		return new ArrayList<>(INSERT_CHUNK_SIZE);
 	}
 
 	private static BigDecimal nvl(BigDecimal value) {
