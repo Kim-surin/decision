@@ -25,6 +25,7 @@ import com.kpmg.kdb.web.coodecision.dto.OriginCriteria;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 import com.kpmg.kdb.web.origindecision.BulkDecisionResult;
+import com.kpmg.kdb.web.origindecision.DomesticBulkDecisionService;
 import com.kpmg.kdb.web.origindecision.IndividualBulkDecisionService;
 import com.kpmg.kdb.web.origindecision.IndividualDecisionRawLine;
 import com.kpmg.kdb.web.origindecision.OriginDecisionPipeline;
@@ -64,6 +65,8 @@ public class TestController extends GenericController {
 	private OriginDecisionPipelineFactory pipelineFactory;
 	@Autowired
 	private IndividualBulkDecisionService individualBulkDecisionService;
+	@Autowired
+	private DomesticBulkDecisionService domesticBulkDecisionService;
 
 	@RequestMapping(value = "/origin/compliance/test/test")
 	@ResponseBody
@@ -840,6 +843,45 @@ public class TestController extends GenericController {
 			logger.error("수출 판정 테스트 실행 중 오류", e);
 			result.setSuccess(false);
 			result.setMessage("수출 판정 테스트 실행 중 오류: " + e.getMessage());
+		}
+		return result;
+	}
+
+	/**
+	 * 내수 월판정(MONTHLY_DECISION_PROC 이관) 배치 테스트 엔드포인트. companyCode/yyyymmdd 만 지정하고
+	 * divisionCode/customerCode/deliveryCustomerCode/productCodes 는 모두 비워, {@link
+	 * DomesticDecisionGroupingService} 가 해당 회사·기간의 판정 대상 (DIVISION_CODE, CUSTOMER_CODE)
+	 * 그룹을 전부 조회하도록 한다({@link DomesticBulkDecisionService} 참고) — 실제 MONTHLY_DECISION_PROC
+	 * 가 회사 전체를 한 번에 처리하던 것과 동일한 범위다. 그룹마다 가상매출 생성부터 STATUS 업데이트까지
+	 * 별도 파이프라인으로 수행되며, DB 에 실제로 반영되므로 운영 DB 에서는 호출하지 않는다.
+	 *
+	 * companyCode=FRT100, yyyymmdd=202604(2026년 4월).
+	 */
+	@RequestMapping(value = "/origin/compliance/test/monthly-decision")
+	@ResponseBody
+	public Result runMonthlyDecision() {
+		Result result = new Result();
+		try {
+			VirtualSalesGenerationParams filter = new VirtualSalesGenerationParams();
+			filter.setCompanyCode("FRT100");
+			filter.setYyyymmdd("202604");
+
+			BulkDecisionResult bulkResult = domesticBulkDecisionService.run(filter);
+
+			Map<String, Object> value = new LinkedHashMap<>();
+			value.put("groupCount", bulkResult.getGroupCount());
+			value.put("targets",
+					bulkResult.getTargets().stream().map(this::describeTarget).collect(Collectors.toList()));
+			value.put("failedTargets",
+					bulkResult.getFailedTargets().stream().map(this::describeTarget).collect(Collectors.toList()));
+
+			result.setSuccess(bulkResult.getFailedTargets().isEmpty());
+			result.setMessage(bulkResult.getFailedTargets().isEmpty() ? "월판정 배치 완료" : "일부 판정대상 실패 - value 확인");
+			result.setValue(value);
+		} catch (Exception e) {
+			logger.error("월판정 배치 테스트 실행 중 오류", e);
+			result.setSuccess(false);
+			result.setMessage("월판정 배치 테스트 실행 중 오류: " + e.getMessage());
 		}
 		return result;
 	}
