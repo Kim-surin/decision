@@ -14,13 +14,17 @@
     </appender>
 
     <!-- File Appender: 콘솔은 스크롤/뷰어 제한으로 긴 로그가 잘리므로, 같은 내용을 파일로도 남긴다.
-         실행할 때마다(앱 재시작 시) 파일을 새로 시작한다(append=false) - 이전 실행의 로그가 섞이지
-         않아 이번 실행분만 그대로 텍스트 파일로 확인할 수 있다. 앱을 재시작하지 않고 여러 테스트
-         엔드포인트를 연달아 호출하면 그 호출들은 한 파일에 계속 쌓인다. 경로는 앱 실행 시점의
-         작업 디렉터리(working directory) 기준 상대경로다. -->
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+         일자별로 쌓이도록 자정에 롤오버한다 - 오늘 로그는 logs/decision.log 에 계속 append 되고(앱을
+         재시작해도 같은 날이면 이어서 쌓인다), 자정이 지나면 어제 분량이 logs/decision.2026-08-18.log
+         형태로 이름이 바뀌어 보관되고 logs/decision.log 는 새로 시작한다. maxHistory 로 30일치만 보관
+         하고 그 이전 파일은 자동 삭제한다(무한정 쌓이지 않도록). 경로는 앱 실행 시점의 작업
+         디렉터리(working directory) 기준 상대경로다. -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/decision.log</file>
-        <append>false</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/decision.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
