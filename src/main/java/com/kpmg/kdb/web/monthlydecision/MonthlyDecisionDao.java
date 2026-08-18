@@ -22,6 +22,14 @@ public interface MonthlyDecisionDao {
 	 */
 	List<PendingDomesticGroup> selectPendingDomesticGroups(@Param("p") VirtualSalesGenerationParams params);
 
+	/**
+	 * 판정대상 커서(C_SALES_MST, {@link #selectDecisionTargets})의 EXPORT_FLAG='E' 분기만 떼어 미리
+	 * 조회한다 — 수출은 가상매출 생성이 필요 없어(이미 실제 SALES_NO 에 TARGET_FTA_CODE 가 세팅돼 있음)
+	 * {@link #selectPendingDomesticGroups} 처럼 고객사/사업부 그룹 발견을 거칠 필요가 없다
+	 * ({@link com.kpmg.kdb.web.origindecision.ExportDecisionGroupingService} 참고).
+	 */
+	List<SalesTarget> selectPendingExportTargets(@Param("p") VirtualSalesGenerationParams params);
+
 	/** "1. 내수 포괄 매출 생성" 전처리: 기존 가상 SALES_DTL 삭제 */
 	int deleteAggregatedSalesDtl(@Param("p") VirtualSalesGenerationParams params);
 

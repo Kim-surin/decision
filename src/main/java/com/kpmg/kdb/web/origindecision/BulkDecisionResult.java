@@ -6,7 +6,8 @@ import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 
 /**
  * 그룹(가상 SALES_NO 또는 실제 SALES_NO)별 파이프라인 실행을 취합한 결과. {@link IndividualBulkDecisionService},
- * {@link DomesticBulkDecisionService}, {@link ExportBulkDecisionService} 가 공용으로 쓴다.
+ * {@link DomesticBulkDecisionService}, {@link ExportBulkDecisionService}, {@link MonthlyBulkDecisionService}
+ * 가 공용으로 쓴다.
  */
 public class BulkDecisionResult {
 

@@ -16,21 +16,24 @@ import com.kpmg.kdb.core.generic.GenericController;
 import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 import com.kpmg.kdb.web.origindecision.BulkDecisionResult;
-import com.kpmg.kdb.web.origindecision.DomesticBulkDecisionService;
 import com.kpmg.kdb.web.origindecision.ExportBulkDecisionService;
 import com.kpmg.kdb.web.origindecision.ExportDecisionTarget;
 import com.kpmg.kdb.web.origindecision.IndividualBulkDecisionRequest;
 import com.kpmg.kdb.web.origindecision.IndividualBulkDecisionService;
 import com.kpmg.kdb.web.origindecision.IndividualDecisionRawLine;
+import com.kpmg.kdb.web.origindecision.MonthlyBulkDecisionService;
 
 /**
  * 벌크 판정(개별판정/월판정/수출 개별판정) 동작 확인용 임시 테스트 컨트롤러.
  * 운영 기능이 아니므로 검증이 끝나면 삭제할 것. DB 에 실제로 반영되므로 운영 DB 에서는 호출하지 않는다.
  *
  * 세 엔드포인트 모두 {@link com.kpmg.kdb.web.origindecision.BulkDecisionService} 공통 인터페이스를
- * 구현하는 서비스(각각 {@link IndividualBulkDecisionService}, {@link DomesticBulkDecisionService},
+ * 구현하는 서비스(각각 {@link IndividualBulkDecisionService}, {@link MonthlyBulkDecisionService},
  * {@link ExportBulkDecisionService})를 호출하고, 동일한 {@link BulkDecisionResult}
- * (groupCount/targets/failedTargets) 응답 구조를 따른다.
+ * (groupCount/targets/failedTargets) 응답 구조를 따른다. 월판정은 내수(EXPORT_FLAG='D')와
+ * 수출(EXPORT_FLAG='E')을 모두 포함해야 하므로 {@link MonthlyBulkDecisionService} 가 내부적으로
+ * {@link com.kpmg.kdb.web.origindecision.DomesticBulkDecisionService}(내수)와 {@link
+ * ExportBulkDecisionService}(수출)를 순서대로 호출해 결과를 합친다.
  */
 @Controller
 public class TestController extends GenericController {
@@ -38,7 +41,7 @@ public class TestController extends GenericController {
 	@Autowired
 	private IndividualBulkDecisionService individualBulkDecisionService;
 	@Autowired
-	private DomesticBulkDecisionService domesticBulkDecisionService;
+	private MonthlyBulkDecisionService monthlyBulkDecisionService;
 	@Autowired
 	private ExportBulkDecisionService exportBulkDecisionService;
 
@@ -81,12 +84,12 @@ public class TestController extends GenericController {
 	}
 
 	/**
-	 * 내수 월판정(MONTHLY_DECISION_PROC 이관) 배치 테스트 엔드포인트. companyCode/yyyymmdd 만 지정하고
+	 * 월판정(MONTHLY_DECISION_PROC 이관) 배치 테스트 엔드포인트. companyCode/yyyymmdd 만 지정하고
 	 * divisionCode/customerCode/deliveryCustomerCode/productCodes 는 모두 비워, {@link
-	 * com.kpmg.kdb.web.origindecision.DomesticDecisionGroupingService} 가 해당 회사·기간의 판정 대상
-	 * (DIVISION_CODE, CUSTOMER_CODE) 그룹을 전부 조회하도록 한다({@link DomesticBulkDecisionService}
-	 * 참고) — 실제 MONTHLY_DECISION_PROC 가 회사 전체를 한 번에 처리하던 것과 동일한 범위다. 그룹마다
-	 * 가상매출 생성부터 STATUS 업데이트까지 별도 파이프라인으로 수행된다.
+	 * MonthlyBulkDecisionService} 가 해당 회사·기간의 내수(EXPORT_FLAG='D', 고객사/사업부 그룹마다
+	 * 가상매출 생성 후 판정)와 수출(EXPORT_FLAG='E', 이미 TARGET_FTA_CODE 가 세팅된 실제 매출 판정)을
+	 * 모두 처리하도록 한다 — 레거시 판정대상 커서(C_SALES_MST)가 두 흐름을 한 번에 순회하던 것과 동일한
+	 * 범위다.
 	 *
 	 * companyCode=FRT100, yyyymmdd=202604(2026년 4월).
 	 */
@@ -99,7 +102,7 @@ public class TestController extends GenericController {
 			filter.setCompanyCode("FRT100");
 			filter.setYyyymmdd("202604");
 
-			BulkDecisionResult bulkResult = domesticBulkDecisionService.run(filter);
+			BulkDecisionResult bulkResult = monthlyBulkDecisionService.run(filter);
 
 			result.setSuccess(bulkResult.getFailedTargets().isEmpty());
 			result.setMessage(bulkResult.getFailedTargets().isEmpty() ? "월판정 배치 완료" : "일부 판정대상 실패 - value 확인");
