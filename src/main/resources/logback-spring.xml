@@ -64,14 +64,43 @@
 	<logger name="org.springframework.security.web.authentication.AnonymousAuthenticationFilter" level="OFF"/>
 	<logger name="org.springframework.security.web.access.intercept.FilterSecurityInterceptor" level="OFF"/>
     
-    <!-- root레벨 설정 -->
+    <!-- root레벨 설정: FILE 은 여기 안 붙인다 - 판정(원산지판정) 관련 패키지만 파일로 남기고
+         (아래), 그 외(Spring 프레임워크 등)는 CONSOLE 로만 나가게 한다. -->
     <root level="debug">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
     </root>
 
     <!-- 특정패키지 로깅레벨 설정 -->
     <logger name="org.apache.ibatis" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <!-- 판정(원산지판정) 흐름 패키지만 FILE 에도 남긴다 - additivity="false" 로 root(CONSOLE 전용)로
+         전파되지 않게 막고 이 로거에서 CONSOLE/FILE 을 둘 다 직접 붙인다(안 붙이면 콘솔에서도 안 보임).
+         org.apache.ibatis(SQL 디버그 로그)는 이미 위에서 FILE 이 붙어 있어 판정 쿼리도 그대로 파일에
+         남는다. -->
+    <logger name="com.kpmg.kdb.web.origindecision" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+    <logger name="com.kpmg.kdb.web.coodecision" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+    <logger name="com.kpmg.kdb.web.monthlydecision" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+    <logger name="com.kpmg.kdb.web.createfcr" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+    <logger name="com.kpmg.kdb.web.originbasis" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+    <logger name="com.kpmg.kdb.web.poledger.TestController" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
