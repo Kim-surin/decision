@@ -20,17 +20,23 @@ import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
  * 시점에 productCodes 스코프가 고정돼(모든 target 에 동일 적용) 여러 그룹을 파이프라인 하나로 누적
  * 처리할 수 없다 — 그래서 그룹마다 파이프라인 인스턴스를 새로 만드는 방식을 택했다(기존 파이프라인/
  * DTO/하위 인터페이스는 전혀 건드리지 않음).
+ *
+ * <p>{@link BulkDecisionService} 공통 인터페이스를 구현하며, companyCode+원본 행 목록은
+ * {@link IndividualBulkDecisionRequest} 로 묶어서 받는다.
  */
 @Service
-public class IndividualBulkDecisionService extends GeneralService {
+public class IndividualBulkDecisionService extends GeneralService
+		implements BulkDecisionService<IndividualBulkDecisionRequest> {
 
 	@Autowired
 	private OriginDecisionPipelineFactory pipelineFactory;
 	@Autowired
 	private IndividualDecisionGroupingService groupingService;
 
-	public BulkDecisionResult run(String companyCode, List<IndividualDecisionRawLine> rawLines) {
-		List<VirtualSalesGenerationParams> groups = groupingService.prepare(rawLines);
+	@Override
+	public BulkDecisionResult run(IndividualBulkDecisionRequest request) {
+		String companyCode = request.getCompanyCode();
+		List<VirtualSalesGenerationParams> groups = groupingService.prepare(request.getRawLines());
 
 		List<SalesTarget> allTargets = new ArrayList<>();
 		List<SalesTarget> allFailedTargets = new ArrayList<>();

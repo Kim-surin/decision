@@ -21,15 +21,19 @@ import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
  * 집계하고 파이프라인 하나가 그 결과 target 전체를 처리했다(그룹별 결과가 하나의 targets/failedTargets
  * 로 뭉뚱그려짐). 이 서비스는 그룹을 미리 목록으로 뽑아 그룹마다 별도 파이프라인/결과를 갖도록
  * 재구성한 것으로, 개별판정 배치와 동일한 그룹 단위 처리·결과 취합 구조를 내수에도 적용한다.
+ *
+ * <p>{@link BulkDecisionService} 공통 인터페이스를 구현한다.
  */
 @Service
-public class DomesticBulkDecisionService extends GeneralService {
+public class DomesticBulkDecisionService extends GeneralService
+		implements BulkDecisionService<VirtualSalesGenerationParams> {
 
 	@Autowired
 	private OriginDecisionPipelineFactory pipelineFactory;
 	@Autowired
 	private DomesticDecisionGroupingService groupingService;
 
+	@Override
 	public BulkDecisionResult run(VirtualSalesGenerationParams filter) {
 		List<VirtualSalesGenerationParams> groups = groupingService.prepare(filter);
 

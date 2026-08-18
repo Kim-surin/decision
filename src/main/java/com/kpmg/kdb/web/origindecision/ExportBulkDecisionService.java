@@ -18,13 +18,16 @@ import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
  * <p>대상마다 {@link OriginDecisionPipeline} 을 새로 만들어 CREATE_FCR-&gt;COO_DECISION-&gt;STATUS
  * 업데이트 3단계(가상매출 생성 단계 없음)를 순서대로 수행한다 — {@link OriginDecisionPipelineFactory#forExport}
  * 참고.
+ *
+ * <p>{@link BulkDecisionService} 공통 인터페이스를 구현한다.
  */
 @Service
-public class ExportBulkDecisionService extends GeneralService {
+public class ExportBulkDecisionService extends GeneralService implements BulkDecisionService<List<ExportDecisionTarget>> {
 
 	@Autowired
 	private OriginDecisionPipelineFactory pipelineFactory;
 
+	@Override
 	public BulkDecisionResult run(List<ExportDecisionTarget> targets) {
 		List<SalesTarget> allTargets = new ArrayList<>();
 		List<SalesTarget> allFailedTargets = new ArrayList<>();
