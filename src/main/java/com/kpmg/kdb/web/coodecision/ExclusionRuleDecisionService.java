@@ -3,6 +3,8 @@ package com.kpmg.kdb.web.coodecision;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -43,8 +45,7 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	 * TYPE 4/16-2단계와 동일하게 VG_INKOTERMS_AMOUNT(값기준) 를 분모로 사용하는 패턴이므로 결함 수정과
 	 * 함께 동일하게 강제 'N' 처리 대상에 포함했다.
 	 */
-	private static final java.util.Set<String> CTC_ONLY_FORCED_N_TYPES = java.util.Set.of("4", "6", "13", "15", "16",
-			"17");
+	private static final Set<String> CTC_ONLY_FORCED_N_TYPES = Set.of("4", "6", "13", "15", "16", "17");
 
 	/** 단발성 호출용 편의 오버로드(테스트 등) — 이 호출 1건 범위에서만 유효한 캐시를 새로 만들어 위임한다. */
 	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
@@ -201,7 +202,7 @@ public class ExclusionRuleDecisionService extends GeneralService {
 				.map(ExclusionRuleDecisionService::nvl)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-		BigDecimal maxRate = details.stream().map(ExclusionRuleDetail::getExclusionRate).filter(java.util.Objects::nonNull)
+		BigDecimal maxRate = details.stream().map(ExclusionRuleDetail::getExclusionRate).filter(Objects::nonNull)
 				.max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
 
 		// VG_INKOTERMS_AMOUNT = 0 이면 원본과 동일하게 예외 전파(ArithmeticException, 상위 catch에서 흡수)

@@ -3,6 +3,7 @@ package com.kpmg.kdb.web.coodecision;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,7 +121,7 @@ public class RvcCriteriaDecisionService {
 		return satisfied ? "Y" : "N";
 	}
 
-	private static BigDecimal sum(List<MaterialOriginRow> rows, java.util.function.Function<MaterialOriginRow, BigDecimal> extractor) {
+	private static BigDecimal sum(List<MaterialOriginRow> rows, Function<MaterialOriginRow, BigDecimal> extractor) {
 		return rows.stream().map(extractor).map(RvcCriteriaDecisionService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
