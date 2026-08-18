@@ -114,17 +114,16 @@ public class OriginDeterminationService extends GeneralService implements Origin
 				// FM_LIST 행마다 즉시 실행하던 FCR_RESULT INSERT/UPDATE_FRM 재조회/FCR_MST 최종결과 UPDATE
 				// 를 모두 모았다가 루프가 끝난 뒤 한 번씩 배치로 반영한다(OriginDeterminationSupportService
 				// #flushPendingResultsBatch/#resolveDeferredUpdateFrm/#flushFcrMstUpdates 참고).
-				List<OriginDeterminationResult> allPendingResults = new ArrayList<>();
-				List<OriginDeterminationTarget> deferredUpdateFrmTargets = new ArrayList<>();
-				List<FcrMstDecisionUpdateRow> fcrMstUpdateBatch = new ArrayList<>();
+				DeterminationRunContext runContext = new DeterminationRunContext(invoiceDate, newAptaPsrFlag, mode,
+						exclusionRuleCache, originCriteriaCache, productLineBufferCache, materialOriginRowsCache,
+						rcepCache);
+				PendingBatch pending = new PendingBatch();
 				for (OriginDeterminationTarget fmData : fmListRows) {
-					decideOneFtaLine(dao, fmData, invoiceDate, newAptaPsrFlag, mode, exclusionRuleCache,
-							originCriteriaCache, productLineBufferCache, materialOriginRowsCache, rcepCache,
-							allPendingResults, deferredUpdateFrmTargets, fcrMstUpdateBatch);
+					decideOneFtaLine(dao, fmData, runContext, pending);
 				}
-				supportService.flushPendingResultsBatch(allPendingResults);
-				supportService.resolveDeferredUpdateFrm(deferredUpdateFrmTargets, fcrMstUpdateBatch);
-				supportService.flushFcrMstUpdates(fcrMstUpdateBatch);
+				supportService.flushPendingResultsBatch(pending.results);
+				supportService.resolveDeferredUpdateFrm(pending.deferredUpdateFrmTargets, pending.fcrMstUpdateBatch);
+				supportService.flushFcrMstUpdates(pending.fcrMstUpdateBatch);
 			}
 		} catch (Exception e) {
 			logger.error("COO_DECISION 실패. companyCode={}, salesNo={}", companyCode, salesNo, e);
@@ -152,17 +151,13 @@ public class OriginDeterminationService extends GeneralService implements Origin
 		dao.insertFcrResultForProducts(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
 	}
 
-	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmData, String invoiceDate,
-			String newAptaPsrFlag, OriginDeterminationMode mode, ExclusionRuleCache exclusionRuleCache,
-			OriginCriteriaCache originCriteriaCache, Map<String, BufferRates> productLineBufferCache,
-			Map<String, List<MaterialOriginRow>> materialOriginRowsCache, RcepCooNationCache rcepCache,
-			List<OriginDeterminationResult> allPendingResults, List<OriginDeterminationTarget> deferredUpdateFrmTargets,
-			List<FcrMstDecisionUpdateRow> fcrMstUpdateBatch) {
+	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmData,
+			DeterminationRunContext runContext, PendingBatch pending) {
 		OriginDeterminationContext ctx = new OriginDeterminationContext();
 		ctx.setFmData(fmData);
 
 		supportService.loadBuffer(ctx, fmData.getCompanyCode(), fmData.getDivisionCode(), fmData.getFtaCode(),
-				fmData.getProductCode(), productLineBufferCache);
+				fmData.getProductCode(), runContext.productLineBufferCache);
 
 		// 원본에는 "기판정된 결과가 있는 경우 삭제"가 FM_LIST 1건당 1회(FTA_CODE 후보 수만큼) 있었으나,
 		// determineOrigin() 은 항상 CreateFcrService.createFcr() 직후에 호출되고 그 안에서 이미
@@ -173,38 +168,38 @@ public class OriginDeterminationService extends GeneralService implements Origin
 		// FCR_INFO_TEMP 대체: prefetchMaterialOriginRows 로 미리 배치 조회해둔 결과를 재사용한다. 캐시에
 		// 없는 조합(배치 실패 등)은 그 자리에서 바로 단건 조회로 대체한다.
 		String materialKey = materialOriginRowsKey(fmData.getFtaCode(), fmData.getDivisionCode(), fmData.getSalesSeq());
-		List<MaterialOriginRow> materialOriginRows = materialOriginRowsCache.containsKey(materialKey)
-				? materialOriginRowsCache.get(materialKey)
+		List<MaterialOriginRow> materialOriginRows = runContext.materialOriginRowsCache.containsKey(materialKey)
+				? runContext.materialOriginRowsCache.get(materialKey)
 				: dao.selectMaterialOriginRows(fmData.getFtaCode(), fmData.getDivisionCode(), fmData.getCompanyCode(),
 						fmData.getSalesNo(), fmData.getSalesSeq(), fmData.getHsCode());
 		ctx.setMaterialOriginRows(materialOriginRows);
 
 		if ("PKRRC".equals(fmData.getFtaCode())) {
-			resolveItemCooNationForRcep(ctx, invoiceDate, rcepCache);
+			resolveItemCooNationForRcep(ctx, runContext.invoiceDate, runContext.rcepCache);
 		}
 
-		List<OriginCriteria> rules = originCriteriaCache.get(fmData.getHsCode(), fmData.getFtaCode(),
-				fmData.getHsCodeSubCategory(), newAptaPsrFlag);
+		List<OriginCriteria> rules = runContext.originCriteriaCache.get(fmData.getHsCode(), fmData.getFtaCode(),
+				fmData.getHsCodeSubCategory(), runContext.newAptaPsrFlag);
 
 		if (rules.isEmpty()) {
 			// 원본 V_RULE_CNT=100 분기: 해당 HS코드에 적용가능한 FTA_RULE 이 전혀 없는 경우
-			insertNoRuleFoundResult(ctx, fmData, mode);
+			insertNoRuleFoundResult(ctx, fmData, runContext.mode);
 		} else {
 			for (OriginCriteria frData : rules) {
-				decideOneRule(ctx, fmData, frData, mode, exclusionRuleCache);
+				decideOneRule(ctx, fmData, frData, runContext.mode, runContext.exclusionRuleCache);
 			}
 		}
 
 		// 이 FM_LIST 행(FTA 후보) 처리 중 쌓인 판정결과를 determineOrigin() 전체 배치 목록으로 옮겨 담는다
 		// — 더 이상 행 단위로 즉시 flush 하지 않고, 루프 전체가 끝난 뒤 한 번에 저장한다
 		// (OriginDeterminationSupportService#flushPendingResultsBatch 참고).
-		allPendingResults.addAll(ctx.getPendingResults());
+		pending.results.addAll(ctx.getPendingResults());
 
 		// 원본 VG_RULE_COUNT: C_FTA_RULE 루프는 룰이 없어도 phantom 1회가 실행되어 항상 1 로 설정된다.
 		// UPDATE_FRM_PROCEDURE 의 "룰 없음(ruleCount<1)" 분기는 이 경로로는 사실상 도달하지 않는
 		// 원본 동작을 그대로 재현한다.
 		ctx.setRuleCount(1);
-		supportService.prepareUpdateFrm(ctx, mode, fcrMstUpdateBatch, deferredUpdateFrmTargets);
+		supportService.prepareUpdateFrm(ctx, runContext.mode, pending.fcrMstUpdateBatch, pending.deferredUpdateFrmTargets);
 	}
 
 	private void insertNoRuleFoundResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode) {
@@ -547,6 +542,43 @@ public class OriginDeterminationService extends GeneralService implements Origin
 			this.lastInputYyyyMmCache = lastInputYyyyMmCache;
 			this.cooNationBatchCache = cooNationBatchCache;
 		}
+	}
+
+	/**
+	 * determineOrigin() 1회 호출 동안 FM_LIST 행(FTA 후보)마다 {@link #decideOneFtaLine} 에 반복해서
+	 * 넘기던 컨텍스트를 한 데 묶었다(묶기 전엔 파라미터가 13개였다) — 전부 이 호출 범위에서 한 번만
+	 * 만들어지는 읽기 전용 값/캐시라 필드로 노출해도 안전하다.
+	 */
+	private static final class DeterminationRunContext {
+		final String invoiceDate;
+		final String newAptaPsrFlag;
+		final OriginDeterminationMode mode;
+		final ExclusionRuleCache exclusionRuleCache;
+		final OriginCriteriaCache originCriteriaCache;
+		final Map<String, BufferRates> productLineBufferCache;
+		final Map<String, List<MaterialOriginRow>> materialOriginRowsCache;
+		final RcepCooNationCache rcepCache;
+
+		DeterminationRunContext(String invoiceDate, String newAptaPsrFlag, OriginDeterminationMode mode,
+				ExclusionRuleCache exclusionRuleCache, OriginCriteriaCache originCriteriaCache,
+				Map<String, BufferRates> productLineBufferCache,
+				Map<String, List<MaterialOriginRow>> materialOriginRowsCache, RcepCooNationCache rcepCache) {
+			this.invoiceDate = invoiceDate;
+			this.newAptaPsrFlag = newAptaPsrFlag;
+			this.mode = mode;
+			this.exclusionRuleCache = exclusionRuleCache;
+			this.originCriteriaCache = originCriteriaCache;
+			this.productLineBufferCache = productLineBufferCache;
+			this.materialOriginRowsCache = materialOriginRowsCache;
+			this.rcepCache = rcepCache;
+		}
+	}
+
+	/** {@link #decideOneFtaLine} 이 FM_LIST 행마다 쌓는 배치 결과 3종(판정결과/재조회대상/FCR_MST 갱신행)을 묶었다. */
+	private static final class PendingBatch {
+		final List<OriginDeterminationResult> results = new ArrayList<>();
+		final List<OriginDeterminationTarget> deferredUpdateFrmTargets = new ArrayList<>();
+		final List<FcrMstDecisionUpdateRow> fcrMstUpdateBatch = new ArrayList<>();
 	}
 
 	private static boolean ynOrDefaultY(String value) {
