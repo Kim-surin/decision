@@ -1,13 +1,11 @@
 package com.kpmg.kdb.web.origindecision;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 
 /**
  * 수출 개별판정 배치 처리 진입점. 내수 개별판정({@link IndividualBulkDecisionService})과 달리 데이터
@@ -29,28 +27,18 @@ public class ExportBulkDecisionService extends GeneralService implements BulkDec
 
 	@Override
 	public BulkDecisionResult run(List<ExportDecisionTarget> targets) {
-		List<SalesTarget> allTargets = new ArrayList<>();
-		List<SalesTarget> allFailedTargets = new ArrayList<>();
-
-		for (ExportDecisionTarget target : targets) {
-			try {
-				OriginDecisionPipeline pipeline = pipelineFactory
+		BulkDecisionResult result = BulkPipelineRunner.run(targets,
+				target -> pipelineFactory
 						.forExport(target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(),
 								target.getProductCodes())
 						.createFcr()
 						.determineOrigin()
-						.updateStatus();
+						.updateStatus(),
+				(target, e) -> logger.error("수출 개별판정 배치 대상 처리 실패. companyCode={}, divisionCode={}, salesNo={}",
+						target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(), e));
 
-				allTargets.addAll(pipeline.targets());
-				allFailedTargets.addAll(pipeline.failedTargets());
-			} catch (Exception e) {
-				logger.error("수출 개별판정 배치 대상 처리 실패. companyCode={}, divisionCode={}, salesNo={}",
-						target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(), e);
-			}
-		}
+		logger.info("수출 개별판정 배치 완료. 대상건수={}, 실패건수={}", result.getTargets().size(), result.getFailedTargets().size());
 
-		logger.info("수출 개별판정 배치 완료. 대상건수={}, 실패건수={}", allTargets.size(), allFailedTargets.size());
-
-		return new BulkDecisionResult(targets.size(), allTargets, allFailedTargets);
+		return result;
 	}
 }

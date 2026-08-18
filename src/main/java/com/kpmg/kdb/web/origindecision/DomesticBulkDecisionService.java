@@ -1,13 +1,11 @@
 package com.kpmg.kdb.web.origindecision;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 
 /**
@@ -37,30 +35,20 @@ public class DomesticBulkDecisionService extends GeneralService
 	public BulkDecisionResult run(VirtualSalesGenerationParams filter) {
 		List<VirtualSalesGenerationParams> groups = groupingService.prepare(filter);
 
-		List<SalesTarget> allTargets = new ArrayList<>();
-		List<SalesTarget> allFailedTargets = new ArrayList<>();
-
-		for (VirtualSalesGenerationParams groupParams : groups) {
-			try {
-				OriginDecisionPipeline pipeline = pipelineFactory
-						.forDomestic(groupParams.getCompanyCode(), groupParams.getProductCodes())
+		BulkDecisionResult result = BulkPipelineRunner.run(groups,
+				groupParams -> pipelineFactory.forDomestic(groupParams.getCompanyCode(), groupParams.getProductCodes())
 						.generateVirtualSales(groupParams)
 						.createFcr()
 						.determineOrigin()
-						.updateStatus();
-
-				allTargets.addAll(pipeline.targets());
-				allFailedTargets.addAll(pipeline.failedTargets());
-			} catch (Exception e) {
-				logger.error("내수 벌크판정 그룹 처리 실패. companyCode={}, divisionCode={}, customerCode={}, yyyymmdd={}",
+						.updateStatus(),
+				(groupParams, e) -> logger.error(
+						"내수 벌크판정 그룹 처리 실패. companyCode={}, divisionCode={}, customerCode={}, yyyymmdd={}",
 						groupParams.getCompanyCode(), groupParams.getDivisionCode(), groupParams.getCustomerCode(),
-						groupParams.getYyyymmdd(), e);
-			}
-		}
+						groupParams.getYyyymmdd(), e));
 
-		logger.info("내수 벌크판정 완료. 그룹수={}, 대상건수={}, 실패건수={}", groups.size(), allTargets.size(),
-				allFailedTargets.size());
+		logger.info("내수 벌크판정 완료. 그룹수={}, 대상건수={}, 실패건수={}", result.getGroupCount(), result.getTargets().size(),
+				result.getFailedTargets().size());
 
-		return new BulkDecisionResult(groups.size(), allTargets, allFailedTargets);
+		return result;
 	}
 }

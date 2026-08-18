@@ -1,13 +1,11 @@
 package com.kpmg.kdb.web.origindecision;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.monthlydecision.dto.SalesTarget;
 import com.kpmg.kdb.web.monthlydecision.dto.VirtualSalesGenerationParams;
 
 /**
@@ -38,30 +36,20 @@ public class IndividualBulkDecisionService extends GeneralService
 		String companyCode = request.getCompanyCode();
 		List<VirtualSalesGenerationParams> groups = groupingService.prepare(request.getRawLines());
 
-		List<SalesTarget> allTargets = new ArrayList<>();
-		List<SalesTarget> allFailedTargets = new ArrayList<>();
-
-		for (VirtualSalesGenerationParams groupParams : groups) {
-			try {
-				OriginDecisionPipeline pipeline = pipelineFactory
-						.forIndividual(companyCode, groupParams.getProductCodes())
+		BulkDecisionResult result = BulkPipelineRunner.run(groups,
+				groupParams -> pipelineFactory.forIndividual(companyCode, groupParams.getProductCodes())
 						.generateVirtualSales(groupParams)
 						.createFcr()
 						.determineOrigin()
-						.updateStatus();
-
-				allTargets.addAll(pipeline.targets());
-				allFailedTargets.addAll(pipeline.failedTargets());
-			} catch (Exception e) {
-				logger.error("개별판정 배치 그룹 처리 실패. companyCode={}, customerCode={}, divisionCode={}, yyyymm={}",
+						.updateStatus(),
+				(groupParams, e) -> logger.error(
+						"개별판정 배치 그룹 처리 실패. companyCode={}, customerCode={}, divisionCode={}, yyyymm={}",
 						groupParams.getCompanyCode(), groupParams.getCustomerCode(), groupParams.getDivisionCode(),
-						groupParams.getYyyymm(), e);
-			}
-		}
+						groupParams.getYyyymm(), e));
 
-		logger.info("개별판정 배치 완료. 그룹수={}, 대상건수={}, 실패건수={}", groups.size(), allTargets.size(),
-				allFailedTargets.size());
+		logger.info("개별판정 배치 완료. 그룹수={}, 대상건수={}, 실패건수={}", result.getGroupCount(), result.getTargets().size(),
+				result.getFailedTargets().size());
 
-		return new BulkDecisionResult(groups.size(), allTargets, allFailedTargets);
+		return result;
 	}
 }
