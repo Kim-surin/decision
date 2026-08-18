@@ -12,7 +12,20 @@
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
-    
+
+    <!-- File Appender: 콘솔은 스크롤/뷰어 제한으로 긴 로그가 잘리므로, 같은 내용을 파일로도 남긴다.
+         실행할 때마다(앱 재시작 시) 파일을 새로 시작한다(append=false) - 이전 실행의 로그가 섞이지
+         않아 이번 실행분만 그대로 텍스트 파일로 확인할 수 있다. 앱을 재시작하지 않고 여러 테스트
+         엔드포인트를 연달아 호출하면 그 호출들은 한 파일에 계속 쌓인다. 경로는 앱 실행 시점의
+         작업 디렉터리(working directory) 기준 상대경로다. -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/decision.log</file>
+        <append>false</append>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <logger level="OFF" appender-ref="CONSOLE" name="jdbc.sqltiming"/>
     <logger level="OFF" appender-ref="CONSOLE" name="jdbc.audit"/>
     <logger level="OFF" appender-ref="CONSOLE" name="jdbc.resultset"/>
@@ -50,10 +63,12 @@
     <!-- root레벨 설정 -->
     <root level="debug">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </root>
 
     <!-- 특정패키지 로깅레벨 설정 -->
     <logger name="org.apache.ibatis" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </logger>
 </configuration>
