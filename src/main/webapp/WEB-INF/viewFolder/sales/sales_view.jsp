@@ -86,7 +86,7 @@
 											</div>
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">내수/수출</label>
+													<label class="form-label" for="example-select">판매구분</label>
 													<select class="form-select" id="export_flag">
 														<option value="">전체</option>
 														<option value="D">내수</option>
@@ -163,7 +163,7 @@
 									, dataType: "date", dateInputFormat: "yyyymmdd", formatString: "yyyy-mm-dd"
 									, filter: {showIcon: true}
 								},
-								{dataField: "export_flag_name", headerText: "내수/수출", filter: {showIcon: true}}
+								{dataField: "export_flag_name", headerText: "판매구분", filter: {showIcon: true}}
 							];
 
 							const gridProps = {

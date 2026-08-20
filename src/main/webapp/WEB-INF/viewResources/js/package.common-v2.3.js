@@ -3366,7 +3366,7 @@ var KpackageOBJ = {
     }, // Date End
 	
 	sidepanel : {
-		open : function(modalId, url, pWidth){
+		open : function(modalId, url, pWidth, pData){
 			
 			if ($("#"+ modalId).length > 0) {
 				return;
@@ -3391,8 +3391,53 @@ var KpackageOBJ = {
 
 			var $modalElement = $('#' + modalId);
 			var $modalBody = $modalElement.find('.modal-body');
+			
+			var ajaxConfig = {
+			    url: url,
+			    dataType: 'html',
+			    success: function(response) {
+			        $modalBody.html(response);
 
-			$modalBody.load(url, function(response, status, xhr) {
+			        var modalObject = new bootstrap.Modal($modalElement[0]);
+			        
+			        // 닫히기 직전에 포커스 제거
+			        $modalElement.on('hide.bs.modal', function () {
+			            if (document.activeElement) {
+			                document.activeElement.blur();
+			            }
+			        });
+
+			        // 모달이 완전히 닫힌 뒤 DOM 제거
+			        $modalElement.on('hidden.bs.modal', function () {
+			            modalObject.dispose();   
+			            $modalElement.remove();  
+			            
+			            if (opener && typeof opener.focus === 'function') {
+			                opener.focus();
+			            }
+			        });
+
+			        modalObject.show();
+			    },
+			    error: function(xhr, status, error) {
+			        $modalBody.html(`
+			          <div class="text-danger">
+			            화면을 불러오는 중 오류가 발생했습니다.
+			          </div>
+			        `);
+			    }
+			};
+			
+			if (pData !== undefined && pData !== null) {
+			    ajaxConfig.type = 'POST';
+			    ajaxConfig.data = pData;
+			} else {
+			    ajaxConfig.type = 'GET';
+			}
+		
+			$.ajax(ajaxConfig);
+
+			/*$modalBody.load(url, function(response, status, xhr) {
 			  if (status === 'error') {
 			    $modalBody.html(`
 			      <div class="text-danger">
@@ -3422,7 +3467,7 @@ var KpackageOBJ = {
 			  });
 
 			  modalObject.show();
-			});
+			});*/
 			
 		}
 		

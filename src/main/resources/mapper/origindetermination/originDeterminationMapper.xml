@@ -1,0 +1,143 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindetermination.OriginDeterminationDao">
+    <select id="retrieveDomesticOriginDetermination" parameterType="HashMap" resultType="HashMap">
+       SELECT SM.INVOICE_MONTH
+       		, D.DIVISION_NAME
+       		, C.CUSTOMER_NAME
+       		, SM.PRODUCT_CODE
+       		, IM.ITEM_NAME AS PRODUCT_NAME 
+       		, IM.HS_CODE
+       		, SM.STATUS
+       		, GET_CODE_NAME(SM.STATUS::VARCHAR, 'DS', SM.COMPANY_CODE, 'KOR') AS STATUS_NAME
+       		, GET_CODE_NAME(SM.PRODUCT_ASSETS_TYPE, 'AT', SM.COMPANY_CODE, 'KOR') AS PRODUCT_ASSETS_TYPE_NAME
+       		, SM.COO_CERTIFY_NO
+       FROM (
+			SELECT SM.COMPANY_CODE
+			 	, SUBSTR(SM.INVOICE_DATE, 1, 6) AS INVOICE_MONTH
+				, SD.DIVISION_CODE
+				, SM.CUSTOMER_CODE
+				, SD.PRODUCT_CODE
+				, SUM(CASE WHEN SM.VIRTUAL_YN = 'Y' THEN SD.STATUS::INTEGER ELSE 0 END) AS STATUS
+				, MAX(CASE WHEN SM.VIRTUAL_YN = 'Y' THEN SD.COO_CERTIFY_NO ELSE NULL END) AS COO_CERTIFY_NO
+				, SD.PRODUCT_ASSETS_TYPE
+				, SUM(SD.QUANTITY) AS QUANTITY
+			FROM SALES_MST SM
+			INNER JOIN SALES_DTL SD
+				ON SM.COMPANY_CODE = SD.COMPANY_CODE
+				AND SM.SALES_NO = SD.SALES_NO
+				AND SM.DIVISION_CODE = SD.DIVISION_CODE
+			INNER JOIN CUSTOMER C
+				ON C.COMPANY_CODE = SD.COMPANY_CODE
+				AND C.CUSTOMER_CODE = SD.DELIVERY_CUSTOMER_CODE
+			LEFT JOIN CUSTOMER_MODEL CM
+				ON CM.COMPANY_CODE = SD.COMPANY_CODE
+				AND CM.DIVISION_CODE = SD.DIVISION_CODE
+				AND CM.ITEM_CODE = SD.PRODUCT_CODE
+				AND CM.CUSTOMER_CODE = SD.DELIVERY_CUSTOMER_CODE			
+			WHERE SM.COMPANY_CODE = #{company_code}		
+			AND SM.EXPORT_FLAG = 'D'
+			<if test="from_date != null and from_date != ''">
+				<if test="to_date != null and to_date != ''">
+				AND SM.INVOICE_DATE BETWEEN #{from_date} AND #{to_date}
+				</if>
+			</if>		
+			GROUP BY SM.COMPANY_CODE
+			 	, SUBSTR(SM.INVOICE_DATE, 1, 6)	
+			 	, SM.CUSTOMER_CODE
+            	, SD.DELIVERY_CUSTOMER_CODE
+            	, SD.DIVISION_CODE
+            	, SD.PRODUCT_CODE
+            	, SM.EXPORT_FLAG
+            	, SD.PROD_DIVISION_CODE
+            	, COALESCE(CM.CUSTOMER_ITEM_CODE, SD.CUSTOMER_ITEM_CODE)
+            	, SD.PRODUCT_ASSETS_TYPE
+		) SM
+			INNER JOIN ITEM_MST IM
+				ON IM.COMPANY_CODE = SM.COMPANY_CODE
+				AND IM.ITEM_CODE = SM.PRODUCT_CODE
+			LEFT JOIN DIVISION D
+				ON D.COMPANY_CODE = SM.COMPANY_CODE
+				AND D.DIVISION_CODE = SM.DIVISION_CODE
+			INNER JOIN CUSTOMER C
+				ON C.COMPANY_CODE = SM.COMPANY_CODE
+				AND C.CUSTOMER_CODE = SM.CUSTOMER_CODE
+		WHERE 1=1	
+		AND SM.QUANTITY &gt; 0 -- 반품 제외
+		<if test="division_code != null">
+				AND D.DIVISION_CODE = #{division_code}
+		</if>
+		<if test="customer != null">
+				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+		</if>
+		<if test="product != null">
+				AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
+			</if>
+		ORDER BY SM.INVOICE_MONTH, C.CUSTOMER_CODE, D.DIVISION_CODE, SM.PRODUCT_CODE
+    </select>
+    
+    <select id="retrieveExportOriginDetermination" parameterType="HashMap" resultType="HashMap">
+       SELECT SM.INVOICE_DATE
+       		, D.DIVISION_NAME
+       		, C.CUSTOMER_NAME
+       		, SM.INVOICE_NO
+       		, SM.STATUS
+       		, GET_CODE_NAME(SM.STATUS, 'DS', SM.COMPANY_CODE, 'KOR') AS STATUS_NAME
+       		, GET_CODE_NAME(COALESCE(SM.ARRIVAL_NATION, C.NATION_CODE), 'NA', SM.COMPANY_CODE, 'KOR') AS EXPORT_NATION
+       		, (SELECT COUNT(*) 
+       			FROM FTA_APPLY_NATION FAN 
+       			WHERE FAN.NATION_CODE = COALESCE(SM.ARRIVAL_NATION, C.NATION_CODE)
+				AND FAN.EFFECT_DATE &lt;= SM.INVOICE_DATE
+				AND FM.FTA_CODE = FAN.FTA_CODE) AS FTA_CNT
+       FROM (
+			SELECT SM.COMPANY_CODE
+				, SM.SALES_NO
+				, SM.DIVISION_CODE
+			FROM SALES_MST SM
+			INNER JOIN SALES_DTL SD
+				ON SM.COMPANY_CODE = SD.COMPANY_CODE
+				AND SM.SALES_NO = SD.SALES_NO
+				AND SM.DIVISION_CODE = SD.DIVISION_CODE		
+			INNER JOIN ITEM_MST IM
+				ON IM.COMPANY_CODE = SD.COMPANY_CODE
+				AND IM.ITEM_CODE = SD.PRODUCT_CODE
+			WHERE SM.COMPANY_CODE = #{company_code}		
+			AND SM.EXPORT_FLAG = 'E'
+			<if test="from_date != null and from_date != ''">
+				<if test="to_date != null and to_date != ''">
+				AND SM.INVOICE_DATE BETWEEN #{from_date} AND #{to_date}
+				</if>
+			</if>		
+			<if test="product != null">
+				AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
+			</if>		
+			GROUP BY SM.COMPANY_CODE, SM.SALES_NO, SM.DIVISION_CODE
+		) SALES
+			INNER JOIN SALES_MST SM
+				ON SM.COMPANY_CODE = SALES.COMPANY_CODE
+				AND SM.SALES_NO = SALES.SALES_NO
+				AND SM.DIVISION_CODE = SALES.DIVISION_CODE
+			LEFT JOIN DIVISION D
+				ON D.COMPANY_CODE = SM.COMPANY_CODE
+				AND D.DIVISION_CODE = SM.DIVISION_CODE
+			INNER JOIN CUSTOMER C
+				ON C.COMPANY_CODE = SM.COMPANY_CODE
+				AND C.CUSTOMER_CODE = SM.CUSTOMER_CODE
+			LEFT JOIN FTA_MASTER FM
+				ON SM.COMPANY_CODE = FM.COMPANY_CODE
+				AND SM.TARGET_FTA_CODE = FM.FTA_CODE
+				AND FM.DELETE_YN = 'N'
+				AND FM.FTA_STATUS = '4'
+		WHERE 1=1	
+		<if test="division_code != null">
+				AND D.DIVISION_CODE = #{division_code}
+		</if>
+		<if test="customer != null">
+				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+		</if>	
+		ORDER BY SM.INVOICE_DATE, C.CUSTOMER_CODE, D.DIVISION_CODE
+    </select>
+    
+    <select id="retrieveOriginDeterminationResult" parameterType="HashMap" resultType="HashMap">
+    </select>
+</mapper>
