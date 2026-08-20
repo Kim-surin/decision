@@ -229,7 +229,7 @@
 
 					self.detailMap = {};
 					list.forEach(function(row) {
-						var key = self.buildKey(row.SALES_NO, row.SALES_SEQ);
+						var key = self.buildKey(row.sales_no, row.sales_seq);
 						self.detailMap[key] = row;
 					});
 
@@ -264,13 +264,13 @@
 
 			var $row = $(
 				'<tr>' +
-					'<td>' + (detail.PRODUCT_CODE || '') + '</td>' +
-					'<td>' + (detail.PRODUCT_NAME || '') + '</td>' +
-					'<td>' + (detail.HS_CODE || '') + '</td>' +
-					'<td class="text-end">' + (detail.QUANTITY || '') + '</td>' +
-					'<td>' + (detail.UNIT || '') + '</td>' +
-					'<td class="text-end">' + (detail.UNIT_PRICE || '') + '</td>' +
-					'<td class="text-end">' + (detail.AMOUNT || '') + '</td>' +
+					'<td>' + (detail.product_code || '') + '</td>' +
+					'<td>' + (detail.product_name || '') + '</td>' +
+					'<td>' + (detail.hs_code || '') + '</td>' +
+					'<td class="text-end">' + (detail.quantity || '') + '</td>' +
+					'<td>' + (detail.unit || '') + '</td>' +
+					'<td class="text-end">' + (detail.unit_price || '') + '</td>' +
+					'<td class="text-end">' + (detail.amount || '') + '</td>' +
 				'</tr>'
 			);
 
@@ -330,7 +330,7 @@
 					var list = (response && response.value) ? response.value : [];
 
 					list.forEach(function(r) {
-						self.detailMap[self.buildKey(r.SALES_NO, r.SALES_SEQ)] = r;
+						self.detailMap[self.buildKey(r.sales_no, r.sales_seq)] = r;
 					});
 
 					if (self.selectedKey === key) {
