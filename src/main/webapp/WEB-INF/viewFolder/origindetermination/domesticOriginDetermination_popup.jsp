@@ -119,6 +119,35 @@
 			return salesNo + "_" + salesSeq;
 		};
 
+		// KpackageOBJ.ajax.doSubmit는 통신 실패 시 항상 네이티브 alert()를 호출하는데,
+		// 이 팝업은 Bootstrap 모달(sidepanel.open) 위에서 열려 있어 네이티브 alert()가
+		// 모달 트랜지션을 끊어 백드롭이 안 사라지는 문제로 이어짐.
+		// 그래서 이 팝업 내부 통신은 자체 헬퍼로 처리하고, 에러는 KpackageOBJ.object.alert로만 표시
+		this.postJson = function(url, data, successHandler, errorHandler) {
+			var token = $("meta[name='_csrf']").attr("content");
+			var header = $("meta[name='_csrf_header']").attr("content");
+
+			$.ajax({
+				url: url,
+				type: "POST",
+				cache: false,
+				data: JSON.stringify(data),
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				beforeSend: function(xhr) {
+					if (token && header) {
+						xhr.setRequestHeader(header, token);
+					}
+				},
+				success: successHandler,
+				error: function() {
+					if (typeof errorHandler === "function") {
+						errorHandler();
+					}
+				}
+			});
+		};
+
 		// 판정상태(status)에 따른 배지 색상 클래스
 		this.getStatusBadgeClass = function(status) {
 			switch (String(status)) {
@@ -190,7 +219,7 @@
 				})
 			};
 
-			KpackageOBJ.ajax.doSubmit(
+			this.postJson(
 				'/origin/compliance/origindetermination/domesticOriginDeterminationDetailList',
 				request,
 				function(response) {
@@ -292,7 +321,7 @@
 				datas: [{ sales_no: row.sales_no, sales_seq: row.sales_seq }]
 			};
 
-			KpackageOBJ.ajax.doSubmit(
+			this.postJson(
 				'/origin/compliance/origindetermination/domesticOriginDeterminationDetailList',
 				request,
 				function(response) {
