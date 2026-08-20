@@ -2,10 +2,12 @@ package com.kpmg.kdb.web.origindetermination.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kpmg.kdb.global.config.aop.dto.BaseRequestDto;
 
 public class OriginDeterminationDetailRequestDto extends BaseRequestDto {
 	// 좌측에서 체크되어 넘어온 판정 대상 라인(SALES_NO, SALES_SEQ) 목록
+	@JsonProperty("datas")
 	private List<SalesKey> datas;
 
 	public List<SalesKey> getDatas() {
@@ -17,7 +19,10 @@ public class OriginDeterminationDetailRequestDto extends BaseRequestDto {
 	}
 
 	public static class SalesKey {
+		@JsonProperty("sales_no")
 		private String sales_no;
+
+		@JsonProperty("sales_seq")
 		private String sales_seq;
 
 		public String getSales_no() {
