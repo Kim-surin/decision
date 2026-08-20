@@ -62,28 +62,13 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 
-	@RequestMapping(value = "/origin/compliance/origindetermination/individualDomesticOriginDetermination_popup")
-	public String individualDomesticOriginDetermination_view(
-			@RequestParam(value = "status", required = false) String status,
-	        @RequestParam(value = "datas", required = false) String datas, 
+	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDetermination_popup")
+	public String domesticOriginDetermination_popup(
+			@RequestParam(value = "datas", required = false) String datas,
 	        Model model, HttpSession session) {
-		try {
-			 model.addAttribute("datas", datas); 
-			 
-			 switch(status){
-				case "0": // 미판정
-				case "1":
-					return "origindetermination/individualDomesticOriginUnDetermined_popup";
-				case "4": // 판정 완료
-					return "origindetermination/individualDomesticOriginDetermined_popup";
-				case "5": // 판정 실패
-					return "origindetermination/individualDomesticOriginFailed_popup";
-			}
-		} catch(Exception e) {
-			
-		}
-		
-		return "origindetermination/individualDomesticOriginDetermination_view";
+		model.addAttribute("datas", datas);
+
+		return "origindetermination/domesticOriginDetermination_popup";
 	}
 	
 	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDetermination")

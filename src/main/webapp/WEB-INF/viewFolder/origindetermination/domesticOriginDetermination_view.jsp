@@ -219,7 +219,7 @@
 								datas: JSON.stringify(datas)
 							}
 							
-							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/individualDomesticOriginDetermination_popup', '1700px', request);
+							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/domesticOriginDetermination_popup', '1700px', request);
 						}
 
 					}

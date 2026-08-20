@@ -68,11 +68,10 @@
 </head>
 <body>
 	<div class="modal-header">
-		<h5 class="modal-title h4">원산지 판정 상세 (미판정)</h5>
+		<h5 class="modal-title h4">원산지 판정 상세</h5>
 		<div class="ms-auto d-flex align-items-center gap-2">
-			<button type="button" class="btn btn-sm btn-outline-primary" onclick="javascript:INDIVIDUAL_DOMESTIC_ORIGIN_UNDETERMINED_POPUP.bulkOriginDetermination();">일괄 원산지 판정</button>
-				<button type="button" class="btn btn-sm btn-primary" onclick="javascript:INDIVIDUAL_DOMESTIC_ORIGIN_UNDETERMINED_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
-
+			<button type="button" class="btn btn-sm btn-outline-primary" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_POPUP.bulkOriginDetermination();">일괄 원산지 판정</button>
+			<button type="button" class="btn btn-sm btn-primary" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
 			<button type="button" class="btn btn-system" data-bs-dismiss="modal" aria-label="Close">
 				<svg class="sa-icon sa-icon-2x">
                       <use href="/rcs/ui5x/img/sprite.svg#x"></use>
@@ -82,7 +81,7 @@
 	</div>
 	<div class="modal-body p-0">
 		<div class="origin-detail-split">
-			<div class="origin-detail-sidebar list-group" id="individualDomesticOriginUnDetermined_sidebar">
+			<div class="origin-detail-sidebar list-group" id="domesticOriginDetermination_popup_sidebar">
 			</div>
 			<div class="origin-detail-main">
 				<h6 class="mb-3">판정 품목</h6>
@@ -98,7 +97,7 @@
 							<th>금액(원)</th>
 						</tr>
 					</thead>
-					<tbody id="individualDomesticOriginUnDetermined_detailBody">
+					<tbody id="domesticOriginDetermination_popup_detailBody">
 						<tr>
 							<td colspan="7" class="origin-detail-empty">좌측에서 조회할 항목을 선택하세요.</td>
 						</tr>
@@ -109,7 +108,7 @@
 	</div>
 </body>
 <script>
-	var INDIVIDUAL_DOMESTIC_ORIGIN_UNDETERMINED_POPUP = new function() {
+	var DOMESTIC_ORIGIN_DETERMINATION_POPUP = new function() {
 		// 좌측에서 체크되어 넘어온 판정 대상 목록 (invoice_month, product_code, product_name, sales_no, sales_seq 등)
 		this.datas = [];
 		// sales_no + '_' + sales_seq 를 key 로 하는 상세정보 맵
@@ -151,7 +150,7 @@
 
 		// 좌측 사이드바 렌더링 (매출년월/품번/품명)
 		this.renderSidebar = function() {
-			var $sidebar = $('#individualDomesticOriginUnDetermined_sidebar');
+			var $sidebar = $('#domesticOriginDetermination_popup_sidebar');
 			$sidebar.empty();
 
 			if (this.datas.length === 0) {
@@ -217,14 +216,14 @@
 		this.selectItem = function(key) {
 			this.selectedKey = key;
 
-			$('#individualDomesticOriginUnDetermined_sidebar .list-group-item').removeClass('active');
-			$('#individualDomesticOriginUnDetermined_sidebar .list-group-item[data-key="' + key + '"]').addClass('active');
+			$('#domesticOriginDetermination_popup_sidebar .list-group-item').removeClass('active');
+			$('#domesticOriginDetermination_popup_sidebar .list-group-item[data-key="' + key + '"]').addClass('active');
 
 			this.renderDetail(this.detailMap[key]);
 		};
 
 		this.renderDetail = function(detail) {
-			var $body = $('#individualDomesticOriginUnDetermined_detailBody');
+			var $body = $('#domesticOriginDetermination_popup_detailBody');
 			$body.empty();
 
 			if (!detail) {
@@ -316,7 +315,7 @@
 
 	$(document).ready(function() {
 		pageSetUp(); // 위젯 기능을 사용하기 위해 필수로 호출 합니다.
-		INDIVIDUAL_DOMESTIC_ORIGIN_UNDETERMINED_POPUP.Initialize_viewObject();
+		DOMESTIC_ORIGIN_DETERMINATION_POPUP.Initialize_viewObject();
 	});
 </script>
 
