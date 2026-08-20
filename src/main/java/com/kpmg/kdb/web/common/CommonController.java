@@ -139,4 +139,27 @@ public class CommonController extends GenericController {
 		}
 		return rs;
 	}
+	
+
+	/**
+	 * 공통코드 서명권자 콤보박스
+	 * 
+	 * @author 망할고양이
+	 * @param param
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value="/common/retrieveSignatureCombo")
+	@ResponseBody
+	public Result retrieveSignatureCombo(@RequestBody Map param) throws Exception {
+		Result rs = new Result();
+		try {
+			rs.setValue(service.retrieveSignatureCombo(super.extendsMap(param)));
+			rs.setSuccess(true);
+		} catch (Exception e) {
+			e.printStackTrace();
+			rs = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+		return rs;
+	}
 }

@@ -39,6 +39,36 @@
 		order  by sort_no asc
 	</select>
 	
+	<select id="retrieveSignatureCombo" parameterType="HashMap" resultType="HashMap">
+	    SELECT code
+	         , name
+	    FROM (
+	        <if test="OPTION_ALL == 'Y'.toString()">
+	            SELECT '' AS code
+	                 , '선택' AS name
+	                 , '000' AS sort_no
+	                 , NULL::timestamp AS create_date
+	            UNION ALL
+	        </if>
+	        SELECT CAST(seq AS varchar) AS code
+	             , signature_name
+	               || CASE WHEN position IS NOT NULL AND position <![CDATA[ <> ]]> '' THEN ' / ' || position ELSE '' END
+	               || CASE WHEN department_name IS NOT NULL AND department_name <![CDATA[ <> ]]> '' THEN ' / ' || department_name ELSE '' END
+	               AS name
+	             , '999' AS sort_no
+	             , create_date
+	        FROM signature
+	        WHERE company_code = #{company_code}
+	          AND start_date <![CDATA[ <= ]]> #{invoice_date}
+	          AND (
+	                end_date IS NULL
+	                OR end_date = ''
+	                OR end_date >= #{invoice_date}
+	              )
+	    ) a
+	    ORDER BY sort_no ASC, create_date DESC
+	</select>
+	
 	<select id="retrieveCodeCombo" parameterType="HashMap" resultType="HashMap">
 		SELECT '' CODE
 		       ,'전체' NAME

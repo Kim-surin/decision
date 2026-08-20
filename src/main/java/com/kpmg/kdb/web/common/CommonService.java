@@ -47,6 +47,15 @@ public class CommonService extends GeneralService {
 	public List<Map> retrievePlantCombo(Map param) {
 		return sqlSession.getMapper(CommonDao.class).retrievePlantCombo(param);
 	}
+	/**
+	 * 플렌트 목록 조회
+	 * 
+	 * @param param
+	 * @return
+	 */
+	public List<Map> retrieveSignatureCombo(Map param) {
+		return sqlSession.getMapper(CommonDao.class).retrieveSignatureCombo(param);
+	}
 
 	/**
 	 * 공통코드 리스트 조회
