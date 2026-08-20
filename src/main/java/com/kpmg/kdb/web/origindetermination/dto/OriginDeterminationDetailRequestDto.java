@@ -22,8 +22,10 @@ public class OriginDeterminationDetailRequestDto extends BaseRequestDto {
 		@JsonProperty("sales_no")
 		private String sales_no;
 
+		// SALES_DTL.SALES_SEQ가 NUMERIC 컬럼이라 String으로 바인딩하면
+		// "operator does not exist: numeric = character varying" 오류가 남
 		@JsonProperty("sales_seq")
-		private String sales_seq;
+		private Integer sales_seq;
 
 		public String getSales_no() {
 			return sales_no;
@@ -33,11 +35,11 @@ public class OriginDeterminationDetailRequestDto extends BaseRequestDto {
 			this.sales_no = sales_no;
 		}
 
-		public String getSales_seq() {
+		public Integer getSales_seq() {
 			return sales_seq;
 		}
 
-		public void setSales_seq(String sales_seq) {
+		public void setSales_seq(Integer sales_seq) {
 			this.sales_seq = sales_seq;
 		}
 	}
