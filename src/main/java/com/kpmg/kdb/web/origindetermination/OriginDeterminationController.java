@@ -49,10 +49,12 @@ public class OriginDeterminationController extends GenericController {
 	@RequestMapping(value = "/origin/compliance/origindetermination/individualDomesticOriginDetermination_popup")
 	public String individualDomesticOriginDetermination_view(
 			@RequestParam(value = "status", required = false) String status,
-	        @RequestParam(value = "datas", required = false) List<String> datas, 
+	        @RequestParam(value = "datas", required = false) String datas, 
 	        Model model, HttpSession session) {
 		try {
-			switch(status){
+			 model.addAttribute("datas", datas); 
+			 
+			 switch(status){
 				case "0": // 미판정
 				case "1":
 					return "origindetermination/individualDomesticOriginUnDetermined_popup";

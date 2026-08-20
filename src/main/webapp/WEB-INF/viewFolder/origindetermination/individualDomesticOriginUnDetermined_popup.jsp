@@ -36,7 +36,6 @@
 		// 시작점
 		this.Initialize_viewObject = function() {
 			
-			alert("오른쪽에서 나오는 팝업창 호출");
 		}
 
 
