@@ -60,6 +60,15 @@
 	}
 	.origin-detail-main table {
 		width: 100%;
+		/* 셀 내용 길이에 따라 컬럼 너비가 항목마다 달라지지 않도록 고정.
+		   실제 너비는 각 표의 thead th에 지정한 width(%) 값을 따름 */
+		table-layout: fixed;
+	}
+	.origin-detail-main th,
+	.origin-detail-main td {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 	.origin-detail-empty {
 		color: #6c757d;
@@ -92,13 +101,13 @@
 				<table class="table table-bordered table-sm">
 					<thead class="table-light">
 						<tr>
-							<th>품번</th>
-							<th>품명</th>
-							<th>HS CODE</th>
-							<th>수량</th>
-							<th>단위</th>
-							<th>단가(원)</th>
-							<th>금액(원)</th>
+							<th style="width:15%">품번</th>
+							<th style="width:25%">품명</th>
+							<th style="width:12%">HS CODE</th>
+							<th style="width:10%">수량</th>
+							<th style="width:8%">단위</th>
+							<th style="width:15%">단가(원)</th>
+							<th style="width:15%">금액(원)</th>
 						</tr>
 					</thead>
 					<tbody id="domesticOriginDetermination_popup_detailBody">
@@ -113,16 +122,16 @@
 					<table class="table table-bordered table-sm">
 						<thead class="table-light">
 							<tr>
-								<th>HS CODE</th>
-								<th>협정명</th>
-								<th>단가</th>
-								<th>단가기준</th>
-								<th>결정기준</th>
-								<th>충족여부</th>
-								<th>판정 부가가치 비율</th>
-								<th>미소기준 적용 비율</th>
-								<th>BOM 추적</th>
-								<th>역내전환전략</th>
+								<th style="width:9%">HS CODE</th>
+								<th style="width:11%">협정명</th>
+								<th style="width:8%">단가</th>
+								<th style="width:8%">단가기준</th>
+								<th style="width:10%">결정기준</th>
+								<th style="width:8%">충족여부</th>
+								<th style="width:12%">판정 부가가치 비율</th>
+								<th style="width:12%">미소기준 적용 비율</th>
+								<th style="width:11%">BOM 추적</th>
+								<th style="width:11%">역내전환전략</th>
 							</tr>
 						</thead>
 						<tbody id="domesticOriginDetermination_popup_resultBody">
@@ -134,13 +143,13 @@
 						<table class="table table-bordered table-sm">
 							<thead class="table-light">
 								<tr>
-									<th>결정기준</th>
-									<th>미소기준 적용금액</th>
-									<th>충족여부</th>
-									<th>판매금액</th>
-									<th>미상 재료비(원)</th>
-									<th>부가가치 비율</th>
-									<th>결정기준 해설</th>
+									<th style="width:12%">결정기준</th>
+									<th style="width:14%">미소기준 적용금액</th>
+									<th style="width:10%">충족여부</th>
+									<th style="width:12%">판매금액</th>
+									<th style="width:14%">미상 재료비(원)</th>
+									<th style="width:12%">부가가치 비율</th>
+									<th style="width:26%">결정기준 해설</th>
 								</tr>
 							</thead>
 							<tbody id="domesticOriginDetermination_popup_resultDetailBody">
