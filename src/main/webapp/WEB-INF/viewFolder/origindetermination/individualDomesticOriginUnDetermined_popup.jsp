@@ -208,7 +208,7 @@
 					}
 				},
 				function() {
-					alert('판정 품목 상세 조회 중 오류가 발생했습니다.');
+					KpackageOBJ.object.alert('판정 품목 상세 조회 중 오류가 발생했습니다.');
 				}
 			);
 		};
@@ -251,22 +251,22 @@
 		// TODO: 판정 백엔드(원산지 판정 로직) 병합 시 실제 API 연동 필요
 		this.bulkOriginDetermination = function() {
 			if (this.datas.length === 0) {
-				alert("판정할 품목이 없습니다.");
+				KpackageOBJ.object.alert("판정할 품목이 없습니다.");
 				return;
 			}
 
-			alert(this.datas.length + "건 일괄 원산지 판정을 진행합니다.");
+			KpackageOBJ.object.alert(this.datas.length + "건 일괄 원산지 판정을 진행합니다.");
 		};
 
 		// 좌측에서 선택한 품목 1건만 대상으로 원산지 판정 진행
 		// TODO: 판정 백엔드(원산지 판정 로직) 병합 시 실제 API 연동 필요
 		this.individualOriginDetermination = function() {
 			if (!this.selectedKey) {
-				alert("판정할 품목을 선택하세요.");
+				KpackageOBJ.object.alert("판정할 품목을 선택하세요.");
 				return;
 			}
 
-			alert("선택한 품목 1건 원산지 판정을 진행합니다.");
+			KpackageOBJ.object.alert("선택한 품목 1건 원산지 판정을 진행합니다.");
 		};
 	};
 
