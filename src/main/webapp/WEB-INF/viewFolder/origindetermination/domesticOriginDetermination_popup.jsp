@@ -6,7 +6,9 @@
 <style>
 	.origin-detail-split {
 		display: flex;
-		height: 620px;
+		/* 팝업(sidepanel) 자체가 거의 풀 높이라 고정값(620px) 대신 뷰포트 기준으로 채움.
+		   140px는 이 팝업의 modal-header + 바깥 sidepanel modal-body의 여백을 대략 뺀 값 */
+		height: calc(100vh - 140px);
 	}
 	.origin-detail-sidebar {
 		width: 300px;
