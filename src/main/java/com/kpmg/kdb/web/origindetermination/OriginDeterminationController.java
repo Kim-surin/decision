@@ -17,6 +17,8 @@ import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultRequestDto;
 
 @Controller
 public class OriginDeterminationController extends GenericController {
@@ -54,6 +56,36 @@ public class OriginDeterminationController extends GenericController {
 
 		try {
 			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationResultList")
+	@ResponseBody
+	public Result domesticOriginDeterminationResultList(@RequestBody OriginDeterminationResultRequestDto param) throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveDomesticOriginDeterminationResultList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationResultDetailList")
+	@ResponseBody
+	public Result domesticOriginDeterminationResultDetailList(@RequestBody OriginDeterminationResultDetailRequestDto param) throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveDomesticOriginDeterminationResultDetailList(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

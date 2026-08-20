@@ -11,6 +11,10 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequest
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultResponseDto;
 
 @Service
 public class OriginDeterminationService extends GeneralService {
@@ -70,6 +74,40 @@ public class OriginDeterminationService extends GeneralService {
 
 		try {
 			List<OriginDeterminationDetailResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveDomesticOriginDeterminationDetailList(param);
+
+			result.setValue(list);
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	public Result retrieveDomesticOriginDeterminationResultList(OriginDeterminationResultRequestDto param) throws Exception {
+		Result result = new Result();
+
+		try {
+			List<OriginDeterminationResultResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveDomesticOriginDeterminationResultList(param);
+
+			result.setValue(list);
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	public Result retrieveDomesticOriginDeterminationResultDetailList(OriginDeterminationResultDetailRequestDto param) throws Exception {
+		Result result = new Result();
+
+		try {
+			List<OriginDeterminationResultDetailResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveDomesticOriginDeterminationResultDetailList(param);
 
 			result.setValue(list);
 			result.setSuccess(true);

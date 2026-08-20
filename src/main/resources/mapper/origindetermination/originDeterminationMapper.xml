@@ -150,7 +150,44 @@
        		(#{d.sales_no}, #{d.sales_seq})
        </foreach>
     </select>
-    
+
+    <!-- 판정완료(status=4) 건의 판정결과: 해당 품목에 적용되는 협정(FTA)별 결과 목록 -->
+    <select id="retrieveDomesticOriginDeterminationResultList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultRequestDto" resultType="HashMap">
+       SELECT FM.FTA_CODE
+       		, FM.HS_CODE
+       		, FTA.FTA_NAME
+       		, FM.AMOUNT
+       		, FM.RULE_CONTENTS
+       		, FM.COMPANY_COO_YN
+       		, FR.RVC_RATE
+       		, FR.DE_MINIMIS_RATE
+       FROM FCR_MST FM
+       INNER JOIN FTA_MASTER FTA
+       		ON FM.COMPANY_CODE = FTA.COMPANY_CODE
+       		AND FM.FTA_CODE = FTA.FTA_CODE
+       INNER JOIN FCR_RESULT FR
+       		ON FM.COMPANY_CODE = FR.COMPANY_CODE
+       		AND FM.DIVISION_CODE = FR.DIVISION_CODE
+       		AND FM.FTA_CODE = FR.FTA_CODE
+       		AND FM.SALES_NO = FR.SALES_NO
+       		AND FM.SALES_SEQ = FR.SALES_SEQ
+       		AND FM.RULE_CONTENTS = FR.RULE_CODE
+       WHERE FM.COMPANY_CODE = #{company_code}
+       AND FM.SALES_NO = #{sales_no}
+       AND FM.SALES_SEQ = #{sales_seq}
+    </select>
+
+    <!-- 판정결과에서 협정(FTA_CODE) 선택 시 그 협정의 기준별 판정 상세내용 -->
+    <select id="retrieveDomesticOriginDeterminationResultDetailList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailRequestDto" resultType="HashMap">
+       SELECT FR.RULE_CODE
+       		, FR.COMPANY_COO_YN
+       FROM FCR_RESULT FR
+       WHERE FR.COMPANY_CODE = #{company_code}
+       AND FR.SALES_NO = #{sales_no}
+       AND FR.SALES_SEQ = #{sales_seq}
+       AND FR.FTA_CODE = #{fta_code}
+    </select>
+
     <select id="retrieveExportOriginDetermination" parameterType="HashMap" resultType="HashMap">
        SELECT SM.INVOICE_DATE
        		, D.DIVISION_NAME

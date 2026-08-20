@@ -107,6 +107,47 @@
 						</tr>
 					</tbody>
 				</table>
+
+				<div id="domesticOriginDetermination_popup_resultSection" style="display:none;">
+					<h6 class="mt-4 mb-3">판정결과</h6>
+					<table class="table table-bordered table-sm">
+						<thead class="table-light">
+							<tr>
+								<th>HS CODE</th>
+								<th>협정명</th>
+								<th>단가</th>
+								<th>단가기준</th>
+								<th>결정기준</th>
+								<th>충족여부</th>
+								<th>판정 부가가치 비율</th>
+								<th>미소기준 적용 비율</th>
+								<th>BOM 추적</th>
+								<th>역내전환전략</th>
+							</tr>
+						</thead>
+						<tbody id="domesticOriginDetermination_popup_resultBody">
+						</tbody>
+					</table>
+
+					<div id="domesticOriginDetermination_popup_resultDetailSection" style="display:none;">
+						<h6 class="mt-4 mb-3">판정 상세내용</h6>
+						<table class="table table-bordered table-sm">
+							<thead class="table-light">
+								<tr>
+									<th>결정기준</th>
+									<th>미소기준 적용금액</th>
+									<th>충족여부</th>
+									<th>판매금액</th>
+									<th>미상 재료비(원)</th>
+									<th>부가가치 비율</th>
+									<th>결정기준 해설</th>
+								</tr>
+							</thead>
+							<tbody id="domesticOriginDetermination_popup_resultDetailBody">
+							</tbody>
+						</table>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -253,6 +294,31 @@
 			$('#domesticOriginDetermination_popup_sidebar .list-group-item[data-key="' + key + '"]').addClass('active');
 
 			this.renderDetail(this.detailMap[key]);
+
+			// 판정완료(status=4) 건만 판정결과/판정 상세내용 섹션을 보여줌
+			var row = this.findRowByKey(key);
+			if (row && this.isDetermined(row.status)) {
+				this.retrieveResultList(row);
+			} else {
+				this.hideResultSections();
+			}
+		};
+
+		// 좌측 목록(datas)에서 key에 해당하는 원본 row 를 찾음
+		this.findRowByKey = function(key) {
+			var self = this;
+			return this.datas.filter(function(row) {
+				return self.buildKey(row.sales_no, row.sales_seq) === key;
+			})[0];
+		};
+
+		this.isDetermined = function(status) {
+			return String(status) === "4";
+		};
+
+		this.hideResultSections = function() {
+			$('#domesticOriginDetermination_popup_resultSection').hide();
+			$('#domesticOriginDetermination_popup_resultDetailSection').hide();
 		};
 
 		this.renderDetail = function(detail) {
@@ -277,6 +343,111 @@
 			);
 
 			$body.append($row);
+		};
+
+		// 판정완료 건의 판정결과(협정별) 조회
+		this.retrieveResultList = function(row) {
+			var self = this;
+			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
+
+			this.postJson(
+				'/origin/compliance/origindetermination/domesticOriginDeterminationResultList',
+				request,
+				function(response) {
+					var list = (response && response.value) ? response.value : [];
+					self.renderResultList(list, row);
+				},
+				function() {
+					KpackageOBJ.object.alert('판정결과 조회 중 오류가 발생했습니다.');
+				}
+			);
+		};
+
+		// 판정결과 렌더링 (협정 행 클릭 시 그 협정의 판정 상세내용 조회)
+		this.renderResultList = function(list, row) {
+			var self = this;
+			var $body = $('#domesticOriginDetermination_popup_resultBody');
+			$body.empty();
+
+			$('#domesticOriginDetermination_popup_resultDetailSection').hide();
+			$('#domesticOriginDetermination_popup_resultDetailBody').empty();
+			$('#domesticOriginDetermination_popup_resultSection').show();
+
+			if (list.length === 0) {
+				$body.append('<tr><td colspan="10" class="origin-detail-empty">판정결과가 없습니다.</td></tr>');
+				return;
+			}
+
+			list.forEach(function(r) {
+				// 단가기준/BOM 추적/역내전환전략은 현재 제공되는 값이 없어 빈 칸으로 출력
+				var $tr = $(
+					'<tr class="origin-result-row" style="cursor:pointer;">' +
+						'<td>' + (r.hs_code || '') + '</td>' +
+						'<td>' + (r.fta_name || '') + '</td>' +
+						'<td class="text-end">' + (r.amount || '') + '</td>' +
+						'<td></td>' +
+						'<td>' + (r.rule_contents || '') + '</td>' +
+						'<td>' + (r.company_coo_yn || '') + '</td>' +
+						'<td class="text-end">' + (r.rvc_rate || '') + '</td>' +
+						'<td class="text-end">' + (r.de_minimis_rate || '') + '</td>' +
+						'<td></td>' +
+						'<td></td>' +
+					'</tr>'
+				);
+
+				$tr.on('click', function() {
+					$('#domesticOriginDetermination_popup_resultBody tr').removeClass('table-active');
+					$tr.addClass('table-active');
+					self.retrieveResultDetailList(row, r.fta_code);
+				});
+
+				$body.append($tr);
+			});
+		};
+
+		// 협정(FTA_CODE) 선택 시, 그 협정의 기준별 판정 상세내용 조회
+		this.retrieveResultDetailList = function(row, ftaCode) {
+			var self = this;
+			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq, fta_code: ftaCode };
+
+			this.postJson(
+				'/origin/compliance/origindetermination/domesticOriginDeterminationResultDetailList',
+				request,
+				function(response) {
+					var list = (response && response.value) ? response.value : [];
+					self.renderResultDetailList(list);
+				},
+				function() {
+					KpackageOBJ.object.alert('판정 상세내용 조회 중 오류가 발생했습니다.');
+				}
+			);
+		};
+
+		this.renderResultDetailList = function(list) {
+			var $body = $('#domesticOriginDetermination_popup_resultDetailBody');
+			$body.empty();
+			$('#domesticOriginDetermination_popup_resultDetailSection').show();
+
+			if (list.length === 0) {
+				$body.append('<tr><td colspan="7" class="origin-detail-empty">판정 상세내용이 없습니다.</td></tr>');
+				return;
+			}
+
+			// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은
+			// 현재 제공되는 값이 없어 빈 칸으로 출력
+			list.forEach(function(r) {
+				$body.append(
+					'<tr>' +
+						'<td>' + (r.rule_code || '') + '</td>' +
+						'<td></td>' +
+						'<td>' + (r.company_coo_yn || '') + '</td>' +
+						'<td></td>' +
+						'<td></td>' +
+						'<td></td>' +
+						'<td></td>' +
+					'</tr>'
+				);
+			});
 		};
 
 		// 우측의 모든 품목을 대상으로 원산지 판정 진행
@@ -310,10 +481,7 @@
 
 		// 좌측 목록(datas)에서 현재 선택된(selectedKey) 항목의 원본 row 를 찾음
 		this.findSelectedRow = function() {
-			var self = this;
-			return this.datas.filter(function(row) {
-				return self.buildKey(row.sales_no, row.sales_seq) === self.selectedKey;
-			})[0];
+			return this.findRowByKey(this.selectedKey);
 		};
 
 		// 판정 실행 후, 해당 건 1개의 상세 결과만 다시 조회해 우측 화면을 최신화
