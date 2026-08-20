@@ -3,55 +3,223 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-
+<style>
+	.origin-detail-split {
+		display: flex;
+		height: 620px;
+	}
+	.origin-detail-sidebar {
+		width: 300px;
+		flex: 0 0 300px;
+		border-right: 1px solid #dee2e6;
+		overflow-y: auto;
+	}
+	.origin-detail-sidebar .list-group-item {
+		cursor: pointer;
+		border-left: 0;
+		border-right: 0;
+		border-radius: 0;
+	}
+	.origin-detail-sidebar .list-group-item.active {
+		background-color: #eef3ff;
+		border-color: #dee2e6;
+		color: #212529;
+		font-weight: bold;
+		border-left: 3px solid #4a6cf7;
+	}
+	.origin-detail-sidebar .badge {
+		margin-bottom: 4px;
+	}
+	.origin-detail-sidebar .item-product-code {
+		display: block;
+		font-weight: 600;
+	}
+	.origin-detail-sidebar .item-product-name {
+		display: block;
+		font-size: 12px;
+		color: #6c757d;
+	}
+	.origin-detail-main {
+		flex: 1 1 auto;
+		padding: 16px 20px;
+		overflow-y: auto;
+	}
+	.origin-detail-main table {
+		width: 100%;
+	}
+	.origin-detail-empty {
+		color: #6c757d;
+		text-align: center;
+		padding: 40px 0;
+	}
+</style>
 </head>
 <body>
 	<div class="modal-header">
-		<h5 class="modal-title h4">팝업페이지 테스트</h5>
-		<button type="button" class="btn btn-system ms-auto" data-bs-dismiss="modal" aria-label="Close">
-			<svg class="sa-icon sa-icon-2x">
+		<h5 class="modal-title h4">원산지 판정 상세 (미판정)</h5>
+		<div class="ms-auto d-flex align-items-center gap-2">
+			<button type="button" class="btn btn-sm btn-primary">원산지판정</button>
+			<button type="button" class="btn btn-system" data-bs-dismiss="modal" aria-label="Close">
+				<svg class="sa-icon sa-icon-2x">
                       <use href="/rcs/ui5x/img/sprite.svg#x"></use>
                   </svg>
-		</button>
-	</div>
-	<div class="modal-body">
-		<div class="alert alert-danger m-0">우측 팝업창 예시 입니다..</div>
-		<div class="frame-wrap">
-		    <div class="demo" style="text-align: right;">
-		    	<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.dialog.open('previewPopup','우측 팝업 후 가운데 팝업','/sample-001-pop02',1000,700,false);">
-		            가운데 팝업창(드래그 가능)
-		        </button>
-		    </div>
+			</button>
 		</div>
 	</div>
-	<div class="modal-footer">
-		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-		<button type="button" class="btn btn-primary">Save changes</button>
+	<div class="modal-body p-0">
+		<div class="origin-detail-split">
+			<div class="origin-detail-sidebar list-group" id="individualDomesticOriginUnDetermined_sidebar">
+			</div>
+			<div class="origin-detail-main">
+				<h6 class="mb-3">판정 품목</h6>
+				<table class="table table-bordered table-sm">
+					<thead class="table-light">
+						<tr>
+							<th>품번</th>
+							<th>품명</th>
+							<th>HS CODE</th>
+							<th>수량</th>
+							<th>단위</th>
+							<th>단가(원)</th>
+							<th>금액(원)</th>
+						</tr>
+					</thead>
+					<tbody id="individualDomesticOriginUnDetermined_detailBody">
+						<tr>
+							<td colspan="7" class="origin-detail-empty">좌측에서 조회할 항목을 선택하세요.</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
 	</div>
 </body>
 <script>
-	var SAMPLE001POP01 = new function() {
+	var INDIVIDUAL_DOMESTIC_ORIGIN_UNDETERMINED_POPUP = new function() {
+		// 좌측에서 체크되어 넘어온 판정 대상 목록 (invoice_month, product_code, product_name, sales_no, sales_seq 등)
+		this.datas = [];
+		// sales_no + '_' + sales_seq 를 key 로 하는 상세정보 맵
+		this.detailMap = {};
+		this.selectedKey = null;
+
+		this.buildKey = function(salesNo, salesSeq) {
+			return salesNo + "_" + salesSeq;
+		};
 
 		// 시작점
 		this.Initialize_viewObject = function() {
-			
-		}
+			var rawDatas = '${datas}';
 
+			try {
+				this.datas = rawDatas ? JSON.parse(rawDatas) : [];
+			} catch (e) {
+				this.datas = [];
+			}
 
-		// AUIGrid 를 생성합니다.
-		this.createAUIGrid = function() {
-			
+			this.renderSidebar();
+			this.retrieveDetailList();
 		};
-		
-		this.retrieve_GridData = function(){
 
-		}
+		// 좌측 사이드바 렌더링 (매출년월/품번/품명)
+		this.renderSidebar = function() {
+			var $sidebar = $('#individualDomesticOriginUnDetermined_sidebar');
+			$sidebar.empty();
+
+			if (this.datas.length === 0) {
+				$sidebar.append('<div class="origin-detail-empty">선택된 항목이 없습니다.</div>');
+				return;
+			}
+
+			var self = this;
+			this.datas.forEach(function(row) {
+				var key = self.buildKey(row.sales_no, row.sales_seq);
+
+				var $item = $(
+					'<a href="javascript:void(0)" class="list-group-item list-group-item-action" data-key="' + key + '">' +
+						'<span class="badge bg-secondary">' + (row.invoice_month || '') + '</span>' +
+						'<span class="item-product-code">' + (row.product_code || '') + '</span>' +
+						'<span class="item-product-name">' + (row.product_name || '') + '</span>' +
+					'</a>'
+				);
+
+				$item.on('click', function() {
+					self.selectItem(key);
+				});
+
+				$sidebar.append($item);
+			});
+		};
+
+		// 초기 진입 시, 체크되어 넘어온 모든 항목의 상세정보를 한번에 조회
+		this.retrieveDetailList = function() {
+			var self = this;
+
+			var request = {
+				datas: this.datas.map(function(row) {
+					return { sales_no: row.sales_no, sales_seq: row.sales_seq };
+				})
+			};
+
+			KpackageOBJ.ajax.doSubmit(
+				'/origin/compliance/origindetermination/domesticOriginDeterminationDetailList',
+				request,
+				function(response) {
+					var list = (response && response.value) ? response.value : [];
+
+					self.detailMap = {};
+					list.forEach(function(row) {
+						var key = self.buildKey(row.SALES_NO, row.SALES_SEQ);
+						self.detailMap[key] = row;
+					});
+
+					if (self.datas.length > 0) {
+						self.selectItem(self.buildKey(self.datas[0].sales_no, self.datas[0].sales_seq));
+					}
+				},
+				function() {
+					alert('판정 품목 상세 조회 중 오류가 발생했습니다.');
+				}
+			);
+		};
+
+		// 좌측 항목 선택 시, 우측 상세 렌더링
+		this.selectItem = function(key) {
+			this.selectedKey = key;
+
+			$('#individualDomesticOriginUnDetermined_sidebar .list-group-item').removeClass('active');
+			$('#individualDomesticOriginUnDetermined_sidebar .list-group-item[data-key="' + key + '"]').addClass('active');
+
+			this.renderDetail(this.detailMap[key]);
+		};
+
+		this.renderDetail = function(detail) {
+			var $body = $('#individualDomesticOriginUnDetermined_detailBody');
+			$body.empty();
+
+			if (!detail) {
+				$body.append('<tr><td colspan="7" class="origin-detail-empty">상세 정보가 없습니다.</td></tr>');
+				return;
+			}
+
+			var $row = $(
+				'<tr>' +
+					'<td>' + (detail.PRODUCT_CODE || '') + '</td>' +
+					'<td>' + (detail.PRODUCT_NAME || '') + '</td>' +
+					'<td>' + (detail.HS_CODE || '') + '</td>' +
+					'<td class="text-end">' + (detail.QUANTITY || '') + '</td>' +
+					'<td>' + (detail.UNIT || '') + '</td>' +
+					'<td class="text-end">' + (detail.UNIT_PRICE || '') + '</td>' +
+					'<td class="text-end">' + (detail.AMOUNT || '') + '</td>' +
+				'</tr>'
+			);
+
+			$body.append($row);
+		};
 	};
-	
+
 	$(document).ready(function() {
 		pageSetUp(); // 위젯 기능을 사용하기 위해 필수로 호출 합니다.
-		SAMPLE001POP01.Initialize_viewObject();
+		INDIVIDUAL_DOMESTIC_ORIGIN_UNDETERMINED_POPUP.Initialize_viewObject();
 	});
 </script>
 

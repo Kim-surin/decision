@@ -122,6 +122,8 @@
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
+								{dataField: "sales_no", headerText: "매출번호", width: 130, visible: false},
+								{dataField: "sales_seq", headerText: "매출순번", width: 100, visible: false},
 								{dataField: "invoice_month", headerText: "매출년월", width: 120, filter: {showIcon: true}},
 								{dataField: "division_name", headerText: "플랜트", width: 120, filter: {showIcon: true}},
 								{dataField: "customer_name", headerText: "고객사", width: 140, filter: {showIcon: true}},

@@ -2,56 +2,72 @@
 
 <mapper namespace="com.kpmg.kdb.web.origindetermination.OriginDeterminationDao">
     <select id="retrieveDomesticOriginDetermination" parameterType="HashMap" resultType="HashMap">
-       SELECT SM.INVOICE_MONTH
+       SELECT SM.SALES_NO
+       		, SM.SALES_SEQ
+       		, SM.INVOICE_MONTH
        		, D.DIVISION_NAME
        		, C.CUSTOMER_NAME
        		, SM.PRODUCT_CODE
-       		, IM.ITEM_NAME AS PRODUCT_NAME 
+       		, IM.ITEM_NAME AS PRODUCT_NAME
        		, IM.HS_CODE
-       		, SM.STATUS
-       		, GET_CODE_NAME(SM.STATUS::VARCHAR, 'DS', SM.COMPANY_CODE, 'KOR') AS STATUS_NAME
+       		, COALESCE(SM.STATUS, 0) AS STATUS
+       		, GET_CODE_NAME(COALESCE(SM.STATUS, 0)::VARCHAR, 'DS', SM.COMPANY_CODE, 'KOR') AS STATUS_NAME
        		, GET_CODE_NAME(SM.PRODUCT_ASSETS_TYPE, 'AT', SM.COMPANY_CODE, 'KOR') AS PRODUCT_ASSETS_TYPE_NAME
        		, SM.COO_CERTIFY_NO
        FROM (
+			<!-- [원산지판정 상세 대응] 매출년월/고객사/플랜트/품번 단위 집계를 라인(SALES_NO, SALES_SEQ) 단위로 전환
+			     판정상태/원산지확인서 발급번호는 동일 그룹의 가상매출(VIRTUAL_YN='Y') 라인에서 그대로 조회 -->
 			SELECT SM.COMPANY_CODE
+				, SM.SALES_NO
+				, SD.SALES_SEQ
 			 	, SUBSTR(SM.INVOICE_DATE, 1, 6) AS INVOICE_MONTH
 				, SD.DIVISION_CODE
 				, SM.CUSTOMER_CODE
 				, SD.PRODUCT_CODE
-				, SUM(CASE WHEN SM.VIRTUAL_YN = 'Y' THEN SD.STATUS::INTEGER ELSE 0 END) AS STATUS
-				, MAX(CASE WHEN SM.VIRTUAL_YN = 'Y' THEN SD.COO_CERTIFY_NO ELSE NULL END) AS COO_CERTIFY_NO
+				, SD.QUANTITY
 				, SD.PRODUCT_ASSETS_TYPE
-				, SUM(SD.QUANTITY) AS QUANTITY
+				, (SELECT SD2.STATUS::INTEGER
+				     FROM SALES_MST SM2
+				     INNER JOIN SALES_DTL SD2
+				       ON SM2.COMPANY_CODE = SD2.COMPANY_CODE
+				      AND SM2.SALES_NO = SD2.SALES_NO
+				      AND SM2.DIVISION_CODE = SD2.DIVISION_CODE
+				    WHERE SM2.COMPANY_CODE = SM.COMPANY_CODE
+				      AND SM2.VIRTUAL_YN = 'Y'
+				      AND SM2.CUSTOMER_CODE = SM.CUSTOMER_CODE
+				      AND SD2.DIVISION_CODE = SD.DIVISION_CODE
+				      AND SD2.PRODUCT_CODE = SD.PRODUCT_CODE
+				      AND SUBSTR(SM2.INVOICE_DATE, 1, 6) = SUBSTR(SM.INVOICE_DATE, 1, 6)
+				    FETCH FIRST 1 ROW ONLY) AS STATUS
+				, (SELECT SD2.COO_CERTIFY_NO
+				     FROM SALES_MST SM2
+				     INNER JOIN SALES_DTL SD2
+				       ON SM2.COMPANY_CODE = SD2.COMPANY_CODE
+				      AND SM2.SALES_NO = SD2.SALES_NO
+				      AND SM2.DIVISION_CODE = SD2.DIVISION_CODE
+				    WHERE SM2.COMPANY_CODE = SM.COMPANY_CODE
+				      AND SM2.VIRTUAL_YN = 'Y'
+				      AND SM2.CUSTOMER_CODE = SM.CUSTOMER_CODE
+				      AND SD2.DIVISION_CODE = SD.DIVISION_CODE
+				      AND SD2.PRODUCT_CODE = SD.PRODUCT_CODE
+				      AND SUBSTR(SM2.INVOICE_DATE, 1, 6) = SUBSTR(SM.INVOICE_DATE, 1, 6)
+				    FETCH FIRST 1 ROW ONLY) AS COO_CERTIFY_NO
 			FROM SALES_MST SM
 			INNER JOIN SALES_DTL SD
 				ON SM.COMPANY_CODE = SD.COMPANY_CODE
 				AND SM.SALES_NO = SD.SALES_NO
 				AND SM.DIVISION_CODE = SD.DIVISION_CODE
-			INNER JOIN CUSTOMER C
-				ON C.COMPANY_CODE = SD.COMPANY_CODE
-				AND C.CUSTOMER_CODE = SD.DELIVERY_CUSTOMER_CODE
-			LEFT JOIN CUSTOMER_MODEL CM
-				ON CM.COMPANY_CODE = SD.COMPANY_CODE
-				AND CM.DIVISION_CODE = SD.DIVISION_CODE
-				AND CM.ITEM_CODE = SD.PRODUCT_CODE
-				AND CM.CUSTOMER_CODE = SD.DELIVERY_CUSTOMER_CODE			
-			WHERE SM.COMPANY_CODE = #{company_code}		
+			INNER JOIN CUSTOMER DC
+				ON DC.COMPANY_CODE = SD.COMPANY_CODE
+				AND DC.CUSTOMER_CODE = SD.DELIVERY_CUSTOMER_CODE
+			WHERE SM.COMPANY_CODE = #{company_code}
 			AND SM.EXPORT_FLAG = 'D'
+			AND SM.VIRTUAL_YN = 'N'
 			<if test="from_date != null and from_date != ''">
 				<if test="to_date != null and to_date != ''">
 				AND SM.INVOICE_DATE BETWEEN #{from_date} AND #{to_date}
 				</if>
-			</if>		
-			GROUP BY SM.COMPANY_CODE
-			 	, SUBSTR(SM.INVOICE_DATE, 1, 6)	
-			 	, SM.CUSTOMER_CODE
-            	, SD.DELIVERY_CUSTOMER_CODE
-            	, SD.DIVISION_CODE
-            	, SD.PRODUCT_CODE
-            	, SM.EXPORT_FLAG
-            	, SD.PROD_DIVISION_CODE
-            	, COALESCE(CM.CUSTOMER_ITEM_CODE, SD.CUSTOMER_ITEM_CODE)
-            	, SD.PRODUCT_ASSETS_TYPE
+			</if>
 		) SM
 			INNER JOIN ITEM_MST IM
 				ON IM.COMPANY_CODE = SM.COMPANY_CODE
@@ -62,7 +78,7 @@
 			INNER JOIN CUSTOMER C
 				ON C.COMPANY_CODE = SM.COMPANY_CODE
 				AND C.CUSTOMER_CODE = SM.CUSTOMER_CODE
-		WHERE 1=1	
+		WHERE 1=1
 		AND SM.QUANTITY &gt; 0 -- 반품 제외
 		<if test="division_code != null">
 				AND D.DIVISION_CODE = #{division_code}
@@ -73,7 +89,32 @@
 		<if test="product != null">
 				AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
 			</if>
-		ORDER BY SM.INVOICE_MONTH, C.CUSTOMER_CODE, D.DIVISION_CODE, SM.PRODUCT_CODE
+		ORDER BY SM.INVOICE_MONTH, C.CUSTOMER_CODE, D.DIVISION_CODE, SM.PRODUCT_CODE, SM.SALES_NO, SM.SALES_SEQ
+    </select>
+
+    <select id="retrieveDomesticOriginDeterminationDetailList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto" resultType="HashMap">
+       SELECT SM.SALES_NO
+       		, SD.SALES_SEQ
+       		, SD.PRODUCT_CODE
+       		, IM.ITEM_NAME AS PRODUCT_NAME
+       		, IM.HS_CODE
+       		, SD.QUANTITY
+       		, IM.UNIT
+       		, SD.UNIT_PRICE
+       		, SD.AMOUNT
+       FROM SALES_MST SM
+       INNER JOIN SALES_DTL SD
+       		ON SM.COMPANY_CODE = SD.COMPANY_CODE
+       		AND SM.SALES_NO = SD.SALES_NO
+       		AND SM.DIVISION_CODE = SD.DIVISION_CODE
+       INNER JOIN ITEM_MST IM
+       		ON IM.COMPANY_CODE = SD.COMPANY_CODE
+       		AND IM.ITEM_CODE = SD.PRODUCT_CODE
+       WHERE SM.COMPANY_CODE = #{company_code}
+       AND (SM.SALES_NO, SD.SALES_SEQ) IN
+       <foreach collection="datas" item="d" open="(" separator="," close=")">
+       		(#{d.sales_no}, #{d.sales_seq})
+       </foreach>
     </select>
     
     <select id="retrieveExportOriginDetermination" parameterType="HashMap" resultType="HashMap">
