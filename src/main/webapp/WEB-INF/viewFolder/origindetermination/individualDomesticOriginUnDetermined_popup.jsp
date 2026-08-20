@@ -30,6 +30,18 @@
 	.origin-detail-sidebar .badge {
 		margin-bottom: 4px;
 	}
+	.origin-detail-sidebar .badge.status-fail {
+		background-color: #ffe6e6 !important;
+		color: #d9534f !important;
+	}
+	.origin-detail-sidebar .badge.status-non {
+		background-color: #fffde7 !important;
+		color: #b78103 !important;
+	}
+	.origin-detail-sidebar .badge.status-done {
+		background-color: #e6f4ea !important;
+		color: #1e7e34 !important;
+	}
 	.origin-detail-sidebar .item-product-code {
 		display: block;
 		font-weight: 600;
@@ -58,7 +70,9 @@
 	<div class="modal-header">
 		<h5 class="modal-title h4">원산지 판정 상세 (미판정)</h5>
 		<div class="ms-auto d-flex align-items-center gap-2">
-			<button type="button" class="btn btn-sm btn-primary">원산지판정</button>
+			<button type="button" class="btn btn-sm btn-outline-primary" onclick="javascript:INDIVIDUAL_DOMESTIC_ORIGIN_UNDETERMINED_POPUP.bulkOriginDetermination();">일괄 원산지 판정</button>
+				<button type="button" class="btn btn-sm btn-primary" onclick="javascript:INDIVIDUAL_DOMESTIC_ORIGIN_UNDETERMINED_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
+
 			<button type="button" class="btn btn-system" data-bs-dismiss="modal" aria-label="Close">
 				<svg class="sa-icon sa-icon-2x">
                       <use href="/rcs/ui5x/img/sprite.svg#x"></use>
@@ -106,6 +120,21 @@
 			return salesNo + "_" + salesSeq;
 		};
 
+		// 판정상태(status)에 따른 배지 색상 클래스
+		this.getStatusBadgeClass = function(status) {
+			switch (String(status)) {
+				case "5": // 판정실패
+					return "status-fail";
+				case "0": // 미판정
+				case "1":
+					return "status-non";
+				case "4": // 판정완료
+					return "status-done";
+				default:
+					return "bg-secondary";
+			}
+		};
+
 		// 시작점
 		this.Initialize_viewObject = function() {
 			var rawDatas = '${datas}';
@@ -133,10 +162,12 @@
 			var self = this;
 			this.datas.forEach(function(row) {
 				var key = self.buildKey(row.sales_no, row.sales_seq);
+				var statusClass = self.getStatusBadgeClass(row.status);
 
 				var $item = $(
 					'<a href="javascript:void(0)" class="list-group-item list-group-item-action" data-key="' + key + '">' +
-						'<span class="badge bg-secondary">' + (row.invoice_month || '') + '</span>' +
+						'<span class="badge bg-secondary">' + (row.invoice_month || '') + '</span> ' +
+						'<span class="badge ' + statusClass + '">' + (row.status_name || '') + '</span>' +
 						'<span class="item-product-code">' + (row.product_code || '') + '</span>' +
 						'<span class="item-product-name">' + (row.product_name || '') + '</span>' +
 					'</a>'
@@ -214,6 +245,28 @@
 			);
 
 			$body.append($row);
+		};
+
+		// 우측의 모든 품목을 대상으로 원산지 판정 진행
+		// TODO: 판정 백엔드(원산지 판정 로직) 병합 시 실제 API 연동 필요
+		this.bulkOriginDetermination = function() {
+			if (this.datas.length === 0) {
+				alert("판정할 품목이 없습니다.");
+				return;
+			}
+
+			alert(this.datas.length + "건 일괄 원산지 판정을 진행합니다.");
+		};
+
+		// 좌측에서 선택한 품목 1건만 대상으로 원산지 판정 진행
+		// TODO: 판정 백엔드(원산지 판정 로직) 병합 시 실제 API 연동 필요
+		this.individualOriginDetermination = function() {
+			if (!this.selectedKey) {
+				alert("판정할 품목을 선택하세요.");
+				return;
+			}
+
+			alert("선택한 품목 1건 원산지 판정을 진행합니다.");
 		};
 	};
 
