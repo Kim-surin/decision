@@ -72,8 +72,7 @@
 	<div class="modal-header">
 		<h5 class="modal-title h4">원산지 판정 상세</h5>
 		<div class="ms-auto d-flex align-items-center gap-2">
-			<button type="button" class="btn btn-sm btn-outline-primary" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_POPUP.bulkOriginDetermination();">일괄 원산지 판정</button>
-			<button type="button" class="btn btn-sm btn-primary" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
+			<button type="button" class="btn btn-sm btn-primary" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_POPUP.bulkOriginDetermination();">일괄 원산지 판정</button>
 			<button type="button" class="btn btn-system" data-bs-dismiss="modal" aria-label="Close">
 				<svg class="sa-icon sa-icon-2x">
                       <use href="/rcs/ui5x/img/sprite.svg#x"></use>
@@ -86,7 +85,10 @@
 			<div class="origin-detail-sidebar list-group" id="domesticOriginDetermination_popup_sidebar">
 			</div>
 			<div class="origin-detail-main">
-				<h6 class="mb-3">판정 품목</h6>
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<h6 class="mb-0">판정 품목</h6>
+					<button type="button" class="btn btn-sm btn-primary" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
+				</div>
 				<table class="table table-bordered table-sm">
 					<thead class="table-light">
 						<tr>
