@@ -112,6 +112,8 @@
 
 					var DOMESTIC_ORIGIN_DETERMINATIONVIEW = new function () {
 						this.grid_DOMESTIC_ORIGIN_DETERMINATION = null;
+						// 원산지판정 팝업으로 넘길 수 있는 최대 체크 건수
+						this.MAX_CHECK_COUNT = 50;
 
 						this.Initialize_viewObject = function () {
 							DOMESTIC_ORIGIN_DETERMINATIONVIEW.createAUIGrid();
@@ -170,6 +172,12 @@
 									// 엑스트라 체크박스 체크해제 추가
 									AUIGrid.addUncheckedRowsByIds(event.pid, rowIndex);
 								} else {
+									// 체크 가능 건수(최대 50건) 초과 여부 확인
+									if (AUIGrid.getCheckedRowItems(event.pid).length >= DOMESTIC_ORIGIN_DETERMINATIONVIEW.MAX_CHECK_COUNT) {
+										KpackageOBJ.object.alert("한 번에 최대 " + DOMESTIC_ORIGIN_DETERMINATIONVIEW.MAX_CHECK_COUNT + "건까지 선택할 수 있습니다.");
+										return;
+									}
+
 									// 엑스트라 체크박스 체크 추가
 									AUIGrid.addCheckedRowsByIds(event.pid, rowIndex);
 								}
@@ -190,12 +198,18 @@
 						
 						this.individual_domestic_origin_determination = function () {
 							var checkItems = AUIGrid.getCheckedRowItems(DOMESTIC_ORIGIN_DETERMINATIONVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION);
-							
+
 							if (checkItems.length === 0) {
 								alert("선택된 항목이 없습니다.");
 								return;
 							}
-							
+
+							// 전체선택 체크박스 등으로 체크 가능 건수(최대 50건)를 초과한 경우 방어
+							if (checkItems.length > DOMESTIC_ORIGIN_DETERMINATIONVIEW.MAX_CHECK_COUNT) {
+								KpackageOBJ.object.alert("한 번에 최대 " + DOMESTIC_ORIGIN_DETERMINATIONVIEW.MAX_CHECK_COUNT + "건까지 선택할 수 있습니다.");
+								return;
+							}
+
 							var datas = checkItems.map(function(row) {
 							        return row.item;
 							    });

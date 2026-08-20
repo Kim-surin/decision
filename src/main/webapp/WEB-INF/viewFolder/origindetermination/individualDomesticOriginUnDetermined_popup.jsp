@@ -266,7 +266,51 @@
 				return;
 			}
 
+			var selectedRow = this.findSelectedRow();
+
 			KpackageOBJ.object.alert("선택한 품목 1건 원산지 판정을 진행합니다.");
+
+			// 판정을 진행한 건은 결과가 바뀌므로, 판정 실행 후 해당 건만 재조회해 우측 상세를 최신화
+			if (selectedRow) {
+				this.refetchDetail(selectedRow);
+			}
+		};
+
+		// 좌측 목록(datas)에서 현재 선택된(selectedKey) 항목의 원본 row 를 찾음
+		this.findSelectedRow = function() {
+			var self = this;
+			return this.datas.filter(function(row) {
+				return self.buildKey(row.sales_no, row.sales_seq) === self.selectedKey;
+			})[0];
+		};
+
+		// 판정 실행 후, 해당 건 1개의 상세 결과만 다시 조회해 우측 화면을 최신화
+		this.refetchDetail = function(row) {
+			var self = this;
+			var key = this.buildKey(row.sales_no, row.sales_seq);
+
+			var request = {
+				datas: [{ sales_no: row.sales_no, sales_seq: row.sales_seq }]
+			};
+
+			KpackageOBJ.ajax.doSubmit(
+				'/origin/compliance/origindetermination/domesticOriginDeterminationDetailList',
+				request,
+				function(response) {
+					var list = (response && response.value) ? response.value : [];
+
+					list.forEach(function(r) {
+						self.detailMap[self.buildKey(r.SALES_NO, r.SALES_SEQ)] = r;
+					});
+
+					if (self.selectedKey === key) {
+						self.renderDetail(self.detailMap[key]);
+					}
+				},
+				function() {
+					KpackageOBJ.object.alert('판정 결과 재조회 중 오류가 발생했습니다.');
+				}
+			);
 		};
 	};
 
