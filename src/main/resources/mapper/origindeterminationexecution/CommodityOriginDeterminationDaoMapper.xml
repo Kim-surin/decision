@@ -1,0 +1,154 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.CommodityOriginDeterminationDao">
+
+	<!--
+		레거시 CREATE_FCR "3-5. FCR MST UPDATE(상품 원산지 판정)" 이관. CreateFcrService 에 있었으나
+		판정 로직을 OriginDeterminationService.determineOrigin 으로 모으면서 옮겨왔다(동작은 그대로).
+
+		VENDOR_RULE_CONTENTS: 원본은 힌트(INDEX_DESC) + ROWNUM=1 로 "가장 최근" 확인서 결정기준 1건을
+		임의 선택했다. 힌트가 암시하는 의도(가장 최근 입고건 우선)를 명시적 정렬로 대체해 이식성과
+		동작을 함께 확보한다(FETCH FIRST 1 ROW ONLY + ORDER BY WAREHOUSING_DATE DESC).
+		업무팀 확인 필요: 원본 인덱스(PO_LEDGER_IDX2)의 실제 정렬 기준과 다를 경우 결과가 달라질 수 있음.
+
+		VENDOR_RULE_CONTENTS/RULE_CONTENTS 는 원래 SELECT 목록의 상관 서브쿼리(FM/IM 을 참조)로
+		작성했었는데, PostgreSQL 이 MERGE 의 USING 서브쿼리 안에서는 그 서브쿼리 자신의 FROM 절
+		별칭(FM, IM)을 상관 서브쿼리가 보지 못한다("missing FROM-clause entry" 오류). 표준 SQL의
+		LATERAL 조인으로 바꿔 상관관계를 명시적인 JOIN 으로 표현했다 — FETCH FIRST 1 ROW ONLY 로
+		여전히 최대 1건만 매칭되므로 결과는 기존 상관 서브쿼리와 동일하다(매칭 없으면 LEFT JOIN 이라
+		NULL, 기존 스칼라 서브쿼리도 결과 없으면 NULL이었던 것과 동일).
+	-->
+	<update id="mergeFcrMstOriginDetermination">
+		MERGE INTO FCR_MST FM
+		USING (SELECT FM.FTA_CODE
+		             ,FM.SALES_NO
+		             ,FM.SALES_SEQ
+		             ,FM.DIVISION_CODE
+		             ,FM.COMPANY_CODE
+		             ,VRC.RULE_CODE AS VENDOR_RULE_CONTENTS
+		             ,FRU.RULE_CONTENTS AS RULE_CONTENTS
+		             ,CASE WHEN FD.OUTAREA_QTY = 0 THEN 'Y' ELSE 'N' END AS COO_YN
+		       FROM   FCR_MST FM
+		       INNER  JOIN FCR_DTL FD
+		       ON     FD.FTA_CODE = FM.FTA_CODE
+		       AND    FD.SALES_NO = FM.SALES_NO
+		       AND    FD.SALES_SEQ = FM.SALES_SEQ
+		       AND    FD.DIVISION_CODE = FM.DIVISION_CODE
+		       AND    FD.COMPANY_CODE = FM.COMPANY_CODE
+		       INNER  JOIN ITEM_MST IM
+		       ON     IM.ITEM_CODE = FM.PRODUCT_CODE
+		       AND    IM.COMPANY_CODE = FM.COMPANY_CODE
+		       LEFT   JOIN LATERAL (SELECT ECD.RULE_CODE
+		                            FROM   PO_LEDGER PL
+		                            INNER  JOIN EXT_COO_CERTIFY_MST ECM
+		                            ON     ECM.COMPANY_CODE = PL.COMPANY_CODE
+		                            AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		                            AND    ECM.SUBMIT_STATUS = '4'
+		                            AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND
+		                                     PL.WAREHOUSING_DATE BETWEEN ECM.APPLY_DATE AND ECM.END_DATE) OR
+		                                    (ECM.COO_CERTIFY_TYPE = 'N' AND PL.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO))
+		                            LEFT OUTER JOIN EXT_COO_CERTIFY_DTL ECD
+		                            ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		                            AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		                            AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		                            AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		                            AND    ECD.ITEM_CODE = PL.ITEM_CODE
+		                            AND    #{invoiceDate} BETWEEN ECD.APPLY_DATE AND ECD.END_DATE
+		                            WHERE  PL.COMPANY_CODE = #{companyCode}
+		                            AND    PL.ITEM_CODE = COALESCE(IM.ITEM_CODE_ANOTHER, FM.PRODUCT_CODE)
+		                            AND    ECD.FTA_CODE = FM.FTA_CODE
+		                            ORDER  BY PL.WAREHOUSING_DATE DESC
+		                            FETCH FIRST 1 ROW ONLY) VRC ON TRUE
+		       LEFT   JOIN LATERAL (SELECT RULE_CONTENTS
+		                            FROM   FTA_RULE FR
+		                            WHERE  FR.HS_CODE = SUBSTRING(FM.HS_CODE FROM 1 FOR LENGTH(FR.HS_CODE))
+		                            AND    FR.FTA_CODE = FM.FTA_CODE
+		                            AND    HS_CODE_SUB_CATEGORY = '1'
+		                            FETCH FIRST 1 ROW ONLY) FRU ON TRUE
+		       WHERE  FM.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
+		       AND    FM.SALES_NO = #{salesNo}
+		       AND    FM.DIVISION_CODE = #{divisionCode}
+		       AND    FM.COMPANY_CODE = #{companyCode}
+		       <if test="productCodes != null and !productCodes.isEmpty()">
+		       AND    FM.PRODUCT_CODE IN
+		              <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                  #{productCode}
+		              </foreach>
+		       </if>) SUB
+		ON (FM.FTA_CODE = SUB.FTA_CODE AND FM.SALES_NO = SUB.SALES_NO AND FM.SALES_SEQ = SUB.SALES_SEQ
+		    AND FM.DIVISION_CODE = SUB.DIVISION_CODE AND FM.COMPANY_CODE = SUB.COMPANY_CODE)
+		WHEN MATCHED THEN
+			UPDATE
+			SET    FTA_COO_YN     = SUB.COO_YN
+			      ,COMPANY_COO_YN = SUB.COO_YN
+			      ,RULE_CONTENTS  = COALESCE(SUB.VENDOR_RULE_CONTENTS, SUB.RULE_CONTENTS)
+	</update>
+
+	<!--
+		레거시 CREATE_FCR "3-6. FCR RESULT UPDATE(상품 원산지 판정)" 이관.
+		CREATE_BY/UPDATE_BY: 원래 'CREATE_FCR' 리터럴이었는데(당시엔 실제로 CREATE_FCR 프로시저가
+		기록했으므로), 이제 이 INSERT 를 실행하는 주체가 COO_DECISION(OriginDeterminationService)이라
+		제품(P,H) FCR_RESULT 기록과 동일하게 호출한 판정 모드의 원본 패키지명(#{createBy},
+		OriginDeterminationMode#getProcedureName)을 기록하도록 맞췄다.
+
+		SEQ 컬럼은 INSERT 대상 목록에서 뺐다 — 컬럼 DEFAULT(시퀀스)로 채번한다. 원래 있던 "SELECT 1
+		AS SEQ" 는 매 행마다 같은 값(1)을 넣는 잘못된 채번이었다(여러 행을 한 번의 INSERT...SELECT 로
+		넣는 이 쿼리 특성상 실제로는 그대로 두면 문제가 됐을 코드).
+	-->
+	<insert id="insertFcrResultForProducts">
+		INSERT INTO FCR_RESULT
+			(SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
+			 RVC_RATE, CTC_YN, COMPANY_RVC_YN, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE,
+			 CREATE_BY, UPDATE_DATE, UPDATE_BY)
+		SELECT FM.SALES_NO
+		      ,FM.SALES_SEQ
+		      ,FM.FTA_CODE
+		      ,FM.DIVISION_CODE
+		      ,FM.COMPANY_CODE
+		      ,FM.HS_CODE
+		      ,FM.PRODUCT_CODE
+		      ,FM.STANDARD
+		      ,-1                AS RULE_SEQ
+		      ,FM.RULE_CONTENTS AS RULE_CODE
+		      ,FM.FTA_COO_YN
+		      ,FM.COMPANY_COO_YN
+		      ,NULL              AS BUFFER_OPTION
+		      ,NULL              AS DE_MINIMIS_RATE
+		      ,NULL              AS RVC_RATE
+		      ,CASE WHEN (SELECT COUNT(1) FROM FTA_RULE X
+		                  WHERE X.HS_CODE IN (SUBSTRING(FM.HS_CODE FROM 1 FOR 2), SUBSTRING(FM.HS_CODE FROM 1 FOR 4), FM.HS_CODE)
+		                  AND X.FTA_CODE = FM.FTA_CODE AND X.CTH_RULE IS NOT NULL) > 0
+		                 AND FM.COMPANY_COO_YN = 'Y' THEN 'Y' ELSE 'N' END AS CTC_YN
+		      ,CASE WHEN (SELECT COUNT(1) FROM FTA_RULE X
+		                  WHERE X.HS_CODE IN (SUBSTRING(FM.HS_CODE FROM 1 FOR 2), SUBSTRING(FM.HS_CODE FROM 1 FOR 4), FM.HS_CODE)
+		                  AND X.FTA_CODE = FM.FTA_CODE
+		                  AND (X.BD_RULE IS NOT NULL OR X.BU_RULE IS NOT NULL OR X.NC_RULE IS NOT NULL OR X.MC_RULE IS NOT NULL)) > 0
+		                 AND FM.COMPANY_COO_YN = 'Y'
+		                 AND POSITION('+' IN FM.RULE_CONTENTS) > 0 THEN 'Y' ELSE 'N' END AS COMPANY_RVC_YN
+		      ,'N'               AS STATUS
+		      ,NULL              AS ERROR_CODE
+		      ,NULL              AS ERROR_MSG
+		      ,'N'               AS DELETE_YN
+		      ,CURRENT_TIMESTAMP AS CREATE_DATE
+		      ,#{createBy}       AS CREATE_BY
+		      ,CURRENT_TIMESTAMP AS UPDATE_DATE
+		      ,#{createBy}       AS UPDATE_BY
+		FROM   FCR_MST FM
+		INNER  JOIN SALES_DTL SD
+		ON     SD.SALES_NO = FM.SALES_NO
+		AND    SD.SALES_SEQ = FM.SALES_SEQ
+		AND    SD.DIVISION_CODE = FM.DIVISION_CODE
+		AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		WHERE  SD.SALES_NO = #{salesNo}
+		AND    SD.DIVISION_CODE = #{divisionCode}
+		AND    SD.COMPANY_CODE = #{companyCode}
+		AND    SD.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    SD.PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</insert>
+</mapper>

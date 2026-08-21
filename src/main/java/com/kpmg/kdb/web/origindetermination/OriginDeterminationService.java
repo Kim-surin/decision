@@ -19,8 +19,10 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailR
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.SalesTarget;
-import com.kpmg.kdb.web.origindetermination.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationexecution.BulkDecisionResult;
+import com.kpmg.kdb.web.origindeterminationexecution.DomesticBulkDecisionService;
+import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
 
 @Service
 public class OriginDeterminationService extends GeneralService {

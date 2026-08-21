@@ -1,0 +1,235 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationSupportDao">
+
+	<!-- ===================== GET_BUFFER ===================== -->
+
+	<select id="selectBufferOptionValue" resultType="string">
+		SELECT OPTION_VALUE
+		FROM   COMPANY_OPTION
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    OPTION_CODE = 'BF'
+	</select>
+
+	<select id="selectCompanyBuffer" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.BufferRates">
+		SELECT COM_RVC_RATE        AS rvcRate
+		      ,COM_DE_MINIMIS_RATE AS deMinimisRate
+		FROM   COMPANY
+		WHERE  COMPANY_CODE = #{companyCode}
+	</select>
+
+	<select id="selectDivisionBuffer" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.BufferRates">
+		SELECT DIV_RVC_RATE        AS rvcRate
+		      ,DIV_DE_MINIMIS_RATE AS deMinimisRate
+		FROM   DIVISION
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    DIVISION_CODE = #{divisionCode}
+	</select>
+
+	<select id="selectProductLineBuffer" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.BufferRates">
+		SELECT PL.PRD_RVC_RATE        AS rvcRate
+		      ,PL.PRD_DE_MINIMIS_RATE AS deMinimisRate
+		FROM   PRODUCT_LINE PL
+		      ,ITEM_MST     ID
+		WHERE  ID.COMPANY_CODE = #{companyCode}
+		AND    ID.ITEM_CODE = #{productCode}
+		AND    ID.PRODUCT_CODE = PL.PRODUCT_CODE
+		AND    ID.COMPANY_CODE = PL.COMPANY_CODE
+	</select>
+
+	<select id="selectFtaBuffer" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.BufferRates">
+		SELECT COM_RVC_RATE        AS rvcRate
+		      ,COM_DE_MINIMIS_RATE AS deMinimisRate
+		FROM   FTA_MASTER
+		WHERE  FTA_CODE = #{ftaCode}
+		AND    COMPANY_CODE = #{companyCode}
+	</select>
+
+	<!-- ===================== GET_MP_ITEM ===================== -->
+
+	<select id="selectMinimalProcessItemCount" resultType="long">
+		SELECT COUNT(1)
+		FROM   SALES_MST SM
+		INNER  JOIN SALES_DTL SD
+		ON     SD.SALES_NO = SM.SALES_NO
+		AND    SD.COMPANY_CODE = SM.COMPANY_CODE
+		AND    SD.DIVISION_CODE = SM.DIVISION_CODE
+		INNER  JOIN MINIMAL_PROCESS_ITEM MP
+		ON     MP.COMPANY_CODE = SD.COMPANY_CODE
+		AND    MP.DIVISION_CODE = SD.DIVISION_CODE
+		AND    MP.ITEM_CODE = SD.PRODUCT_CODE
+		AND    SM.INVOICE_DATE BETWEEN MP.APPLY_DATE AND MP.END_DATE
+		WHERE  SM.COMPANY_CODE = #{companyCode}
+		AND    SM.DIVISION_CODE = #{divisionCode}
+		AND    SM.SALES_NO = #{salesNo}
+		AND    SD.SALES_SEQ = #{salesSeq}
+	</select>
+
+	<!-- ===================== GET_RCEP_NATION / GET_RCEP_RVC_NATION 공용 ===================== -->
+
+	<select id="selectFtaApplyNations" resultType="string">
+		SELECT NATION_CODE
+		FROM   FTA_APPLY_NATION
+		WHERE  FTA_CODE = #{ftaCode}
+	</select>
+
+	<!--
+		===================== INSERT_FRD_PROCESS =====================
+		SEQ 컬럼은 넘기지 않는다 — 컬럼 DEFAULT(시퀀스)로 채번하도록 INSERT 대상 목록에서 아예 뺐다
+		(Oracle 전용 FCR_RESULT_SEQ_S.NEXTVAL 을 매번 별도 SELECT 로 조회해 바인딩하던 것을 없앰).
+
+		원본은 룰 1건 판정이 끝날 때마다 단건 INSERT 였지만, FM_LIST 1건(FTA 후보)에 걸린 룰 전체의
+		결과를 애플리케이션에서 모았다가 한 번의 배치 INSERT 로 저장한다 — INSERT 순서에 의미가 없어
+		최종 저장 결과는 동일하다(OriginDeterminationSupportService#insertFrdAndReset/#flushPendingResults 참고).
+	-->
+	<insert id="insertFcrResults">
+		INSERT INTO FCR_RESULT
+			(SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
+			 RVC_RATE, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE, CREATE_BY, UPDATE_DATE,
+			 UPDATE_BY, SP_COO_YN, WO_COO_YN, CTC_YN, FTA_DE_MINIMIS_YN, COMPANY_DE_MINIMIS_YN,
+			 FTA_RVC_YN, COMPANY_RVC_YN, EXCLUSION_YN, EXCLUSION_CONDITION, CTC_RESULT_RATE,
+			 CTC_FTA_RESULT_RATE, CTC_COMPANY_RESULT_RATE, RVC_RESULT_RATE, RVC_FTA_RESULT_RATE,
+			 RVC_COMPANY_RESULT_RATE, RCEP_COO_NATION)
+		VALUES
+		<foreach collection="records" item="rec" separator=",">
+			(#{rec.salesNo}, #{rec.salesSeq}, #{rec.ftaCode}, #{rec.divisionCode}, #{rec.companyCode}, #{rec.hsCode},
+			 #{rec.productCode}, #{rec.standard}, #{rec.ruleSeq}, #{rec.ruleCode}, #{rec.ftaCooYn}, #{rec.companyCooYn},
+			 #{rec.bufferOption}, #{rec.deMinimisRate}, #{rec.rvcRate}, #{rec.status}, #{rec.errorCode}, #{rec.errorMsg},
+			 #{rec.deleteYn}, CURRENT_TIMESTAMP, #{rec.createBy}, CURRENT_TIMESTAMP, #{rec.updateBy}, #{rec.spCooYn},
+			 #{rec.woCooYn}, #{rec.ctcYn}, #{rec.ftaDeMinimisYn}, #{rec.companyDeMinimisYn}, #{rec.ftaRvcYn}, #{rec.companyRvcYn},
+			 #{rec.exclusionYn}, #{rec.exclusionCondition}, #{rec.ctcResultRate}, #{rec.ctcFtaResultRate},
+			 #{rec.ctcCompanyResultRate}, #{rec.rvcResultRate}, #{rec.rvcFtaResultRate}, #{rec.rvcCompanyResultRate},
+			 #{rec.rcepCooNation})
+		</foreach>
+	</insert>
+
+	<!-- ===================== UPDATE_FRM_PROCEDURE ===================== -->
+
+	<sql id="fcrResultColumns">
+		SEQ AS seq, SALES_NO AS salesNo, SALES_SEQ AS salesSeq, FTA_CODE AS ftaCode,
+		DIVISION_CODE AS divisionCode, COMPANY_CODE AS companyCode, HS_CODE AS hsCode,
+		PRODUCT_CODE AS productCode, STANDARD AS standard, RULE_SEQ AS ruleSeq, RULE_CODE AS ruleCode,
+		FTA_COO_YN AS ftaCooYn, COMPANY_COO_YN AS companyCooYn, BUFFER_OPTION AS bufferOption,
+		DE_MINIMIS_RATE AS deMinimisRate, RVC_RATE AS rvcRate, STATUS AS status, ERROR_CODE AS errorCode,
+		ERROR_MSG AS errorMsg, SP_COO_YN AS spCooYn, WO_COO_YN AS woCooYn, CTC_YN AS ctcYn,
+		FTA_DE_MINIMIS_YN AS ftaDeMinimisYn, COMPANY_DE_MINIMIS_YN AS companyDeMinimisYn,
+		FTA_RVC_YN AS ftaRvcYn, COMPANY_RVC_YN AS companyRvcYn, EXCLUSION_YN AS exclusionYn,
+		EXCLUSION_CONDITION AS exclusionCondition, CTC_RESULT_RATE AS ctcResultRate,
+		CTC_FTA_RESULT_RATE AS ctcFtaResultRate, CTC_COMPANY_RESULT_RATE AS ctcCompanyResultRate,
+		RVC_RESULT_RATE AS rvcResultRate, RVC_FTA_RESULT_RATE AS rvcFtaResultRate,
+		RVC_COMPANY_RESULT_RATE AS rvcCompanyResultRate, RCEP_COO_NATION AS rcepCooNation
+	</sql>
+
+	<!--
+		원본은 ROWNUM = 1 만 사용하고 별도 정렬 기준이 없어(임의의 한 행) 그대로 이관한다.
+		ROWNUM 대신 목록을 반환하고 애플리케이션에서 첫 행만 사용해 동일하게 동작시킨다(DB 이식성).
+	-->
+	<select id="selectOwnCooFcrResult" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationResult">
+		SELECT <include refid="fcrResultColumns"/>
+		FROM   FCR_RESULT FRD
+		WHERE  FRD.SALES_NO = #{salesNo}
+		AND    FRD.SALES_SEQ = #{salesSeq}
+		AND    FRD.FTA_CODE = #{ftaCode}
+		AND    FRD.DIVISION_CODE = #{divisionCode}
+		AND    FRD.COMPANY_CODE = #{companyCode}
+		AND    FRD.COMPANY_COO_YN = 'Y'
+	</select>
+
+	<select id="selectNonCooFcrResult" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationResult">
+		SELECT <include refid="fcrResultColumns"/>
+		FROM   FCR_RESULT FRD
+		WHERE  FRD.SALES_NO = #{salesNo}
+		AND    FRD.SALES_SEQ = #{salesSeq}
+		AND    FRD.FTA_CODE = #{ftaCode}
+		AND    FRD.DIVISION_CODE = #{divisionCode}
+		AND    FRD.COMPANY_CODE = #{companyCode}
+		AND    FRD.COMPANY_COO_YN = 'N'
+		AND    FRD.STATUS = 'N'
+	</select>
+
+	<!--
+		selectOwnCooFcrResult(역내산 우선)/selectNonCooFcrResult(없으면 역외산만 존재) 2단계 순차 조회를
+		단일 배치 쿼리로 통합. FM_LIST 행(FTA 후보)마다 반복되던 것을, 요청받은 (salesSeq,ftaCode,
+		divisionCode) 조합 전체를 UNION ALL 파생 테이블(V)로 던지고 LATERAL 서브쿼리 안에서 원본 두 단건
+		쿼리를 각각 그대로(OR/CASE 없이) FETCH FIRST 1 ROW ONLY 로 조회한 뒤 UNION ALL 로 합쳐 최대 2행
+		(역내산 1건 + 역외산 1건) 중 역내산을 우선해 1건만 뽑는다. 매칭되는 행이 전혀 없는 조합도 결과에
+		포함되고(LEFT JOIN LATERAL), 그 경우 matchTier 를 포함한 모든 FCR_RESULT 컬럼이 NULL 이다(원본의
+		두 조회 모두 0건 -> cooYn='E' 분기에 대응 — OriginDeterminationSupportService#resolveDeferredUpdateFrm
+		참고).
+
+		[버그 수정 이력] 최초 구현은 두 조건을 OR 로 합친 뒤 ORDER BY CASE WHEN COMPANY_COO_YN='Y' THEN 0
+		ELSE 1 END 으로 우선순위를 매겼는데, 이 CASE 식이 ORDER BY 대상이라 PostgreSQL 이 인덱스를 이용한
+		"정렬 없이 첫 행 찾기" 최적화를 못 쓰고 FCR_RESULT 를 매번 정렬 가능한 형태로 훑어야 했다 —
+		LATERAL 이라 요청(V) 건수만큼(최대 수백 회) 반복 실행되어 실사용 중 이 쿼리 한 번에 2분 넘게
+		걸리는 회귀가 발생했다(세션 맨 처음 고쳤던 RULE_SEQ = CASE WHEN... 자기참조 CASE와 같은 계열의
+		planner 문제). 원본 selectOwnCooFcrResult/selectNonCooFcrResult 와 동일하게 OR/CASE 없는 단순
+		WHERE + FETCH FIRST 1 ROW ONLY(정렬기준 없음) 두 개로 되돌리고, 이 둘을 합친 최대 2행에 대해서만
+		(비용이 무시할 만큼 작음) matchTier 로 최종 우선순위를 가르는 방식으로 고쳤다.
+	-->
+	<select id="selectOwnOrNonCooFcrResultBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.UpdateFrmBatchResult">
+		SELECT V.SALES_SEQ     AS reqSalesSeq
+		      ,V.FTA_CODE      AS reqFtaCode
+		      ,V.DIVISION_CODE AS reqDivisionCode
+		      ,R.*
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.salesSeq} AS SALES_SEQ, #{r.ftaCode} AS FTA_CODE, #{r.divisionCode} AS DIVISION_CODE
+		       </foreach>
+		       ) V
+		LEFT   JOIN LATERAL (SELECT *
+		                      FROM   (
+		                             (SELECT <include refid="fcrResultColumns"/>
+		                                    ,'Y' AS matchTier
+		                              FROM   FCR_RESULT FRD
+		                              WHERE  FRD.SALES_NO = #{salesNo}
+		                              AND    FRD.SALES_SEQ = V.SALES_SEQ
+		                              AND    FRD.FTA_CODE = V.FTA_CODE
+		                              AND    FRD.DIVISION_CODE = V.DIVISION_CODE
+		                              AND    FRD.COMPANY_CODE = #{companyCode}
+		                              AND    FRD.COMPANY_COO_YN = 'Y'
+		                              FETCH FIRST 1 ROW ONLY)
+		                             UNION ALL
+		                             (SELECT <include refid="fcrResultColumns"/>
+		                                    ,'N' AS matchTier
+		                              FROM   FCR_RESULT FRD
+		                              WHERE  FRD.SALES_NO = #{salesNo}
+		                              AND    FRD.SALES_SEQ = V.SALES_SEQ
+		                              AND    FRD.FTA_CODE = V.FTA_CODE
+		                              AND    FRD.DIVISION_CODE = V.DIVISION_CODE
+		                              AND    FRD.COMPANY_CODE = #{companyCode}
+		                              AND    FRD.COMPANY_COO_YN = 'N'
+		                              AND    FRD.STATUS = 'N'
+		                              FETCH FIRST 1 ROW ONLY)
+		                             ) TIERS
+		                      ORDER  BY matchTier DESC
+		                      FETCH FIRST 1 ROW ONLY) R ON TRUE
+	</select>
+
+	<!--
+		원본은 FM_LIST 행(FTA 후보)마다 단건 UPDATE 였지만, determineOrigin() 1회 호출에서 나온 모든
+		FM_LIST 행의 갱신을 모았다가 UPDATE...FROM(VALUES) 로 한 번에 반영한다. FM_LIST 행은 서로 다른
+		(SALES_SEQ,FTA_CODE) 조합의 FCR_MST 행을 갱신하므로 행 사이에 순서 의존성이 없어 배치로 묶어도
+		결과는 동일하다.
+	-->
+	<update id="updateFcrMstDecisionResults">
+		UPDATE FCR_MST FM
+		SET    RULE_CONTENTS   = V.RULE_CONTENTS
+		      ,FTA_COO_YN      = V.FTA_COO_YN
+		      ,COMPANY_COO_YN  = V.COMPANY_COO_YN
+		      ,RCEP_COO_NATION = V.RCEP_COO_NATION
+		FROM   (
+		       <foreach collection="rows" item="r" separator="UNION ALL">
+		       SELECT #{r.salesNo} AS SALES_NO, #{r.salesSeq} AS SALES_SEQ, #{r.ftaCode} AS FTA_CODE,
+		              #{r.divisionCode} AS DIVISION_CODE, #{r.companyCode} AS COMPANY_CODE,
+		              #{r.ruleContents} AS RULE_CONTENTS, #{r.ftaCooYn} AS FTA_COO_YN,
+		              #{r.companyCooYn} AS COMPANY_COO_YN, #{r.rcepCooNation} AS RCEP_COO_NATION
+		       </foreach>
+		       ) V
+		WHERE  FM.SALES_NO = V.SALES_NO
+		AND    FM.SALES_SEQ = V.SALES_SEQ
+		AND    FM.FTA_CODE = V.FTA_CODE
+		AND    FM.DIVISION_CODE = V.DIVISION_CODE
+		AND    FM.COMPANY_CODE = V.COMPANY_CODE
+	</update>
+</mapper>
