@@ -18,14 +18,14 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCriteria;
  * 레거시 FS03_GET_HS_CODE(company, division, customer, item, nation, fta, yyyymmdd) 이관.
  */
 @Service
-public class HsCodeService extends GeneralService {
+public class MaterialHsCodeService extends GeneralService {
 
 	/** {@link #prefetchHsCode} 배치 조회 1회당 최대 요청 건수(바인드 파라미터 상한 방지) */
 	private static final int BATCH_CHUNK_SIZE = 500;
 
 	public String resolveHsCode(HsCodeCriteria criteria) {
 		try {
-			HsCodeCandidateRow candidate = sqlSession.getMapper(HsCodeDao.class).selectHsCodeCandidates(criteria);
+			HsCodeCandidateRow candidate = sqlSession.getMapper(MaterialHsCodeDao.class).selectHsCodeCandidates(criteria);
 			if (candidate == null) {
 				return "";
 			}
@@ -40,7 +40,7 @@ public class HsCodeService extends GeneralService {
 	}
 
 	/**
-	 * {@link HsCodeDao#selectHsCodeCandidates} 가 (제품×FTA_CODE 후보) 조합마다 반복 호출되던 것을 배치
+	 * {@link MaterialHsCodeDao#selectHsCodeCandidates} 가 (제품×FTA_CODE 후보) 조합마다 반복 호출되던 것을 배치
 	 * 조회 1회로 대체하기 위한 사전조회. 반환된 맵은 {@link #hsCodeKey} 로 만든 키에 최종 우선순위
 	 * HS코드(빈 문자열이면 "결과 없음", {@link #resolveHsCode} 와 동일 규칙)를 담는다 — 호출자가 만든
 	 * hsCodeCache(Map)에 그대로 채워 넣으면 그 이후의 조회는 추가 DB 호출 없이 캐시만으로 처리된다.
@@ -61,7 +61,7 @@ public class HsCodeService extends GeneralService {
 		}
 
 		try {
-			HsCodeDao dao = sqlSession.getMapper(HsCodeDao.class);
+			MaterialHsCodeDao dao = sqlSession.getMapper(MaterialHsCodeDao.class);
 			Map<String, String> cache = new HashMap<>();
 			for (int from = 0; from < distinctRequests.size(); from += BATCH_CHUNK_SIZE) {
 				List<HsCodeCriteria> chunk = distinctRequests.subList(from,

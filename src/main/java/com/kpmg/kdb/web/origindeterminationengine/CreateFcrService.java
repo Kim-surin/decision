@@ -25,7 +25,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader;
-import com.kpmg.kdb.web.origindeterminationengine.HsCodeService;
+import com.kpmg.kdb.web.origindeterminationengine.MaterialHsCodeService;
 import com.kpmg.kdb.web.origindeterminationengine.IncotermsRateService;
 import com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateService;
 import com.kpmg.kdb.web.origindeterminationengine.ItemPriceService;
@@ -46,7 +46,7 @@ import com.kpmg.kdb.web.origindeterminationengine.FcrCreator;
  *
  * 원본은 FS03_GET_HS_CODE / GET_INCOTERMS_CHANGE_RATE / FC10_GET_ITEM_PRICE / FC10_GET_ITEM_ORIGIN_RATE
  * / FC10_GET_ITEM_PRICE_NOTE 를 대량 INSERT...SELECT 문 안에서 행마다 스칼라 함수로 호출했다. Java
- * 이관에서는 이 함수들이 이미 Layer3 서비스({@link HsCodeService} 등)로 옮겨져 있으므로, SQL 은
+ * 이관에서는 이 함수들이 이미 Layer3 서비스({@link MaterialHsCodeService} 등)로 옮겨져 있으므로, SQL 은
  * 순수 집합 연산(조인/집계)만 담당하고 함수 호출이 필요한 부분은 Java 스트림에서 처리한다.
  *
  * <p>이 클래스는 FCR_MST/FCR_DTL 데이터 생성까지만 담당한다. 원본에서 CREATE_FCR 안에 있던 상품
@@ -78,7 +78,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
 	@Autowired
-	private HsCodeService hsCodeService;
+	private MaterialHsCodeService hsCodeService;
 	@Autowired
 	private IncotermsRateService incotermsRateService;
 	@Autowired
@@ -237,7 +237,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		String stdYyyy = invoiceDate.substring(0, 4);
 
 		// 같은 제품이 FTA_CODE 후보 수만큼(salesLines × ftaMasters) 반복 조회되던 selectHsCodeCandidates 를
-		// 배치 1회로 선조회해 hsCodeCache 를 미리 채워둔다(HsCodeService#prefetchHsCode 참고).
+		// 배치 1회로 선조회해 hsCodeCache 를 미리 채워둔다(MaterialHsCodeService#prefetchHsCode 참고).
 		List<HsCodeCriteria> hsCodeLookups = new ArrayList<>(salesLines.size() * ftaMasters.size());
 		for (DomesticSalesLine sales : salesLines) {
 			for (FtaMasterActive fta : ftaMasters) {
@@ -309,7 +309,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 
 		// selectHsCodeCandidates 를 salesLines 전체 기준 배치 1회로 선조회한다. 위 클래스 주석의
 		// "원본 결함 재현"과 동일하게 ftaCode 자리엔 invoiceDate 를, baseDate 자리엔 null 을 그대로 넘긴다
-		// (HsCodeService#prefetchHsCode 참고).
+		// (MaterialHsCodeService#prefetchHsCode 참고).
 		List<HsCodeCriteria> hsCodeLookups = new ArrayList<>(salesLines.size());
 		for (ExportSalesLine sales : salesLines) {
 			hsCodeLookups.add(new HsCodeCriteria(sales.getCompanyCode(), sales.getProdDivisionCode(),
@@ -529,10 +529,10 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		return "Y".equals(intermediateYn) ? "MF" : "F";
 	}
 
-	/** 캐시 키 규칙은 {@link HsCodeService#hsCodeKey} 와 공유한다 — prefetchHsCode 로 미리 채운 항목과 키가 어긋나면 안 된다. */
+	/** 캐시 키 규칙은 {@link MaterialHsCodeService#hsCodeKey} 와 공유한다 — prefetchHsCode 로 미리 채운 항목과 키가 어긋나면 안 된다. */
 	private String resolveHsCodeCached(Map<String, String> cache, String companyCode, String divisionCode,
 			String customerCode, String itemCode, String nationCode, String ftaCode, String baseDate) {
-		String key = HsCodeService.hsCodeKey(companyCode, divisionCode, customerCode, itemCode, nationCode, ftaCode,
+		String key = MaterialHsCodeService.hsCodeKey(companyCode, divisionCode, customerCode, itemCode, nationCode, ftaCode,
 				baseDate);
 		return cache.computeIfAbsent(key, k -> hsCodeService
 				.resolveHsCode(new HsCodeCriteria(companyCode, divisionCode, customerCode, itemCode, nationCode,
