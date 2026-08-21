@@ -10,11 +10,6 @@
 							color: #d9534f !important;            /* 붉은색 글자 */
 							font-weight: bold;
 				        }
-						.origin-determination-non {
-							background-color: #fffde7 !important; /* 은은하고 밝은 노란색 배경 */
-							color: #b78103 !important;            /* 어두운 황토/겨자빛 노란색 글자 */
-							font-weight: bold;
-						}
 				    </style>
 			</head>
 
@@ -135,33 +130,27 @@
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
-								{dataField: "invoice_month", headerText: "매출년월", width: 120, filter: {showIcon: true}},
+								{dataField: "invoice_date", headerText: "매출일", width: 120, filter: {showIcon: true}},
 								{dataField: "division_name", headerText: "플랜트", width: 120, filter: {showIcon: true}},
+								{dataField: "export_flag", headerText: "판매구분", width: 130, visible: false},
 								{dataField: "export_flag_name", headerText: "판매구분", width: 120, filter: {showIcon: true}},
 								{dataField: "customer_name", headerText: "고객사", width: 140, filter: {showIcon: true}},
 								{dataField: "product_code", headerText: "품번", width: 250, filter: {showIcon: true}},
 								{dataField: "product_name", headerText: "품명", width: 250, filter: {showIcon: true}},
 								{dataField: "hs_code", headerText: "HS CODE", width: 130, filter: {showIcon: true}},
-								{dataField: "export_nation", headerText: "수출국", width: 130, filter: {showIcon: true}},
-								{dataField: "origin_status", headerText: "원산지 지위", width: 200, filter: {showIcon: true}},
+								{dataField: "fta_name", headerText: "협정", width: 130, filter: {showIcon: true}},
+								{dataField: "origin_status", headerText: "원산지 지위", width: 100, filter: {showIcon: true}},
 								{dataField: "status", headerText: "판정상태", width: 130, visible: false},
 								{dataField: "status_name", headerText: "판정상태", width: 130, filter: {showIcon: true}, 
 									styleFunction: function(rowIndex, columnIndex, value, headerText, item, dataField){
 										if(item.status === 5){
 											return "origin-determination-fail";
-										}
-										
-										if(item.status === 0){
-											return "origin-determination-non";
-										}
-										
+										}													
 									}}
 							];
 
-							const gridProps = {
-								showRowCheckColumn: true,     	// 최좌측에 행 선택 체크박스 컬럼 생성
-								showRowAllCheckBox: true,     	// 헤더에 전체 선택 체크박스 표시
-								rowNumColumnWidth: 40,			// 행번호 너비
+							const gridProps = {							
+								rowNumColumnWidth: 50,			// 행번호 너비
 								usePaging: true,
 								pageRowCount: 20,
 								showPageRowSelect: true,
@@ -174,33 +163,32 @@
 						
 							// 셀클릭 이벤트 바인딩
 							AUIGrid.bind(DOMESTIC_ORIGIN_DETERMINATION_GRID, "cellClick", function (event) {
-								const rowIndex = event.rowIndex;
-
-								// 이미 체크 선택되었는지 검사
-								if (AUIGrid.isCheckedRowById(event.pid, rowIndex)) {
-									// 엑스트라 체크박스 체크해제 추가
-									AUIGrid.addUncheckedRowsByIds(event.pid, rowIndex);
-								} else {
-									// 엑스트라 체크박스 체크 추가
-									AUIGrid.addCheckedRowsByIds(event.pid, rowIndex);
-								}
+								DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.retrive_DetailData(event.item);
 							});
 						}
-
+						
 						this.retrieve_GridData = function () {
 							var params = {
-								/* 날짜 파라메터 '-' 제거  */
-								"from_date": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "from_date").replace(/-/gi, "")
-								, "to_date": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "to_date").replace(/-/gi, "")
-								, "division_code": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "division_code")
-								, "customer": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "customer")
-								, "export_flag": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "export_flag")
-							}
-
-							KpackageOBJ.auiGrid.retrieve(DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION_RESULT, "/origin/compliance/origindetermination/originDeterminationResultList", params);
+							/* 날짜 파라메터 '-' 제거  */
+							"from_date": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "from_date").replace(/-/gi, "")
+							, "to_date": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "to_date").replace(/-/gi, "")
+							, "division_code": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "division_code")
+							, "customer": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "customer")
+							, "export_flag": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "export_flag")
 						}
 
+						KpackageOBJ.auiGrid.retrieve(DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION_RESULT, "/origin/compliance/origindetermination/originDeterminationResultList", params);
 					}
+					
+					this.retrive_DetailData = function (data) {	
+						var request = {
+							datas: JSON.stringify([data])
+						}
+																				
+						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', request);
+					}
+
+				}
 
 
 					$(document).ready(function () {

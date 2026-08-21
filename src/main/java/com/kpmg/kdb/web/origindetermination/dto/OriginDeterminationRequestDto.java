@@ -24,8 +24,12 @@ public class OriginDeterminationRequestDto extends BaseRequestDto {
 	// 고객사
 	@JsonProperty("customer")
 	String customer;
-	
+
 	// 플랜트
 	@JsonProperty("division_code")
 	String division_code;
+
+	// 판매구분
+	@JsonProperty("export_flag")
+	String export_flag;
 }

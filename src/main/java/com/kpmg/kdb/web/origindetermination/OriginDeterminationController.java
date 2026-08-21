@@ -50,84 +50,6 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 	
-	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationDetailList")
-	@ResponseBody
-	public Result domesticOriginDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param) throws Exception {
-		Result result;
-
-		try {
-			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(param);
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-		}
-
-		return result;
-	}
-
-	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationResultList")
-	@ResponseBody
-	public Result domesticOriginDeterminationResultList(@RequestBody OriginDeterminationResultRequestDto param) throws Exception {
-		Result result;
-
-		try {
-			result = originDeterminationService.retrieveDomesticOriginDeterminationResultList(param);
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-		}
-
-		return result;
-	}
-
-	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationResultDetailList")
-	@ResponseBody
-	public Result domesticOriginDeterminationResultDetailList(@RequestBody OriginDeterminationResultDetailRequestDto param) throws Exception {
-		Result result;
-
-		try {
-			result = originDeterminationService.retrieveDomesticOriginDeterminationResultDetailList(param);
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-		}
-
-		return result;
-	}
-
-	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationExecute")
-	@ResponseBody
-	public Result domesticOriginDeterminationExecute(@RequestBody DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
-		Result result;
-
-		try {
-			result = originDeterminationService.executeDomesticOriginDetermination(param);
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-		}
-
-		return result;
-	}
-
-	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDetermination_popup")
-	public String domesticOriginDetermination_popup(
-			@RequestParam(value = "datas", required = false) String datas,
-	        Model model, HttpSession session) {
-		model.addAttribute("datas", datas);
-
-		return "origindetermination/domesticOriginDetermination_popup";
-	}
-	
-	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDetermination")
-	public String exportOriginDetermination_view(Model model, HttpSession session) {
-		try {
-		} catch(Exception e) {
-			
-		}
-		return "origindetermination/exportOriginDetermination_view";
-	}
-	
 	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDeterminationList")
 	@ResponseBody
 	public Result exportOriginDetermination_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
@@ -166,4 +88,58 @@ public class OriginDeterminationController extends GenericController {
 
 		return result;
 	}
+	
+	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetail_popup")
+	public String domesticOriginDetermination_popup(
+			@RequestParam(value = "datas", required = false) String datas,
+	        Model model, HttpSession session) {
+		model.addAttribute("datas", datas);
+
+		return "origindetermination/originDeterminationDetail_popup";
+	}
+	
+	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")
+	@ResponseBody
+	public Result domesticOriginDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param) throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailResultList")
+	@ResponseBody
+	public Result domesticOriginDeterminationResultList(@RequestBody OriginDeterminationResultRequestDto param) throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveDomesticOriginDeterminationResultList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+	
+	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationExecute")
+	@ResponseBody
+	public Result domesticOriginDeterminationExecute(@RequestBody DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.executeDomesticOriginDetermination(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}	
 }
