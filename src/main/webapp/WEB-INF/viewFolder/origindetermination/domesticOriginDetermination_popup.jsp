@@ -564,7 +564,7 @@
 			};
 
 			this.postJson(
-				'/origin/compliance/origindetermination/domesticOriginDeterminationExecute',
+				'/origin/compliance/origindetermination/executeDomesticOriginDetermination',
 				request,
 				function(response) {
 					var value = (response && response.value) ? response.value : {};

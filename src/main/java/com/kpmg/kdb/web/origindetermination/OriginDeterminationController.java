@@ -128,9 +128,9 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 	
-	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationExecute")
+	@RequestMapping(value = "/origin/compliance/origindetermination/executeDomesticOriginDetermination")
 	@ResponseBody
-	public Result domesticOriginDeterminationExecute(@RequestBody DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
+	public Result executeDomesticOriginDetermination(@RequestBody DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
 		Result result;
 
 		try {
