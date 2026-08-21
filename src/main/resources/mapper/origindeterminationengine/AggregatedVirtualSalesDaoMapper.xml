@@ -13,17 +13,21 @@
 		mergeAggregatedSalesMst 와 동일하게 CUSTOMER_CODE/DIVISION_CODE COALESCE 조건을 추가했다 —
 		두 파라미터가 null 이면(기존 회사+기간 전체 호출) 조건이 무력화돼 원래 동작과 동일하다.
 
-		[버그 수정 이력 2] deleteAggregatedSalesDtl 은 productCodes 스코프 없이 해당 고객사+플랜트+월의
-		가상 SALES_DTL 전체를 지웠는데, 바로 다음의 mergeAggregatedSalesDtl 은 productCodes 로 좁혀서
-		그 제품들만 다시 채운다 — 이 둘의 스코프가 어긋나 있었다. 그 결과 개별/특정 제품만 좁혀서
-		판정을 실행하면(productCodes 지정), 그 스코프 밖의 다른 제품들의 가상 SALES_DTL 행까지 함께
-		삭제된 채로 이번 호출에서는 재생성되지 않고, 다음 전체 재생성 때 SALES_SEQ 가 ROW_NUMBER() 로
-		처음부터 다시 채번되면서 이전 SALES_SEQ 와 달라진다. createFcr()/determineOrigin() 의 FCR_MST/
-		FCR_DTL/FCR_RESULT 삭제는 "현재 SALES_DTL 과 SALES_SEQ 가 일치하는 행"만 지우므로, 이렇게
-		SALES_SEQ 가 바뀌어버린 예전 FCR_* 행들은 영영 삭제되지 못하고 고아로 남아 판정을 반복할수록
-		누적된다(FCR_RESULT 는 FTA_CODE/RULE_SEQ 조합만큼 여러 행이라 특히 눈에 띄게 쌓인다). 그래서
-		deleteAggregatedSalesDtl 도 productCodes 가 지정된 경우 그 제품들만 지우도록 스코프를 맞췄다
-		(null/빈 리스트면 기존과 동일하게 전체 삭제).
+		[버그 수정 이력 2] 원본 레거시(개별판정 화면, OriginDeterminCoverDAO#insertSalesMstVirtual)는
+		개별/특정 제품 판정 시 SALES_MST/SALES_DTL 을 DELETE 하지 않고 MERGE(WHEN MATCHED 시 QUANTITY/
+		UNIT_PRICE/AMOUNT/HS_CODE 갱신, WHEN NOT MATCHED 시 신규 SALES_SEQ 로 INSERT)만 수행한다 —
+		DELETE-후-재생성은 MONTHLY_DECISION_PROC(월판정) 전용이었다. 그런데 이관 시 deleteAggregatedSalesDtl/
+		deleteAggregatedSalesMst 를 productCodes 유무와 무관하게(월판정이든 개별판정이든) 항상 먼저
+		실행하도록 공용화해버려서, 개별판정으로 좁혀 반복 실행할 때마다 그 제품의 가상 SALES_DTL 이
+		매번 삭제 후 새 SALES_SEQ 로 재삽입됐다. createFcr()/determineOrigin() 의 FCR_MST/FCR_DTL/
+		FCR_RESULT 삭제는 "현재 SALES_DTL 과 SALES_SEQ 가 일치하는 행"만 지우므로, SALES_SEQ 가 매번
+		바뀌면 예전 FCR_* 행들이 고아로 남아 판정을 반복할수록 누적된다(FCR_RESULT 는 FTA_CODE/
+		RULE_SEQ 조합만큼 여러 행이라 특히 눈에 띄게 쌓인다). 그래서 productCodes 가 지정된(개별/특정
+		제품 한정) 호출에서는 {@link AggregatedVirtualSalesGenerator} 가 이 두 DELETE 를 아예 건너뛰고
+		MERGE 만 수행하도록 바꿨고, mergeAggregatedSalesDtl 의 WHEN MATCHED 절도 원본과 동일하게
+		QUANTITY/UNIT_PRICE/AMOUNT/HS_CODE 까지 갱신하도록 맞췄다(기존에는 PRODUCT_ASSETS_TYPE 만
+		갱신해 매출 값이 바뀌어도 가상 집계가 갱신되지 않는 별개의 문제도 있었다). companyCode+기간
+		전체를 다루는 월판정(productCodes 없음)에서는 기존과 동일하게 삭제 후 재생성한다.
 	-->
 
 	<delete id="deleteAggregatedSalesDtl">
@@ -36,22 +40,8 @@
 		                     AND    SM.VIRTUAL_YN = 'Y'
 		                     AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
 		                     AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE))
-		<if test="p.productCodes != null and !p.productCodes.isEmpty()">
-		AND    PRODUCT_CODE IN
-		       <foreach collection="p.productCodes" item="productCode" open="(" separator="," close=")">
-		           #{productCode}
-		       </foreach>
-		</if>
 	</delete>
 
-	<!--
-		SALES_MST(가상매출 헤더)는 제품 단위가 아니라 고객사+플랜트+월당 1건이라 PRODUCT_CODE 로 좁힐
-		수 없다. 그래서 productCodes 가 지정된(개별/특정 제품 한정) 좁은 호출에서는 이 삭제를 아예 건너뛴다
-		({@link AggregatedVirtualSalesGenerator} 참고) — mergeAggregatedSalesMst 는 WHEN NOT MATCHED
-		절만 있어(WHEN MATCHED 없음), 헤더가 이미 있으면 삭제 없이도 그냥 아무 것도 안 하고 넘어가
-		안전하다. companyCode+기간 전체를 다루는 월판정처럼 productCodes 가 없는 호출에서는 기존과 동일
-		하게 삭제 후 재생성한다.
-	-->
 	<delete id="deleteAggregatedSalesMst">
 		DELETE FROM SALES_MST
 		WHERE  SALES_NO IN (SELECT SM.CUSTOMER_CODE || SM.DIVISION_CODE || #{p.yyyymm}
@@ -200,6 +190,12 @@
 		WHEN MATCHED THEN
 			UPDATE
 			SET    PRODUCT_ASSETS_TYPE = VSD.PRODUCT_ASSETS_TYPE
+			      ,HS_CODE             = VSD.HS_CODE
+			      ,QUANTITY            = VSD.QUANTITY
+			      ,UNIT_PRICE          = VSD.UNIT_PRICE
+			      ,AMOUNT              = VSD.AMOUNT
+			      ,UPDATE_DATE         = CURRENT_TIMESTAMP
+			      ,UPDATE_BY           = 'MONTHLY_DECISION_PROC'
 		WHEN NOT MATCHED THEN
 			INSERT
 				(SALES_NO, SALES_SEQ, DIVISION_CODE, COMPANY_CODE, PRODUCT_CODE, PRODUCT_NAME, PRODUCT_UNIT,

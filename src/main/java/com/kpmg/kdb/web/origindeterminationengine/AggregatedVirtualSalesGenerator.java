@@ -24,14 +24,15 @@ public class AggregatedVirtualSalesGenerator extends GeneralService implements V
 	public List<SalesTarget> generate(VirtualSalesGenerationParams params) {
 		AggregatedVirtualSalesDao dao = sqlSession.getMapper(AggregatedVirtualSalesDao.class);
 
-		dao.deleteAggregatedSalesDtl(params);
-		// SALES_MST(가상매출 헤더)는 제품 단위로 좁힐 수 없다. productCodes 가 지정된 좁은 호출(개별/특정
-		// 제품 판정)에서 이 헤더까지 지우고 mergeAggregatedSalesMst 로 재생성하면, 그 사이 다른 제품들의
-		// SALES_DTL 이 참조하던 헤더가 잠깐 사라졌다 다시 생기는 것뿐이라 문제는 없지만 불필요하다 —
-		// mergeAggregatedSalesMst 는 WHEN NOT MATCHED 절만 있어(WHEN MATCHED 없음) 헤더가 이미 있으면
-		// 그냥 아무 것도 안 하고 넘어가므로, 굳이 지우지 않아도 안전하다. companyCode+기간 전체를 다루는
-		// 월판정처럼 productCodes 가 없는 호출에서는 기존과 동일하게 삭제 후 재생성한다.
+		// 원본 레거시(개별판정 화면, OriginDeterminCoverDAO#insertSalesMstVirtual)는 DELETE 없이 MERGE
+		// 만으로 가상매출을 갱신한다 — MERGE 의 WHEN MATCHED 가 기존 SALES_SEQ 를 유지한 채 값만 갱신
+		// 하므로, 같은 제품을 반복 판정해도 SALES_SEQ 가 바뀌지 않아 FCR_MST/FCR_DTL/FCR_RESULT 가 계속
+		// 같은 행을 가리킨다. DELETE-후-재생성은 MONTHLY_DECISION_PROC(월판정, productCodes 없음) 전용
+		// 동작이었다 — productCodes 가 지정된(개별/특정 제품 한정) 호출까지 함께 삭제하면 그 제품의
+		// SALES_SEQ 가 매번 새로 채번돼 예전 FCR_* 행이 고아로 남는다(AggregatedVirtualSalesDaoMapper.xml
+		// 주석 참고). 그래서 productCodes 가 있을 때는 삭제를 건너뛰고 MERGE 만 수행한다.
 		if (params.getProductCodes() == null || params.getProductCodes().isEmpty()) {
+			dao.deleteAggregatedSalesDtl(params);
 			dao.deleteAggregatedSalesMst(params);
 		}
 		dao.mergeAggregatedSalesMst(params);
