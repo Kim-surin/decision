@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 
@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsChangeRateCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsRateRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsRateRow.IncotermsCode;
+import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsChangeRateCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsRateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsRateRow.IncotermsCode;
 
 /**
  * 레거시 GET_INCOTERMS_CHANGE_RATE(stdYyyy, companyCode, divisionCode, exportFlag,

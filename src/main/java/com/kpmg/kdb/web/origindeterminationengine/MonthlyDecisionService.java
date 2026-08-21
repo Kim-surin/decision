@@ -1,14 +1,14 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationExecutionService;
-import com.kpmg.kdb.web.origindeterminationexecution.CreateFcrService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
-import com.kpmg.kdb.web.origindeterminationexecution.OriginDecisionPipeline;
-import com.kpmg.kdb.web.origindeterminationexecution.OriginDecisionPipelineFactory;
+import com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationExecutionService;
+import com.kpmg.kdb.web.origindeterminationengine.CreateFcrService;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.OriginDecisionPipeline;
+import com.kpmg.kdb.web.origindeterminationengine.OriginDecisionPipelineFactory;
 
 /**
  * 레거시 MONTHLY_DECISION_PROC 이관.

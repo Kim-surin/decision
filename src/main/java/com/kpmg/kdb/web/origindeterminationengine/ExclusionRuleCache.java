@@ -1,11 +1,11 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ExclusionRuleDetail;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ExclusionRuleHeader;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleDetail;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleHeader;
 
 /**
  * {@link OriginDeterminationExecutionService#determineOrigin} 1회 호출 범위에서 유효한 예외판정 규칙

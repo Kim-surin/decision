@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /** 레거시 CREATE_FCR 3-2(내수) 단계에서 SALES 와 교차조인되는 활성 FTA_MASTER(DELETE_YN='N') 한 행 */
 public class FtaMasterActive {

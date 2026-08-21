@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /**
  * 레거시 FS03_GET_HS_CODE(companyCode, divisionCode, customerCode, itemCode,

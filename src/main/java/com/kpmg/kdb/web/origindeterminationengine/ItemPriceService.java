@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,15 +16,15 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.common.CompanySettingService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.DivisionItemKey;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemPriceCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemPriceWithNote;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceTierBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceTierRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PoLedgerPriceBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PoLedgerPriceRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.StandardCostBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.StandardCostRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.DivisionItemKey;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemPriceCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemPriceWithNote;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow;
 
 /**
  * 레거시 FC10_GET_ITEM_PRICE 이관. FC10_GET_ITEM_PRICE_NOTE(근거 텍스트)는 별도로 조회하지 않는다.

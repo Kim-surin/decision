@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,9 +10,9 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeCandidateRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCandidateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCriteria;
 
 /**
  * 레거시 FS03_GET_HS_CODE(company, division, customer, item, nation, fta, yyyymmdd) 이관.

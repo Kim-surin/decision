@@ -1,6 +1,6 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/** {@link DivisionItemKey} 1건에 대응하는 {@link com.kpmg.kdb.web.origindeterminationexecution.ItemOriginRateDao#selectLastInputYyyyMmBatch} 결과 행. */
+/** {@link DivisionItemKey} 1건에 대응하는 {@link com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateDao#selectLastInputYyyyMmBatch} 결과 행. */
 public class LastInputYyyyMmResult {
 
 	private String divisionCode;

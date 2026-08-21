@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /**
  * 레거시 GET_INCOTERMS_CHANGE_RATE 파라미터 대체 객체.

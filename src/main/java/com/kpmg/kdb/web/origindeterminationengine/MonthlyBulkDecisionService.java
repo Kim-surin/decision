@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * 월판정(MONTHLY_DECISION_PROC 이관) 전체 진입점. 레거시 판정대상 커서(C_SALES_MST)가

@@ -1,13 +1,13 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.MonthlyDecisionDao;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionDao;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * {@link VirtualSalesGenerator} 기본 구현. 레거시 MONTHLY_DECISION_PROC "1. 내수 포괄 매출 생성" /

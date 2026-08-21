@@ -1,17 +1,17 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.DivisionItemKey;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemPriceCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceTierBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceTierRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PoLedgerPriceBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PoLedgerPriceRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.StandardCostBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.StandardCostRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.DivisionItemKey;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemPriceCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow;
 
 /**
  * 각 조회는 FETCH FIRST 1 ROW ONLY 로 DB에서 최대 1건만 잘라 전송하도록 매핑되어 있다.

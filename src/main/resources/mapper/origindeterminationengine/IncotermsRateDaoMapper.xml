@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.IncotermsRateDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.IncotermsRateDao">
 	<!--
 		레거시 GET_INCOTERMS_CHANGE_RATE 이관.
 		- DECODE(...) 컬럼 피벗은 제거하고 전체 요율 컬럼을 반환한다 (선택은 Java IncotermsCode 에서 수행).
@@ -9,8 +9,8 @@
 		- Oracle 전용 ROWNUM 대신 ANSI 표준 FETCH FIRST 1 ROW ONLY 로 DB에서 1건만 잘라 전송한다
 		  (연차가 쌓일수록 STD_YYYY 이력이 늘어나는 테이블이라 LIMIT 없이는 매번 더 많은 행을 읽게 된다).
 	-->
-	<select id="selectIncotermsInfo" parameterType="com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsChangeRateCriteria"
-		resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsRateRow">
+	<select id="selectIncotermsInfo" parameterType="com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsChangeRateCriteria"
+		resultType="com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsRateRow">
 		SELECT FII.STD_YYYY  AS stdYyyy
 		      ,FII.EXW_RATE  AS exwRate
 		      ,FII.FCA_RATE  AS fcaRate

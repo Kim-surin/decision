@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /**
  * 레거시 FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 공통 파라미터 대체 객체.

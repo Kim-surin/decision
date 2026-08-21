@@ -1,6 +1,6 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/** {@link com.kpmg.kdb.web.origindeterminationexecution.ItemOriginRateDao#selectLastInputYyyyMmBatch} 배치 조회 입력 키. */
+/** {@link com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateDao#selectLastInputYyyyMmBatch} 배치 조회 입력 키. */
 public class DivisionItemKey {
 
 	private final String divisionCode;

@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
@@ -7,7 +7,7 @@ import java.math.BigDecimal;
  *
  * 원본은 패키지 레벨 전역변수라 하나의 판정 룰(FTA_RULE 한 건) 처리 동안 여러 프로시저
  * (EXCLUTION_RULE_DECISION → COO_DECISION_FOR_CTC/RVC → GET_RCEP_* → INSERT_FRD_PROCESS)가
- * 이 값을 이어받아 채워나간다. Java 에서는 {@link com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationContext}
+ * 이 값을 이어받아 채워나간다. Java 에서는 {@link com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationContext}
  * 가 들고 있는 인스턴스 필드로 대체해 판정 1건(스레드) 단위로 격리시킨다(동시성 안전).
  */
 public class OriginDeterminationResult {

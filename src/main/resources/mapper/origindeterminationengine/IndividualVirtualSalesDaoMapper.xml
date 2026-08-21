@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.IndividualVirtualSalesDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.IndividualVirtualSalesDao">
 
 	<!--
 		===================== 2. SALES_MST 가상 매출 생성(개별 판정) =====================

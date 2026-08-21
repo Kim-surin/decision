@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Param;
  *
  * <p>레거시에서는 이 로직이 CREATE_FCR 프로시저 안(3-5/3-6단계)에 있었으나, "판정" 관련 로직을 전부
  * {@link OriginDeterminationExecutionService#determineOrigin} 에 모으기 위해 옮겨왔다. CREATE_FCR
- * ({@link com.kpmg.kdb.web.origindeterminationexecution.CreateFcrService})은 이제 FCR_MST/FCR_DTL 데이터 생성까지만
+ * ({@link com.kpmg.kdb.web.origindeterminationengine.CreateFcrService})은 이제 FCR_MST/FCR_DTL 데이터 생성까지만
  * 담당한다.
  */
 public interface CommodityOriginDeterminationDao {

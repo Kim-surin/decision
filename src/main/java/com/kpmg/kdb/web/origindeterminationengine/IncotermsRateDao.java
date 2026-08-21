@@ -1,7 +1,7 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsChangeRateCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsRateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsChangeRateCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsRateRow;
 
 public interface IncotermsRateDao {
 	/**

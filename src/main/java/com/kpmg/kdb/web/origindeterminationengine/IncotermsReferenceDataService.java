@@ -1,11 +1,11 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsChangeRateCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsRateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsChangeRateCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsRateRow;
 
 /**
  * FTA_INCOTERMS_INFO(인코텀즈 환산율) 조회 전용 캐시. {@link IncotermsRateDao#selectIncotermsInfo} 는

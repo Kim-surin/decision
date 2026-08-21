@@ -1,12 +1,12 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 
 /**
  * 레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 패키지 전역변수(VG_*)를 대체하는 판정 작업 컨텍스트.

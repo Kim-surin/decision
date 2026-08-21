@@ -1,20 +1,20 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.DivisionItemKey;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemOriginRateCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.LastInputYyyyMmResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialCandidatesBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialCandidatesRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.NonCertifiedOriginSummaryRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.NonCertifiedOriginSummaryResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummary;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummaryBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummaryRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.DivisionItemKey;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemOriginRateCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.LastInputYyyyMmResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialCandidatesBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialCandidatesRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.NonCertifiedOriginSummaryRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.NonCertifiedOriginSummaryResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryRequest;
 
 public interface ItemOriginRateDao {
 
@@ -24,7 +24,7 @@ public interface ItemOriginRateDao {
 
 	/**
 	 * {@link #selectMaterialCandidates} 를 (divisionCode,itemCode,조회구간) 조합별로 반복 호출하는 대신 한 번에
-	 * 조회하는 배치 버전. {@link com.kpmg.kdb.web.origindeterminationexecution.ItemOriginRateService#prefetchMaterialCandidates}
+	 * 조회하는 배치 버전. {@link com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateService#prefetchMaterialCandidates}
 	 * 참고. 요청 1건당 결과가 0~N 행(BOM 자재 0/1건 + 대체자재 0..N건)이라 요청 목록에 있어도 매칭되는 자재가
 	 * 없으면 결과에 아예 나타나지 않는다(단건 조회가 빈 리스트를 반환하던 것과 동일).
 	 */
@@ -50,7 +50,7 @@ public interface ItemOriginRateDao {
 
 	/**
 	 * {@link #selectPurchaseLedgerSummary} 를 (itemCode,fromDate,toDate) 조합별로 반복 호출하는 대신 한 번에
-	 * 조회하는 배치 버전. {@link com.kpmg.kdb.web.origindeterminationexecution.ItemOriginRateService#prefetchPurchaseLedgerSummaries}
+	 * 조회하는 배치 버전. {@link com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateService#prefetchPurchaseLedgerSummaries}
 	 * 참고. 요청 목록에 없는 조합은 결과에 없다(호출자가 필요분만 넘긴다는 전제).
 	 */
 	List<PurchaseLedgerSummaryBatchResult> selectPurchaseLedgerSummaryBatch(@Param("companyCode") String companyCode,
@@ -64,7 +64,7 @@ public interface ItemOriginRateDao {
 	/**
 	 * {@link #selectNonCertifiedOriginSummary} 를 (itemCode,ftaCode,fromDate,toDate) 조합별로 반복 호출하는
 	 * 대신 한 번에 조회하는 배치 버전. CreateFcrService 의 BOM 리프 자재 루프(자재 수 × FTA_CODE 후보 수만큼
-	 * 반복 호출되던 지점)에서 사용한다 — {@link com.kpmg.kdb.web.origindeterminationexecution.ItemOriginRateService#prefetchNonCertifiedOriginSummaries}
+	 * 반복 호출되던 지점)에서 사용한다 — {@link com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateService#prefetchNonCertifiedOriginSummaries}
 	 * 참고. 요청 목록에 없는 조합은 결과에 없다(호출자가 필요분만 넘긴다는 전제).
 	 */
 	List<NonCertifiedOriginSummaryResult> selectNonCertifiedOriginSummaryBatch(@Param("companyCode") String companyCode,

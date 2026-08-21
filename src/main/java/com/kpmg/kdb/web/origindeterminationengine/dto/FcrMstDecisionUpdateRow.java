@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /**
  * UPDATE_FRM_PROCEDURE 말미의 FCR_MST 갱신 1건. FM_LIST 행(=FTA 후보)마다 즉시 UPDATE 하는 대신

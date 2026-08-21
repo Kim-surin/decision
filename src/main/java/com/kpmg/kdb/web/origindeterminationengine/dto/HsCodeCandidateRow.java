@@ -1,8 +1,8 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /**
  * ITEM_MST 및 관련 우선순위 테이블을 조인해서 얻은 HS코드 후보 원본 값.
- * 우선순위 판단(CASE WHEN)은 SQL이 아닌 {@link com.kpmg.kdb.web.origindeterminationexecution.HsCodeService}에서 수행한다.
+ * 우선순위 판단(CASE WHEN)은 SQL이 아닌 {@link com.kpmg.kdb.web.origindeterminationengine.HsCodeService}에서 수행한다.
  */
 public class HsCodeCandidateRow {
 

@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,9 +6,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.MonthlyDecisionDao;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PendingDomesticGroup;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionDao;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PendingDomesticGroup;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * 내수 벌크 판정(MONTHLY_DECISION_PROC 이관 확장) "1. 데이터 가공" 단계. 레거시 MONTHLY_DECISION_PROC 는

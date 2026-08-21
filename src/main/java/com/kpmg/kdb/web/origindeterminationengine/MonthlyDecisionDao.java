@@ -1,13 +1,13 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.CompanyDecisionFlags;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PendingDomesticGroup;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyDecisionFlags;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PendingDomesticGroup;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /** 레거시 MONTHLY_DECISION_PROC 이 사용하는 조회/저장. 오케스트레이션은 {@link MonthlyDecisionService} 참고. */
 public interface MonthlyDecisionDao {
@@ -18,7 +18,7 @@ public interface MonthlyDecisionDao {
 	 * mergeAggregatedSalesMst 가 처리할 (companyCode,divisionCode,customerCode) 그룹 목록을 미리 조회한다
 	 * — mergeAggregatedSalesMst 의 WHERE 조건(EXPORT_FLAG='D', VIRTUAL_YN='N', 기간/사업부/고객사/
 	 * 배송처 필터)과 GROUP BY 대상을 그대로 SELECT DISTINCT 로 옮긴 것이다
-	 * ({@link com.kpmg.kdb.web.origindeterminationexecution.DomesticDecisionGroupingService} 참고).
+	 * ({@link com.kpmg.kdb.web.origindeterminationengine.DomesticDecisionGroupingService} 참고).
 	 */
 	List<PendingDomesticGroup> selectPendingDomesticGroups(@Param("p") VirtualSalesGenerationParams params);
 
@@ -26,7 +26,7 @@ public interface MonthlyDecisionDao {
 	 * 판정대상 커서(C_SALES_MST, {@link #selectDecisionTargets})의 EXPORT_FLAG='E' 분기만 떼어 미리
 	 * 조회한다 — 수출은 가상매출 생성이 필요 없어(이미 실제 SALES_NO 에 TARGET_FTA_CODE 가 세팅돼 있음)
 	 * {@link #selectPendingDomesticGroups} 처럼 고객사/사업부 그룹 발견을 거칠 필요가 없다
-	 * ({@link com.kpmg.kdb.web.origindeterminationexecution.ExportDecisionGroupingService} 참고).
+	 * ({@link com.kpmg.kdb.web.origindeterminationengine.ExportDecisionGroupingService} 참고).
 	 */
 	List<SalesTarget> selectPendingExportTargets(@Param("p") VirtualSalesGenerationParams params);
 

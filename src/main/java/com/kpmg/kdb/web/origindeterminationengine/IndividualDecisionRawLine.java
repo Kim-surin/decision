@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 /**
  * 개별판정 배치 처리 원본 입력 1행(예: 업로드/요청 payload 의 SALES_NO+PRODUCT_CODE 조합).

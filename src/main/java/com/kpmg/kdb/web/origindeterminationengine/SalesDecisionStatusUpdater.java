@@ -1,11 +1,11 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.MonthlyDecisionDao;
+import com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionDao;
 
 /**
  * {@link DecisionStatusUpdater} 기본 구현. 레거시 MONTHLY_DECISION_PROC "5. 원산지판정" 말미의

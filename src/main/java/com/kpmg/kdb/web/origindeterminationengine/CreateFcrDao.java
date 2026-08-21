@@ -1,19 +1,19 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.BomAvailability;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.BomLeafRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.DomesticSalesLine;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ExportSalesLine;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FcrDtlInsertRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FcrMstInsertRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FtaMasterActive;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ProductFcrDtlSourceRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesDtlBomTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesInvoiceHeader;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailability;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrDtlInsertRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstInsertRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader;
 
 /** 레거시 CREATE_FCR 프로시저가 사용하는 조회/저장. 실제 오케스트레이션은 {@link CreateFcrService} 참고. */
 public interface CreateFcrDao {
@@ -92,8 +92,8 @@ public interface CreateFcrDao {
 
 	/**
 	 * "3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE". 상품(M,R,B) 원산지 판정(과거 3-5/3-6 단계)은
-	 * {@link com.kpmg.kdb.web.origindeterminationexecution.CommodityOriginDeterminationDao} 로 옮겨
-	 * {@link com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationExecutionService#determineOrigin} 에서 수행한다
+	 * {@link com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao} 로 옮겨
+	 * {@link com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationExecutionService#determineOrigin} 에서 수행한다
 	 * — CREATE_FCR 은 FCR_MST/FCR_DTL 데이터 생성까지만 담당한다.
 	 */
 	void mergeFcrMstMaterialAmountTotals(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,

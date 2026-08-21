@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -14,13 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.CooNationBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.CooNationLookupRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.DivisionItemKey;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemNationCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemOriginRateCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.LastInputYyyyMmResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.CooNationBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.CooNationLookupRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.DivisionItemKey;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemNationCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemOriginRateCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.LastInputYyyyMmResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceRow;
 
 /**
  * 레거시 FC01_GET_ITEM_NATION 이관 (RCEP 자재별 원산지국가(COO_NATION) 산정).

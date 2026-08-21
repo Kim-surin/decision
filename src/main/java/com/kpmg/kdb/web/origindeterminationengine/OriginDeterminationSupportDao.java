@@ -1,14 +1,14 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.BufferRates;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FcrMstDecisionUpdateRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.UpdateFrmBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.UpdateFrmLookupRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstDecisionUpdateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmLookupRequest;
 
 /**
  * PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 두 패키지에 완전 동일하게 존재하는

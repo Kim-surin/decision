@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.ItemNationDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ItemNationDao">
 	<!--
 		레거시 FC01_GET_ITEM_NATION 의 PO_LEDGER/EXT_COO_CERTIFY_MST/EXT_COO_CERTIFY_DTL 조회 이관.
 		ItemOriginRateDaoMapper.xml 의 selectNonCertifiedOriginSummary 와 조인 구조(ECM/ECD/COO_DIVISION_V,
@@ -65,7 +65,7 @@
 		전혀 없다 — 이 세션에서 반복된 "LATERAL 안에 ORDER BY CASE/OR" 플래너 회귀 패턴이 애초에 적용될
 		여지가 없는 안전한 배치화다.
 	-->
-	<select id="selectCooNationBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.CooNationBatchResult">
+	<select id="selectCooNationBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.CooNationBatchResult">
 		SELECT V.REQ_KEY AS reqKey
 		      ,R.cooNation AS cooNation
 		FROM   (

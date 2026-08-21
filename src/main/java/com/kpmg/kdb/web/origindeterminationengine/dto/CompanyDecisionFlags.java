@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /** 레거시 MONTHLY_DECISION_PROC 의 COMPANY.MATERIAL_USE_YN / CTC_DECISION_ONLY_YN 조회 결과 */
 public class CompanyDecisionFlags {

@@ -1,11 +1,11 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ExclusionRuleDetail;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ExclusionRuleHeader;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleDetail;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleHeader;
 
 public interface ExclusionRuleDao {
 

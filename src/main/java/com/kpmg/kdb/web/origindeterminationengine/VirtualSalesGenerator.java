@@ -1,9 +1,9 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * {@link OriginDecisionPipeline} "1. 가상매출 생성" 단계의 부품 인터페이스. 내수 전용 단계로, 회사/기간

@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationCursorDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationCursorDao">
 
 	<!-- ===================== COO_DECISION 초기화 ===================== -->
 
@@ -49,7 +49,7 @@
 		팬아웃된다. 다른 FTA_MASTER 참조 쿼리들(selectExportSalesLines, selectFtaBuffer)에도 같은
 		누락이 있어 함께 고쳤다 — CreateFcrDaoMapper.xml/OriginDeterminationSupportDaoMapper.xml 참고.
 	-->
-	<select id="selectOriginDeterminationTargets" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationTarget">
+	<select id="selectOriginDeterminationTargets" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget">
 		SELECT FTAFM.FTA_CODE                                                    AS ftaCode
 		      ,FTAFM.SALES_NO                                                    AS salesNo
 		      ,FTAFM.SALES_SEQ                                                   AS salesSeq
@@ -156,7 +156,7 @@
 
 	<!-- ===================== FCR_INFO_TEMP 대체 (FCR_DTL 조회) ===================== -->
 
-	<select id="selectMaterialOriginRows" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRow">
+	<select id="selectMaterialOriginRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow">
 		SELECT FI.FTA_CODE       AS ftaCode
 		      ,FI.DIVISION_CODE  AS divisionCode
 		      ,FI.COMPANY_CODE   AS companyCode
@@ -187,7 +187,7 @@
 		와 동일한 이유로) LEFT JOIN LATERAL(top-1) 이 아니라 V 를 그대로 드라이빙하는 일반 JOIN 을 쓴다.
 		parentHsCode 는 FI 조회조건이 아니라 결과에 그대로 echo 되는 상수값이라 V 의 컬럼을 그대로 쓴다.
 	-->
-	<select id="selectMaterialOriginRowsBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRowBatchResult">
+	<select id="selectMaterialOriginRowsBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowBatchResult">
 		SELECT V.FTA_CODE         AS reqFtaCode
 		      ,V.DIVISION_CODE    AS reqDivisionCode
 		      ,V.SALES_SEQ        AS reqSalesSeq
@@ -222,7 +222,7 @@
 
 	<!-- ===================== CURSOR C_FTA_RULE ===================== -->
 
-	<select id="selectApplicableOriginCriteria" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteria">
+	<select id="selectApplicableOriginCriteria" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria">
 		SELECT RULE_ID                                            AS ruleId
 		      ,FTA_CODE                                           AS ftaCode
 		      ,HS_CODE                                            AS hsCode
@@ -276,7 +276,7 @@
 		값이라 결과를 요청별로 다시 묶으려면 reqHsCode/reqFtaCode/reqHsCodeSubCategory 로 요청 키를
 		그대로 돌려줘야 한다(OriginCriteriaBatchResult 클래스 주석 참고).
 	-->
-	<select id="selectApplicableOriginCriteriaBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteriaBatchResult">
+	<select id="selectApplicableOriginCriteriaBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchResult">
 		SELECT V.HS_CODE                                            AS reqHsCode
 		      ,V.FTA_CODE                                           AS reqFtaCode
 		      ,V.HS_CODE_SUB_CATEGORY                                AS reqHsCodeSubCategory

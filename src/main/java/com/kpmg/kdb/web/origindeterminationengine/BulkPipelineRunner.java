@@ -1,11 +1,11 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 
 /**
  * "그룹(또는 대상)마다 {@link OriginDecisionPipeline} 을 새로 만들어 실행하고 targets/failedTargets 를

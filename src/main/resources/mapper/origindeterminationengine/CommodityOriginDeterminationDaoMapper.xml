@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.CommodityOriginDeterminationDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao">
 
 	<!--
 		레거시 CREATE_FCR "3-5. FCR MST UPDATE(상품 원산지 판정)" 이관. CreateFcrService 에 있었으나

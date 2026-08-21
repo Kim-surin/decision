@@ -1,8 +1,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.MonthlyDecisionDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionDao">
 
-	<select id="selectCompanyDecisionFlags" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.CompanyDecisionFlags">
+	<select id="selectCompanyDecisionFlags" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.CompanyDecisionFlags">
 		SELECT COALESCE(MATERIAL_USE_YN, 'N')      AS materialUseYn
 		      ,COALESCE(CTC_DECISION_ONLY_YN, 'N') AS ctcDecisionOnlyYn
 		FROM   COMPANY
@@ -14,7 +14,7 @@
 		그룹을, 그와 동일한 WHERE 조건으로 먼저 SELECT DISTINCT 조회한다 — mergeAggregatedSalesMst 의
 		WHERE 절과 반드시 같이 맞춰야 한다(둘 중 하나만 고치면 그룹 발견 결과와 실제 집계 대상이 어긋난다).
 	-->
-	<select id="selectPendingDomesticGroups" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.PendingDomesticGroup">
+	<select id="selectPendingDomesticGroups" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PendingDomesticGroup">
 		SELECT DISTINCT SM.COMPANY_CODE  AS companyCode
 		      ,SM.DIVISION_CODE         AS divisionCode
 		      ,SM.CUSTOMER_CODE         AS customerCode
@@ -34,9 +34,9 @@
 		조회한다. 수출은 가상매출 생성이 필요 없어(이미 실제 SALES_NO 에 TARGET_FTA_CODE 가 세팅돼 있음)
 		selectPendingDomesticGroups 처럼 고객사/사업부 그룹 발견 -> 그룹별 가상매출 생성 흐름을 탈 필요가
 		없다 - 회사+기간(+선택 필터) 조건만으로 대상을 직접 뽑는다
-		({@link com.kpmg.kdb.web.origindeterminationexecution.ExportDecisionGroupingService} 참고).
+		({@link com.kpmg.kdb.web.origindeterminationengine.ExportDecisionGroupingService} 참고).
 	-->
-	<select id="selectPendingExportTargets" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget">
+	<select id="selectPendingExportTargets" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget">
 		SELECT SM.COMPANY_CODE  AS companyCode
 		      ,SM.DIVISION_CODE AS divisionCode
 		      ,SM.SALES_NO      AS salesNo
@@ -250,7 +250,7 @@
 
 	<!-- ===================== 4. 판정대상 커서(C_SALES_MST) ===================== -->
 
-	<select id="selectDecisionTargets" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget">
+	<select id="selectDecisionTargets" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget">
 		SELECT COMPANY_CODE  AS companyCode
 		      ,DIVISION_CODE AS divisionCode
 		      ,SALES_NO      AS salesNo

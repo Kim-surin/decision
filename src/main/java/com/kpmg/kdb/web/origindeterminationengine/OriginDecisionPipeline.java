@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.HashSet;
 import java.util.List;
@@ -8,9 +8,9 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationMode;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationMode;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * 원산지판정 전체 흐름(레거시 MONTHLY_DECISION_PROC + CREATE_FCR + PKG99_COO_DECISION.COO_DECISION)을

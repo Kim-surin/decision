@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.BufferRates;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
 
 /**
  * GET_BUFFER / GET_RCEP_NATION / GET_RCEP_RVC_NATION 이 참조하는 저카디널리티 기준정보

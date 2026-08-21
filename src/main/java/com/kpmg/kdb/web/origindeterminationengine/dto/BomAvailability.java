@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /**
  * 레거시 CREATE_FCR "해당 사업장 BOM 존재 확인" / "타 플랜트 BOM 체크" 조회 결과.

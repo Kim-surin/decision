@@ -1,12 +1,12 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeCandidateRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCandidateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCriteria;
 
 public interface HsCodeDao {
 	/**
@@ -20,7 +20,7 @@ public interface HsCodeDao {
 	 * {@link #selectHsCodeCandidates} 의 배치 버전. (companyCode,divisionCode,customerCode,itemCode,
 	 * nationCode,ftaCode,baseDate) 조합 전체를 한 번에 조회한다 — 같은 제품이 FTA_CODE 후보 수만큼
 	 * 반복되는 3-2 단계(FCR_MST 생성, salesLines × ftaMasters)에서 사용한다
-	 * ({@link com.kpmg.kdb.web.origindeterminationexecution.HsCodeService#prefetchHsCode} 참고). 요청 조합마다 반드시
+	 * ({@link com.kpmg.kdb.web.origindeterminationengine.HsCodeService#prefetchHsCode} 참고). 요청 조합마다 반드시
 	 * 결과 행이 1건씩 존재한다(LEFT JOIN LATERAL — ITEM_MST 조차 없는 조합도 후보 필드가 전부 null인
 	 * 행으로 돌아온다).
 	 */

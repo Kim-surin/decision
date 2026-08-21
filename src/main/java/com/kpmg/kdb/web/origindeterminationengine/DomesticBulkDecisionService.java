@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * 내수 벌크 판정(MONTHLY_DECISION_PROC 이관 확장) 진입점. {@link DomesticDecisionGroupingService} 로
@@ -14,7 +14,7 @@ import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationP
  * {@link OriginDecisionPipeline} 을 새로 만들어 가상매출 생성-&gt;FCR 생성-&gt;원산지 판정-&gt;STATUS
  * 업데이트 4단계를 순서대로 수행한다 — {@link IndividualBulkDecisionService} 와 동일한 구조다.
  *
- * <p>기존 {@link com.kpmg.kdb.web.origindeterminationexecution.MonthlyDecisionService#run} 은 필터 파라미터 1건을
+ * <p>기존 {@link com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionService#run} 은 필터 파라미터 1건을
  * 그대로 {@code generateVirtualSales} 에 넘겨, 그 안의 MERGE 문 GROUP BY 가 여러 고객사 그룹을 한 번에
  * 집계하고 파이프라인 하나가 그 결과 target 전체를 처리했다(그룹별 결과가 하나의 targets/failedTargets
  * 로 뭉뚱그려짐). 이 서비스는 그룹을 미리 목록으로 뽑아 그룹마다 별도 파이프라인/결과를 갖도록

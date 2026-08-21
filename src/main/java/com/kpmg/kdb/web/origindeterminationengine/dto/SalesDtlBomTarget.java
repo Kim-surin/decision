@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /** 레거시 CURSOR C_SALES_DTL(CREATE_FCR "2. 실적 BOM 및 표준 BOM 확인") 한 행 */
 public class SalesDtlBomTarget {

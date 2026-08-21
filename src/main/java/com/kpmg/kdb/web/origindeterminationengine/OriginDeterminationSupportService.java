@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,13 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.BufferRates;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FcrMstDecisionUpdateRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.UpdateFrmBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.UpdateFrmLookupRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstDecisionUpdateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmLookupRequest;
 
 /**
  * PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 두 패키지에 완전(또는 거의) 동일하게 존재하던

@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 /**
  * 레거시 PKG99_COO_DECISION(RVC+CTC 통합) / PKG99_COO_CTC_DECISION(CTC 전용) 두 패키지를

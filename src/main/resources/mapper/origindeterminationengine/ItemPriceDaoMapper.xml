@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.ItemPriceDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ItemPriceDao">
 	<!--
 		레거시 FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 이관.
 		- FC10_GET_ITEM_PRICE_NOTE 는 별도 조회하지 않는다. ItemPriceService.resolveItemPriceWithNote 가
@@ -24,7 +24,7 @@
 		동작과 결과가 동일하다(단순히 전체 최신월 1건만 조회해 자기 사업부 여부를 사후 필터링하면, 자기
 		사업부의 더 오래된 실적이 조회 대상에서 아예 빠져 결과가 달라질 수 있어 이 형태를 유지한다).
 	-->
-	<select id="selectDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceTierRow">
+	<select id="selectDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierRow">
 		SELECT ML.YYYYMM          AS yyyymm
 		      ,ML.DIVISION_CODE   AS divisionCode
 		      ,ML.ISSUE_AMOUNT    AS issueAmount
@@ -82,7 +82,7 @@
 		없어(자기 사업부가 전체 최댓값을 달성했다면 tier 0 조건도 이미 만족했을 것이므로) 원본의
 		"자기 사업부 우선" CASE 분기가 무의미해지는 지점까지 동일하게 보존된다.
 	-->
-	<select id="selectDivisionBalanceForPriceBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceTierBatchResult">
+	<select id="selectDivisionBalanceForPriceBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierBatchResult">
 		SELECT V.DIVISION_CODE      AS reqDivisionCode
 		      ,V.ITEM_CODE          AS reqItemCode
 		      ,ML.YYYYMM            AS yyyymm
@@ -136,7 +136,7 @@
 	</select>
 
 	<!-- 두 함수 공용: 최근 구매단가(PO_LEDGER). 원본의 WAREHOUSING_DATE DESC, WAREHOUSING_NO DESC 정렬을 그대로 유지 -->
-	<select id="selectRecentPurchasePrice" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.PoLedgerPriceRow">
+	<select id="selectRecentPurchasePrice" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceRow">
 		SELECT PL.UNIT_PRICE       AS unitPrice
 		      ,PL.WAREHOUSING_DATE AS warehousingDate
 		      ,PL.DIVISION_CODE    AS divisionCode
@@ -159,7 +159,7 @@
 		"조회 완료, 결과 없음"으로 캐싱해야 호출자가 불필요한 단건 폴백 조회를 다시 하지 않는다
 		(ItemPriceService#prefetchRecentPurchasePrices 참고).
 	-->
-	<select id="selectRecentPurchasePriceBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.PoLedgerPriceBatchResult">
+	<select id="selectRecentPurchasePriceBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceBatchResult">
 		SELECT V.DIVISION_CODE     AS reqDivisionCode
 		      ,V.ITEM_CODE         AS reqItemCode
 		      ,PL.UNIT_PRICE       AS unitPrice
@@ -190,7 +190,7 @@
 		두 호출부 모두 결과값을 사용하기 전에 "금액 > 0" 을 재검증하므로(ItemPriceService) 필터 유무가 최종
 		결과에 영향을 주지 않는다. ORDER BY APPLY_DATE DESC 는 원본에 없던 명시적 정렬을 추가해 결정론적으로 만든 것.
 	-->
-	<select id="selectStandardCostByDivision" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.StandardCostRow">
+	<select id="selectStandardCostByDivision" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow">
 		SELECT SC.STANDARD_COST_AMOUNT AS standardCostAmount
 		      ,SC.APPLY_DATE          AS applyDate
 		      ,SC.DIVISION_CODE       AS divisionCode
@@ -211,7 +211,7 @@
 		"조회 완료, 결과 없음"으로 캐싱해야 호출자가 불필요한 단건 폴백 조회를 다시 하지 않는다
 		(ItemPriceService#prefetchStandardCostByDivision 참고).
 	-->
-	<select id="selectStandardCostByDivisionBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.StandardCostBatchResult">
+	<select id="selectStandardCostByDivisionBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostBatchResult">
 		SELECT V.DIVISION_CODE        AS reqDivisionCode
 		      ,V.ITEM_CODE            AS reqItemCode
 		      ,SC.standardCostAmount  AS standardCostAmount
@@ -235,7 +235,7 @@
 	</select>
 
 	<!-- FC10_GET_ITEM_PRICE 전용 최종 fallback(division 필터 없음). NOTE 함수에는 대응 단계가 없다 -->
-	<select id="selectStandardCostAnyDivision" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.StandardCostRow">
+	<select id="selectStandardCostAnyDivision" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow">
 		SELECT SC.STANDARD_COST_AMOUNT AS standardCostAmount
 		      ,SC.APPLY_DATE          AS applyDate
 		      ,SC.DIVISION_CODE       AS divisionCode

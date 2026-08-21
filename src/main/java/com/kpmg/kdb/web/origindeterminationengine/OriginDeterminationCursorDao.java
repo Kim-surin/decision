@@ -1,16 +1,16 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRowBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRowsRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteriaBatchRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteriaBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowsRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchResult;
 
 /**
  * 레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 의 메인 프로시저 COO_DECISION 이 사용하는

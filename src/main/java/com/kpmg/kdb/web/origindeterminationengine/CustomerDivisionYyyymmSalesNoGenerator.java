@@ -1,8 +1,8 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import org.springframework.stereotype.Service;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * {@link VirtualSalesNoGenerator} 기본 구현. 레거시 "SELECT customerCode||divisionCode||yyyymm FROM

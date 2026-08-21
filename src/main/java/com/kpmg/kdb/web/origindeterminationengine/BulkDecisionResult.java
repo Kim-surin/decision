@@ -1,8 +1,8 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 
 /**
  * 그룹(가상 SALES_NO 또는 실제 SALES_NO)별 파이프라인 실행을 취합한 결과. {@link IndividualBulkDecisionService},

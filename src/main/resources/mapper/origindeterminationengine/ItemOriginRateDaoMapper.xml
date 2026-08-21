@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.ItemOriginRateDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateDao">
 	<!--
 		레거시 FC10_GET_ITEM_ORIGIN_RATE 이관.
 		- DECODE(...) 는 표준 CASE WHEN 으로 대체(ANSI SQL, DB 이식 가능).
@@ -20,7 +20,7 @@
 		없어 UNION ALL 이 아닌 UNION 으로 중복을 제거해 원본과 동일한 결과를 보장한다).
 	-->
 
-	<select id="selectMaterialCandidates" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceRow">
+	<select id="selectMaterialCandidates" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceRow">
 		SELECT ML.ITEM_CODE                          AS itemCode
 		      ,ML.YYYYMM                             AS matYyyyMm
 		      ,ML.INITIAL_QTY                        AS matInitialQty
@@ -105,7 +105,7 @@
 		2번(브랜치마다 1번) 반복되지만, 이 파일은 이미 BOM/FUNGIBLE 두 브랜치마다 V 를 따로 만드는
 		구조였으므로(파라미터 개수가 늘어나는 것은 동일한 트레이드오프) 같은 패턴의 연장이다.
 	-->
-	<select id="selectMaterialCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialCandidatesBatchResult">
+	<select id="selectMaterialCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialCandidatesBatchResult">
 		SELECT V.REQ_DIVISION_CODE                   AS reqDivisionCode
 		      ,V.REQ_ITEM_CODE                       AS reqItemCode
 		      ,V.REQ_BASE_DATE                       AS reqBaseDate
@@ -219,7 +219,7 @@
 		GROUP BY 특성상 결과에 아예 나타나지 않는다 — 단건 조회가 그 경우 MAX(...)=NULL 인 1행을
 		돌려주던 것과 동일한 결과이므로, 호출자는 조회 결과 Map 에 키가 없으면 NULL 로 취급하면 된다.
 	-->
-	<select id="selectLastInputYyyyMmBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.LastInputYyyyMmResult">
+	<select id="selectLastInputYyyyMmBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.LastInputYyyyMmResult">
 		SELECT ML.DIVISION_CODE               AS divisionCode
 		      ,ML.ITEM_CODE                   AS itemCode
 		      ,MAX(ML.YYYYMM)                 AS lastInputYyyyMm
@@ -234,7 +234,7 @@
 		GROUP  BY ML.DIVISION_CODE, ML.ITEM_CODE
 	</select>
 
-	<select id="selectPurchaseLedgerSummary" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummary">
+	<select id="selectPurchaseLedgerSummary" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary">
 		SELECT COUNT(*)                          AS poCount
 		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0) AS warehousingAmountSum
 		FROM   PO_LEDGER PL
@@ -252,7 +252,7 @@
 		달리 V 를 드라이빙하는 LEFT JOIN 만으로 충분하다 — 매칭되는 PO_LEDGER 가 없는 조합도
 		COUNT(PL.WAREHOUSING_AMOUNT)=0, SUM=0 인 1행으로 집계되어 원본(무그룹 COUNT(*))과 동일하다.
 	-->
-	<select id="selectPurchaseLedgerSummaryBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummaryBatchResult">
+	<select id="selectPurchaseLedgerSummaryBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryBatchResult">
 		SELECT V.ITEM_CODE                                    AS itemCode
 		      ,V.FROM_DATE                                    AS fromDate
 		      ,V.TO_DATE                                      AS toDate
@@ -280,7 +280,7 @@
 		DOCUMENT_TYPE/APPLY_TYPE 값으로 분기하는 OR-of-AND 로 풀어써서 원본과 동일한 3가지 분기,
 		동일한 무조건-참 의미(DOCUMENT_TYPE='D' AND APPLY_TYPE='A' 분기)를 그대로 보존했다.
 	-->
-	<select id="selectNonCertifiedOriginSummary" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummary">
+	<select id="selectNonCertifiedOriginSummary" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary">
 		SELECT COUNT(*)                          AS poCount
 		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0) AS warehousingAmountSum
 		FROM   PO_LEDGER PL
@@ -336,7 +336,7 @@
 		[버그 수정 이력 2] NOT EXISTS 서브쿼리 안의 ECM.DIVISION_CODE 조건도 selectNonCertifiedOriginSummary
 		(단건)와 동일한 이유로 CASE WHEN 을 OR-of-AND 로 풀어썼다(자세한 이유는 단건 select 주석 참고).
 	-->
-	<select id="selectNonCertifiedOriginSummaryBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.NonCertifiedOriginSummaryResult">
+	<select id="selectNonCertifiedOriginSummaryBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.NonCertifiedOriginSummaryResult">
 		SELECT V.ITEM_CODE                                    AS itemCode
 		      ,V.FTA_CODE                                     AS ftaCode
 		      ,V.FROM_DATE                                    AS fromDate

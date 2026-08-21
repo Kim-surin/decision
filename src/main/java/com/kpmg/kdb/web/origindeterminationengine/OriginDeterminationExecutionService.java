@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -10,18 +10,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.CreateFcrService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.BufferRates;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FcrMstDecisionUpdateRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRowBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRowsRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.ItemNationService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemNationCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.OriginDecider;
+import com.kpmg.kdb.web.origindeterminationengine.CreateFcrService;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstDecisionUpdateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowsRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.ItemNationService;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemNationCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.OriginDecider;
 
 /**
  * 레거시 PKG99_COO_DECISION.COO_DECISION / PKG99_COO_CTC_DECISION.COO_DECISION 메인 프로시저 이관.

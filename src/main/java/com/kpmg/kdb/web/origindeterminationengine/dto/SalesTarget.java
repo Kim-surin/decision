@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /** 레거시 CURSOR C_SALES_MST(MONTHLY_DECISION_PROC "4. 판정대상 커서") 한 행 */
 public class SalesTarget {

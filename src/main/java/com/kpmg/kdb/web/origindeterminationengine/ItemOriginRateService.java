@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -18,19 +18,19 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.common.CompanySettingService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.DivisionItemKey;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemOriginRateCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.LastInputYyyyMmResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialCandidatesBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialCandidatesRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.NonCertifiedOriginSummaryRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.NonCertifiedOriginSummaryResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginRatePrecheck;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginRateStage;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummary;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummaryBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummaryRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.DivisionItemKey;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemOriginRateCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.LastInputYyyyMmResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialCandidatesBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialCandidatesRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.NonCertifiedOriginSummaryRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.NonCertifiedOriginSummaryResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginRatePrecheck;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginRateStage;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryRequest;
 
 /**
  * 레거시 FC10_GET_ITEM_ORIGIN_RATE 이관 (원재료 역내산 비율 조회).

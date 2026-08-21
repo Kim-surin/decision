@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FtaMasterActive;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive;
 
 /**
  * FTA_MASTER(활성 FTA 목록) 조회 전용 캐시. {@link CreateFcrDao#selectActiveFtaMasters} 는 companyCode

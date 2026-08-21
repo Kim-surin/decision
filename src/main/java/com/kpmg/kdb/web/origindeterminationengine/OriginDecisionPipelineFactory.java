@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.Collections;
 import java.util.List;
@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationMode;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.CompanyDecisionFlags;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesTarget;
+import com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationMode;
+import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyDecisionFlags;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 
 /**
  * {@link OriginDecisionPipeline} 을 만들어주는 진입점. companyCode 기준 COMPANY.CTC_DECISION_ONLY_YN

@@ -1,11 +1,11 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.CooNationBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.CooNationLookupRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.CooNationBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.CooNationLookupRequest;
 
 /**
  * 레거시 FC01_GET_ITEM_NATION 이 사용하는 조회 중, {@link ItemOriginRateDao}(FC10_GET_ITEM_ORIGIN_RATE)와

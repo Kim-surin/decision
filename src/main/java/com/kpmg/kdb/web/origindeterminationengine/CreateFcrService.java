@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,31 +15,31 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.BomAvailability;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.BomLeafRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.DomesticSalesLine;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ExportSalesLine;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FcrDtlInsertRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FcrMstInsertRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.FtaMasterActive;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ProductFcrDtlSourceRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesDtlBomTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.SalesInvoiceHeader;
-import com.kpmg.kdb.web.origindeterminationexecution.HsCodeService;
-import com.kpmg.kdb.web.origindeterminationexecution.IncotermsRateService;
-import com.kpmg.kdb.web.origindeterminationexecution.ItemOriginRateService;
-import com.kpmg.kdb.web.origindeterminationexecution.ItemPriceService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.IncotermsChangeRateCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemOriginRateCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemPriceCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ItemPriceWithNote;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialBalanceTierRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginRatePrecheck;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PoLedgerPriceRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.PurchaseLedgerSummary;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.StandardCostRow;
-import com.kpmg.kdb.web.origindeterminationexecution.FcrCreator;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailability;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrDtlInsertRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstInsertRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader;
+import com.kpmg.kdb.web.origindeterminationengine.HsCodeService;
+import com.kpmg.kdb.web.origindeterminationengine.IncotermsRateService;
+import com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateService;
+import com.kpmg.kdb.web.origindeterminationengine.ItemPriceService;
+import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsChangeRateCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemOriginRateCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemPriceCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ItemPriceWithNote;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginRatePrecheck;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary;
+import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow;
+import com.kpmg.kdb.web.origindeterminationengine.FcrCreator;
 
 /**
  * 레거시 CREATE_FCR(P_COMPANY_CODE, P_DIVISION_CODE, P_SALES_NO, P_BOM_TYPE, P_ERR_CODE) 프로시저 이관.
@@ -51,7 +51,7 @@ import com.kpmg.kdb.web.origindeterminationexecution.FcrCreator;
  *
  * <p>이 클래스는 FCR_MST/FCR_DTL 데이터 생성까지만 담당한다. 원본에서 CREATE_FCR 안에 있던 상품
  * (PRODUCT_ASSETS_TYPE IN ('M','R','B')) 원산지 판정(과거 3-5/3-6 단계)은 판정 관련 로직을 한 곳에
- * 모으기 위해 {@link com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationExecutionService#determineOrigin} 으로
+ * 모으기 위해 {@link com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationExecutionService#determineOrigin} 으로
  * 옮겼다 — 제품(P,H) 판정(PKG99_COO_DECISION.COO_DECISION)과 상품 판정이 이제 그 메서드 하나에서
  * 함께 처리된다.
  *

@@ -1,8 +1,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.ExclusionRuleDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ExclusionRuleDao">
 
-	<select id="selectExclusionRuleHeaders" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.ExclusionRuleHeader">
+	<select id="selectExclusionRuleHeaders" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleHeader">
 		SELECT DISTINCT CAST(EXCLUSION_TYPE AS DECIMAL) AS exclusionType
 		               ,JOIN_CONDITION AS joinCondition
 		               ,EXCLUSION_RATE AS exclusionRate
@@ -14,7 +14,7 @@
 		ORDER  BY CAST(EXCLUSION_TYPE AS DECIMAL)
 	</select>
 
-	<select id="selectExclusionRuleDetails" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.ExclusionRuleDetail">
+	<select id="selectExclusionRuleDetails" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleDetail">
 		SELECT EXCLUSION_HS_CODE AS exclusionHsCode
 		      ,EXCLUSION_RATE    AS exclusionRate
 		FROM   FTA_EXCLUSION_RULE

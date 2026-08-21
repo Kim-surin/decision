@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.HsCodeDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.HsCodeDao">
 	<!--
 		레거시 FS03_GET_HS_CODE 이관.
 		- 우선순위 CASE WHEN 은 제거하고 각 소스별 HS코드를 그대로 반환한다 (우선순위 판정은 Java).
@@ -8,8 +8,8 @@
 		  DB에서 실제로 1건만 잘라 전송하므로 ROWNUM과 동일한 네트워크/메모리 효율을 내면서도
 		  Oracle 12c+/PostgreSQL/SQL Server 2012+/MySQL 8.0.19+ 에서 동일하게 동작해 이식성도 유지된다.
 	-->
-	<select id="selectHsCodeCandidates" parameterType="com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeCriteria"
-		resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeCandidateRow">
+	<select id="selectHsCodeCandidates" parameterType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCriteria"
+		resultType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCandidateRow">
 		SELECT CM.CUSTOMER_HS_CODE  AS customerHsCode
 		      ,FAHC.FTA_AGM_HS_CODE AS ftaAgmHsCode
 		      ,FHC.FTA_HS_CODE      AS ftaHsCode
@@ -53,7 +53,7 @@
 		그대로여야 캐시 키가 어긋나지 않는다(수출 분기는 baseDate 를 의도적으로 null 로 넘긴다 —
 		HsCodeService 클래스의 "원본 결함 재현" 관련 주석 참고).
 	-->
-	<select id="selectHsCodeCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.HsCodeBatchResult">
+	<select id="selectHsCodeCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeBatchResult">
 		SELECT V.COMPANY_CODE   AS reqCompanyCode
 		      ,V.DIVISION_CODE  AS reqDivisionCode
 		      ,V.CUSTOMER_CODE  AS reqCustomerCode

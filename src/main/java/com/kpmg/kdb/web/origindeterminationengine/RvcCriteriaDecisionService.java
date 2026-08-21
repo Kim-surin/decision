@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 
 /**
  * 레거시 COO_DECISION_FOR_RVC(부가가치기준 원산지 판정) 이관.

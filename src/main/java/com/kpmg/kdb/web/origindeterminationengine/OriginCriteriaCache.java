@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteria;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteriaBatchRequest;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteriaBatchResult;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchRequest;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 
 /**
  * {@link OriginDeterminationExecutionService#determineOrigin} 1회 호출 범위에서만 유효한 FTA_RULE 조회

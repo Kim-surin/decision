@@ -1,14 +1,14 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationexecution.dto.VirtualSalesGenerationParams;
+import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * 개별 판정(API 호출) 전용 가상매출 생성 쿼리. 월 판정(MONTHLY_DECISION_PROC, {@link
- * com.kpmg.kdb.web.origindeterminationexecution.MonthlyDecisionDao})은 회사/사업부/기간 범위의 실매출을 고객사
+ * com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionDao})은 회사/사업부/기간 범위의 실매출을 고객사
  * 단위로 GROUP BY 집계해 가상매출을 만드는 반면, 개별 판정은 이미 알고 있는 실제 매출건
  * 1건({@code sourceSalesNo})의 헤더를 그대로 복사하고, 요청받은 제품(productCode) 단위로 가상
  * SALES_DTL 을 만든다는 점에서 로직이 다르다 — 그래서 별도 DAO/매퍼로 분리했다.

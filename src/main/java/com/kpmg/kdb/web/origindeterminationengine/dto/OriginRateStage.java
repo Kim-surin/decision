@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /**
  * {@link OriginRatePrecheck} 1건(BOM 자재 1건)의 사전조회 결과. FTA_CODE 와 무관하게 결정되는

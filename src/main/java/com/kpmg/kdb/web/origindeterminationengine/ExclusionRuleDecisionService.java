@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -9,11 +9,11 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ExclusionRuleDetail;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.ExclusionRuleHeader;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.MaterialOriginRow;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginDeterminationTarget;
-import com.kpmg.kdb.web.origindeterminationexecution.dto.OriginCriteria;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleDetail;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleHeader;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
+import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 
 /**
  * 레거시 EXCLUTION_RULE_DECISION 이관.

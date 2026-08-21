@@ -1,8 +1,8 @@
-package com.kpmg.kdb.web.origindeterminationexecution;
+package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
-import com.kpmg.kdb.web.origindeterminationexecution.OriginDeterminationMode;
+import com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationMode;
 
 /**
  * {@link OriginDecisionPipeline} "PKG99_COO_DECISION.COO_DECISION" 단계의 부품 인터페이스. 제품(P,H)

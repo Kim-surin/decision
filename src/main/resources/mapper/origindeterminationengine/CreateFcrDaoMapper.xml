@@ -1,10 +1,10 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationexecution.CreateFcrDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.CreateFcrDao">
 
 	<!-- ===================== 1. 파라미터 셋업 작업 ===================== -->
 
-	<select id="selectSalesInvoiceHeader" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.SalesInvoiceHeader">
+	<select id="selectSalesInvoiceHeader" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader">
 		SELECT EXPORT_FLAG   AS exportFlag
 		      ,SM.INVOICE_DATE AS invoiceDate
 		      ,VIRTUAL_YN    AS virtualYn
@@ -25,7 +25,7 @@
 
 	<!-- ===================== 2. 실적 BOM 및 표준 BOM 확인 작업 ===================== -->
 
-	<select id="selectSalesDtlBomTargets" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.SalesDtlBomTarget">
+	<select id="selectSalesDtlBomTargets" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget">
 		SELECT SALES_SEQ          AS salesSeq
 		      ,PRODUCT_CODE       AS productCode
 		      ,PROD_DIVISION_CODE AS prodDivisionCode
@@ -47,7 +47,7 @@
 		원본은 ROWNUM = 1 만 사용하고 별도 정렬 기준이 없어(임의의 한 행) 그대로 이관한다.
 		ROWNUM 대신 FETCH FIRST 1 ROW ONLY 사용(DB 이식성).
 	-->
-	<select id="selectOwnDivisionBom" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.BomAvailability">
+	<select id="selectOwnDivisionBom" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailability">
 		SELECT DIVISION_CODE AS divisionCode
 		      ,FBD.YYYYMM    AS yyyymm
 		FROM   FTA_BOM_DTL FBD
@@ -66,7 +66,7 @@
 		FETCH FIRST 1 ROW ONLY
 	</select>
 
-	<select id="selectAnyDivisionBom" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.BomAvailability">
+	<select id="selectAnyDivisionBom" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailability">
 		SELECT DIVISION_CODE AS divisionCode
 		      ,FBD.YYYYMM    AS yyyymm
 		FROM   FTA_BOM_DTL FBD
@@ -170,7 +170,7 @@
 
 	<!-- ===================== 3-2. FCR_MST 데이터 생성 ===================== -->
 
-	<select id="selectDomesticSalesLines" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.DomesticSalesLine">
+	<select id="selectDomesticSalesLines" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine">
 		SELECT SM.SALES_NO                                  AS salesNo
 		      ,SD.SALES_SEQ                                 AS salesSeq
 		      ,SD.PRODUCT_CODE                               AS productCode
@@ -205,7 +205,7 @@
 		</if>
 	</select>
 
-	<select id="selectActiveFtaMasters" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.FtaMasterActive">
+	<select id="selectActiveFtaMasters" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive">
 		SELECT FTA_CODE       AS ftaCode
 		      ,INTERMEDIATE_YN AS intermediateYn
 		FROM   FTA_MASTER
@@ -213,7 +213,7 @@
 		AND    COMPANY_CODE = #{companyCode}
 	</select>
 
-	<select id="selectExportSalesLines" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.ExportSalesLine">
+	<select id="selectExportSalesLines" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine">
 		SELECT FM.FTA_CODE                                   AS ftaCode
 		      ,SALES.SALES_NO                                AS salesNo
 		      ,SALES.SALES_SEQ                                AS salesSeq
@@ -306,7 +306,7 @@
 
 	<!-- ===================== 3-3. 제품 BOM 소요량(FCR_DTL leaf 자재) ===================== -->
 
-	<select id="selectBomLeafRows" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.BomLeafRow">
+	<select id="selectBomLeafRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow">
 		SELECT FBD.ITEM_CODE                                 AS itemCode
 		      ,FM.FTA_CODE                                   AS ftaCode
 		      ,FM.SALES_NO                                   AS salesNo
@@ -373,7 +373,7 @@
 
 	<!-- ===================== 3-4. 상품/부산물 FCR_DTL ===================== -->
 
-	<select id="selectProductFcrDtlSourceRows" resultType="com.kpmg.kdb.web.origindeterminationexecution.dto.ProductFcrDtlSourceRow">
+	<select id="selectProductFcrDtlSourceRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow">
 		SELECT FM.PRODUCT_CODE                               AS productCode
 		      ,FM.FTA_CODE                                    AS ftaCode
 		      ,FM.SALES_NO                                    AS salesNo
@@ -427,7 +427,7 @@
 	<!--
 		===================== 3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE =====================
 		(과거 3-5/3-6 단계였던 상품(M,R,B) 원산지 판정은
-		com.kpmg.kdb.web.origindeterminationexecution.CommodityOriginDeterminationDao 로 옮겼다 — 판정 관련 로직을
+		com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao 로 옮겼다 — 판정 관련 로직을
 		OriginDeterminationService.determineOrigin 에 모으기 위함. 이 3-7 단계는 판정이 아니라 FCR_DTL
 		에 이미 계산된 금액을 FCR_MST 로 집계하는 데이터 준비 작업이라 CREATE_FCR 에 그대로 남겨뒀다.)
 	-->

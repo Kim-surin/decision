@@ -1,4 +1,4 @@
-package com.kpmg.kdb.web.origindeterminationexecution.dto;
+package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 /** 레거시 CREATE_FCR "1. 파라미터 셋업 작업" 에서 조회하는 SALES_MST 헤더 정보 */
 public class SalesInvoiceHeader {
