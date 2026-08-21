@@ -98,6 +98,23 @@
 		padding: 10px 12px;
 		vertical-align: middle;
 	}
+	.origin-status-message {
+		border-radius: 4px;
+		padding: 16px 20px;
+	}
+	.origin-status-message h6 {
+		margin-top: 0 !important;
+	}
+	.origin-status-message-fail {
+		background-color: #fff5f5;
+		border: 1px solid #f5c2c2;
+		color: #d9534f;
+	}
+	.origin-status-message-pending {
+		background-color: #fffde7;
+		border: 1px solid #f0e2a3;
+		color: #b78103;
+	}
 </style>
 </head>
 <body>
@@ -160,6 +177,16 @@
 						<tbody id="domesticOriginDetermination_popup_resultBody">
 						</tbody>
 					</table>
+				</div>
+
+				<div id="domesticOriginDetermination_popup_failedSection" class="origin-status-message origin-status-message-fail" style="display:none;">
+					<h6 class="mt-4 mb-2">판정결과</h6>
+					<div>원산지 판정에 실패했습니다.</div>
+				</div>
+
+				<div id="domesticOriginDetermination_popup_pendingSection" class="origin-status-message origin-status-message-pending" style="display:none;">
+					<h6 class="mt-4 mb-2">판정결과</h6>
+					<div>아직 원산지 판정이 진행되지 않았습니다.</div>
 				</div>
 			</div>
 		</div>
@@ -308,12 +335,12 @@
 
 			this.renderDetail(this.detailMap[key]);
 
-			// 판정완료(status=4) 건만 판정결과/판정 상세내용 섹션을 보여줌
+			// 판정상태(status)에 따라 판정완료/판정실패/미판정 영역 중 하나만 보여줌
 			var row = this.findRowByKey(key);
-			if (row && this.isDetermined(row.status)) {
+			var status = row ? row.status : null;
+			this.showResultAreaForStatus(status);
+			if (this.isDetermined(status)) {
 				this.retrieveResultList(row);
-			} else {
-				this.hideResultSections();
 			}
 		};
 
@@ -329,8 +356,26 @@
 			return String(status) === "4";
 		};
 
-		this.hideResultSections = function() {
+		this.isFailed = function(status) {
+			return String(status) === "5";
+		};
+
+		// 판정완료(4)/판정실패(5)/미판정(그 외) 세 영역 중 상태값에 맞는 것 하나만 보여주고 나머지는 숨김.
+		// 세 영역 모두 HTML에 미리 선언돼 있고(domesticOriginDetermination_popup_resultSection/
+		// failedSection/pendingSection), 여기서는 표시 여부만 토글한다 — 판정완료 영역의 행 데이터는
+		// retrieveResultList/renderResultList 가 별도로 채운다.
+		this.showResultAreaForStatus = function(status) {
 			$('#domesticOriginDetermination_popup_resultSection').hide();
+			$('#domesticOriginDetermination_popup_failedSection').hide();
+			$('#domesticOriginDetermination_popup_pendingSection').hide();
+
+			if (this.isDetermined(status)) {
+				$('#domesticOriginDetermination_popup_resultSection').show();
+			} else if (this.isFailed(status)) {
+				$('#domesticOriginDetermination_popup_failedSection').show();
+			} else {
+				$('#domesticOriginDetermination_popup_pendingSection').show();
+			}
 		};
 
 		this.renderDetail = function(detail) {
