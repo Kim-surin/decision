@@ -2,6 +2,7 @@ package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -585,8 +586,20 @@ public class ItemOriginRateService extends GeneralService {
 		return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).format(YYYYMMDD);
 	}
 
+	/**
+	 * MATERIAL_INV_BAL.AGING_PERIOD(자재 재고회전 기간)가 비정상적으로 큰 값(데이터 이상)이면
+	 * minusMonths 자체는 성공하지만 4자리 연도를 벗어나 format() 이 {@link DateTimeException} 을 던진다
+	 * — 원본 Oracle DATE 산술은 자릿수 제약이 없어 이런 경우에도 그냥 먼 과거 날짜를 조용히 만들어냈을
+	 * 뿐이다. 표현 가능한 가장 이른 날짜로 클램프해도 결과는 동일하다(그 시점 이전 PO_LEDGER 데이터는
+	 * 어차피 없으므로 구매원장 집계가 0건으로 나와 역외로 판정된다) — 굳이 예외를 던져 상위 호출부의
+	 * try/catch 폴백(단건 재조회)까지 타게 할 필요가 없다.
+	 */
 	private static String firstDayMinusMonths(String yyyyMm, int months) {
-		return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).minusMonths(months).format(YYYYMMDD);
+		try {
+			return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).minusMonths(months).format(YYYYMMDD);
+		} catch (DateTimeException e) {
+			return "00010101";
+		}
 	}
 
 	private static String firstDayMinusOneDay(String yyyyMm) {
