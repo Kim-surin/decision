@@ -16,6 +16,29 @@
 							color: #b78103 !important;            /* 어두운 황토/겨자빛 노란색 글자 */
 							font-weight: bold;
 						}
+						/* 검색조건 위 통계(총 건수/판정완료/판정실패/미판정) - 그리드 상태 배지와 동일한 색상 사용 */
+						.origin-stat-box {
+							min-width: 90px;
+						}
+						.origin-stat-label {
+							font-size: 12px;
+							color: #6c757d;
+							margin-bottom: 2px;
+						}
+						.origin-stat-value {
+							font-size: 22px;
+							font-weight: bold;
+							margin-bottom: 0;
+						}
+						.origin-stat-done {
+							color: #1e7e34;
+						}
+						.origin-stat-fail-label, .origin-stat-fail {
+							color: #d9534f;
+						}
+						.origin-stat-non-label, .origin-stat-non {
+							color: #b78103;
+						}
 				    </style>
 			</head>
 
@@ -30,6 +53,24 @@
 									<li class="breadcrumb-item active" aria-current="page">원산지 판정(내수)</li>
 								</ol>
 							</nav>
+						</div>
+						<div class="row col-9">
+							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
+								<label class="origin-stat-label mb-0">총 건수</label>
+								<h4 class="origin-stat-value mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_total">0</h4>
+							</div>
+							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
+								<label class="origin-stat-label mb-0">판정완료</label>
+								<h4 class="origin-stat-value origin-stat-done mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_done">0</h4>
+							</div>
+							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
+								<label class="origin-stat-label origin-stat-fail-label mb-0">판정실패</label>
+								<h4 class="origin-stat-value origin-stat-fail mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_fail">0</h4>
+							</div>
+							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
+								<label class="origin-stat-label origin-stat-non-label mb-0">미판정</label>
+								<h4 class="origin-stat-value origin-stat-non mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_non">0</h4>
+							</div>
 						</div>
 					</div>
 					<div class="row">
@@ -195,7 +236,42 @@
 								, "customer": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION-form", "customer")
 							}
 
-							KpackageOBJ.auiGrid.retrieve(DOMESTIC_ORIGIN_DETERMINATIONVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION, "/origin/compliance/origindetermination/domesticOriginDeterminationList", params);
+							// 검색조건 위 통계(총 건수/판정완료/판정실패/미판정)는 별도 API 호출 없이,
+							// 그리드에 내려주는 것과 같은 응답(result.value)을 그대로 집계해서 채운다.
+							// AUIGrid usePaging은 클라이언트 페이징이라 result.value에 검색조건에 해당하는
+							// 전체 행이 이미 다 들어있어, 추가 조회 없이 상태값(status)만 세면 된다.
+							KpackageOBJ.ajax.doSubmit(
+								"/origin/compliance/origindetermination/domesticOriginDeterminationList",
+								params,
+								function (result) {
+									var list = (result && Array.isArray(result.value)) ? result.value : [];
+
+									AUIGrid.setGridData(DOMESTIC_ORIGIN_DETERMINATIONVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION, list);
+									DOMESTIC_ORIGIN_DETERMINATIONVIEW.updateStats(list);
+								}
+							);
+						}
+
+						// 조회된 목록으로 총 건수/판정완료(4)/판정실패(5)/미판정(0) 건수를 집계해 표시
+						this.updateStats = function (list) {
+							var doneCount = 0;
+							var failCount = 0;
+							var nonCount = 0;
+
+							list.forEach(function (row) {
+								if (row.status === 4) {
+									doneCount++;
+								} else if (row.status === 5) {
+									failCount++;
+								} else if (row.status === 0) {
+									nonCount++;
+								}
+							});
+
+							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_total').text(list.length);
+							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_done').text(doneCount);
+							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_fail').text(failCount);
+							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_non').text(nonCount);
 						}
 						
 						this.individual_domestic_origin_determination = function () {
