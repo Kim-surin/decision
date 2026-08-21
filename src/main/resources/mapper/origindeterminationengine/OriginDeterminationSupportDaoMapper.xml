@@ -75,8 +75,19 @@
 
 	<!--
 		===================== INSERT_FRD_PROCESS =====================
-		SEQ 컬럼은 넘기지 않는다 — 컬럼 DEFAULT(시퀀스)로 채번하도록 INSERT 대상 목록에서 아예 뺐다
-		(Oracle 전용 FCR_RESULT_SEQ_S.NEXTVAL 을 매번 별도 SELECT 로 조회해 바인딩하던 것을 없앰).
+		SEQ 컬럼: 데이터 이관 중에는 FCR_RESULT 가 이관 스크립트로 SEQ 값을 직접 채워 넣을 수 있어
+		컬럼 DEFAULT(시퀀스)의 내부 카운터가 실제 MAX(SEQ) 를 못 따라갈 수 있다(시퀀스 NEXTVAL 이 이미
+		존재하는 SEQ 값과 충돌 → PK 위반). 그래서 컬럼 DEFAULT(Oracle 전용 FCR_RESULT_SEQ_S.NEXTVAL 을
+		매번 별도 SELECT 로 조회해 바인딩하던 방식의 이관본) 대신, 이 INSERT 시점에 COALESCE(MAX(SEQ),0)
+		을 직접 조회해 그 다음 값부터 채번한다. 여러 행을 한 번의 INSERT...SELECT 로 넣으므로
+		ROW_NUMBER() 로 배치 내에서도 행마다 겹치지 않게 한다. 동시에 여러 트랜잭션이 이 INSERT 를
+		실행하면 서로 같은 MAX(SEQ) 를 보고 같은 SEQ 를 시도해 PK 위반이 날 수 있는데(원본 시퀀스 방식과
+		달리 원자적이지 않음), 이 판정 파이프라인은 같은 매출 건을 동시에 여러 스레드가 처리하지 않으므로
+		실사용에서는 문제되지 않는다.
+
+		VALUES(...) 리터럴 목록 대신 "SELECT #{...} ... UNION ALL SELECT ..." 형태를 쓴 이유는 PostgreSQL
+		JDBC 가 VALUES 목록 안의 전부-파라미터인 컬럼의 타입을 추론하지 못해 오류를 내는 경우가 있어서다
+		(updateFcrMstDecisionResults 에서 이미 쓰는 것과 같은 패턴).
 
 		원본은 룰 1건 판정이 끝날 때마다 단건 INSERT 였지만, FM_LIST 1건(FTA 후보)에 걸린 룰 전체의
 		결과를 애플리케이션에서 모았다가 한 번의 배치 INSERT 로 저장한다 — INSERT 순서에 의미가 없어
@@ -84,24 +95,34 @@
 	-->
 	<insert id="insertFcrResults">
 		INSERT INTO FCR_RESULT
-			(SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
 			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
 			 RVC_RATE, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE, CREATE_BY, UPDATE_DATE,
 			 UPDATE_BY, SP_COO_YN, WO_COO_YN, CTC_YN, FTA_DE_MINIMIS_YN, COMPANY_DE_MINIMIS_YN,
 			 FTA_RVC_YN, COMPANY_RVC_YN, EXCLUSION_YN, EXCLUSION_CONDITION, CTC_RESULT_RATE,
 			 CTC_FTA_RESULT_RATE, CTC_COMPANY_RESULT_RATE, RVC_RESULT_RATE, RVC_FTA_RESULT_RATE,
 			 RVC_COMPANY_RESULT_RATE, RCEP_COO_NATION)
-		VALUES
-		<foreach collection="records" item="rec" separator=",">
-			(#{rec.salesNo}, #{rec.salesSeq}, #{rec.ftaCode}, #{rec.divisionCode}, #{rec.companyCode}, #{rec.hsCode},
-			 #{rec.productCode}, #{rec.standard}, #{rec.ruleSeq}, #{rec.ruleCode}, #{rec.ftaCooYn}, #{rec.companyCooYn},
-			 #{rec.bufferOption}, #{rec.deMinimisRate}, #{rec.rvcRate}, #{rec.status}, #{rec.errorCode}, #{rec.errorMsg},
-			 #{rec.deleteYn}, CURRENT_TIMESTAMP, #{rec.createBy}, CURRENT_TIMESTAMP, #{rec.updateBy}, #{rec.spCooYn},
-			 #{rec.woCooYn}, #{rec.ctcYn}, #{rec.ftaDeMinimisYn}, #{rec.companyDeMinimisYn}, #{rec.ftaRvcYn}, #{rec.companyRvcYn},
-			 #{rec.exclusionYn}, #{rec.exclusionCondition}, #{rec.ctcResultRate}, #{rec.ctcFtaResultRate},
-			 #{rec.ctcCompanyResultRate}, #{rec.rvcResultRate}, #{rec.rvcFtaResultRate}, #{rec.rvcCompanyResultRate},
-			 #{rec.rcepCooNation})
+		SELECT NS.BASE_SEQ + ROW_NUMBER() OVER (), V.*
+		FROM   (
+		<foreach collection="records" item="rec" separator="UNION ALL">
+		SELECT #{rec.salesNo} AS SALES_NO, #{rec.salesSeq} AS SALES_SEQ, #{rec.ftaCode} AS FTA_CODE,
+		       #{rec.divisionCode} AS DIVISION_CODE, #{rec.companyCode} AS COMPANY_CODE, #{rec.hsCode} AS HS_CODE,
+		       #{rec.productCode} AS PRODUCT_CODE, #{rec.standard} AS STANDARD, #{rec.ruleSeq} AS RULE_SEQ,
+		       #{rec.ruleCode} AS RULE_CODE, #{rec.ftaCooYn} AS FTA_COO_YN, #{rec.companyCooYn} AS COMPANY_COO_YN,
+		       #{rec.bufferOption} AS BUFFER_OPTION, #{rec.deMinimisRate} AS DE_MINIMIS_RATE, #{rec.rvcRate} AS RVC_RATE,
+		       #{rec.status} AS STATUS, #{rec.errorCode} AS ERROR_CODE, #{rec.errorMsg} AS ERROR_MSG,
+		       #{rec.deleteYn} AS DELETE_YN, CURRENT_TIMESTAMP AS CREATE_DATE, #{rec.createBy} AS CREATE_BY,
+		       CURRENT_TIMESTAMP AS UPDATE_DATE, #{rec.updateBy} AS UPDATE_BY, #{rec.spCooYn} AS SP_COO_YN,
+		       #{rec.woCooYn} AS WO_COO_YN, #{rec.ctcYn} AS CTC_YN, #{rec.ftaDeMinimisYn} AS FTA_DE_MINIMIS_YN,
+		       #{rec.companyDeMinimisYn} AS COMPANY_DE_MINIMIS_YN, #{rec.ftaRvcYn} AS FTA_RVC_YN,
+		       #{rec.companyRvcYn} AS COMPANY_RVC_YN, #{rec.exclusionYn} AS EXCLUSION_YN,
+		       #{rec.exclusionCondition} AS EXCLUSION_CONDITION, #{rec.ctcResultRate} AS CTC_RESULT_RATE,
+		       #{rec.ctcFtaResultRate} AS CTC_FTA_RESULT_RATE, #{rec.ctcCompanyResultRate} AS CTC_COMPANY_RESULT_RATE,
+		       #{rec.rvcResultRate} AS RVC_RESULT_RATE, #{rec.rvcFtaResultRate} AS RVC_FTA_RESULT_RATE,
+		       #{rec.rvcCompanyResultRate} AS RVC_COMPANY_RESULT_RATE, #{rec.rcepCooNation} AS RCEP_COO_NATION
 		</foreach>
+		       ) V
+		CROSS  JOIN (SELECT COALESCE(MAX(SEQ), 0) AS BASE_SEQ FROM FCR_RESULT) NS
 	</insert>
 
 	<!-- ===================== UPDATE_FRM_PROCEDURE ===================== -->

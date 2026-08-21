@@ -91,17 +91,24 @@
 		제품(P,H) FCR_RESULT 기록과 동일하게 호출한 판정 모드의 원본 패키지명(#{createBy},
 		OriginDeterminationMode#getProcedureName)을 기록하도록 맞췄다.
 
-		SEQ 컬럼은 INSERT 대상 목록에서 뺐다 — 컬럼 DEFAULT(시퀀스)로 채번한다. 원래 있던 "SELECT 1
-		AS SEQ" 는 매 행마다 같은 값(1)을 넣는 잘못된 채번이었다(여러 행을 한 번의 INSERT...SELECT 로
-		넣는 이 쿼리 특성상 실제로는 그대로 두면 문제가 됐을 코드).
+		SEQ 컬럼: 데이터 이관 중에는 FCR_RESULT 가 이관 스크립트로 SEQ 값을 직접 채워 넣을 수 있어
+		컬럼 DEFAULT(시퀀스)의 내부 카운터가 실제 MAX(SEQ) 를 못 따라갈 수 있다(시퀀스 NEXTVAL 이
+		이미 존재하는 SEQ 값과 충돌 → PK 위반). 그래서 컬럼 DEFAULT 대신 매 INSERT 시점의
+		COALESCE(MAX(SEQ),0) 을 직접 조회해 그 다음 값부터 채번한다. 원래 있던 "SELECT 1 AS SEQ" 는
+		매 행마다 같은 값(1)을 넣는 잘못된 채번이었다(여러 행을 한 번의 INSERT...SELECT 로 넣는 이 쿼리
+		특성상 그대로 두면 문제가 됐을 코드) — ROW_NUMBER() 로 배치 내에서도 행마다 겹치지 않게 한다.
+		동시에 같은 회사에서 이 INSERT 가 여러 트랜잭션으로 동시 실행되면 서로 같은 MAX(SEQ) 를 보고
+		같은 SEQ 를 시도해 PK 위반이 날 수 있는데(원본 시퀀스 방식과 달리 원자적이지 않음), 이 판정
+		파이프라인은 같은 매출 건을 동시에 여러 스레드가 처리하지 않으므로 실사용에서는 문제되지 않는다.
 	-->
 	<insert id="insertFcrResultForProducts">
 		INSERT INTO FCR_RESULT
-			(SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
 			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
 			 RVC_RATE, CTC_YN, COMPANY_RVC_YN, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE,
 			 CREATE_BY, UPDATE_DATE, UPDATE_BY)
-		SELECT FM.SALES_NO
+		SELECT NS.BASE_SEQ + ROW_NUMBER() OVER ()
+		      ,FM.SALES_NO
 		      ,FM.SALES_SEQ
 		      ,FM.FTA_CODE
 		      ,FM.DIVISION_CODE
@@ -140,6 +147,7 @@
 		AND    SD.SALES_SEQ = FM.SALES_SEQ
 		AND    SD.DIVISION_CODE = FM.DIVISION_CODE
 		AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		CROSS  JOIN (SELECT COALESCE(MAX(SEQ), 0) AS BASE_SEQ FROM FCR_RESULT) NS
 		WHERE  SD.SALES_NO = #{salesNo}
 		AND    SD.DIVISION_CODE = #{divisionCode}
 		AND    SD.COMPANY_CODE = #{companyCode}
