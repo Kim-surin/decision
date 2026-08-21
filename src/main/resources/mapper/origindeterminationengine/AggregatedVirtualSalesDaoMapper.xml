@@ -32,7 +32,7 @@
 
 	<delete id="deleteAggregatedSalesDtl">
 		DELETE FROM SALES_DTL
-		WHERE  SALES_NO IN (SELECT SM.CUSTOMER_CODE || SM.DIVISION_CODE || #{p.yyyymm}
+		WHERE  SALES_NO IN (SELECT #{virtualSalesNo}
 		                     FROM   SALES_MST SM
 		                     WHERE  SM.COMPANY_CODE = #{p.companyCode}
 		                     AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
@@ -44,7 +44,7 @@
 
 	<delete id="deleteAggregatedSalesMst">
 		DELETE FROM SALES_MST
-		WHERE  SALES_NO IN (SELECT SM.CUSTOMER_CODE || SM.DIVISION_CODE || #{p.yyyymm}
+		WHERE  SALES_NO IN (SELECT #{virtualSalesNo}
 		                     FROM   SALES_MST SM
 		                     WHERE  SM.COMPANY_CODE = #{p.companyCode}
 		                     AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
@@ -56,7 +56,7 @@
 
 	<insert id="mergeAggregatedSalesMst">
 		MERGE INTO SALES_MST SM
-		USING (SELECT SM.CUSTOMER_CODE || SM.DIVISION_CODE || #{p.yyyymm} AS SALES_NO
+		USING (SELECT #{virtualSalesNo} AS SALES_NO
 		             ,SM.DIVISION_CODE                                   AS DIVISION_CODE
 		             ,SM.COMPANY_CODE                                    AS COMPANY_CODE
 		             ,SM.CUSTOMER_CODE                                   AS CUSTOMER_CODE
@@ -120,7 +120,7 @@
 	-->
 	<insert id="mergeAggregatedSalesDtl">
 		MERGE INTO SALES_DTL SD
-		USING (SELECT VSD.CUSTOMER_CODE || VSD.DIVISION_CODE || #{p.yyyymm} AS SALES_NO
+		USING (SELECT #{virtualSalesNo} AS SALES_NO
 		             ,(NS.NEXT_SEQ + ROW_NUMBER() OVER (PARTITION BY VSD.CUSTOMER_CODE, VSD.DIVISION_CODE
 		                                     ORDER BY VSD.PRODUCT_CODE, VSD.PROD_DIVISION_CODE,
 		                                              VSD.DELIVERY_CUSTOMER_CODE) - 1) AS SALES_SEQ
@@ -180,7 +180,7 @@
 		                        SD.PROD_DIVISION_CODE, SD.DELIVERY_CUSTOMER_CODE) VSD
 		       LEFT   JOIN LATERAL (SELECT COALESCE(MAX(SALES_SEQ) + 1, 1) AS NEXT_SEQ
 		                            FROM   SALES_DTL
-		                            WHERE  SALES_NO = VSD.CUSTOMER_CODE || VSD.DIVISION_CODE || #{p.yyyymm}
+		                            WHERE  SALES_NO = #{virtualSalesNo}
 		                            AND    COMPANY_CODE = VSD.COMPANY_CODE
 		                            AND    DIVISION_CODE = VSD.DIVISION_CODE) NS ON TRUE
 		       WHERE  VSD.QUANTITY > 0) VSD

@@ -2,6 +2,7 @@ package com.kpmg.kdb.web.origindeterminationengine;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
@@ -16,13 +17,23 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  * <p>{@code params.getExportFlag()} 를 지정하지 않으면 판정 대상 커서는 내수(가상매출)와 이미
  * TARGET_FTA_CODE 가 세팅된 수출 건을 함께 반환한다 — 내수 파이프라인 전용으로 쓰려면 호출측에서
  * {@code params.setExportFlag("D")} 로 스코프를 좁혀야 한다.
+ *
+ * <p>"1. 가상 매출 번호 채번"은 {@link IndividualVirtualSalesGenerator} 와 동일하게 {@link
+ * VirtualSalesNoGenerator} 에 위임한다 — 채번 규칙이 나중에 바뀔 수 있어 SQL 에서 CUSTOMER_CODE||
+ * DIVISION_CODE||YYYYMM 을 직접 이어붙이지 않고, 여기서 만든 값을 각 쿼리에 그대로 넘겨 쓴다.
  */
 @Service
 public class AggregatedVirtualSalesGenerator extends GeneralService implements VirtualSalesGenerator {
 
+	@Autowired
+	private VirtualSalesNoGenerator salesNoGenerator;
+
 	@Override
 	public List<SalesTarget> generate(VirtualSalesGenerationParams params) {
 		AggregatedVirtualSalesDao dao = sqlSession.getMapper(AggregatedVirtualSalesDao.class);
+
+		// 1. 가상 매출 번호 채번
+		String virtualSalesNo = salesNoGenerator.generate(params);
 
 		// 원본 레거시(개별판정 화면, OriginDeterminCoverDAO#insertSalesMstVirtual)는 DELETE 없이 MERGE
 		// 만으로 가상매출을 갱신한다 — MERGE 의 WHEN MATCHED 가 기존 SALES_SEQ 를 유지한 채 값만 갱신
@@ -32,11 +43,11 @@ public class AggregatedVirtualSalesGenerator extends GeneralService implements V
 		// SALES_SEQ 가 매번 새로 채번돼 예전 FCR_* 행이 고아로 남는다(AggregatedVirtualSalesDaoMapper.xml
 		// 주석 참고). 그래서 productCodes 가 있을 때는 삭제를 건너뛰고 MERGE 만 수행한다.
 		if (params.getProductCodes() == null || params.getProductCodes().isEmpty()) {
-			dao.deleteAggregatedSalesDtl(params);
-			dao.deleteAggregatedSalesMst(params);
+			dao.deleteAggregatedSalesDtl(virtualSalesNo, params);
+			dao.deleteAggregatedSalesMst(virtualSalesNo, params);
 		}
-		dao.mergeAggregatedSalesMst(params);
-		dao.mergeAggregatedSalesDtl(params);
+		dao.mergeAggregatedSalesMst(virtualSalesNo, params);
+		dao.mergeAggregatedSalesDtl(virtualSalesNo, params);
 
 		return dao.selectDecisionTargets(params);
 	}
