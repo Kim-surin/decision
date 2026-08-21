@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
+import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailRequestDto;
@@ -86,6 +87,21 @@ public class OriginDeterminationController extends GenericController {
 
 		try {
 			result = originDeterminationService.retrieveDomesticOriginDeterminationResultDetailList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationExecute")
+	@ResponseBody
+	public Result domesticOriginDeterminationExecute(@RequestBody DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.executeDomesticOriginDetermination(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

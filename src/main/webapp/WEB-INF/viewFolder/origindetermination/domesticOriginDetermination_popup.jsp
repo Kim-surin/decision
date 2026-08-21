@@ -459,19 +459,59 @@
 			});
 		};
 
+		// (invoice_month, customer_code, division_code, product_code) 라인 목록으로 원산지 판정을 실행하고,
+		// 완료 후 처리 대상 row들의 판정 품목 상세를 재조회해 우측 화면을 최신화
+		// 주의: 판정상태(status) 배지는 좌측 목록(datas)이 팝업을 열 때 넘어온 값을 그대로 쓰고 있어,
+		// 여기서는 갱신하지 않는다 - 최신 판정상태를 보려면 팝업을 닫고 다시 열어야 한다.
+		this.executeOriginDetermination = function(rows) {
+			var self = this;
+
+			var request = {
+				datas: rows.map(function(row) {
+					return {
+						invoice_month: row.invoice_month,
+						customer_code: row.customer_code,
+						division_code: row.division_code,
+						product_code: row.product_code
+					};
+				})
+			};
+
+			this.postJson(
+				'/origin/compliance/origindetermination/domesticOriginDeterminationExecute',
+				request,
+				function(response) {
+					var value = (response && response.value) ? response.value : {};
+					var failedCount = value.failedTargets ? value.failedTargets.length : 0;
+					var message = (value.groupCount || 0) + "건 원산지 판정을 진행했습니다.";
+
+					if (failedCount > 0) {
+						message += " (실패 " + failedCount + "건)";
+					}
+
+					KpackageOBJ.object.alert(message);
+
+					rows.forEach(function(row) {
+						self.refetchDetail(row);
+					});
+				},
+				function() {
+					KpackageOBJ.object.alert('원산지 판정 실행 중 오류가 발생했습니다.');
+				}
+			);
+		};
+
 		// 우측의 모든 품목을 대상으로 원산지 판정 진행
-		// TODO: 판정 백엔드(원산지 판정 로직) 병합 시 실제 API 연동 필요
 		this.bulkOriginDetermination = function() {
 			if (this.datas.length === 0) {
 				KpackageOBJ.object.alert("판정할 품목이 없습니다.");
 				return;
 			}
 
-			KpackageOBJ.object.alert(this.datas.length + "건 일괄 원산지 판정을 진행합니다.");
+			this.executeOriginDetermination(this.datas);
 		};
 
 		// 좌측에서 선택한 품목 1건만 대상으로 원산지 판정 진행
-		// TODO: 판정 백엔드(원산지 판정 로직) 병합 시 실제 API 연동 필요
 		this.individualOriginDetermination = function() {
 			if (!this.selectedKey) {
 				KpackageOBJ.object.alert("판정할 품목을 선택하세요.");
@@ -479,13 +519,11 @@
 			}
 
 			var selectedRow = this.findSelectedRow();
-
-			KpackageOBJ.object.alert("선택한 품목 1건 원산지 판정을 진행합니다.");
-
-			// 판정을 진행한 건은 결과가 바뀌므로, 판정 실행 후 해당 건만 재조회해 우측 상세를 최신화
-			if (selectedRow) {
-				this.refetchDetail(selectedRow);
+			if (!selectedRow) {
+				return;
 			}
+
+			this.executeOriginDetermination([selectedRow]);
 		};
 
 		// 좌측 목록(datas)에서 현재 선택된(selectedKey) 항목의 원본 row 를 찾음

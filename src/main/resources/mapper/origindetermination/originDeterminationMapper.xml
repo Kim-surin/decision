@@ -5,7 +5,9 @@
        SELECT SM.SALES_NO
        		, SM.SALES_SEQ
        		, SM.INVOICE_MONTH
+       		, SM.DIVISION_CODE
        		, D.DIVISION_NAME
+       		, SM.CUSTOMER_CODE
        		, C.CUSTOMER_NAME
        		, SM.PRODUCT_CODE
        		, IM.ITEM_NAME AS PRODUCT_NAME
