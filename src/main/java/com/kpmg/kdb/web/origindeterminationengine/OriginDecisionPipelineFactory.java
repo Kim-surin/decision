@@ -14,7 +14,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 /**
  * {@link OriginDecisionPipeline} 을 만들어주는 진입점. companyCode 기준 COMPANY.CTC_DECISION_ONLY_YN
  * 을 조회해 판정 모드(RVC_CTC/CTC_ONLY)를 정하고, 기본 부품(기존 CreateFcrService/
- * OriginDeterminationExecutionService/MonthlyDecisionDao 이관 코드)을 채운 파이프라인을 돌려준다.
+ * OriginDeterminationExecutionService/AggregatedVirtualSalesDao 등 이관 코드)을 채운 파이프라인을 돌려준다.
  *
  * <p>내수/수출 모두 {@code COMPANY.MATERIAL_USE_YN='Y'} 인 회사에 대해 원본이 호출하는
  * PKG01_IF_LOAD.AUTO_MATERIAL_INV_BAL_PROC(원재료수불부 자동생성)은 이관 대상에 포함되어 있지 않아

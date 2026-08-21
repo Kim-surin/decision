@@ -24,7 +24,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  * 각 단계는 {@link VirtualSalesGenerator}/{@link FcrCreator}/{@link OriginDecider}/
  * {@link DecisionStatusUpdater} 부품으로 분리되어 있어 {@code with*} 메서드로 다른 구현체와
  * 갈아끼울 수 있다. 기본 부품(기존 CreateFcrService/OriginDeterminationExecutionService/
- * MonthlyDecisionDao 이관 코드)은 {@link OriginDecisionPipelineFactory} 가 채워준다.
+ * AggregatedVirtualSalesDao/SalesDecisionStatusDao 등 이관 코드)은 {@link OriginDecisionPipelineFactory} 가 채워준다.
  *
  * <p>내수는 {@link #generateVirtualSales} 호출 시점에 회사/기간 범위의 판정 대상(SALES_NO)이 여러
  * 건 채워질 수 있어, 그 뒤의 각 단계는 현재 판정 대상 전체에 대해 반복 수행된다. 수출은 파이프라인

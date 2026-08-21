@@ -4,7 +4,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionDao;
 import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyDecisionFlags;
 
 /**
@@ -21,6 +20,6 @@ public class CompanyDecisionFlagsService extends GeneralService {
 
 	@Cacheable(cacheNames = "companyDecisionFlags", key = "#companyCode")
 	public CompanyDecisionFlags getDecisionFlags(String companyCode) {
-		return sqlSession.getMapper(MonthlyDecisionDao.class).selectCompanyDecisionFlags(companyCode);
+		return sqlSession.getMapper(CompanyDecisionFlagsDao.class).selectCompanyDecisionFlags(companyCode);
 	}
 }

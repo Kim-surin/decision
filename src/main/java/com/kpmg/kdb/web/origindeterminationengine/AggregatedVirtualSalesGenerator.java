@@ -5,13 +5,12 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionDao;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
  * {@link VirtualSalesGenerator} 기본 구현. 레거시 MONTHLY_DECISION_PROC "1. 내수 포괄 매출 생성" /
- * "2. 포괄 SALES_DTL 생성" / "4. 판정대상 커서(C_SALES_MST)" 를 그대로 이관한 {@link MonthlyDecisionDao}
+ * "2. 포괄 SALES_DTL 생성" / "4. 판정대상 커서(C_SALES_MST)" 를 그대로 이관한 {@link AggregatedVirtualSalesDao}
  * 쿼리를 순서대로 호출한다.
  *
  * <p>{@code params.getExportFlag()} 를 지정하지 않으면 판정 대상 커서는 내수(가상매출)와 이미
@@ -23,7 +22,7 @@ public class AggregatedVirtualSalesGenerator extends GeneralService implements V
 
 	@Override
 	public List<SalesTarget> generate(VirtualSalesGenerationParams params) {
-		MonthlyDecisionDao dao = sqlSession.getMapper(MonthlyDecisionDao.class);
+		AggregatedVirtualSalesDao dao = sqlSession.getMapper(AggregatedVirtualSalesDao.class);
 
 		dao.deleteAggregatedSalesDtl(params);
 		dao.deleteAggregatedSalesMst(params);

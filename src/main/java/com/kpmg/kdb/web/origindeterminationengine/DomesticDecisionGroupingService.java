@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationengine.MonthlyDecisionDao;
 import com.kpmg.kdb.web.origindeterminationengine.dto.PendingDomesticGroup;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
@@ -14,7 +13,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  * 내수 벌크 판정(MONTHLY_DECISION_PROC 이관 확장) "1. 데이터 가공" 단계. 레거시 MONTHLY_DECISION_PROC 는
  * "1. 내수 포괄 매출 생성"(mergeAggregatedSalesMst)의 MERGE 문 안에서 GROUP BY(COMPANY_CODE,
  * DIVISION_CODE, CUSTOMER_CODE)로 대상 그룹을 감춰서 한 번에 처리했는데, 여기서는 그 그룹을
- * {@link MonthlyDecisionDao#selectPendingDomesticGroups} 로 먼저 목록으로 뽑아, 그룹마다
+ * {@link DomesticDecisionGroupingDao#selectPendingDomesticGroups} 로 먼저 목록으로 뽑아, 그룹마다
  * {@link VirtualSalesGenerationParams} 1건(고객사/사업부를 특정 그룹으로 좁힌 값)을 만든다 —
  * 개별판정 배치({@link IndividualDecisionGroupingService})와 동일하게 "그룹마다 파이프라인 1개"로
  * 처리할 수 있도록 하기 위함이다({@link DomesticBulkDecisionService} 참고).
@@ -29,7 +28,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
 public class DomesticDecisionGroupingService extends GeneralService {
 
 	public List<VirtualSalesGenerationParams> prepare(VirtualSalesGenerationParams filter) {
-		MonthlyDecisionDao dao = sqlSession.getMapper(MonthlyDecisionDao.class);
+		DomesticDecisionGroupingDao dao = sqlSession.getMapper(DomesticDecisionGroupingDao.class);
 		List<PendingDomesticGroup> groups = dao.selectPendingDomesticGroups(filter);
 
 		List<VirtualSalesGenerationParams> result = new ArrayList<>(groups.size());
