@@ -44,57 +44,75 @@
 	</select>
 
 	<!--
-		원본은 ROWNUM = 1 만 사용하고 별도 정렬 기준이 없어(임의의 한 행) 그대로 이관한다.
-		ROWNUM 대신 FETCH FIRST 1 ROW ONLY 사용(DB 이식성).
+		selectOwnDivisionBom/selectAnyDivisionBom(원본 각각 ROWNUM=1, 정렬기준 없음)을 C_SALES_DTL
+		커서 대상(사업장,제품) 조합 전체에 대해 한 번의 왕복으로 배치 조회한다. own/any 를 각각
+		LATERAL 로 병렬 조회해두고(원본처럼 own 이 없을 때만 any 를 보는 2단계 대신 항상 둘 다 계산),
+		Java(CreateFcrService#checkBomAvailability)에서 own 우선으로 골라 쓴다 — own 이 있으면 그대로
+		쓰고 없으면 any 로 폴백하므로 결과는 원본과 동일하다.
 	-->
-	<select id="selectOwnDivisionBom" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailability">
-		SELECT DIVISION_CODE AS divisionCode
-		      ,FBD.YYYYMM    AS yyyymm
-		FROM   FTA_BOM_DTL FBD
-		WHERE  FBD.COMPANY_CODE = #{companyCode}
-		AND    FBD.DIVISION_CODE = #{prodDivisionCode}
-		AND    FBD.PRODUCT_CODE = #{productCode}
-		AND    FBD.TXN_TYPE = #{bomType}
-		AND    FBD.REQ_QTY >= 0
-		AND    FBD.YYYYMM = (SELECT MAX(FBDT.YYYYMM)
-		                      FROM   FTA_BOM_DTL FBDT
-		                      WHERE  FBDT.COMPANY_CODE = #{companyCode}
-		                      AND    FBDT.DIVISION_CODE = #{prodDivisionCode}
-		                      AND    FBDT.PRODUCT_CODE = #{productCode}
-		                      AND    FBDT.TXN_TYPE = #{bomType}
-		                      AND    FBDT.YYYYMM BETWEEN #{bomPreviousYyyymm} AND #{yyyymm})
-		FETCH FIRST 1 ROW ONLY
+	<select id="selectBomAvailabilityBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult">
+		SELECT V.PROD_DIVISION_CODE AS reqProdDivisionCode
+		      ,V.PRODUCT_CODE       AS reqProductCode
+		      ,OWN.DIVISION_CODE    AS ownDivisionCode
+		      ,OWN.YYYYMM           AS ownYyyymm
+		      ,ANY_.DIVISION_CODE   AS anyDivisionCode
+		      ,ANY_.YYYYMM          AS anyYyyymm
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.prodDivisionCode} AS PROD_DIVISION_CODE, #{r.productCode} AS PRODUCT_CODE
+		       </foreach>
+		       ) V
+		LEFT   JOIN LATERAL (SELECT DIVISION_CODE
+		                            ,FBD.YYYYMM
+		                      FROM   FTA_BOM_DTL FBD
+		                      WHERE  FBD.COMPANY_CODE = #{companyCode}
+		                      AND    FBD.DIVISION_CODE = V.PROD_DIVISION_CODE
+		                      AND    FBD.PRODUCT_CODE = V.PRODUCT_CODE
+		                      AND    FBD.TXN_TYPE = #{bomType}
+		                      AND    FBD.REQ_QTY >= 0
+		                      AND    FBD.YYYYMM = (SELECT MAX(FBDT.YYYYMM)
+		                                            FROM   FTA_BOM_DTL FBDT
+		                                            WHERE  FBDT.COMPANY_CODE = #{companyCode}
+		                                            AND    FBDT.DIVISION_CODE = V.PROD_DIVISION_CODE
+		                                            AND    FBDT.PRODUCT_CODE = V.PRODUCT_CODE
+		                                            AND    FBDT.TXN_TYPE = #{bomType}
+		                                            AND    FBDT.YYYYMM BETWEEN #{bomPreviousYyyymm} AND #{yyyymm})
+		                      FETCH FIRST 1 ROW ONLY) OWN ON TRUE
+		LEFT   JOIN LATERAL (SELECT DIVISION_CODE
+		                            ,FBD.YYYYMM
+		                      FROM   FTA_BOM_DTL FBD
+		                      WHERE  FBD.COMPANY_CODE = #{companyCode}
+		                      AND    FBD.PRODUCT_CODE = V.PRODUCT_CODE
+		                      AND    FBD.TXN_TYPE = #{bomType}
+		                      AND    FBD.REQ_QTY >= 0
+		                      AND    FBD.YYYYMM = (SELECT MAX(FBDT.YYYYMM)
+		                                            FROM   FTA_BOM_DTL FBDT
+		                                            WHERE  FBDT.COMPANY_CODE = #{companyCode}
+		                                            AND    FBDT.PRODUCT_CODE = V.PRODUCT_CODE
+		                                            AND    FBDT.TXN_TYPE = #{bomType}
+		                                            AND    FBDT.YYYYMM BETWEEN #{bomPreviousYyyymm} AND #{yyyymm})
+		                      FETCH FIRST 1 ROW ONLY) ANY_ ON TRUE
 	</select>
 
-	<select id="selectAnyDivisionBom" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailability">
-		SELECT DIVISION_CODE AS divisionCode
-		      ,FBD.YYYYMM    AS yyyymm
-		FROM   FTA_BOM_DTL FBD
-		WHERE  FBD.COMPANY_CODE = #{companyCode}
-		AND    FBD.PRODUCT_CODE = #{productCode}
-		AND    FBD.TXN_TYPE = #{bomType}
-		AND    FBD.REQ_QTY >= 0
-		AND    FBD.YYYYMM = (SELECT MAX(FBDT.YYYYMM)
-		                      FROM   FTA_BOM_DTL FBDT
-		                      WHERE  FBDT.COMPANY_CODE = #{companyCode}
-		                      AND    FBDT.PRODUCT_CODE = #{productCode}
-		                      AND    FBDT.TXN_TYPE = #{bomType}
-		                      AND    FBDT.YYYYMM BETWEEN #{bomPreviousYyyymm} AND #{yyyymm})
-		FETCH FIRST 1 ROW ONLY
-	</select>
-
-	<update id="updateSalesDtlBomStatus">
-		UPDATE SALES_DTL
-		SET    STATUS            = #{status}
-		      ,BOM_STATUS        = #{bomStatus}
-		      ,BOM_YYYYMM        = #{bomYyyymm}
-		      ,BOM_DIVISION_CODE = #{bomDivisionCode}
+	<update id="updateSalesDtlBomStatusBatch">
+		UPDATE SALES_DTL SD
+		SET    STATUS            = V.STATUS
+		      ,BOM_STATUS        = V.BOM_STATUS
+		      ,BOM_YYYYMM        = V.BOM_YYYYMM
+		      ,BOM_DIVISION_CODE = V.BOM_DIVISION_CODE
 		      ,UPDATE_DATE       = CURRENT_TIMESTAMP
-		WHERE  SALES_NO = #{salesNo}
-		AND    SALES_SEQ = #{salesSeq}
-		AND    DIVISION_CODE = #{divisionCode}
-		AND    COMPANY_CODE = #{companyCode}
-		AND    PRODUCT_CODE = #{productCode}
+		FROM   (
+		       <foreach collection="rows" item="r" separator="UNION ALL">
+		       SELECT #{r.salesSeq} AS SALES_SEQ, #{r.productCode} AS PRODUCT_CODE, #{r.status} AS STATUS,
+		              #{r.bomStatus} AS BOM_STATUS, #{r.bomYyyymm} AS BOM_YYYYMM,
+		              #{r.bomDivisionCode} AS BOM_DIVISION_CODE
+		       </foreach>
+		       ) V
+		WHERE  SD.SALES_NO = #{salesNo}
+		AND    SD.DIVISION_CODE = #{divisionCode}
+		AND    SD.COMPANY_CODE = #{companyCode}
+		AND    SD.SALES_SEQ = V.SALES_SEQ
+		AND    SD.PRODUCT_CODE = V.PRODUCT_CODE
 	</update>
 
 	<!-- ===================== 3-1. 전 처리 작업 ===================== -->

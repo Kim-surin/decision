@@ -15,7 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailability;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityRequest;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
@@ -23,6 +24,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.FcrDtlInsertRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstInsertRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomStatusUpdateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader;
 import com.kpmg.kdb.web.origindeterminationengine.MaterialHsCodeService;
@@ -69,7 +71,7 @@ import com.kpmg.kdb.web.origindeterminationengine.FcrCreator;
  * <p><b>원본과 동일하게 이 메서드는 예외를 흡수하지 않는다.</b> CREATE_FCR 원본 프로시저에는 최상위
  * EXCEPTION 블록이 없어 DB 오류가 호출자(MONTHLY_DECISION_PROC)까지 그대로 전파된다 — COO_DECISION
  * 과 다른 부분이니 유의(그쪽은 자체적으로 예외를 흡수한다). 매출 1건 처리 실패를 배치 전체 중단 없이
- * 넘기는 책임은 호출자(MonthlyDecisionService)에 있다.
+ * 넘기는 책임은 호출자({@link BulkPipelineRunner})에 있다.
  */
 @Service
 public class CreateFcrService extends GeneralService implements FcrCreator {
@@ -192,39 +194,68 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		return errCnt > 0 ? "semisuccess" : "successed";
 	}
 
+	/**
+	 * "2. 실적 BOM 및 표준 BOM 확인 작업". 원본은 C_SALES_DTL 커서 행(제품)마다 own/any BOM 존재 확인
+	 * 조회 2회 + 상태 UPDATE 1회를 반복해 대상 제품 수만큼 DB 왕복이 늘었다. (사업장,제품) 조합을 먼저
+	 * distinct 로 모아 {@link CreateFcrDao#selectBomAvailabilityBatch} 로 한 번에 선조회하고,
+	 * {@link CreateFcrDao#updateSalesDtlBomStatusBatch} 로 상태 갱신도 한 번에 반영해 대상 제품 수와
+	 * 무관하게 이 단계 전체가 왕복 2회로 끝나도록 했다.
+	 */
 	private int checkBomAvailability(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
 			String bomType, String bomPreviousYyyymm, String yyyymm, List<String> productCodes) {
+		List<SalesDtlBomTarget> targets = dao.selectSalesDtlBomTargets(companyCode, divisionCode, salesNo,
+				productCodes);
+		if (targets.isEmpty()) {
+			return 0;
+		}
+
+		Map<String, BomAvailabilityRequest> distinctLookups = new LinkedHashMap<>();
+		for (SalesDtlBomTarget target : targets) {
+			distinctLookups.putIfAbsent(bomAvailabilityKey(target.getProdDivisionCode(), target.getProductCode()),
+					new BomAvailabilityRequest(target.getProdDivisionCode(), target.getProductCode()));
+		}
+
+		Map<String, BomAvailabilityBatchResult> availabilityCache = new LinkedHashMap<>();
+		for (BomAvailabilityBatchResult result : dao.selectBomAvailabilityBatch(companyCode, bomType,
+				bomPreviousYyyymm, yyyymm, new ArrayList<>(distinctLookups.values()))) {
+			availabilityCache.put(bomAvailabilityKey(result.getReqProdDivisionCode(), result.getReqProductCode()),
+					result);
+		}
+
 		int errCnt = 0;
-		for (SalesDtlBomTarget target : dao.selectSalesDtlBomTargets(companyCode, divisionCode, salesNo,
-				productCodes)) {
+		List<SalesDtlBomStatusUpdateRow> updateRows = new ArrayList<>(targets.size());
+		for (SalesDtlBomTarget target : targets) {
 			String status = "5".equals(target.getStatus()) ? "1" : "0";
 			String bomStatus;
 			String bomYyyymm = null;
 			String bomDivisionCode = null;
 
-			BomAvailability own = dao.selectOwnDivisionBom(companyCode, target.getProdDivisionCode(),
-					target.getProductCode(), bomType, bomPreviousYyyymm, yyyymm);
-			if (own != null) {
+			BomAvailabilityBatchResult availability = availabilityCache
+					.get(bomAvailabilityKey(target.getProdDivisionCode(), target.getProductCode()));
+
+			if (availability != null && availability.getOwnDivisionCode() != null) {
 				bomStatus = "0";
-				bomYyyymm = own.getYyyymm();
-				bomDivisionCode = own.getDivisionCode();
+				bomYyyymm = availability.getOwnYyyymm();
+				bomDivisionCode = availability.getOwnDivisionCode();
+			} else if (availability != null && availability.getAnyDivisionCode() != null) {
+				bomStatus = "2";
+				bomYyyymm = availability.getAnyYyyymm();
+				bomDivisionCode = availability.getAnyDivisionCode();
 			} else {
-				BomAvailability other = dao.selectAnyDivisionBom(companyCode, target.getProductCode(), bomType,
-						bomPreviousYyyymm, yyyymm);
-				if (other != null) {
-					bomStatus = "2";
-					bomYyyymm = other.getYyyymm();
-					bomDivisionCode = other.getDivisionCode();
-				} else {
-					bomStatus = "1";
-					errCnt++;
-				}
+				bomStatus = "1";
+				errCnt++;
 			}
 
-			dao.updateSalesDtlBomStatus(salesNo, target.getSalesSeq(), divisionCode, companyCode,
-					target.getProductCode(), status, bomStatus, bomYyyymm, bomDivisionCode);
+			updateRows.add(new SalesDtlBomStatusUpdateRow(target.getSalesSeq(), target.getProductCode(), status,
+					bomStatus, bomYyyymm, bomDivisionCode));
 		}
+
+		dao.updateSalesDtlBomStatusBatch(salesNo, divisionCode, companyCode, updateRows);
 		return errCnt;
+	}
+
+	private static String bomAvailabilityKey(String prodDivisionCode, String productCode) {
+		return prodDivisionCode + "|" + productCode;
 	}
 
 	/** 3-2(내수, EXPORT_FLAG='D'): SALES × 활성 FTA_MASTER 교차곱으로 FCR_MST 생성 */

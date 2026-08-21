@@ -4,7 +4,8 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailability;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityRequest;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
@@ -12,6 +13,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.FcrDtlInsertRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstInsertRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomStatusUpdateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader;
 
@@ -34,22 +36,19 @@ public interface CreateFcrDao {
 			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
 			@Param("productCodes") List<String> productCodes);
 
-	/** "해당 사업장 BOM 존재 확인". 원본 ROWNUM=1(정렬기준 없음)을 FETCH FIRST 1 ROW ONLY 로 이관 */
-	BomAvailability selectOwnDivisionBom(@Param("companyCode") String companyCode,
-			@Param("prodDivisionCode") String prodDivisionCode, @Param("productCode") String productCode,
+	/**
+	 * "해당 사업장 BOM 존재 확인"(own) / "타 플랜트 BOM 체크"(any) 를 (사업장,제품) 조합별로 한 번에
+	 * 배치 조회한다 — 원본은 이 두 조회(+updateSalesDtlBomStatus)를 C_SALES_DTL 커서 행마다(제품 수만큼)
+	 * 반복했으나, LATERAL 조인으로 대상 조합 전체를 한 번의 왕복으로 처리한다. own/any 각각 원본과 동일
+	 * 하게 ROWNUM=1(정렬기준 없음)을 FETCH FIRST 1 ROW ONLY 로 이관.
+	 */
+	List<BomAvailabilityBatchResult> selectBomAvailabilityBatch(@Param("companyCode") String companyCode,
 			@Param("bomType") String bomType, @Param("bomPreviousYyyymm") String bomPreviousYyyymm,
-			@Param("yyyymm") String yyyymm);
+			@Param("yyyymm") String yyyymm, @Param("requests") List<BomAvailabilityRequest> requests);
 
-	/** "타 플랜트 BOM 체크". 원본 ROWNUM=1(정렬기준 없음)을 FETCH FIRST 1 ROW ONLY 로 이관 */
-	BomAvailability selectAnyDivisionBom(@Param("companyCode") String companyCode,
-			@Param("productCode") String productCode, @Param("bomType") String bomType,
-			@Param("bomPreviousYyyymm") String bomPreviousYyyymm, @Param("yyyymm") String yyyymm);
-
-	void updateSalesDtlBomStatus(@Param("salesNo") String salesNo, @Param("salesSeq") int salesSeq,
-			@Param("divisionCode") String divisionCode, @Param("companyCode") String companyCode,
-			@Param("productCode") String productCode, @Param("status") String status,
-			@Param("bomStatus") String bomStatus, @Param("bomYyyymm") String bomYyyymm,
-			@Param("bomDivisionCode") String bomDivisionCode);
+	/** updateSalesDtlBomStatus 배치 버전: C_SALES_DTL 커서 대상 전체(SALES_SEQ 단위)를 한 번에 UPDATE */
+	void updateSalesDtlBomStatusBatch(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
+			@Param("companyCode") String companyCode, @Param("rows") List<SalesDtlBomStatusUpdateRow> rows);
 
 	/** "3-1. 전 처리 작업": FCR_DTL/FCR_RESULT/FCR_MST 중 이번 호출 대상 제품(SALES_DTL) 초기화 */
 	int deleteFcrDtl(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
