@@ -25,7 +25,15 @@ public class AggregatedVirtualSalesGenerator extends GeneralService implements V
 		AggregatedVirtualSalesDao dao = sqlSession.getMapper(AggregatedVirtualSalesDao.class);
 
 		dao.deleteAggregatedSalesDtl(params);
-		dao.deleteAggregatedSalesMst(params);
+		// SALES_MST(가상매출 헤더)는 제품 단위로 좁힐 수 없다. productCodes 가 지정된 좁은 호출(개별/특정
+		// 제품 판정)에서 이 헤더까지 지우고 mergeAggregatedSalesMst 로 재생성하면, 그 사이 다른 제품들의
+		// SALES_DTL 이 참조하던 헤더가 잠깐 사라졌다 다시 생기는 것뿐이라 문제는 없지만 불필요하다 —
+		// mergeAggregatedSalesMst 는 WHEN NOT MATCHED 절만 있어(WHEN MATCHED 없음) 헤더가 이미 있으면
+		// 그냥 아무 것도 안 하고 넘어가므로, 굳이 지우지 않아도 안전하다. companyCode+기간 전체를 다루는
+		// 월판정처럼 productCodes 가 없는 호출에서는 기존과 동일하게 삭제 후 재생성한다.
+		if (params.getProductCodes() == null || params.getProductCodes().isEmpty()) {
+			dao.deleteAggregatedSalesMst(params);
+		}
 		dao.mergeAggregatedSalesMst(params);
 		dao.mergeAggregatedSalesDtl(params);
 

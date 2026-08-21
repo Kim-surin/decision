@@ -4,7 +4,7 @@
 
 	<!--
 		===================== 1. 내수 포괄 매출 생성 =====================
-		[버그 수정 이력] deleteAggregatedSalesDtl/deleteAggregatedSalesMst 는 원래 companyCode+기간
+		[버그 수정 이력 1] deleteAggregatedSalesDtl/deleteAggregatedSalesMst 는 원래 companyCode+기간
 		으로만 걸러 회사+기간의 기존 가상매출 전체를 지웠다(원본 MONTHLY_DECISION_PROC 도 동일 — 원래는
 		호출 1번이 회사+기간 전체를 한 번에 재생성하는 용도라 문제가 없었다). 그런데
 		DomesticBulkDecisionService 처럼 같은 회사+기간에 대해 고객사 그룹마다 generateVirtualSales 를
@@ -12,6 +12,18 @@
 		함께 지워버린다(FCR_MST 는 이미 그 SALES_NO 를 참조해 생성된 뒤라 orphan 이 됨). 그래서
 		mergeAggregatedSalesMst 와 동일하게 CUSTOMER_CODE/DIVISION_CODE COALESCE 조건을 추가했다 —
 		두 파라미터가 null 이면(기존 회사+기간 전체 호출) 조건이 무력화돼 원래 동작과 동일하다.
+
+		[버그 수정 이력 2] deleteAggregatedSalesDtl 은 productCodes 스코프 없이 해당 고객사+플랜트+월의
+		가상 SALES_DTL 전체를 지웠는데, 바로 다음의 mergeAggregatedSalesDtl 은 productCodes 로 좁혀서
+		그 제품들만 다시 채운다 — 이 둘의 스코프가 어긋나 있었다. 그 결과 개별/특정 제품만 좁혀서
+		판정을 실행하면(productCodes 지정), 그 스코프 밖의 다른 제품들의 가상 SALES_DTL 행까지 함께
+		삭제된 채로 이번 호출에서는 재생성되지 않고, 다음 전체 재생성 때 SALES_SEQ 가 ROW_NUMBER() 로
+		처음부터 다시 채번되면서 이전 SALES_SEQ 와 달라진다. createFcr()/determineOrigin() 의 FCR_MST/
+		FCR_DTL/FCR_RESULT 삭제는 "현재 SALES_DTL 과 SALES_SEQ 가 일치하는 행"만 지우므로, 이렇게
+		SALES_SEQ 가 바뀌어버린 예전 FCR_* 행들은 영영 삭제되지 못하고 고아로 남아 판정을 반복할수록
+		누적된다(FCR_RESULT 는 FTA_CODE/RULE_SEQ 조합만큼 여러 행이라 특히 눈에 띄게 쌓인다). 그래서
+		deleteAggregatedSalesDtl 도 productCodes 가 지정된 경우 그 제품들만 지우도록 스코프를 맞췄다
+		(null/빈 리스트면 기존과 동일하게 전체 삭제).
 	-->
 
 	<delete id="deleteAggregatedSalesDtl">
@@ -24,8 +36,22 @@
 		                     AND    SM.VIRTUAL_YN = 'Y'
 		                     AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
 		                     AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE))
+		<if test="p.productCodes != null and !p.productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="p.productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
 	</delete>
 
+	<!--
+		SALES_MST(가상매출 헤더)는 제품 단위가 아니라 고객사+플랜트+월당 1건이라 PRODUCT_CODE 로 좁힐
+		수 없다. 그래서 productCodes 가 지정된(개별/특정 제품 한정) 좁은 호출에서는 이 삭제를 아예 건너뛴다
+		({@link AggregatedVirtualSalesGenerator} 참고) — mergeAggregatedSalesMst 는 WHEN NOT MATCHED
+		절만 있어(WHEN MATCHED 없음), 헤더가 이미 있으면 삭제 없이도 그냥 아무 것도 안 하고 넘어가
+		안전하다. companyCode+기간 전체를 다루는 월판정처럼 productCodes 가 없는 호출에서는 기존과 동일
+		하게 삭제 후 재생성한다.
+	-->
 	<delete id="deleteAggregatedSalesMst">
 		DELETE FROM SALES_MST
 		WHERE  SALES_NO IN (SELECT SM.CUSTOMER_CODE || SM.DIVISION_CODE || #{p.yyyymm}
