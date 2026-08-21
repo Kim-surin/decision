@@ -2,7 +2,7 @@ package com.kpmg.kdb.web.origindetermination.dto;
 
 // PostgreSQL은 따옴표 없는 식별자를 소문자로 접어서 반환하므로,
 // 실제 응답(HashMap) 키와 맞추기 위해 필드명을 소문자로 선언
-public class OriginDeterminationResultResponseDto {
+public class OriginDeterminationDetailResultResponseDto {
 	private String fta_code;
 	private String hs_code;
 	private String fta_name;

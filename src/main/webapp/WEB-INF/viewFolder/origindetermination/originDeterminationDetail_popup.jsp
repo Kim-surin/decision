@@ -172,6 +172,8 @@
 		// sales_no + '_' + sales_seq 를 key 로 하는 상세정보 맵
 		this.detailMap = {};
 		this.selectedKey = null;
+		// 현재 선택된 판정 품목의 판정 상세내용(기준별) 전체 목록 - fta_code로 필터링해서 사용
+		this.currentDetailList = [];
 
 		this.buildKey = function(salesNo, salesSeq) {
 			return salesNo + "_" + salesSeq;
@@ -330,6 +332,7 @@
 		};
 
 		this.hideResultSections = function() {
+			this.currentDetailList = [];
 			$('#originDetermination_popup_resultSection').hide();
 		};
 
@@ -357,17 +360,20 @@
 			$body.append($row);
 		};
 
-		// 판정완료 건의 판정결과(협정별) 조회
+		// 판정완료 건의 판정결과(협정별)와 판정 상세내용(기준별)을 한 번에 조회.
+		// 판정 상세내용은 협정(FTA_CODE)마다 별도 호출하지 않고, 여기서 받은 detailList 를
+		// fta_code 로 매핑해 화면에서 바로 보여준다(toggleResultDetailRow 참고)
 		this.retrieveResultList = function(row) {
 			var self = this;
 			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
 
 			this.postJson(
-				'/origin/compliance/origindetermination/originDeterminationResultList',
+				'/origin/compliance/origindetermination/originDeterminationDetailResultList',
 				request,
 				function(response) {
-					var list = (response && response.value) ? response.value : [];
-					self.renderResultList(list, row);
+					var value = (response && response.value) ? response.value : {};
+					self.currentDetailList = value.detailList || [];
+					self.renderResultList(value.resultList || [], row);
 				},
 				function() {
 					KpackageOBJ.object.alert('판정결과 조회 중 오류가 발생했습니다.');
@@ -454,25 +460,12 @@
 			);
 			$tr.after($detailRow);
 
-			self.retrieveResultDetailList(row, ftaCode, $detailRow.find('tbody'));
-		};
-
-		// 협정(FTA_CODE) 선택 시, 그 협정의 기준별 판정 상세내용을 조회해 $targetBody(그 행 바로 아래에
-		// 펼쳐진 인라인 표의 tbody)에 렌더링한다.
-		this.retrieveResultDetailList = function(row, ftaCode, $targetBody) {
-			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq, fta_code: ftaCode };
-
-			this.postJson(
-				'/origin/compliance/origindetermination/originDeterminationResultDetailList',
-				request,
-				function(response) {
-					var list = (response && response.value) ? response.value : [];
-					ORIGIN_DETERMINATION_DETAIL_POPUP.renderResultDetailList(list, $targetBody);
-				},
-				function() {
-					KpackageOBJ.object.alert('판정 상세내용 조회 중 오류가 발생했습니다.');
-				}
-			);
+			// 별도 API 호출 없이, retrieveResultList에서 이미 받아둔 currentDetailList를
+			// 선택한 행의 fta_code로 필터링해서 그대로 보여준다
+			var filtered = this.currentDetailList.filter(function(d) {
+				return d.fta_code === ftaCode;
+			});
+			this.renderResultDetailList(filtered, $detailRow.find('tbody'));
 		};
 
 		this.renderResultDetailList = function(list, $body) {

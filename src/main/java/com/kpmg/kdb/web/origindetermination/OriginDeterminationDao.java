@@ -5,21 +5,20 @@ import java.util.Map;
 
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultDetailResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultResponseDto;
 
 
 public interface OriginDeterminationDao {
 	public List<OriginDeterminationResponseDto> retrieveDomesticOriginDetermination(OriginDeterminationRequestDto param);
 	public List<OriginDeterminationResponseDto> retrieveExportOriginDetermination(OriginDeterminationRequestDto param);
 	public List<OriginDeterminationResponseDto> retrieveOriginDeterminationResult(OriginDeterminationRequestDto param);
-	public List<OriginDeterminationDetailResponseDto> retrieveDomesticOriginDeterminationDetailList(OriginDeterminationDetailRequestDto param);
+	public List<OriginDeterminationDetailResponseDto> retrieveOriginDeterminationDetailList(OriginDeterminationDetailRequestDto param);
 	// 판정완료 건의 판정결과(협정별) 목록
-	public List<OriginDeterminationResultResponseDto> retrieveDomesticOriginDeterminationResultList(OriginDeterminationResultRequestDto param);
-	// 판정결과에서 협정(FTA_CODE) 선택 시 그 협정의 판정 상세내용(기준별) 목록
-	public List<OriginDeterminationResultDetailResponseDto> retrieveDomesticOriginDeterminationResultDetailList(OriginDeterminationResultDetailRequestDto param);
+	public List<OriginDeterminationDetailResultResponseDto> retrieveOriginDeterminationDetailResultList(OriginDeterminationDetailResultRequestDto param);
+	// 판정결과(FTA_CODE)별 판정 상세내용(기준별) 전체 목록 - 프론트에서 fta_code로 매핑해 사용
+	public List<OriginDeterminationDetailResultDetailResponseDto> retrieveOriginDeterminationDetailResultDetailList(OriginDeterminationDetailResultRequestDto param);
 }

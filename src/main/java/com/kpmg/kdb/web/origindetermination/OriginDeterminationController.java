@@ -17,9 +17,8 @@ import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultDetailRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResultRequestDto;
 
 @Controller
 public class OriginDeterminationController extends GenericController {
@@ -90,21 +89,21 @@ public class OriginDeterminationController extends GenericController {
 	}
 	
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetail_popup")
-	public String domesticOriginDetermination_popup(
+	public String originDeterminationDetail_popup(
 			@RequestParam(value = "datas", required = false) String datas,
 	        Model model, HttpSession session) {
 		model.addAttribute("datas", datas);
 
 		return "origindetermination/originDeterminationDetail_popup";
 	}
-	
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")
 	@ResponseBody
-	public Result domesticOriginDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param) throws Exception {
+	public Result originDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param) throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(param);
+			result = originDeterminationService.retrieveOriginDeterminationDetailList(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -115,11 +114,11 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailResultList")
 	@ResponseBody
-	public Result domesticOriginDeterminationResultList(@RequestBody OriginDeterminationResultRequestDto param) throws Exception {
+	public Result originDeterminationDetailResultList(@RequestBody OriginDeterminationDetailResultRequestDto param) throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveDomesticOriginDeterminationResultList(param);
+			result = originDeterminationService.retrieveOriginDeterminationDetailResultList(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
