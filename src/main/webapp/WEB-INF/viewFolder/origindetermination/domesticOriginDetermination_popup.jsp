@@ -75,6 +75,20 @@
 		text-align: center;
 		padding: 40px 0;
 	}
+	.origin-result-row {
+		cursor: pointer;
+	}
+	.origin-result-detail-row > td {
+		padding: 0;
+	}
+	.origin-result-detail-inline {
+		padding: 12px 16px;
+		background-color: #f8f9fa;
+		border-top: 2px solid #4a6cf7;
+	}
+	.origin-result-detail-inline table {
+		background-color: #fff;
+	}
 </style>
 </head>
 <body>
@@ -137,25 +151,6 @@
 						<tbody id="domesticOriginDetermination_popup_resultBody">
 						</tbody>
 					</table>
-
-					<div id="domesticOriginDetermination_popup_resultDetailSection" style="display:none;">
-						<h6 class="mt-4 mb-3">판정 상세내용</h6>
-						<table class="table table-bordered table-sm">
-							<thead class="table-light">
-								<tr>
-									<th style="width:12%">결정기준</th>
-									<th style="width:14%">미소기준 적용금액</th>
-									<th style="width:10%">충족여부</th>
-									<th style="width:12%">판매금액</th>
-									<th style="width:14%">미상 재료비(원)</th>
-									<th style="width:12%">부가가치 비율</th>
-									<th style="width:26%">결정기준 해설</th>
-								</tr>
-							</thead>
-							<tbody id="domesticOriginDetermination_popup_resultDetailBody">
-							</tbody>
-						</table>
-					</div>
 				</div>
 			</div>
 		</div>
@@ -327,7 +322,6 @@
 
 		this.hideResultSections = function() {
 			$('#domesticOriginDetermination_popup_resultSection').hide();
-			$('#domesticOriginDetermination_popup_resultDetailSection').hide();
 		};
 
 		this.renderDetail = function(detail) {
@@ -372,14 +366,11 @@
 			);
 		};
 
-		// 판정결과 렌더링 (협정 행 클릭 시 그 협정의 판정 상세내용 조회)
+		// 판정결과 렌더링 (협정 행 클릭 시 그 행 바로 아래에 판정 상세내용을 펼침)
 		this.renderResultList = function(list, row) {
 			var self = this;
 			var $body = $('#domesticOriginDetermination_popup_resultBody');
 			$body.empty();
-
-			$('#domesticOriginDetermination_popup_resultDetailSection').hide();
-			$('#domesticOriginDetermination_popup_resultDetailBody').empty();
 			$('#domesticOriginDetermination_popup_resultSection').show();
 
 			if (list.length === 0) {
@@ -390,7 +381,7 @@
 			list.forEach(function(r) {
 				// 단가기준/BOM 추적/역내전환전략은 현재 제공되는 값이 없어 빈 칸으로 출력
 				var $tr = $(
-					'<tr class="origin-result-row" style="cursor:pointer;">' +
+					'<tr class="origin-result-row">' +
 						'<td>' + (r.hs_code || '') + '</td>' +
 						'<td>' + (r.fta_name || '') + '</td>' +
 						'<td class="text-end">' + (r.amount || '') + '</td>' +
@@ -405,18 +396,61 @@
 				);
 
 				$tr.on('click', function() {
-					$('#domesticOriginDetermination_popup_resultBody tr').removeClass('table-active');
-					$tr.addClass('table-active');
-					self.retrieveResultDetailList(row, r.fta_code);
+					self.toggleResultDetailRow($tr, row, r.fta_code);
 				});
 
 				$body.append($tr);
 			});
 		};
 
-		// 협정(FTA_CODE) 선택 시, 그 협정의 기준별 판정 상세내용 조회
-		this.retrieveResultDetailList = function(row, ftaCode) {
+		// 판정결과 행 클릭 시 그 행 바로 아래에 판정 상세내용 행을 펼치거나(없으면 추가), 이미 펼쳐진
+		// 같은 행을 다시 클릭하면 접는다(토글). 다른 행을 클릭하면 기존에 펼쳐진 행은 접고 새로 펼친다.
+		this.toggleResultDetailRow = function($tr, row, ftaCode) {
 			var self = this;
+			var alreadyExpanded = $tr.hasClass('table-active');
+
+			$('#domesticOriginDetermination_popup_resultBody tr.origin-result-row').removeClass('table-active');
+			$('#domesticOriginDetermination_popup_resultBody tr.origin-result-detail-row').remove();
+
+			if (alreadyExpanded) {
+				return;
+			}
+
+			$tr.addClass('table-active');
+
+			var $detailRow = $(
+				'<tr class="origin-result-detail-row">' +
+					'<td colspan="10">' +
+						'<div class="origin-result-detail-inline">' +
+							'<h6 class="mb-2">판정 상세내용</h6>' +
+							'<table class="table table-bordered table-sm mb-0">' +
+								'<thead class="table-light">' +
+									'<tr>' +
+										'<th style="width:12%">결정기준</th>' +
+										'<th style="width:14%">미소기준 적용금액</th>' +
+										'<th style="width:10%">충족여부</th>' +
+										'<th style="width:12%">판매금액</th>' +
+										'<th style="width:14%">미상 재료비(원)</th>' +
+										'<th style="width:12%">부가가치 비율</th>' +
+										'<th style="width:26%">결정기준 해설</th>' +
+									'</tr>' +
+								'</thead>' +
+								'<tbody>' +
+									'<tr><td colspan="7" class="origin-detail-empty">조회 중...</td></tr>' +
+								'</tbody>' +
+							'</table>' +
+						'</div>' +
+					'</td>' +
+				'</tr>'
+			);
+			$tr.after($detailRow);
+
+			self.retrieveResultDetailList(row, ftaCode, $detailRow.find('tbody'));
+		};
+
+		// 협정(FTA_CODE) 선택 시, 그 협정의 기준별 판정 상세내용을 조회해 $targetBody(그 행 바로 아래에
+		// 펼쳐진 인라인 표의 tbody)에 렌더링한다.
+		this.retrieveResultDetailList = function(row, ftaCode, $targetBody) {
 			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq, fta_code: ftaCode };
 
 			this.postJson(
@@ -424,7 +458,7 @@
 				request,
 				function(response) {
 					var list = (response && response.value) ? response.value : [];
-					self.renderResultDetailList(list);
+					DOMESTIC_ORIGIN_DETERMINATION_POPUP.renderResultDetailList(list, $targetBody);
 				},
 				function() {
 					KpackageOBJ.object.alert('판정 상세내용 조회 중 오류가 발생했습니다.');
@@ -432,10 +466,8 @@
 			);
 		};
 
-		this.renderResultDetailList = function(list) {
-			var $body = $('#domesticOriginDetermination_popup_resultDetailBody');
+		this.renderResultDetailList = function(list, $body) {
 			$body.empty();
-			$('#domesticOriginDetermination_popup_resultDetailSection').show();
 
 			if (list.length === 0) {
 				$body.append('<tr><td colspan="7" class="origin-detail-empty">판정 상세내용이 없습니다.</td></tr>');
