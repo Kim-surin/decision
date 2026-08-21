@@ -1,5 +1,8 @@
 /target/
 
+# logs (logback FILE appender output)
+/logs/
+
 # configuration
 .settings/
 .project
