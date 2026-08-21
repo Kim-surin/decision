@@ -82,12 +82,21 @@
 		padding: 0;
 	}
 	.origin-result-detail-inline {
-		padding: 12px 16px;
+		padding: 20px 24px;
 		background-color: #f8f9fa;
 		border-top: 2px solid #4a6cf7;
 	}
 	.origin-result-detail-inline table {
 		background-color: #fff;
+		table-layout: auto;
+	}
+	.origin-result-detail-inline table th,
+	.origin-result-detail-inline table td {
+		white-space: normal;
+		overflow: visible;
+		text-overflow: clip;
+		padding: 10px 12px;
+		vertical-align: middle;
 	}
 </style>
 </head>
