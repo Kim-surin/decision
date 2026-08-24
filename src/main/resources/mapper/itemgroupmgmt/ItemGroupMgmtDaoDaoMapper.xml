@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.ts.itemgroupmgmt.ItemGroupMgmtDao">
+
+
+    <select id="retrieveItemGroupMgmt" parameterType="map" resultType="map">
+
+	    SELECT PL.PRODUCT_CODE AS "PRODUCT_CODE",
+	           PL.PRODUCT_NAME AS "PRODUCT_NAME",
+	           PL.PRODUCT_NAME_ENG AS "PRODUCT_NAME_ENG",
+	           PL.FLOWCHART_COMMENT AS "FLOWCHART_COMMENT",
+	           FF.ORIGIN_FILE_NAME AS "FILE_NAME",
+	           TO_CHAR(PL.CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE"
+	      FROM PRODUCT_LINE PL
+	
+	      LEFT JOIN (
+	          SELECT X.COMPANY_CODE,
+	                 X.FLOWCHART_CODE,
+	                 X.ORIGIN_FILE_NAME
+	            FROM (
+	                SELECT F.COMPANY_CODE,
+	                       F.FLOWCHART_CODE,
+	                       F.ORIGIN_FILE_NAME,
+	                       ROW_NUMBER() OVER (
+	                           PARTITION BY F.COMPANY_CODE, F.FLOWCHART_CODE
+	                           ORDER BY F.FILE_SEQ
+	                       ) AS RN
+	                  FROM FLOWCHART_FILE F
+	            ) X
+	           WHERE X.RN = 1
+	      ) FF
+	        ON FF.COMPANY_CODE = PL.COMPANY_CODE
+	       AND FF.FLOWCHART_CODE = PL.PRODUCT_CODE
+	
+	     WHERE PL.COMPANY_CODE = #{COMPANY_CODE}
+	
+	    <if test="productCodes != null and productCodes != ''">
+	        AND PL.PRODUCT_CODE IN
+	        <foreach collection="productCodes.split(',')" item="productCode" open="(" separator="," close=")">
+	            #{productCode}
+	        </foreach>
+	    </if>
+	
+	     ORDER BY PL.PRODUCT_CODE
+	
+	</select>
+
+
+    <!-- 제품군별 품목 조회 -->
+    <select id="retrieveItemGroupItemList" parameterType="map" resultType="map">
+
+        SELECT IM.PRODUCT_CODE AS "PRODUCT_CODE",
+               IM.ITEM_CODE AS "ITEM_CODE",
+               IM.ITEM_NAME AS "ITEM_NAME",
+               IM.HS_CODE AS "HS_CODE",
+               IFM.FILE_NAME AS "ITEM_IMG"
+          FROM ITEM_MST IM
+
+          LEFT JOIN (
+              SELECT X.COMPANY_CODE,
+                     X.ITEM_CODE,
+                     X.FILE_NAME
+                FROM (
+                    SELECT F.COMPANY_CODE,
+                           F.ITEM_CODE,
+                           F.FILE_NAME,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY F.COMPANY_CODE, F.ITEM_CODE
+                               ORDER BY F.FILE_SEQ
+                           ) AS RN
+                      FROM ITEM_FILE F
+                     WHERE F.COMPANY_CODE = #{COMPANY_CODE}
+                ) X
+               WHERE X.RN = 1
+          ) IFM
+            ON IFM.COMPANY_CODE = IM.COMPANY_CODE
+           AND IFM.ITEM_CODE = IM.ITEM_CODE
+
+         WHERE IM.COMPANY_CODE = #{COMPANY_CODE}
+           AND IM.PRODUCT_CODE = #{PRODUCT_CODE}
+
+         ORDER BY IM.ITEM_CODE
+
+    </select>
+
+
+    <!-- 제품군 상세 조회 -->
+    <select id="retrieveItemGroupDetail" parameterType="map" resultType="map">
+
+        SELECT PL.PRODUCT_CODE AS "PRODUCT_CODE",
+               PL.PRODUCT_NAME AS "PRODUCT_NAME",
+               PL.PRODUCT_NAME_ENG AS "PRODUCT_NAME_ENG",
+               PL.FLOWCHART_COMMENT AS "FLOWCHART_COMMENT",
+               TO_CHAR(PL.CREATE_DATE, 'YYYY-MM-DD') AS "CREATE_DATE"
+          FROM PRODUCT_LINE PL
+         WHERE PL.COMPANY_CODE = #{COMPANY_CODE}
+           AND PL.PRODUCT_CODE = #{PRODUCT_CODE}
+
+    </select>
+
+
+    <!-- 제품군 중복 확인 -->
+    <select id="selectItemGroupDuplicate" parameterType="map" resultType="string">
+
+        SELECT PRODUCT_CODE
+          FROM PRODUCT_LINE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND PRODUCT_CODE = #{PRODUCT_CODE}
+
+    </select>
+
+
+    <!-- 제품군 등록 -->
+    <insert id="insertItemGroup" parameterType="map">
+
+        INSERT INTO PRODUCT_LINE
+        (
+            PRODUCT_CODE,
+            COMPANY_CODE,
+            PRODUCT_NAME,
+            PRODUCT_NAME_ENG,
+            FLOWCHART_COMMENT,
+            CREATE_DATE,
+            CREATE_BY,
+            UPDATE_DATE,
+            UPDATE_BY
+        )
+        VALUES
+        (
+            #{PRODUCT_CODE},
+            #{COMPANY_CODE},
+            #{PRODUCT_NAME},
+            #{PRODUCT_NAME_ENG},
+            #{FLOWCHART_COMMENT},
+            CURRENT_TIMESTAMP,
+            #{CREATE_BY},
+            CURRENT_TIMESTAMP,
+            #{UPDATE_BY}
+        )
+
+    </insert>
+
+
+    <!-- 제품군 수정 -->
+    <update id="updateItemGroup" parameterType="map">
+
+        UPDATE PRODUCT_LINE
+           SET PRODUCT_NAME = #{PRODUCT_NAME},
+               PRODUCT_NAME_ENG = #{PRODUCT_NAME_ENG},
+               FLOWCHART_COMMENT = #{FLOWCHART_COMMENT},
+               UPDATE_DATE = CURRENT_TIMESTAMP,
+               UPDATE_BY = #{UPDATE_BY}
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND PRODUCT_CODE = #{PRODUCT_CODE}
+
+    </update>
+
+
+    <!-- 제품군 삭제 -->
+    <delete id="deleteItemGroup" parameterType="map">
+
+        DELETE
+          FROM PRODUCT_LINE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND PRODUCT_CODE = #{PRODUCT_CODE}
+
+    </delete>
+
+
+    <!-- 제품군 첨부파일 등록 -->
+    <insert id="insertItemGroupFile" parameterType="map">
+
+        INSERT INTO FLOWCHART_FILE
+        (
+            FLOWCHART_CODE,
+            FILE_SEQ,
+            COMPANY_CODE,
+            FILE_PATH,
+            FILE_NAME,
+            ORIGIN_FILE_NAME,
+            CREATE_DATE,
+            CREATE_BY,
+            UPDATE_DATE,
+            UPDATE_BY,
+            REALFILE
+        )
+        VALUES
+        (
+            #{PRODUCT_CODE},
+            NEXTVAL('flowchart_file_s'),
+            #{COMPANY_CODE},
+            'POSTGRESQL',
+            #{FILE_NAME},
+            #{ORIGIN_FILE_NAME},
+            CURRENT_TIMESTAMP,
+            #{CREATE_BY},
+            CURRENT_TIMESTAMP,
+            #{UPDATE_BY},
+            #{REALFILE}
+        )
+
+    </insert>
+
+
+    <!-- 제품군 선택 첨부파일 삭제 -->
+    <delete id="deleteItemGroupFile" parameterType="map">
+
+        DELETE
+          FROM FLOWCHART_FILE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND FLOWCHART_CODE = #{PRODUCT_CODE}
+           AND FILE_SEQ IN
+        <foreach collection="FILE_SEQ_LIST" item="seq" open="(" separator="," close=")">
+            CAST(#{seq} AS INTEGER)
+        </foreach>
+
+    </delete>
+
+
+    <!-- 제품군 전체 첨부파일 삭제 -->
+    <delete id="deleteItemGroupFileAll" parameterType="map">
+
+        DELETE
+          FROM FLOWCHART_FILE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND FLOWCHART_CODE = #{PRODUCT_CODE}
+
+    </delete>
+	
+
+    <!-- 제품군 첨부파일 목록 -->
+    <select id="retrieveItemGroupFileList" parameterType="map" resultType="map">
+
+        SELECT FILE_NAME AS "FILE_NAME",
+               FILE_PATH AS "FILE_PATH",
+               ORIGIN_FILE_NAME AS "ORIGIN_FILE_NAME",
+               FILE_SEQ AS "FILE_SEQ"
+          FROM FLOWCHART_FILE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND FLOWCHART_CODE = #{PRODUCT_CODE}
+         ORDER BY FILE_SEQ
+
+    </select>
+
+
+    <!-- 제품군 첨부파일 다운로드 -->
+    <select id="itemGroupFileDownload" parameterType="map" resultType="map">
+
+        SELECT REALFILE AS "REALFILE",
+               ORIGIN_FILE_NAME AS "ORIGIN_FILE_NAME",
+               FILE_NAME AS "FILE_NAME",
+               FILE_PATH AS "FILE_PATH",
+               FILE_SEQ AS "FILE_SEQ"
+          FROM FLOWCHART_FILE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND FLOWCHART_CODE = #{PRODUCT_CODE}
+           AND FILE_SEQ = CAST(#{FILE_SEQ} AS INTEGER)
+
+    </select>
+
+
+    <!-- 품목 상세 조회 -->
+    <select id="retrieveItemDetail" parameterType="map" resultType="map">
+
+        SELECT IM.ITEM_CODE AS "ITEM_CODE",
+               IM.ITEM_NAME AS "ITEM_NAME",
+               PL.PRODUCT_CODE AS "PRODUCT_LINE_CODE",
+               PL.PRODUCT_NAME AS "PRODUCT_LINE_NAME",
+               PL.FLOWCHART_COMMENT AS "FLOWCHART_COMMENT"
+          FROM ITEM_MST IM
+
+          LEFT JOIN PRODUCT_LINE PL
+            ON PL.COMPANY_CODE = IM.COMPANY_CODE
+           AND PL.PRODUCT_CODE = IM.PRODUCT_CODE
+
+         WHERE IM.COMPANY_CODE = #{COMPANY_CODE}
+           AND IM.ITEM_CODE = #{ITEM_CODE}
+
+    </select>
+
+
+    <!-- 제품군 콤보 -->
+    <select id="retrieveItemGroupCombo" parameterType="map" resultType="map">
+
+        SELECT PRODUCT_CODE AS "CODE",
+               PRODUCT_NAME AS "NAME"
+          FROM PRODUCT_LINE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+         ORDER BY PRODUCT_CODE
+
+    </select>
+
+
+    <!-- 품목 제품군 변경 -->
+    <update id="updateItemProductCode" parameterType="map">
+
+        UPDATE ITEM_MST
+           SET PRODUCT_CODE = #{SELECTED_PRODUCT_LINE_CODE}
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND ITEM_CODE = #{ITEM_CODE}
+
+    </update>
+
+
+    <!-- 품목 이미지 등록 -->
+    <insert id="insertItemFile" parameterType="map">
+
+        INSERT INTO ITEM_FILE
+        (
+            ITEM_CODE,
+            COMPANY_CODE,
+            FILE_SEQ,
+            FILE_NAME,
+            ORIGIN_FILE_NAME,
+            FILE_EXTENSION,
+            CREATE_DATE,
+            CREATE_BY,
+            UPDATE_DATE,
+            UPDATE_BY
+        )
+        VALUES
+        (
+            #{ITEM_CODE},
+            #{COMPANY_CODE},
+            NEXTVAL('item_file_s'),
+            #{FILE_NAME},
+            #{ORIGIN_FILE_NAME},
+            CASE
+                WHEN POSITION('.' IN REVERSE(#{ORIGIN_FILE_NAME})) &gt; 0
+                THEN LOWER(SUBSTRING(#{ORIGIN_FILE_NAME} FROM '\.([^.]*)$'))
+                ELSE ''
+            END,
+            CURRENT_TIMESTAMP,
+            #{CREATE_BY},
+            CURRENT_TIMESTAMP,
+            #{UPDATE_BY}
+        )
+
+    </insert>
+
+
+    <!-- 품목 이미지 목록 -->
+    <select id="retrieveItemFileList" parameterType="map" resultType="map">
+
+        SELECT FILE_NAME AS "FILE_NAME",
+               ORIGIN_FILE_NAME AS "ORIGIN_FILE_NAME",
+               FILE_SEQ AS "FILE_SEQ"
+          FROM ITEM_FILE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND ITEM_CODE = #{ITEM_CODE}
+         ORDER BY FILE_SEQ
+
+    </select>
+
+
+    <!-- 품목 이미지 삭제 -->
+    <delete id="deleteItemFile" parameterType="map">
+
+        DELETE
+          FROM ITEM_FILE
+         WHERE COMPANY_CODE = #{COMPANY_CODE}
+           AND ITEM_CODE = #{ITEM_CODE}
+           AND FILE_SEQ IN
+        <foreach collection="FILE_SEQ_LIST" item="seq" open="(" separator="," close=")">
+            CAST(#{seq} AS INTEGER)
+        </foreach>
+
+    </delete>
+    
+    <!-- 제품군 다중 삭제 - 제조공정도 첨부파일 -->
+	<delete id="deleteItemGroupFileList" parameterType="map">
+	    DELETE FROM FLOWCHART_FILE
+	    WHERE COMPANY_CODE = #{COMPANY_CODE}
+	      AND FLOWCHART_CODE IN
+	    <foreach collection="deleteRows" item="row" open="(" separator="," close=")">
+	        #{row.PRODUCT_CODE}
+	    </foreach>
+	</delete>
+	
+	
+	<!-- 제품군 다중 삭제 - 제품군 -->
+	<delete id="deleteItemGroupList" parameterType="map">
+	    DELETE FROM PRODUCT_LINE
+	    WHERE COMPANY_CODE = #{COMPANY_CODE}
+	      AND PRODUCT_CODE IN
+	    <foreach collection="deleteRows" item="row" open="(" separator="," close=")">
+	        #{row.PRODUCT_CODE}
+	    </foreach>
+	</delete>
+
+
+</mapper>

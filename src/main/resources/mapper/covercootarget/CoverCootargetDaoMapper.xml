@@ -1,0 +1,724 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.coverCooTarget.CoverCootargetDao">
+	
+	
+ 	<select id="retrieveCoverCootargetList" parameterType="HashMap" resultType="HashMap">
+	    <![CDATA[
+	        WITH PARAMS AS (
+	            SELECT CAST(#{COMPANY_CODE,jdbcType=VARCHAR} AS TEXT) AS COMPANY_CODE
+	                  ,NULLIF(BTRIM(CAST(#{vendor,jdbcType=VARCHAR} AS TEXT)), '') AS VENDOR
+	                  ,NULLIF(BTRIM(CAST(#{itemCodes,jdbcType=VARCHAR} AS TEXT)), '') AS ITEM_CODES
+	                  ,CASE
+	                       WHEN NULLIF(BTRIM(CAST(#{itemCodes,jdbcType=VARCHAR} AS TEXT)), '') IS NULL THEN NULL
+	                       ELSE REGEXP_SPLIT_TO_ARRAY(
+	                            BTRIM(CAST(#{itemCodes,jdbcType=VARCHAR} AS TEXT)),
+	                            '[[:space:]]*,[[:space:]]*'
+	                       )
+	                   END AS ITEM_CODE_ARRAY
+	                  ,TO_DATE(
+	                       NULLIF(BTRIM(CAST(#{search_from_date,jdbcType=VARCHAR} AS TEXT)), ''),
+	                       'YYYYMMDD'
+	                   ) AS SEARCH_FROM_DATE
+	                  ,TO_DATE(
+	                       NULLIF(BTRIM(CAST(#{search_to_date,jdbcType=VARCHAR} AS TEXT)), ''),
+	                       'YYYYMMDD'
+	                   ) AS SEARCH_TO_DATE
+	                  ,NULLIF(BTRIM(CAST(#{importanceYn,jdbcType=VARCHAR} AS TEXT)), '') AS IMPORTANCE_YN
+	                  ,NULLIF(BTRIM(CAST(#{includeRegisteredYn,jdbcType=VARCHAR} AS TEXT)), '') AS INCLUDE_REGISTERED_YN
+	                  ,COALESCE(
+	                       CAST(
+	                           NULLIF(
+	                               BTRIM(CAST(#{blanketExpiryDays,jdbcType=VARCHAR} AS TEXT)),
+	                               ''
+	                           ) AS INTEGER
+	                       ),
+	                       0
+	                   ) AS BLANKET_EXPIRY_DAYS
+	        )
+	
+	        SELECT DISTINCT
+	               IM.ITEM_CODE AS "ITEM_CODE"
+	              ,COALESCE(IM.ITEM_NAME, '') || CASE WHEN NULLIF(BTRIM(IM.SPEC), '') IS NULL THEN '' ELSE '-' || IM.SPEC END AS "ITEM_SPEC"
+	              ,IM.HS_CODE AS "HS_CODE"
+	              ,TO_CHAR(TO_DATE(NULLIF(EC.ISSUE_DATE, ''), 'YYYYMMDD'), 'YYYY-MM-DD') AS "ISSUE_DATE"
+	              ,TO_CHAR(TO_DATE(NULLIF(EC.APPLY_DATE, ''), 'YYYYMMDD'), 'YYYY-MM-DD') AS "APPLY_DATE"
+	              ,TO_CHAR(TO_DATE(NULLIF(EC.END_DATE, ''), 'YYYYMMDD'), 'YYYY-MM-DD') AS "END_DATE"
+	              ,PL.VENDOR_CODE AS "VENDOR_CODE"
+	              ,VE.VENDOR_NAME AS "VENDOR_NAME"
+	              ,CD.CODE_NAME AS "SUBMIT_STATUS"
+	              ,DI.DIVISION_NAME AS "DIVISION_NAME"
+	              ,PL.DIVISION_CODE AS "DIVISION_CODE"
+	              ,VE.SEND_RECEIVE_IDENTIFIER_CODE AS "SEND_RECEIVE_IDENTIFIER_CODE"
+	              ,EC.COO_CERTIFY_NO AS "COO_CERTIFY_NO"
+	
+	          FROM PO_LEDGER PL
+	
+	         CROSS JOIN PARAMS P
+	
+	         INNER JOIN ITEM_MST IM
+	            ON IM.COMPANY_CODE = PL.COMPANY_CODE
+	           AND IM.ITEM_CODE = PL.ITEM_CODE
+	
+	         INNER JOIN VENDOR VE
+	            ON VE.COMPANY_CODE = PL.COMPANY_CODE
+	           AND VE.VENDOR_CODE = PL.VENDOR_CODE
+	
+	         INNER JOIN DIVISION DI
+	            ON DI.COMPANY_CODE = PL.COMPANY_CODE
+	           AND DI.DIVISION_CODE = PL.DIVISION_CODE
+	
+	         LEFT JOIN (
+	                SELECT ECM.COMPANY_CODE
+	                      ,ECM.VENDOR_CODE
+	                      ,ECM.DIVISION_CODE
+	                      ,ECD.ITEM_CODE
+	                      ,ECM.COO_CERTIFY_NO
+	                      ,MAX(ECD.ISSUE_DATE) AS ISSUE_DATE
+	                      ,MAX(ECD.APPLY_DATE) AS APPLY_DATE
+	                      ,MAX(ECD.END_DATE) AS END_DATE
+	                      ,ECM.SUBMIT_STATUS
+	                  FROM EXT_COO_CERTIFY_MST ECM
+	                 INNER JOIN EXT_COO_CERTIFY_DTL ECD
+	                    ON ECD.COMPANY_CODE = ECM.COMPANY_CODE
+	                   AND ECD.DIVISION_CODE = ECM.DIVISION_CODE
+	                   AND ECD.VENDOR_CODE = ECM.VENDOR_CODE
+	                   AND ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+	                 WHERE ECM.COO_CERTIFY_TYPE = 'C'
+	                 GROUP BY ECM.COMPANY_CODE
+	                         ,ECM.VENDOR_CODE
+	                         ,ECM.DIVISION_CODE
+	                         ,ECD.ITEM_CODE
+	                         ,ECM.COO_CERTIFY_NO
+	                         ,ECM.SUBMIT_STATUS
+	         ) EC
+	            ON EC.COMPANY_CODE = PL.COMPANY_CODE
+	           AND EC.DIVISION_CODE = PL.DIVISION_CODE
+	           AND EC.ITEM_CODE = PL.ITEM_CODE
+	           AND EC.VENDOR_CODE = PL.VENDOR_CODE
+	
+	         LEFT JOIN CODE_DTL CD
+	            ON CD.COMPANY_CODE = PL.COMPANY_CODE
+	           AND CD.CATEGORY = 'SS'
+	           AND CD.CODE = CAST(EC.SUBMIT_STATUS AS TEXT)
+	           AND CD.DELETE_YN = 'N'
+	
+	         WHERE PL.COMPANY_CODE = P.COMPANY_CODE
+	
+	           AND (
+	                P.ITEM_CODES IS NULL
+	                OR CAST(IM.ITEM_CODE AS TEXT) = ANY(P.ITEM_CODE_ARRAY)
+	           )
+	
+	           AND (
+	                P.VENDOR IS NULL
+	                OR VE.VENDOR_NAME ILIKE '%' || P.VENDOR || '%'
+	           )
+	
+	           AND (
+	                P.SEARCH_FROM_DATE IS NULL
+	                OR CAST(PL.WAREHOUSING_DATE AS DATE) >= P.SEARCH_FROM_DATE
+	           )
+	
+	           AND (
+	                P.SEARCH_TO_DATE IS NULL
+	                OR CAST(PL.WAREHOUSING_DATE AS DATE) <= P.SEARCH_TO_DATE
+	           )
+	
+	           AND (
+	                P.IMPORTANCE_YN IS NULL
+	                OR VE.IMPORTANCE_MGT_YN = P.IMPORTANCE_YN
+	           )
+	
+	           /* 기등록 증명서 포함
+				   Y : 등록/미등록 전체
+				   Y가 아니면 : 미등록만
+				*/
+				AND (
+				    P.INCLUDE_REGISTERED_YN = 'Y'
+				    OR PL.COO_CERTIFY_NO IS NULL
+				    OR PL.COO_CERTIFY_NO = ''
+				)
+	
+	           AND (
+	                P.BLANKET_EXPIRY_DAYS = 0
+	                OR (
+	                    EC.END_DATE IS NOT NULL
+	                    AND CURRENT_DATE BETWEEN
+	                        TO_DATE(NULLIF(EC.END_DATE, ''), 'YYYYMMDD') - P.BLANKET_EXPIRY_DAYS
+	                        AND TO_DATE(NULLIF(EC.END_DATE, ''), 'YYYYMMDD')
+	                )
+	           )
+	
+	         ORDER BY "VENDOR_CODE"
+	                 ,"DIVISION_CODE"
+	                 ,"ITEM_CODE"
+	                 ,"SUBMIT_STATUS"
+	    ]]>
+	</select>
+	 	
+	 <delete id="deleteExtCooCertifyFile" parameterType="map">
+	    <![CDATA[
+	        DELETE FROM EXT_COO_CERTIFY_FILE
+	         WHERE COMPANY_CODE = #{COMPANY_CODE}
+	           AND DIVISION_CODE = #{PARAM_DIVISION_CODE}
+	           AND VENDOR_CODE = #{PARAM_VENDOR_CODE}
+	           AND COO_CERTIFY_NO = #{COO_CERTIFY_NO}
+	           AND FILE_SEQ = CAST(#{FILE_SEQ} AS SMALLINT)
+	    ]]>
+	</delete>	
+	
+	<select id="retrieveCoverCootargetDashboard" parameterType="HashMap" resultType="HashMap">
+		 <![CDATA[
+			WITH BASE_ITEM AS (
+			    SELECT DISTINCT PL.COMPANY_CODE
+			                   ,PL.DIVISION_CODE
+			                   ,PL.VENDOR_CODE
+			                   ,PL.ITEM_CODE
+			      FROM PO_LEDGER PL
+			     INNER JOIN ITEM_MST IM
+			        ON IM.COMPANY_CODE = PL.COMPANY_CODE
+			       AND IM.ITEM_CODE = PL.ITEM_CODE
+			     INNER JOIN VENDOR VE
+			        ON VE.COMPANY_CODE = PL.COMPANY_CODE
+			       AND VE.VENDOR_CODE = PL.VENDOR_CODE
+			     INNER JOIN DIVISION DI
+			        ON DI.COMPANY_CODE = PL.COMPANY_CODE
+			       AND DI.DIVISION_CODE = PL.DIVISION_CODE
+			     WHERE PL.COMPANY_CODE = CAST(#{COMPANY_CODE,jdbcType=VARCHAR} AS TEXT)
+			),
+			LATEST_CERTIFY AS (
+			    SELECT DISTINCT ON (
+			           ECM.COMPANY_CODE
+			          ,ECM.DIVISION_CODE
+			          ,ECM.VENDOR_CODE
+			          ,ECD.ITEM_CODE
+			    )
+			           ECM.COMPANY_CODE
+			          ,ECM.DIVISION_CODE
+			          ,ECM.VENDOR_CODE
+			          ,ECD.ITEM_CODE
+			          ,ECM.COO_CERTIFY_NO
+			          ,CAST(ECM.SUBMIT_STATUS AS TEXT) AS SUBMIT_STATUS
+			          ,CD.CODE_NAME AS SUBMIT_STATUS_NAME
+			          ,CASE
+			               WHEN NULLIF(BTRIM(ECD.ISSUE_DATE), '') IS NULL THEN NULL
+			               ELSE TO_DATE(BTRIM(ECD.ISSUE_DATE), 'YYYYMMDD')
+			           END AS ISSUE_DATE
+			          ,CASE
+			               WHEN NULLIF(BTRIM(ECD.APPLY_DATE), '') IS NULL THEN NULL
+			               ELSE TO_DATE(BTRIM(ECD.APPLY_DATE), 'YYYYMMDD')
+			           END AS APPLY_DATE
+			          ,CASE
+			               WHEN NULLIF(BTRIM(ECD.END_DATE), '') IS NULL THEN NULL
+			               ELSE TO_DATE(BTRIM(ECD.END_DATE), 'YYYYMMDD')
+			           END AS END_DATE
+			      FROM EXT_COO_CERTIFY_MST ECM
+			     INNER JOIN EXT_COO_CERTIFY_DTL ECD
+			        ON ECD.COMPANY_CODE = ECM.COMPANY_CODE
+			       AND ECD.DIVISION_CODE = ECM.DIVISION_CODE
+			       AND ECD.VENDOR_CODE = ECM.VENDOR_CODE
+			       AND ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+			      LEFT JOIN CODE_DTL CD
+			        ON CD.COMPANY_CODE = ECM.COMPANY_CODE
+			       AND CD.CATEGORY = 'SS'
+			       AND CD.CODE = CAST(ECM.SUBMIT_STATUS AS TEXT)
+			       AND CD.DELETE_YN = 'N'
+			     WHERE ECM.COMPANY_CODE = CAST(#{COMPANY_CODE,jdbcType=VARCHAR} AS TEXT)
+			       AND ECM.COO_CERTIFY_TYPE = 'C'
+			     ORDER BY ECM.COMPANY_CODE
+			             ,ECM.DIVISION_CODE
+			             ,ECM.VENDOR_CODE
+			             ,ECD.ITEM_CODE
+			             ,CASE
+			                  WHEN NULLIF(BTRIM(ECD.END_DATE), '') IS NULL THEN NULL
+			                  ELSE TO_DATE(BTRIM(ECD.END_DATE), 'YYYYMMDD')
+			              END DESC NULLS LAST
+			             ,CASE
+			                  WHEN NULLIF(BTRIM(ECD.ISSUE_DATE), '') IS NULL THEN NULL
+			                  ELSE TO_DATE(BTRIM(ECD.ISSUE_DATE), 'YYYYMMDD')
+			              END DESC NULLS LAST
+			             ,ECM.COO_CERTIFY_NO DESC
+			)
+			SELECT COUNT(*) FILTER (
+			           WHERE LC.COO_CERTIFY_NO IS NULL
+			       ) AS "unregisteredItemCount"
+			      ,COUNT(*) FILTER (
+			           WHERE LC.SUBMIT_STATUS_NAME = '제출완료'
+			       ) AS "submittedItemCount"
+			      ,COUNT(*) FILTER (
+			           WHERE LC.END_DATE BETWEEN CURRENT_DATE AND CURRENT_DATE + 30
+			       ) AS "expiringWithin30DaysItemCount"
+			      ,COUNT(*) AS "totalItemCount"
+			  FROM BASE_ITEM BI
+			  LEFT JOIN LATEST_CERTIFY LC
+			    ON LC.COMPANY_CODE = BI.COMPANY_CODE
+			   AND LC.DIVISION_CODE = BI.DIVISION_CODE
+			   AND LC.VENDOR_CODE = BI.VENDOR_CODE
+			   AND LC.ITEM_CODE = BI.ITEM_CODE
+			]]>
+ 	</select>
+ 	
+
+	<select id="retrieveCoverCootargetPopup" parameterType="HashMap" resultType="HashMap">
+	    <choose>
+	
+	        <when test="COO_CERTIFY_NO != null and COO_CERTIFY_NO != ''">
+	            <![CDATA[
+	                SELECT ECD.DIVISION_CODE AS "DIVISION_CODE"
+	                      ,ECD.VENDOR_CODE AS "VENDOR_CODE"
+	                      ,ECD.COO_CERTIFY_NO AS "COO_CERTIFY_NO"
+	                      ,ECD.ITEM_CODE AS "ITEM_CODE"
+	                      ,COALESCE(IM.ITEM_NAME, '') || CASE WHEN NULLIF(BTRIM(IM.SPEC), '') IS NULL THEN '' ELSE '-' || IM.SPEC END AS "ITEM_SPEC"
+	                      ,ECD.FTA_CODE AS "FTA_CODE"
+	                      ,FM.FTA_NAME AS "FTA_NAME"
+	                      ,ECD.HS_CODE AS "HS_CODE"
+	                      ,ECD.RULE_CODE AS "RULE_CODE"
+	                      ,ECD.RULE_CODE AS "RULE_CODE_NM"
+	                      ,ECD.RVC_RATE AS "RVC_RATE"
+	                      ,ECD.COO_YN AS "COO_YN"
+	                      ,CASE WHEN ECD.COO_YN = 'Y' THEN '충족' WHEN ECD.COO_YN = 'N' THEN '불충족' ELSE '' END AS "COO_YN_NM"
+	                      ,TO_CHAR(TO_DATE(NULLIF(ECD.APPLY_DATE, ''), 'YYYYMMDD'), 'YYYY-MM-DD') || ' ~ ' || TO_CHAR(TO_DATE(NULLIF(ECD.END_DATE, ''), 'YYYYMMDD'), 'YYYY-MM-DD') AS "COVER_DATE"
+	                      ,ECD.COO_NATION AS "COO_NATION"
+	                      ,COALESCE(CD.CODE_NAME, '') AS "COO_NATION_NM"
+	                      ,'' AS "NO_CODE"
+	                      ,TO_CHAR(TO_DATE(NULLIF(ECD.ISSUE_DATE, ''), 'YYYYMMDD'), 'YYYY-MM-DD') AS "ISSUE_DATE"
+	                      ,TO_CHAR(TO_DATE(NULLIF(ECD.APPLY_DATE, ''), 'YYYYMMDD'), 'YYYY-MM-DD') AS "APPLY_DATE"
+	                      ,TO_CHAR(TO_DATE(NULLIF(ECD.END_DATE, ''), 'YYYYMMDD'), 'YYYY-MM-DD') AS "END_DATE"
+	                  FROM EXT_COO_CERTIFY_DTL ECD
+	                  LEFT JOIN ITEM_MST IM ON IM.COMPANY_CODE = ECD.COMPANY_CODE AND IM.ITEM_CODE = ECD.ITEM_CODE
+	                  LEFT JOIN FTA_MASTER FM ON FM.FTA_CODE = ECD.FTA_CODE AND FM.DELETE_YN = 'N'
+	                  LEFT JOIN CODE_DTL CD ON CD.COMPANY_CODE = ECD.COMPANY_CODE AND CD.CATEGORY = 'NA' AND CD.CODE = ECD.COO_NATION AND CD.DELETE_YN = 'N'
+	                 WHERE ECD.COMPANY_CODE = #{COMPANY_CODE}
+	                   AND ECD.DIVISION_CODE = #{divisionCode}
+	                   AND ECD.VENDOR_CODE = #{vendorCode}
+	                   AND ECD.COO_CERTIFY_NO = #{COO_CERTIFY_NO}
+	                 ORDER BY ECD.ITEM_CODE
+	                         ,FM.FTA_NAME
+	            ]]>
+	        </when>
+	
+	        <otherwise>
+	            <![CDATA[
+	                WITH PARAMS AS (
+	                    SELECT CAST(#{COMPANY_CODE,jdbcType=VARCHAR} AS TEXT) AS COMPANY_CODE
+	                          ,NULLIF(BTRIM(CAST(#{divisionCode,jdbcType=VARCHAR} AS TEXT)), '') AS DIVISION_CODE
+	                          ,NULLIF(BTRIM(CAST(#{vendorCode,jdbcType=VARCHAR} AS TEXT)), '') AS VENDOR_CODE
+	                          ,CASE
+	                               WHEN NULLIF(BTRIM(CAST(#{itemCodes,jdbcType=VARCHAR} AS TEXT)), '') IS NULL THEN NULL
+	                               ELSE REGEXP_SPLIT_TO_ARRAY(BTRIM(CAST(#{itemCodes,jdbcType=VARCHAR} AS TEXT)), '[[:space:]]*,[[:space:]]*')
+	                           END AS ITEM_CODE_ARRAY
+	                )
+	
+	                SELECT P.DIVISION_CODE AS "DIVISION_CODE"
+	                      ,P.VENDOR_CODE AS "VENDOR_CODE"
+	                      ,IM.ITEM_CODE AS "ITEM_CODE"
+	                      ,COALESCE(IM.ITEM_NAME, '') || CASE WHEN NULLIF(BTRIM(IM.SPEC), '') IS NULL THEN '' ELSE '-' || IM.SPEC END AS "ITEM_SPEC"
+	                      ,FM.FTA_CODE AS "FTA_CODE"
+	                      ,FM.FTA_NAME AS "FTA_NAME"
+	                      ,IM.HS_CODE AS "HS_CODE"
+	                      ,'' AS "RULE_CODE"
+	                      ,'' AS "RULE_CODE_NM"
+	                      ,NULL AS "RVC_RATE"
+	                      ,'Y' AS "COO_YN"
+	                      ,'충족' AS "COO_YN_NM"
+	                      ,'' AS "COVER_DATE"
+	                      ,'KR' AS "COO_NATION"
+	                      ,'대한민국' AS "COO_NATION_NM"
+	                      ,'' AS "NO_CODE"
+	                  FROM ITEM_MST IM
+	                 CROSS JOIN PARAMS P
+	                 INNER JOIN (
+	                        SELECT DISTINCT FTA_CODE, FTA_NAME
+	                          FROM FTA_MASTER
+	                         WHERE DELETE_YN = 'N'
+	                 ) FM ON 1 = 1
+	                 WHERE IM.COMPANY_CODE = P.COMPANY_CODE
+	                   AND P.ITEM_CODE_ARRAY IS NOT NULL
+	                   AND CAST(IM.ITEM_CODE AS TEXT) = ANY(P.ITEM_CODE_ARRAY)
+	                 ORDER BY IM.ITEM_CODE
+	                         ,FM.FTA_NAME
+	            ]]>
+	        </otherwise>
+	
+	    </choose>
+	</select>
+	 	
+ 	<select id="retrieveCoverCootargetRule" parameterType="map" resultType="map">
+		<![CDATA[
+			WITH PARAMS AS (
+			    SELECT CASE
+			        WHEN NULLIF(BTRIM(CAST(#{hsCodes,jdbcType=VARCHAR} AS TEXT)), '') IS NULL THEN NULL
+			        ELSE REGEXP_SPLIT_TO_ARRAY(
+			            BTRIM(CAST(#{hsCodes,jdbcType=VARCHAR} AS TEXT)),
+			            '[[:space:]]*,[[:space:]]*'
+			        )
+			    END AS HS_CODE_ARRAY
+			)
+			SELECT FR.FTA_CODE AS "FTA_CODE"
+			      ,HC.HS_CODE AS "HS_CODE"
+			      ,FR.RULE_CONTENTS AS "COMP_RULE"
+			      ,CASE
+			           WHEN FR.BD_RULE IS NOT NULL THEN FR.BD_RULE
+			           WHEN FR.BU_RULE IS NOT NULL THEN FR.BU_RULE
+			           WHEN FR.NC_RULE IS NOT NULL THEN FR.NC_RULE
+			           WHEN FR.MC_RULE IS NOT NULL THEN FR.MC_RULE
+			       END AS "RVC_RATE"
+			FROM FTA_RULE FR
+			CROSS JOIN PARAMS P
+			INNER JOIN HS_CODE HC
+			   ON FR.HS_CODE = SUBSTR(HC.HS_CODE, 1, LENGTH(FR.HS_CODE))
+			WHERE CAST(HC.HS_CODE AS TEXT) = ANY(P.HS_CODE_ARRAY)
+			  AND FR.HS_CODE_SUB_CATEGORY = '1'
+			ORDER BY HC.HS_CODE
+			        ,FR.FTA_CODE
+			        ,FR.RULE_SEQ
+			        ,FR.CTH_RULE
+		]]>
+	</select>
+	
+	<select id="retrieveCoverCootargetNoCode" parameterType="map" resultType="map">
+		<![CDATA[
+			SELECT CODE AS "CODE"
+			      ,CODE_NAME AS "CODE_NAME"
+			FROM CODE_DTL
+			WHERE CATEGORY = 'NO'
+			  AND COMPANY_CODE = #{COMPANY_CODE}
+			ORDER BY SORT_NO
+		]]>
+	</select>
+	
+	<select id="checkCoverCootargetDuplicate" parameterType="map" resultType="int">
+		<![CDATA[
+			SELECT COUNT(*)
+			FROM EXT_COO_CERTIFY_MST
+			WHERE COMPANY_CODE = #{COMPANY_CODE}
+			  AND DIVISION_CODE = #{PARAM_DIVISION_CODE}
+			  AND VENDOR_CODE = #{PARAM_VENDOR_CODE}
+			  AND COO_CERTIFY_NO = #{COO_CERTIFY_NO}
+		]]>
+	</select>
+
+	<select id="selectCooCertifyNoGet" parameterType="map" resultType="string">
+		<![CDATA[
+			SELECT #{PARAM_VENDOR_CODE}
+			       || '-'
+			       || TO_CHAR(CURRENT_DATE, 'YYYYMMDD')
+			       || '-'
+			       || COALESCE(
+			            MAX(
+			                CAST(
+			                    SUBSTRING(
+			                        REPLACE(COO_CERTIFY_NO, VENDOR_CODE, '')
+			                        FROM 11
+			                    ) AS INTEGER
+			                )
+			            ) + 1,
+			            1
+			          )
+			FROM EXT_COO_CERTIFY_MST
+			WHERE COMPANY_CODE = #{COMPANY_CODE}
+			  AND DIVISION_CODE = #{PARAM_DIVISION_CODE}
+			  AND VENDOR_CODE = #{PARAM_VENDOR_CODE}
+			  AND AUTO_COO_YN = 'Y'
+			  AND SUBSTRING(
+			        REPLACE(COO_CERTIFY_NO, VENDOR_CODE, '')
+			        FROM 11
+			      ) !~ '[A-Za-z]'
+		]]>
+	</select>
+
+	<insert id="insertExtCooCertifyMst" parameterType="map">
+		<![CDATA[
+			INSERT INTO EXT_COO_CERTIFY_MST (
+			     COO_CERTIFY_NO
+			    ,VENDOR_CODE
+			    ,DIVISION_CODE
+			    ,COMPANY_CODE
+			    ,COO_CERTIFY_TYPE
+			    ,ISSUE_DATE
+			    ,APPLY_DATE
+			    ,END_DATE
+			    ,SUBMIT_STATUS
+			    ,SUBMIT_TYPE
+			    ,INPUT_TYPE
+			    ,FILE_PATH
+			    ,FILE_NAME
+			    ,ORIGIN_FILE_NAME
+			    ,CREATE_DATE
+			    ,CREATE_BY
+			    ,UPDATE_DATE
+			    ,UPDATE_BY
+			    ,VENDOR_INCHARGE_NAME
+			    ,VENDOR_INCHARGE_TEL_NO
+			    ,VENDOR_INCHARGE_EMAIL
+			    ,DELETE_YN
+			    ,AUTO_COO_YN
+			    ,DOCUMENT_TYPE
+			    ,APPLY_TYPE
+			)
+			VALUES (
+			     #{COO_CERTIFY_NO}
+			    ,#{PARAM_VENDOR_CODE}
+			    ,#{PARAM_DIVISION_CODE}
+			    ,#{COMPANY_CODE}
+			    ,#{COO_CERTIFY_TYPE}
+			    ,#{ISSUE_DATE}
+			    ,#{APPLY_DATE}
+			    ,#{END_DATE}
+			    ,#{SUBMIT_STATUS}
+			    ,#{SUBMIT_TYPE}
+			    ,#{INPUT_TYPE}
+			    ,#{FILE_PATH}
+			    ,#{FILE_NAME}
+			    ,#{ORIGIN_FILE_NAME}
+			    ,CURRENT_TIMESTAMP
+			    ,#{USER_ID}
+			    ,CURRENT_TIMESTAMP
+			    ,#{USER_ID}
+			    ,#{VENDOR_INCHARGE_NAME}
+			    ,#{VENDOR_INCHARGE_TEL_NO}
+			    ,#{VENDOR_INCHARGE_EMAIL}
+			    ,'N'
+			    ,COALESCE(#{AUTO_COO_YN}, 'N')
+			    ,#{DOCUMENT_TYPE}
+			    ,#{APPLY_TYPE}
+			)
+		]]>
+		</insert>
+		
+		<update id="updateExtCooCertifyDtl" parameterType="map">
+			<![CDATA[
+				UPDATE EXT_COO_CERTIFY_DTL
+				SET END_DATE = TO_CHAR(
+				                   TO_DATE(#{APPLY_DATE}, 'YYYYMMDD') - INTERVAL '1 day',
+				                   'YYYYMMDD'
+				               )
+				   ,UPDATE_DATE = CURRENT_TIMESTAMP
+				   ,UPDATE_BY = #{UPDATE_BY}
+				WHERE COMPANY_CODE = #{COMPANY_CODE}
+				  AND DIVISION_CODE = #{PARAM_DIVISION_CODE}
+				  AND VENDOR_CODE = #{PARAM_VENDOR_CODE}
+				]]>
+				<if test="COO_CERTIFY_NO != null and COO_CERTIFY_NO != ''">
+				    AND COO_CERTIFY_NO != #{COO_CERTIFY_NO}
+				</if>
+				<if test="COO_CERTIFY_NO == null or COO_CERTIFY_NO == ''">
+				    AND COO_CERTIFY_NO IS NOT NULL
+				    AND COO_CERTIFY_NO != ''
+				</if>
+				<![CDATA[
+				  AND ITEM_CODE = #{ITEM_CODE}
+				  AND FTA_CODE = #{FTA_CODE}
+				  AND #{APPLY_DATE} BETWEEN APPLY_DATE AND END_DATE
+				  AND WAREHOUSING_NO = '-1'
+				  AND WAREHOUSING_SEQ = '-1'
+			]]>
+		</update>
+		
+	<select id="extCooCertifyFileDownLoad" parameterType="map" resultType="map">
+		SELECT FILE_NAME AS "FILE_NAME",
+			   FILE_PATH AS "FILE_PATH",
+			   ORIGIN_FILE_NAME AS "ORIGIN_FILE_NAME",
+			   FILE_SEQ AS "FILE_SEQ",
+			   EXT_COO_FILE AS "EXT_COO_FILE"
+		FROM EXT_COO_CERTIFY_FILE
+		WHERE FILE_SEQ = CAST(#{FILE_SEQ} AS SMALLINT)
+		  AND COMPANY_CODE = #{COMPANY_CODE}
+		  AND DIVISION_CODE = #{PARAM_DIVISION_CODE}
+		  AND VENDOR_CODE = #{PARAM_VENDOR_CODE}
+		  AND COO_CERTIFY_NO = #{COO_CERTIFY_NO}
+	</select>
+	
+	<select id="selectExtCooCertifyFileList" parameterType="map" resultType="map">
+	    <![CDATA[
+	        SELECT FILE_NAME AS "FILE_NAME"
+	              ,FILE_PATH AS "FILE_PATH"
+	              ,ORIGIN_FILE_NAME AS "ORIGIN_FILE_NAME"
+	              ,FILE_SEQ AS "FILE_SEQ"
+	          FROM EXT_COO_CERTIFY_FILE
+	         WHERE COMPANY_CODE = #{COMPANY_CODE}
+	           AND DIVISION_CODE = #{PARAM_DIVISION_CODE}
+	           AND VENDOR_CODE = #{PARAM_VENDOR_CODE}
+	           AND COO_CERTIFY_NO = #{COO_CERTIFY_NO}
+	         ORDER BY FILE_SEQ
+	    ]]>
+	</select>	
+		
+	<insert id="insertExtCooCertifyDtl" parameterType="map">
+	    <![CDATA[
+	        INSERT INTO EXT_COO_CERTIFY_DTL (
+	             COO_CERTIFY_NO
+	            ,VENDOR_CODE
+	            ,DIVISION_CODE
+	            ,COMPANY_CODE
+	            ,ITEM_CODE
+	            ,FTA_CODE
+	            ,WAREHOUSING_NO
+	            ,WAREHOUSING_SEQ
+	            ,COO_YN
+	            ,HS_CODE
+	            ,RULE_CODE
+	            ,RVC_RATE
+	            ,COO_NATION
+	            ,ISSUE_DATE
+	            ,APPLY_DATE
+	            ,END_DATE
+	            ,CREATE_DATE
+	            ,CREATE_BY
+	            ,UPDATE_DATE
+	            ,UPDATE_BY
+	        )
+	        VALUES (
+	             #{COO_CERTIFY_NO}
+	            ,#{PARAM_VENDOR_CODE}
+	            ,#{PARAM_DIVISION_CODE}
+	            ,#{COMPANY_CODE}
+	            ,#{ITEM_CODE}
+	            ,#{FTA_CODE}
+	            ,'-1'
+	            ,'-1'
+	            ,#{COO_YN}
+	            ,#{HS_CODE}
+	            ,#{RULE_CODE}
+	            ,CAST(NULLIF(REPLACE(CAST(#{RVC_RATE} AS TEXT), '%', ''), '') AS NUMERIC)
+	            ,#{COO_NATION}
+	            ,#{ISSUE_DATE}
+	            ,#{APPLY_DATE}
+	            ,#{END_DATE}
+	            ,CURRENT_TIMESTAMP
+	            ,#{USER_ID}
+	            ,CURRENT_TIMESTAMP
+	            ,#{USER_ID}
+	        )
+	    ]]>
+	</insert>
+		
+	<update id="updatePoLedger" parameterType="map">
+		<![CDATA[
+			UPDATE PO_LEDGER
+			SET COO_TYPE = #{COO_CERTIFY_TYPE}
+			   ,COO_CERTIFY_NO = #{COO_CERTIFY_NO}
+			   ,UPDATE_DATE = CURRENT_TIMESTAMP
+			   ,UPDATE_BY = #{USER_ID}
+			WHERE COMPANY_CODE = #{COMPANY_CODE}
+			  AND VENDOR_CODE = #{PARAM_VENDOR_CODE}
+			  AND ITEM_CODE = #{ITEM_CODE}
+			  AND COALESCE(COO_TYPE, 'C') NOT IN ('N')
+			  AND WAREHOUSING_DATE BETWEEN #{APPLY_DATE} AND #{END_DATE}
+		]]>
+		</update>
+		
+		<insert id="insertExtCooCertifyMstFile" parameterType="map">
+			<![CDATA[
+				INSERT INTO EXT_COO_CERTIFY_FILE (
+				     COO_CERTIFY_NO
+				    ,VENDOR_CODE
+				    ,DIVISION_CODE
+				    ,COMPANY_CODE
+				    ,FILE_SEQ
+				    ,FILE_NAME
+				    ,FILE_PATH
+				    ,ORIGIN_FILE_NAME
+				    ,CREATE_DATE
+				    ,CREATE_BY
+				    ,UPDATE_DATE
+				    ,UPDATE_BY
+				    ,EXT_COO_FILE
+				)
+				VALUES (
+				     #{COO_CERTIFY_NO}
+				    ,#{VENDOR_CODE}
+				    ,#{PARAM_DIVISION_CODE}
+				    ,#{COMPANY_CODE}
+				    ,(
+				        SELECT COALESCE(MAX(FILE_SEQ), 0) + 1
+				        FROM EXT_COO_CERTIFY_FILE
+				        WHERE COO_CERTIFY_NO = #{COO_CERTIFY_NO}
+				          AND VENDOR_CODE = #{VENDOR_CODE}
+				          AND COMPANY_CODE = #{COMPANY_CODE}
+				     )
+				    ,#{FILE_NAME}
+				    ,#{FILE_PATH}
+				    ,#{ORIGIN_FILE_NAME}
+				    ,CURRENT_TIMESTAMP
+				    ,#{CREATE_BY}
+				    ,CURRENT_TIMESTAMP
+				    ,#{UPDATE_BY}
+				    ,#{EXT_COO_FILE,jdbcType=BINARY}
+				)
+				]]>
+		</insert>
+		
+		<select id="retrieveCoverCootargetNationCode" parameterType="map" resultType="map">
+			<![CDATA[
+				SELECT CODE AS "CODE"
+				      ,CODE_NAME AS "CODE_NAME"
+				FROM CODE_DTL
+				WHERE CATEGORY = 'NA'
+				  AND COMPANY_CODE = #{COMPANY_CODE}
+				ORDER BY SORT_NO
+			]]>
+		</select>
+		
+		<select id="retrieveCoverCootargetOmission" parameterType="map" resultType="map">
+		    <![CDATA[
+		        WITH PARAMS AS (
+		            SELECT CAST(#{COMPANY_CODE} AS TEXT) AS COMPANY_CODE
+		                  ,CAST(#{PARAM_VENDOR_CODE} AS TEXT) AS VENDOR_CODE
+		                  ,CAST(#{APPLY_DATE} AS TEXT) AS APPLY_DATE
+		                  ,CASE
+		                       WHEN NULLIF(BTRIM(CAST(#{itemCodes} AS TEXT)), '') IS NULL THEN NULL
+		                       ELSE REGEXP_SPLIT_TO_ARRAY(
+		                            BTRIM(CAST(#{itemCodes} AS TEXT)),
+		                            '[[:space:]]*,[[:space:]]*'
+		                       )
+		                   END AS ITEM_CODE_ARRAY
+		        )
+		        SELECT CAST(#{PARAM_DIVISION_CODE} AS TEXT) AS "DIVISION_CODE"
+		              ,P.VENDOR_CODE AS "VENDOR_CODE"
+		              ,IM.ITEM_CODE AS "ITEM_CODE"
+		              ,COALESCE(IM.ITEM_NAME, '')
+		               || CASE
+		                      WHEN NULLIF(BTRIM(IM.SPEC), '') IS NULL THEN ''
+		                      ELSE '-' || IM.SPEC
+		                  END AS "ITEM_SPEC"
+		              ,FM.FTA_CODE AS "FTA_CODE"
+		              ,FM.FTA_NAME AS "FTA_NAME"
+		              ,IM.HS_CODE AS "HS_CODE"
+		              ,NULL AS "RULE_CODE"
+		              ,NULL AS "RULE_CODE_NM"
+		              ,NULL AS "RVC_RATE"
+		              ,'Y' AS "COO_YN"
+		              ,'충족' AS "COO_YN_NM"
+		              ,'KR' AS "COO_NATION"
+		              ,'대한민국' AS "COO_NATION_NM"
+		              ,'' AS "NO_CODE"
+		          FROM ITEM_MST IM
+		         CROSS JOIN PARAMS P
+		         INNER JOIN (
+		                SELECT DISTINCT FTA_CODE, FTA_NAME
+		                  FROM FTA_MASTER
+		                 WHERE DELETE_YN = 'N'
+		         ) FM
+		            ON 1 = 1
+		         WHERE IM.COMPANY_CODE = P.COMPANY_CODE
+		           AND P.ITEM_CODE_ARRAY IS NOT NULL
+		           AND CAST(IM.ITEM_CODE AS TEXT) = ANY(P.ITEM_CODE_ARRAY)
+		           AND NOT EXISTS (
+		                SELECT 1
+		                  FROM EXT_COO_CERTIFY_DTL ECD
+		                 WHERE ECD.COMPANY_CODE = P.COMPANY_CODE
+		                   AND ECD.VENDOR_CODE = P.VENDOR_CODE
+		                   AND ECD.ITEM_CODE = IM.ITEM_CODE
+		                   AND ECD.FTA_CODE = FM.FTA_CODE
+		                   AND P.APPLY_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE
+		           )
+		         ORDER BY IM.ITEM_CODE
+		                 ,FM.FTA_NAME
+		    ]]>
+		</select>
+
+</mapper>

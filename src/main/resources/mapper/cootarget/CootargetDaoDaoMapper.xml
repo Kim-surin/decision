@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.cootarget.CootargetDao">
+	
+	
+	<select id="start_TestSql" parameterType="HashMap" resultType="HashMap">
+ 		SELECT 1 AS TEST_VALUE FROM DUAL
+ 	</select>
+ 	
+ 	<select id="retrieveCootargetList" parameterType="HashMap" resultType="HashMap">
+		SELECT COALESCE(PL2.VENDOR_NAME, 'Total') AS VENDOR_NAME
+			     , COALESCE(PL2.VENDOR_CODE::TEXT, '') AS VENDOR_CODE
+			     , PL2.DIVISION_CODE
+			     , CASE
+			           WHEN PL2.VENDOR_NAME IS NOT NULL
+			            AND D.DIVISION_NAME IS NULL
+			           THEN 'Sub Total'
+			           ELSE D.DIVISION_NAME
+			       END AS DIVISION_NAME
+			     , PL2.TOTAL_CNT
+			     , PL2.COO_GET_CNT
+			     , PL2.IMPORTANCE_MGT_YN
+			     , TRUNC(PL2.COO_GET_RATE * 100, 2) AS COO_GET_RATE
+			  FROM (
+			        SELECT V.VENDOR_NAME
+			             , MAX(PL.VENDOR_CODE) AS VENDOR_CODE
+			             , MAX(PL.COMPANY_CODE) AS COMPANY_CODE
+			             , PL.DIVISION_CODE
+			             , PL.IMPORTANCE_MGT_YN
+			             , COUNT(PL.ITEM_CODE) AS TOTAL_CNT
+			             , SUM(
+			                   CASE
+			                       WHEN PL.COO_GET_YN = 'Y' THEN 1
+			                       ELSE 0
+			                   END
+			               ) AS COO_GET_CNT
+			             , SUM(
+			                   CASE
+			                       WHEN PL.COO_GET_YN = 'Y' THEN 1
+			                       ELSE 0
+			                   END
+			               )::NUMERIC
+			               / NULLIF(COUNT(PL.ITEM_CODE), 0) AS COO_GET_RATE
+			          FROM (
+			                SELECT PL.ITEM_CODE
+			                     , PL.VENDOR_CODE
+			                     , PL.DIVISION_CODE
+			                     , PL.COMPANY_CODE
+			                     , V.IMPORTANCE_MGT_YN
+			                     , SUM(PL.WAREHOUSING_QTY) AS WAREHOUSING_QTY
+			                     , MAX(
+			                           CASE
+			                               WHEN ECM.SUBMIT_STATUS = '4'
+			                                AND PL.COO_CERTIFY_NO IS NOT NULL
+			                               THEN 'Y'
+			                               ELSE 'N'
+			                           END
+			                       ) AS COO_GET_YN
+			                  FROM PO_LEDGER PL
+			
+			                 INNER JOIN ITEM_DTL ID
+			                    ON ID.ITEM_CODE = PL.ITEM_CODE
+			                   AND ID.DIVISION_CODE = PL.DIVISION_CODE
+			                   AND ID.COMPANY_CODE = PL.COMPANY_CODE
+			                   -- AND ID.MAIL_SEND_YN = 'Y'
+			
+			                 INNER JOIN VENDOR V
+			                    ON V.VENDOR_CODE = PL.VENDOR_CODE
+			                   AND V.COMPANY_CODE = PL.COMPANY_CODE
+			                   -- AND V.MAIL_SEND_YN = 'Y'
+			
+			                  LEFT JOIN EXT_COO_CERTIFY_MST ECM
+			                    ON ECM.COO_CERTIFY_NO = PL.COO_CERTIFY_NO
+			                   AND ECM.VENDOR_CODE = PL.VENDOR_CODE
+			                   AND ECM.COMPANY_CODE = PL.COMPANY_CODE
+			                   AND PL.DIVISION_CODE =
+			                       CASE
+			                           WHEN ECM.COO_CERTIFY_TYPE = 'C'
+			                           THEN PL.DIVISION_CODE
+			                           ELSE ECM.DIVISION_CODE
+			                       END
+			
+			                 WHERE PL.COMPANY_CODE = #{COMPANY_CODE}
+			                   AND PL.WAREHOUSING_DATE
+			                       BETWEEN #{search_from_date}
+			                           AND #{search_to_date}
+			                   AND PL.WAREHOUSING_TYPE IN (
+			                       'DOM',
+			                       'IMP',
+			                       'RKWA'
+			                   )
+			
+			                 <if test="vendor != null and vendor != ''">
+			                   AND PL.VENDOR_CODE = #{vendor}
+			                 </if>
+			
+			                 <if test="plant != null and plant != ''">
+			                   AND PL.DIVISION_CODE = #{plant}
+			                 </if>
+			
+			                 GROUP BY PL.ITEM_CODE
+			                        , PL.VENDOR_CODE
+			                        , PL.DIVISION_CODE
+			                        , PL.COMPANY_CODE
+			                        , V.IMPORTANCE_MGT_YN
+			               ) PL
+			
+			         INNER JOIN VENDOR V
+			            ON PL.COMPANY_CODE = V.COMPANY_CODE
+			           AND PL.VENDOR_CODE = V.VENDOR_CODE
+			
+			         INNER JOIN DIVISION D
+			            ON PL.COMPANY_CODE = D.COMPANY_CODE
+			           AND PL.DIVISION_CODE = D.DIVISION_CODE
+			
+			         WHERE PL.WAREHOUSING_QTY > 0
+			
+			         GROUP BY ROLLUP(
+			                      V.VENDOR_NAME
+			                    , PL.DIVISION_CODE
+			                    , PL.IMPORTANCE_MGT_YN
+			                  )
+			       ) PL2
+			
+			  LEFT JOIN DIVISION D
+			    ON PL2.COMPANY_CODE = D.COMPANY_CODE
+			   AND PL2.DIVISION_CODE = D.DIVISION_CODE
+			
+			 ORDER BY PL2.VENDOR_NAME
+			        , PL2.DIVISION_CODE
+ 	</select>
+ 	
+	
+	<select id="retrieveCootargetDashboard" parameterType="HashMap" resultType="HashMap">
+		 WITH BASE_LEDGER AS (
+			    /* 조회 기간 내 입고된 대상 품목 및 증명서 */
+			    SELECT PL.COMPANY_CODE
+			         , PL.VENDOR_CODE
+			         , PL.DIVISION_CODE
+			         , PL.ITEM_CODE
+			         , PL.COO_CERTIFY_NO
+			         , V.IMPORTANCE_MGT_YN
+			         , SUM(PL.WAREHOUSING_QTY) AS WAREHOUSING_QTY
+			      FROM PO_LEDGER PL
+			
+			     INNER JOIN ITEM_DTL ID
+			        ON ID.COMPANY_CODE  = PL.COMPANY_CODE
+			       AND ID.DIVISION_CODE = PL.DIVISION_CODE
+			       AND ID.ITEM_CODE     = PL.ITEM_CODE
+			
+			     INNER JOIN VENDOR V
+			        ON V.COMPANY_CODE = PL.COMPANY_CODE
+			       AND V.VENDOR_CODE  = PL.VENDOR_CODE
+			
+			     WHERE PL.COMPANY_CODE = #{COMPANY_CODE}
+			       AND PL.WAREHOUSING_DATE
+			           BETWEEN #{search_from_date}
+			               AND #{search_to_date}
+			       AND PL.WAREHOUSING_TYPE IN ('DOM', 'IMP', 'RKWA')
+			
+			     <if test="vendor != null and vendor != ''">
+			       AND PL.VENDOR_CODE = #{vendor}
+			     </if>
+			
+			     <if test="plant != null and plant != ''">
+			       AND PL.DIVISION_CODE = #{plant}
+			     </if>
+			
+			     GROUP BY PL.COMPANY_CODE
+			            , PL.VENDOR_CODE
+			            , PL.DIVISION_CODE
+			            , PL.ITEM_CODE
+			            , PL.COO_CERTIFY_NO
+			            , V.IMPORTANCE_MGT_YN
+			
+			    HAVING SUM(PL.WAREHOUSING_QTY) > 0
+			),
+			
+			BASE_ITEM AS (
+			    /* 수취율 계산 대상 품목 */
+			    SELECT DISTINCT
+			           COMPANY_CODE
+			         , VENDOR_CODE
+			         , DIVISION_CODE
+			         , ITEM_CODE
+			         , IMPORTANCE_MGT_YN
+			      FROM BASE_LEDGER
+			),
+			
+			FTA_LIST AS (
+			    /* 전체 협정 목록 */
+			    SELECT DISTINCT
+			           FTA_CODE
+			      FROM EXT_COO_CERTIFY_DTL
+			     WHERE COMPANY_CODE = #{COMPANY_CODE}
+			       AND FTA_CODE IS NOT NULL
+			),
+			
+			VALID_CERT AS (
+			    /* 제출 완료된 유효 증명서 */
+			    SELECT DISTINCT
+			           BL.COMPANY_CODE
+			         , BL.VENDOR_CODE
+			         , BL.DIVISION_CODE
+			         , BL.ITEM_CODE
+			         , BL.COO_CERTIFY_NO
+			      FROM BASE_LEDGER BL
+			
+			     INNER JOIN EXT_COO_CERTIFY_MST ECM
+			        ON ECM.COMPANY_CODE   = BL.COMPANY_CODE
+			       AND ECM.VENDOR_CODE    = BL.VENDOR_CODE
+			       AND ECM.COO_CERTIFY_NO = BL.COO_CERTIFY_NO
+			       AND ECM.SUBMIT_STATUS  = '4'
+			       AND BL.DIVISION_CODE =
+			           CASE
+			               WHEN ECM.COO_CERTIFY_TYPE = 'C'
+			               THEN BL.DIVISION_CODE
+			               ELSE ECM.DIVISION_CODE
+			           END
+			
+			     WHERE BL.COO_CERTIFY_NO IS NOT NULL
+			),
+			
+			ITEM_RECEIPT AS (
+			    /*
+			     * 품목 수취 여부
+			     * 역내·비역내 여부와 관계없이 유효 증명서가 있으면 수취
+			     */
+			    SELECT BI.COMPANY_CODE
+			         , BI.VENDOR_CODE
+			         , BI.DIVISION_CODE
+			         , BI.ITEM_CODE
+			         , BI.IMPORTANCE_MGT_YN
+			         , CASE
+			               WHEN EXISTS (
+			                    SELECT 1
+			                      FROM VALID_CERT VC
+			                     WHERE VC.COMPANY_CODE  = BI.COMPANY_CODE
+			                       AND VC.VENDOR_CODE   = BI.VENDOR_CODE
+			                       AND VC.DIVISION_CODE = BI.DIVISION_CODE
+			                       AND VC.ITEM_CODE     = BI.ITEM_CODE
+			               )
+			               THEN 'Y'
+			               ELSE 'N'
+			           END AS COO_GET_YN
+			      FROM BASE_ITEM BI
+			),
+			
+			ITEM_FTA_RESULT AS (
+			    /*
+			     * 품목 × 전체 협정
+			     *
+			     * 유효 증명서의 COO_YN = 'Y'가 있으면 역내
+			     * COO_YN = 'N'이거나 협정 미수취이면 비역내 대상으로 계산
+			     */
+			    SELECT BI.COMPANY_CODE
+			         , BI.VENDOR_CODE
+			         , BI.DIVISION_CODE
+			         , BI.ITEM_CODE
+			         , BI.IMPORTANCE_MGT_YN
+			         , FL.FTA_CODE
+			         , CASE
+			               WHEN MAX(
+			                    CASE
+			                        WHEN ECD.COO_YN = 'Y' THEN 1
+			                        ELSE 0
+			                    END
+			               ) = 1
+			               THEN 'Y'
+			               ELSE 'N'
+			           END AS ORIGIN_YN
+			      FROM BASE_ITEM BI
+			
+			     CROSS JOIN FTA_LIST FL
+			
+			      LEFT JOIN VALID_CERT VC
+			        ON VC.COMPANY_CODE  = BI.COMPANY_CODE
+			       AND VC.VENDOR_CODE   = BI.VENDOR_CODE
+			       AND VC.DIVISION_CODE = BI.DIVISION_CODE
+			       AND VC.ITEM_CODE     = BI.ITEM_CODE
+			
+			      LEFT JOIN EXT_COO_CERTIFY_DTL ECD
+			        ON ECD.COMPANY_CODE   = VC.COMPANY_CODE
+			       AND ECD.VENDOR_CODE    = VC.VENDOR_CODE
+			       AND ECD.DIVISION_CODE  = VC.DIVISION_CODE
+			       AND ECD.ITEM_CODE      = VC.ITEM_CODE
+			       AND ECD.COO_CERTIFY_NO = VC.COO_CERTIFY_NO
+			       AND ECD.FTA_CODE       = FL.FTA_CODE
+			
+			     GROUP BY BI.COMPANY_CODE
+			            , BI.VENDOR_CODE
+			            , BI.DIVISION_CODE
+			            , BI.ITEM_CODE
+			            , BI.IMPORTANCE_MGT_YN
+			            , FL.FTA_CODE
+			),
+			
+			RECEIPT_SUMMARY AS (
+			    SELECT COUNT(*) AS TOTAL_ITEM_CNT
+			
+			         , COUNT(*) FILTER (
+			               WHERE COO_GET_YN = 'Y'
+			           ) AS RECEIVED_ITEM_CNT
+			
+			         , COUNT(*) FILTER (
+			               WHERE IMPORTANCE_MGT_YN = 'Y'
+			           ) AS IMPORTANCE_ITEM_CNT
+			
+			         , COUNT(*) FILTER (
+			               WHERE IMPORTANCE_MGT_YN = 'Y'
+			                 AND COO_GET_YN = 'Y'
+			           ) AS IMPORTANCE_RECEIVED_ITEM_CNT
+			      FROM ITEM_RECEIPT
+			),
+			
+			FTA_SUMMARY AS (
+			    SELECT COUNT(*) AS TOTAL_ITEM_FTA_CNT
+			
+			         , COUNT(*) FILTER (
+			               WHERE ORIGIN_YN = 'N'
+			           ) AS NON_ORIGIN_ITEM_FTA_CNT
+			
+			         , COUNT(*) FILTER (
+			               WHERE IMPORTANCE_MGT_YN = 'Y'
+			           ) AS IMPORTANCE_ITEM_FTA_CNT
+			
+			         , COUNT(*) FILTER (
+			               WHERE IMPORTANCE_MGT_YN = 'Y'
+			                 AND ORIGIN_YN = 'N'
+			           ) AS IMPORTANCE_NON_ORIGIN_ITEM_FTA_CNT
+			      FROM ITEM_FTA_RESULT
+			)
+			
+			SELECT
+			       /* 총 구매처 수취율: 역내·비역내 관계없이 증명서 수취 여부 */
+			       COALESCE(
+			           TRUNC(
+			               RS.RECEIVED_ITEM_CNT::NUMERIC
+			               / NULLIF(RS.TOTAL_ITEM_CNT, 0)
+			               * 100
+			           , 2)
+			       , 0) AS TOTAL_COO_GET_RATE
+			
+			       /* 비역내 수취율: 비역내 협정 + 미수취 협정 */
+			     , COALESCE(
+			           TRUNC(
+			               FS.NON_ORIGIN_ITEM_FTA_CNT::NUMERIC
+			               / NULLIF(FS.TOTAL_ITEM_FTA_CNT, 0)
+			               * 100
+			           , 2)
+			       , 0) AS NON_ORIGIN_RATE
+			
+			       /* 집중대상 수취율 */
+			     , COALESCE(
+			           TRUNC(
+			               RS.IMPORTANCE_RECEIVED_ITEM_CNT::NUMERIC
+			               / NULLIF(RS.IMPORTANCE_ITEM_CNT, 0)
+			               * 100
+			           , 2)
+			       , 0) AS IMPORTANCE_COO_GET_RATE
+			
+			       /* 집중대상 비역내 수취율 */
+			     , COALESCE(
+			           TRUNC(
+			               FS.IMPORTANCE_NON_ORIGIN_ITEM_FTA_CNT::NUMERIC
+			               / NULLIF(FS.IMPORTANCE_ITEM_FTA_CNT, 0)
+			               * 100
+			           , 2)
+			       , 0) AS IMPORTANCE_NON_ORIGIN_RATE
+			
+			  FROM RECEIPT_SUMMARY RS
+			 CROSS JOIN FTA_SUMMARY FS
+ 	</select>
+ 	
+ 	
+ 	<select id="retrieveCootargetPopup" parameterType="HashMap" resultType="HashMap">
+		SELECT PL.ITEM_CODE
+		     , IM.ITEM_NAME
+		     , PL.VENDOR_CODE
+		     , V.VENDOR_NAME
+		     , PL.DIVISION_CODE
+		     , D.DIVISION_NAME
+		     , PL.COMPANY_CODE
+		     , SUM(PL.WAREHOUSING_QTY) AS WAREHOUSING_QTY
+		     , MAX(
+		           CASE
+		               WHEN ECM.SUBMIT_STATUS = '4'
+		                AND PL.COO_CERTIFY_NO IS NOT NULL
+		               THEN 'Y'
+		               ELSE 'N'
+		           END
+		       ) AS COO_GET_YN
+		      , ECM.APPLY_DATE || '~' || ECM.END_DATE AS yyyymmdd
+		  FROM PO_LEDGER PL
+		
+		 INNER JOIN DIVISION D
+		    ON D.DIVISION_CODE = PL.DIVISION_CODE
+		   AND D.COMPANY_CODE = PL.COMPANY_CODE
+		
+		 INNER JOIN ITEM_DTL ID
+		    ON ID.ITEM_CODE = PL.ITEM_CODE
+		   AND ID.DIVISION_CODE = PL.DIVISION_CODE
+		   AND ID.COMPANY_CODE = PL.COMPANY_CODE
+		   -- AND ID.MAIL_SEND_YN = 'Y'
+		
+		 INNER JOIN ITEM_MST IM
+		    ON IM.ITEM_CODE = ID.ITEM_CODE
+		   AND IM.COMPANY_CODE = ID.COMPANY_CODE
+		
+		 INNER JOIN VENDOR V
+		    ON V.VENDOR_CODE = PL.VENDOR_CODE
+		   AND V.COMPANY_CODE = PL.COMPANY_CODE
+		   -- AND V.MAIL_SEND_YN = 'Y'
+		
+		  LEFT JOIN EXT_COO_CERTIFY_MST ECM
+		    ON ECM.COO_CERTIFY_NO = PL.COO_CERTIFY_NO
+		   AND ECM.VENDOR_CODE = PL.VENDOR_CODE
+		   AND ECM.COMPANY_CODE = PL.COMPANY_CODE
+		   AND PL.DIVISION_CODE =
+		       CASE
+		           WHEN ECM.COO_CERTIFY_TYPE = 'C'
+		           THEN PL.DIVISION_CODE
+		           ELSE ECM.DIVISION_CODE
+		       END
+		
+		 WHERE EXISTS (
+			    SELECT 1
+			      FROM JSONB_TO_RECORDSET(
+			               CAST(#{conditionListJson} AS JSONB)
+			           ) AS C(
+			               vendor_code TEXT,
+			               division_code TEXT
+			           )
+			     WHERE C.vendor_code = PL.VENDOR_CODE
+			       AND C.division_code = PL.DIVISION_CODE
+			)
+		
+		   AND PL.COMPANY_CODE = #{COMPANY_CODE}
+		   AND PL.WAREHOUSING_DATE BETWEEN #{START_DATE} AND #{END_DATE}
+		   AND PL.WAREHOUSING_TYPE IN ('DOM', 'IMP', 'RKWA')
+		
+		 GROUP BY PL.ITEM_CODE
+		        , IM.ITEM_NAME
+		        , PL.VENDOR_CODE
+		        , V.VENDOR_NAME
+		        , PL.DIVISION_CODE
+		        , D.DIVISION_NAME
+		        , PL.COMPANY_CODE
+		        , ECM.APPLY_DATE
+		        , ECM.END_DATE
+		
+		HAVING SUM(PL.WAREHOUSING_QTY) > 0	       	
+ 	</select>
+</mapper>

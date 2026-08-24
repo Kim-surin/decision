@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.ts.foreignitem.ForeignItemListDao">
+
+	<select id="retrieveForeignItem" parameterType="map" resultType="map">
+		SELECT V.VENDOR_CODE AS "VENDOR_CODE"
+		     , V.VENDOR_NAME AS "VENDOR_NAME"
+		     , IM.ITEM_CODE AS "ITEM_CODE"
+		     , IM.ITEM_NAME AS "ITEM_NAME"
+		     , IM.HS_CODE AS "D_HS_CODE"
+		     , ECD.HS_CODE AS "HS_CODE"
+		     , ECM.COO_CERTIFY_NO AS "COO_CERTIFY_NO"
+		     , ECD.APPLY_DATE AS "APPLY_DATE"
+		     , ECD.END_DATE AS "END_DATE"
+		     , TO_CHAR(TO_DATE(ECD.APPLY_DATE, 'YYYYMMDD'), 'YYYY-MM-DD') || ' ~ ' || TO_CHAR(TO_DATE(ECD.END_DATE, 'YYYYMMDD'), 'YYYY-MM-DD') AS "COO_PERIOD"
+		     , FM.FTA_NAME AS "FTA_NAME"
+		     , ECD.RULE_CODE AS "RULE_CODE"
+		     , CASE
+		           WHEN ECD.COO_YN = 'Y' THEN '충족'
+		           WHEN ECD.COO_YN = 'N' THEN '불충족'
+		           ELSE ECD.COO_YN
+		       END AS "COO_YN"
+		FROM EXT_COO_CERTIFY_MST ECM
+		INNER JOIN EXT_COO_CERTIFY_DTL ECD
+		        ON ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		       AND ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		       AND ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		       AND ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		INNER JOIN ITEM_MST IM
+		        ON IM.ITEM_CODE = ECD.ITEM_CODE
+		       AND IM.COMPANY_CODE = ECD.COMPANY_CODE
+		INNER JOIN VENDOR V
+		        ON V.VENDOR_CODE = ECM.VENDOR_CODE
+		       AND V.COMPANY_CODE = ECM.COMPANY_CODE
+		INNER JOIN FTA_MASTER FM
+		        ON FM.FTA_CODE = ECD.FTA_CODE
+		WHERE ECM.COMPANY_CODE = #{COMPANY_CODE}
+		  AND ECM.SUBMIT_STATUS = '4'
+
+		<if test="SCH_APPLY_DATE != null and SCH_APPLY_DATE != ''">
+			AND #{SCH_APPLY_DATE} BETWEEN ECD.APPLY_DATE AND ECD.END_DATE
+		</if>
+
+		<if test="search_key_word != null and search_key_word != ''">
+			<choose>
+				<when test='search_type == "itemCd"'>
+					AND UPPER(IM.ITEM_CODE) LIKE '%' || UPPER(#{search_key_word}) || '%'
+				</when>
+				<when test='search_type == "itemNm"'>
+					AND UPPER(IM.ITEM_NAME) LIKE '%' || UPPER(#{search_key_word}) || '%'
+				</when>
+				<when test='search_type == "vendorCd"'>
+					AND UPPER(V.VENDOR_CODE) LIKE '%' || UPPER(#{search_key_word}) || '%'
+				</when>
+				<when test='search_type == "vendorNm"'>
+					AND UPPER(V.VENDOR_NAME) LIKE '%' || UPPER(#{search_key_word}) || '%'
+				</when>
+				<when test='search_type == "cooCertifyNo"'>
+					AND UPPER(ECM.COO_CERTIFY_NO) LIKE '%' || UPPER(#{search_key_word}) || '%'
+				</when>
+			</choose>
+		</if>
+
+		<if test="cover_yn != null and cover_yn != ''">
+			AND ECD.COO_YN = #{cover_yn}
+		</if>
+
+		ORDER BY V.VENDOR_CODE
+		       , IM.ITEM_CODE
+		       , FM.FTA_NAME
+	</select>
+
+</mapper>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.targetreceipt.TargetreceiptDao">
+	
+	
+	<select id="start_TestSql" parameterType="HashMap" resultType="HashMap">
+ 		SELECT 1 AS TEST_VALUE FROM DUAL
+ 	</select>
+ 	
+ 	<select id="retrieveTargetReceiptList" parameterType="HashMap" resultType="HashMap">
+		 WITH base_data AS (
+		    SELECT '0' AS "CHECKED"
+		         , im.company_code AS "COMPANY_CODE"
+		         , id.division_code AS "DIVISION_CODE"
+		         , d.division_name AS "DIVISION_NAME"
+		         , id.item_code AS "ITEM_CODE"
+		         , im.item_name AS "ITEM_NAME"
+		         , v.vendor_code AS "VENDOR_CODE"
+		         , v.vendor_name AS "VENDOR_NAME"
+		         , im.hs_code AS "HS_CODE"
+		         , CASE
+		               WHEN eccm.submit_status = '4'
+		                AND COALESCE(eccm.cnt, 0) &lt;&gt; 0
+		               THEN 'Y'
+		               ELSE 'N'
+		           END AS "CNT"
+		
+		    FROM ext_cover_coo_item ecci
+		
+		    INNER JOIN item_dtl id
+		            ON ecci.company_code = id.company_code
+		           AND ecci.division_code = id.division_code
+		           AND ecci.item_code = id.item_code
+		
+		    INNER JOIN item_mst im
+		            ON id.company_code = im.company_code
+		           AND id.item_code = im.item_code
+		
+		    INNER JOIN vendor v
+		            ON ecci.company_code = v.company_code
+		           AND ecci.vendor_code = v.vendor_code
+		
+		    INNER JOIN division d
+		            ON id.company_code = d.company_code
+		           AND id.division_code = d.division_code
+		
+		    LEFT JOIN (
+		        SELECT b.company_code
+		             , b.division_code
+		             , b.vendor_code
+		             , b.item_code
+		             , COUNT(*)::NUMERIC
+		               / NULLIF(
+		                     COUNT(DISTINCT b.fta_code)::NUMERIC,
+		                     0
+		                 ) AS cnt
+		             , a.submit_status
+		
+		        FROM ext_coo_certify_mst a
+		
+		        INNER JOIN ext_coo_certify_dtl b
+		                ON a.company_code = b.company_code
+		               AND a.coo_certify_no = b.coo_certify_no
+		               AND a.vendor_code = b.vendor_code
+		               AND a.division_code = b.division_code
+		
+		        WHERE a.company_code = #{COMPANY_CODE}
+		          AND a.delete_yn = 'N'
+		          AND a.coo_certify_type = 'C'
+		
+		        <if test="SCH_APPLY_DATE != null and SCH_APPLY_DATE != ''">
+		            <![CDATA[
+		            AND b.apply_date <= #{SCH_APPLY_DATE}
+		            AND b.end_date >= #{SCH_APPLY_DATE}
+		            ]]>
+		        </if>
+		
+		        GROUP BY b.company_code
+		               , b.division_code
+		               , b.vendor_code
+		               , b.item_code
+		               , a.submit_status
+		
+		    ) eccm
+		           ON ecci.company_code = eccm.company_code
+		          AND ecci.division_code = eccm.division_code
+		          AND ecci.vendor_code = eccm.vendor_code
+		          AND ecci.item_code = eccm.item_code
+		
+		    WHERE ecci.company_code = #{COMPANY_CODE}
+		
+		    <if test="SEARCH_DIVISION_CODE != null and SEARCH_DIVISION_CODE != ''">
+		        AND id.division_code = #{SEARCH_DIVISION_CODE}
+		    </if>
+		
+		    <if test="search_key_word != null and search_key_word != ''">
+		        <![CDATA[
+		        AND ${search_type} LIKE '%' || #{search_key_word} || '%'
+		        ]]>
+		    </if>
+		),
+		
+		summary_data AS (
+		    SELECT base_data.*
+		         , COUNT(*) OVER () AS "TOTAL_COUNT"
+		         , SUM(
+		               CASE
+		                   WHEN "CNT" = 'Y' THEN 1
+		                   ELSE 0
+		               END
+		           ) OVER () AS "RECEIPT_COUNT"
+		         , ROUND(
+		               SUM(
+		                   CASE
+		                       WHEN "CNT" = 'Y' THEN 1
+		                       ELSE 0
+		                   END
+		               ) OVER ()::NUMERIC
+		               / NULLIF(COUNT(*) OVER (), 0)
+		               * 100
+		             , 1
+		           ) AS "RECEIPT_RATE"
+		    FROM base_data
+		)
+		
+		SELECT *
+		FROM summary_data
+		WHERE 1 = 1
+		
+		<if test="cover_yn != null and cover_yn != ''">
+		    AND "CNT" = #{cover_yn}
+		</if>
+		
+		ORDER BY "DIVISION_CODE"
+		       , "VENDOR_CODE"
+		       , "ITEM_CODE"
+		       
+ 	</select>
+ 	
+	
+</mapper>
