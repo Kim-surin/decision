@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.commonPop.CommonPopDao">
+	
+ 	<select id="retrieveComCodeList" parameterType="HashMap" resultType="HashMap">
+		 SELECT M.CATEGORY
+		      , M.CATEGORY_NAME
+		      , D.CODE
+		      , D.CODE_NAME
+		   FROM CODE_MST M
+		  INNER JOIN CODE_DTL D
+		     ON M.CATEGORY = D.CATEGORY
+			AND M.COMPANY_CODE = D.COMPANY_CODE
+		  WHERE M.COMPANY_CODE = #{company_code}
+		    AND M.CATEGORY = #{searchText}
+			AND D.DELETE_YN = 'N'
+	   ORDER BY D.SORT_NO 
+		 
+ 	</select>
+ 	
+ 		
+ 	<select id="retrieveComNationList" parameterType="HashMap" resultType="HashMap">
+		 SELECT M.CATEGORY
+		      , M.CATEGORY_NAME
+		      , D.CODE
+		      , D.CODE_NAME
+		   FROM CODE_MST M
+		  INNER JOIN CODE_DTL D
+		     ON M.CATEGORY = D.CATEGORY
+			AND M.COMPANY_CODE = D.COMPANY_CODE
+		  WHERE M.COMPANY_CODE = #{company_code}
+		    AND M.CATEGORY = 'NA'
+	  		<if test="searchText != null and searchText != ''">
+			AND (D.CODE LIKE CONCAT(#{searchText} , '%') OR D.CODE_NAME LIKE CONCAT(#{searchText} , '%'))
+		    </if>
+			AND D.DELETE_YN = 'N'
+	   ORDER BY D.SORT_NO 
+ 	</select>
+ 	
+ 	<select id="retrieveComDivisionList" parameterType="HashMap" resultType="HashMap">
+		 SELECT D.DIVISION_CODE AS CODE
+		      , D.DIVISION_NAME AS CODE_NAME
+		   FROM DIVISION D
+		 WHERE D.COMPANY_CODE = #{company_code}
+		    <if test="searchText != null and searchText != ''">
+			AND (D.DIVISION_CODE LIKE CONCAT(#{searchText} , '%') OR D.DIVISION_NAME LIKE CONCAT(#{searchText} , '%'))
+		    </if>
+			AND D.STATUS = 'Y'
+	   ORDER BY D.DIVISION_CODE 
+ 	</select>
+ 	
+ 	
+	<select id="retrieveComItemList" parameterType="HashMap" resultType="HashMap">
+		SELECT ITEM_CODE AS CODE
+		     , ITEM_NAME AS CODE_NAME
+			 , HS_CODE
+		  FROM ITEM_MST 
+		 WHERE COMPANY_CODE = #{company_code}
+		   AND DELETE_YN = 'N'
+		   <if test="searchText != null and searchText != ''">
+		   AND (ITEM_CODE LIKE CONCAT(#{searchText} , '%') OR ITEM_NAME LIKE CONCAT(#{searchText} , '%'))
+		   </if>
+	  ORDER BY ITEM_CODE
+ 	</select>
+ 	
+ 	<select id="retrieveComHsCodePopList" parameterType="HashMap" resultType="HashMap">
+		SELECT HS_CODE AS CODE
+		     , HS_CODE_NAME AS CODE_NAME
+		  FROM HS_CODE
+		 WHERE DELETE_YN ='N'
+		   <if test="searchText != null and searchText != ''">
+		   AND (HS_CODE LIKE CONCAT(#{searchText} , '%') OR HS_CODE_NAME LIKE CONCAT(#{searchText} , '%'))
+		   </if>
+	  ORDER BY HS_CODE
+ 	</select>
+ 	
+	<select id="retrieveComFtaCodePopList" parameterType="HashMap" resultType="HashMap">
+		SELECT F.FTA_CODE AS CODE
+		     , F.FTA_NAME AS CODE_NAME
+		     , F.EFFECT_DATE
+		  FROM FTA_MASTER F
+		 WHERE F.COMPANY_CODE = #{company_code}
+		   AND F.DELETE_YN  = 'N'
+		   <if test="searchText != null and searchText != ''">
+		   AND (F.FTA_CODE LIKE CONCAT(#{searchText} , '%') OR F.FTA_NAME LIKE CONCAT(#{searchText} , '%'))
+		   </if>
+		   <if test="searchEffectDate != null and searchEffectDate != ''">
+		   AND F.EFFECT_DATE <![CDATA[ <= ]]> #{searchEffectDate}
+		   </if>
+		   <if test='searchNation!= null and searchNation != "" and searchNation != "KR"'>
+		   AND EXISTS (SELECT 1
+		   				 FROM FTA_APPLY_NATION T
+		   				WHERE T.FTA_CODE = F.FTA_CODE
+		   				  AND T.NATION_CODE = #{searchNation} ) 
+		   </if>
+	  ORDER BY FTA_CODE
+ 	</select>
+ 	
+ 	
+ 	 <select id="retrieveComCustomerList" parameterType="HashMap" resultType="HashMap">
+		 SELECT d.customer_code as CODE
+		      , d.customer_name as CODE_NAME
+		   FROM customer d
+		  WHERE d.company_code = #{company_code}
+		    <if test="searchText != null and searchText != ''">
+			AND (d.customer_code LIKE CONCAT(#{searchText} , '%') OR d.customer_name LIKE CONCAT(#{searchText} , '%'))
+		    </if>
+	   ORDER BY d.customer_code 
+ 	</select>
+ 	
+</mapper>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.ftaInfo.ftaInfoMgnt.FtaInfoDao">
+	
+ 	<select id="retrieveFtaInfoList" parameterType="HashMap" resultType="HashMap">
+		SELECT FTA_CODE
+		     , FTA_NAME
+			 , EFFECT_DATE
+			 , FTA_STATUS
+			 , (SELECT COUNT(*) 
+			      FROM FTA_APPLY_NATION T
+			     WHERE T.FTA_CODE = A.FTA_CODE) AS FTA_APPLY_CNT 
+		     , CO_ISSUE_FLAG
+			 , DE_MINIMIS_RATE
+			 , RVC_RATE
+			 , DELETE_YN
+		 	 , INKOTERMS_TYPE
+			 , COVER_YN
+		  FROM FTA_MASTER A
+	  	 WHERE COMPANY_CODE = #{company_code}
+	  	<if test="searchFtaCode != null and searchFtaCode != ''">
+	  	   AND A.FTA_CODE = #{searchFtaCode}
+   		</if>
+   		<if test="searchCountry != null and searchCountry != ''">
+   		   AND EXISTS (SELECT 1
+                 		 FROM FTA_APPLY_NATION B
+				        INNER JOIN CODE_DTL D
+					       ON B.NATION_CODE = D.CODE
+						  AND D.CATEGORY = 'NA'
+						  AND D.COMPANY_CODE = #{company_code}
+					    WHERE A.FTA_CODE = B.FTA_CODE
+				  	 	  AND (B.NATION_CODE LIKE CONCAT(#{searchCountry} , '%')
+				  		   OR D.CODE_NAME LIKE CONCAT(#{searchCountry} , '%')))
+        </if>
+       ORDER BY FTA_CODE
+ 	</select>
+ 	
+ 	<insert id="insertFtaInfoList">
+		INSERT INTO FTA_MASTER
+		( FTA_CODE
+		, FTA_NAME
+		, EFFECT_DATE
+		, DE_MINIMIS_RATE
+		, RVC_RATE
+		, COM_DE_MINIMIS_RATE
+		, COM_RVC_RATE
+		, INKOTERMS_TYPE
+		, CO_ISSUE_FLAG
+		, INTERMEDIATE_PROD_TYPE
+		, FTA_STATUS
+		, INTERMEDIATE_YN
+		, DELETE_YN
+		, CREATE_DATE
+		, CREATE_BY
+		, UPDATE_DATE
+		, UPDATE_BY
+		, FTA_INTERMEDIATE_YN
+		, COVER_YN
+		, SORT_NO
+		, ORGAN_CO_ISSUE_CODE
+		, DE_MINIMIS_INKOTERMS_TYPE
+		, COMPANY_CODE)
+		VALUES 
+		( #{fta_code}
+		, #{fta_name}
+		, #{effect_date}
+		, #{de_minimis_rate}
+		, #{rvc_rate}
+		, #{de_minimis_rate}
+		, #{rvc_rate}
+		, #{inkoterms_type}
+		, #{co_issue_flag}
+		, 'O'
+		, #{fta_status}
+		, 'N'
+		, #{delete_yn}
+		, NOW()
+		, #{update_by}
+		, NOW()
+		, #{update_by}
+		, 'N'
+		,  #{cover_yn}
+		, 0
+		, NULL
+		, #{inkoterms_type}
+		, #{company_code})
+ 	</insert>
+ 	
+ 	<update id="updateFtaInfoList">
+ 		UPDATE FTA_MASTER
+ 		   SET FTA_NAME = #{fta_name}
+ 		     , EFFECT_DATE = #{effect_date}
+ 		     , FTA_STATUS = #{fta_status}
+ 		     , CO_ISSUE_FLAG = #{co_issue_flag}
+ 		     , DE_MINIMIS_RATE = #{de_minimis_rate}
+ 		     , RVC_RATE = #{rvc_rate}
+ 		     , COM_DE_MINIMIS_RATE = #{de_minimis_rate}
+ 		     , COM_RVC_RATE = #{rvc_rate}
+ 		     , DELETE_YN = #{delete_yn}
+ 		     , INKOTERMS_TYPE = #{inkoterms_type}
+ 		     , COVER_YN = #{cover_yn}
+ 		     , UPDATE_DATE = NOW()
+ 		     , UPDATE_BY = #{update_by}
+ 	     WHERE COMPANY_CODE = #{company_code}
+ 		   AND FTA_CODE = #{fta_code}
+ 	</update>
+ 	
+	<delete id="deleteFtaInfoList">
+ 	   UPDATE FTA_MASTER
+ 		  SET DELETE_YN = 'Y'
+ 		    , UPDATE_DATE = NOW()
+ 		    , UPDATE_BY = #{update_by}
+ 		WHERE COMPANY_CODE = #{company_code}
+ 		  AND FTA_CODE = #{fta_code}
+ 	</delete>
+ 	
+ 	<select id="retrieveFtaNationAllList" parameterType="HashMap" resultType="HashMap">
+ 		SELECT A.CODE      AS NATION_CODE
+ 		     , A.CODE_NAME AS NATION_NAME
+ 		  FROM CODE_DTL A
+ 		 WHERE A.COMPANY_CODE = #{company_code}
+ 		   AND A.CATEGORY = 'NA'
+ 		   AND A.DELETE_YN = 'N'
+ 		   AND NOT EXISTS (SELECT 1
+ 		                     FROM FTA_APPLY_NATION B
+ 		                    WHERE B.NATION_CODE = A.CODE
+ 		                      AND B.FTA_CODE = #{fta_code}) 
+ 	
+ 	  ORDER BY A.CODE_NAME
+ 	</select>
+ 	
+ 	<select id="retrieveFtaNationApplyList" parameterType="HashMap" resultType="HashMap">
+ 		SELECT A.NATION_CODE
+ 		     , B.CODE_NAME AS NATION_NAME
+ 		     , A.EFFECT_DATE
+ 		  FROM FTA_APPLY_NATION A
+ 		 INNER JOIN CODE_DTL B
+ 		    ON A.NATION_CODE = B.CODE
+ 		   AND B.CATEGORY = 'NA'
+ 		   AND B.COMPANY_CODE =  #{company_code}
+ 		 WHERE FTA_CODE = #{fta_code} 
+ 	  ORDER BY  B.CODE_NAME
+ 	</select>
+ 	
+ 	
+ 	<delete id="deleteFtaNationList">
+ 		DELETE FROM FTA_APPLY_NATION
+ 		WHERE FTA_CODE = #{fta_code}
+ 	</delete>
+ 	
+ 	<insert id="insertFtaNation">
+ 		INSERT INTO FTA_APPLY_NATION 
+ 		( NATION_CODE
+ 		, FTA_CODE
+ 		, EFFECT_DATE
+ 		, REMARKS
+ 		, CREATE_DATE
+ 		, CREATE_BY
+ 		, UPDATE_DATE
+ 		, UPDATE_BY
+ 		)
+ 		VALUES
+ 		( #{nation_code}
+ 		, #{fta_code}
+ 		, #{effect_date}
+ 		, #{remarks}
+ 		, NOW()
+ 		, #{update_by}
+ 		, NOW()
+ 		, #{update_by}
+ 		)
+ 	</insert>
+ 	
+</mapper>

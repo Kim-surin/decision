@@ -27,6 +27,13 @@ public interface CommonDao {
 	 * @return
 	 */
 	public List<Map> retrievePlantCombo(Map param);
+	/**
+	 * 공통코드 리스트 조회
+	 * 
+	 * @param param
+	 * @return
+	 */
+	public List<Map> retrieveSignatureCombo(Map param);
 
 	/**
 	 * 공통코드 리스트 조회

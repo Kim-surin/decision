@@ -30,8 +30,10 @@
 		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/css/customize_style-v2.1.css">
 		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/css/customize_style_Button.css">
 		
+
 		<!-- AUIGrid CSS -->
 		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/auigrid/AUIGrid_gts_style.css">
+		<link rel="stylesheet" type="text/css" media="screen" href="/rcs/css/gridStyle.css">
 		
 		
 		<style>

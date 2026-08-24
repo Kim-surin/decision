@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.kpmg.kdb.core.form.GridOutputData;
@@ -317,38 +320,39 @@ public class BasisController extends GenericController {
 	 * @param userId
 	 * @return
 	 */
-    @GetMapping("/basis/signature/{empno}")
-    public ResponseEntity<byte[]> viewSignatureImageByUserId(@PathVariable("empno") String userId) {
-    	
-    	Map defaultMap = new HashMap();
-    	
-    	defaultMap.put("empno", userId);
-    	
-        Map signature = service.getSignatureByUserId(super.extendsMap(defaultMap));
+	@GetMapping("/basis/signature/{empno}")
+	@ResponseBody
+	public ResponseEntity<byte[]> viewSignatureImageByUserId(@PathVariable("empno") String emp_no) {
 
-        if (signature == null || signature.get("real_file") == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        String contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
-        String fileName = (String) signature.get("sigh_file_name");
+	    Map<String, Object> defaultMap = new HashMap<>();
+	    defaultMap.put("emp_no", emp_no);
 
-        byte[] realFile = (byte[]) signature.get("real_file");
-        
-        if (fileName != null) {
-            String lowerFileName = fileName.toLowerCase();
-            if (lowerFileName.endsWith(".png")) {
-                contentType = MediaType.IMAGE_PNG_VALUE;
-            } else if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) {
-                contentType = MediaType.IMAGE_JPEG_VALUE;
-            } else if (lowerFileName.endsWith(".gif")) {
-                contentType = MediaType.IMAGE_GIF_VALUE;
-            }
-        }
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.IMAGE_PNG_VALUE)
-                .body(realFile);
-    }
+	    Map<String, Object> signature = service.getSignatureByUserId(super.extendsMap(defaultMap));
+
+	    if (signature == null || signature.get("real_file") == null) {
+	        return ResponseEntity.notFound().build();
+	    }
+
+	    String fileName = (String) signature.get("sign_file_name");
+	    byte[] realFile = (byte[]) signature.get("real_file");
+
+	    MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+
+	    if (fileName != null) {
+	        String lowerFileName = fileName.toLowerCase();
+	        if (lowerFileName.endsWith(".png")) {
+	            mediaType = MediaType.IMAGE_PNG;
+	        } else if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) {
+	            mediaType = MediaType.IMAGE_JPEG;
+	        } else if (lowerFileName.endsWith(".gif")) {
+	            mediaType = MediaType.IMAGE_GIF;
+	        }
+	    }
+
+	    return ResponseEntity.ok()
+	            .contentType(mediaType)
+	            .body(realFile);
+	}
 	
     
 	/**
@@ -390,5 +394,417 @@ public class BasisController extends GenericController {
 		
 		return result;
 	}
+	/**
+	 * 사용자관리 - 서명권자 정보
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveSignatureInfo")
+	@ResponseBody
+	public Result retrieveSignatureInfo(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveSignatureInfo ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveSignatureInfo(super.extendsMap(param));
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+		
+		logger.debug("##### Request Type result Class : " + "retrieveSignatureInfo END");
+		
+		return result;
+	}
+	
+	
+	
+	/**
+	 * 서명권자 이미지 미리보기 
+	 * @param param
+	 * @param files
+	 * @param request
+	 * @param mReq
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
+	@RequestMapping(value="/basis/saveUserSignatureInfo", method = {RequestMethod.POST})
+	@ResponseBody
+	public Result uploadImportExcelProcess(@RequestParam Map param,  @RequestParam(value = "file1", required = false) MultipartFile files, HttpServletRequest request, MultipartHttpServletRequest mReq) throws Exception {
+		Result rs = new Result();
+		
+		try {
+			rs = service.saveUserSignatureInfo(super.extendsMap(param), files);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			rs = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+		return rs;
+	}
+	
+	
+	/**
+	 * 사용자 중복 체크
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/checkDuplicateUserId")
+	@ResponseBody
+	public Result checkDuplicateUserId(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "checkDuplicateUserId ");
+		Result result = new Result();
+		try {
+			
+			result = service.checkDuplicateUserId(super.extendsMap(param));
 
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "checkDuplicateUserId END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * 서명권자 해지
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/cancelUserSignatureInfo")
+	@ResponseBody
+	public Result cancelUserSignatureInfo(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "cancelUserSignatureInfo ");
+		Result result = new Result();
+		try {
+			
+			result = service.cancelUserSignatureInfo(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "cancelUserSignatureInfo END");
+		
+		return result;
+	}
+	
+	
+	
+	/**
+	 * 기초정보관리 > 자재관리
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/basis/itemList")
+	public String basis002_view(Model model, HttpSession session) {
+		return "basis/itemList";
+	}
+	
+	/**
+	 * 자재관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveItemList")
+	@ResponseBody
+	public Result retrieveItemList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveItemList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveItemList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveItemList END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * HS CODE 누락 비율 chart UPDATE 용 데이터 조회 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveMissingHsCodeCount")
+	@ResponseBody
+	public Result retrieveMissingHsCodeCount(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveMissingHsCodeCount ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveMissingHsCodeCount(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveMissingHsCodeCount END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * 기초정보관리 > 자재관리 > 상세
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/basis/itemDetail")
+	public String basis00201_view(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);  
+		return "basis/itemDetail";
+	}
+	
+	
+	/**
+	 * 기초정보관리 > 자재관리 > 협정별 / 국가별 HS CODE
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/basis/itemAgreemenNationtHsCode")
+	public String basis00202_view(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);
+		return "basis/itemAgreemenNationtHsCode";
+	}
+	
+	
+	/**
+	 * 자재관리 - 상세 - 마스터정보 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveItemDetailMasterInfo")
+	@ResponseBody
+	public Result retrieveItemDetailMasterInfo(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveItemDetailMasterInfo ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveItemDetailMasterInfo(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveItemDetailMasterInfo END");
+		
+		return result;
+	}
+	
+	/**
+	 * 자재관리 - 상세 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveItemDetailList")
+	@ResponseBody
+	public Result retrieveItemDetailList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveItemDetailList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveItemDetailList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveItemDetailList END");
+		
+		return result;
+	}
+	
+	
+	
+	/**
+	 * 자재관리 - 상세 - 마스터정보 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/checkHsCodeExists")
+	@ResponseBody
+	public Result checkHsCodeExists(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "checkHsCodeExists ");
+		Result result = new Result();
+		try {
+			
+			int cnt = service.checkHsCodeExists(super.extendsMap(param));
+			result.setValue(cnt > 0 ? "Y" : "N");
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "checkHsCodeExists END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * 자재관리 - 상세 - hscode 저장
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/updateItemHsCode")
+	@ResponseBody
+	public Result updateItemHsCode(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "updateItemHsCode ");
+		Result result = new Result();
+		try {
+			
+			result = service.updateItemHsCode(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "updateItemHsCode END");
+		
+		return result;
+	}
+	
+	
+	
+	/**
+	 * 자재관리 - 협정별 / 국가별 hscode 팝업 hscode 데이터 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveHsCodeDetail")
+	@ResponseBody
+	public Result retrieveHsCodeDetail(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveHsCodeDetail ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveHsCodeDetail(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveHsCodeDetail END");
+		
+		return result;
+	}
+	
+	/**
+	 * 자재관리 - 협정별 / 국가별 hscode 팝업 데이터 리스트 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveAgreementNationHsCodeList")
+	@ResponseBody
+	public Result retrieveAgreementNationHsCodeList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveAgreementNationHsCodeList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveAgreementNationHsCodeList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveAgreementNationHsCodeList END");
+		
+		return result;
+	}
+
+	
+	/**
+	 * 고객사 자재관리
+	 * @param param
+	 * @param model
+	 * @param session
+	 * @return
+	 */
+	@RequestMapping(value = "/basis/customerModelMgmt")
+	public String customerModel(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);
+		return "basis/customerModelMgmt";
+	}
+	
+	/**
+	 * 고객사 자재관리 목록 데이터 조회
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/retrieveCustomerModelList")
+	@ResponseBody
+	public Result retrieveCustomerModelList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveCustomerModelList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveCustomerModelList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveCustomerModelList END");
+		
+		return result;
+	}
+	
+	/**
+	 * 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/basis/saveCustomerModelList")
+	@ResponseBody
+	public Result saveCustomerModelList(@RequestBody Map param) {
+	    logger.debug("##### Request Type result Class : saveCustomerModelList");
+	    Result result = new Result();
+
+	    try {
+	        result = service.saveCustomerModelList(super.extendsMap(param));
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+	    }
+
+	    logger.debug("##### Request Type result Class : saveCustomerModelList END");
+	    return result;
+	}
+	
+	
 }

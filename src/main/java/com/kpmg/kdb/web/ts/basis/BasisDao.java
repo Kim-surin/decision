@@ -149,6 +149,146 @@ public interface BasisDao {
 	 * @return
 	 */
 	public Map retrieveUserinfoDetail(Map param);
+	
+	/**
+	 * 사용자관리 - 서명권자 정보
+	 * @param param
+	 * @return
+	 */
+	public Map retrieveSignatureInfo(Map param);
+	
+	
+	int selectUserCount(Map<String, Object> param);
+	
+	
+	int insertUserInfo(Map<String, Object> param);
+	int updateUserInfo(Map<String, Object> param);
+	int selectSignatureCount(Map<String, Object> param);
+	
+	
+	int insertSignatureInfo(Map<String, Object> param);
+	int updateSignatureInfo(Map<String, Object> param);
+	
+	int updateSignatureImage(Map<String, Object> param);
+	int selectNextSignatureSeq(Map<String, Object> param);
+
+	
+	
+	/**
+	 * 사용자관리 - 서명권자 중복 체크
+	 * @param param
+	 * @return
+	 */
+	public int checkDuplicateUserId(Map param);
+	
+	/**
+	 * 사용자관리 - 서명권자 해지
+	 * @param param
+	 * @return
+	 */
+	public int cancelUserSignatureInfo(Map param);
+	
+	
+	/**
+	 * 자재관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveItemList(Map param);
+	
+	
+	/**
+	 * 사용자관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public Map retrieveMissingHsCodeCount(Map param);
+
+	
+	
+	/**
+	 * 자재관리 - 상세 - 마스터정보 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveItemDetailMasterInfo(Map param);
+	
+	/**
+	 * 자재관리 - 상세 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveItemDetailList(Map param);
+	
+	/**
+	 * 자재관리 - 상세 - 목록조회
+	 * @param param
+	 * @return
+	 */
+	public int checkHsCodeExists(Map param);
+	
+	/**
+	 * 
+	 * @param param
+	 * @return
+	 */
+	public int updateItemHsCode(Map param);
+	
+	
+	/**
+	 * 자재관리 - 상세 - 마스터정보 조회
+	 * @param param
+	 * @return
+	 */
+	public Map retrieveHsCodeDetail(Map param);
+	
+	/**
+	 * 자재관리 - 협정별  hscode 팝업 데이터 리스트 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveAgreementHsCodeList(Map param);
+	
+	
+	/**
+	 * 자재관리 - 국가별 hscode 팝업 데이터 리스트 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveNationHsCodeList(Map param);
+	
+	
+	/**
+	 * 고객사 자재관리 목록 데이터 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveCustomerModelList(Map param);
+	
+	
+	/**
+	 * 고객사 자재관리 등록
+	 * @param param
+	 * @return
+	 */
+	public int insertCustomerModel(Map param);
+
+	/**
+	 * 고객사 자재관리 수정
+	 * @param param
+	 * @return
+	 */
+	public int updateCustomerModel(Map param);
+
+	/**
+	 * 고객사 자재관리 삭제
+	 * @param param
+	 * @return
+	 */
+	public int deleteCustomerModel(Map param);
+	
+	
+	public int countCustomerModel(Map param);
 }
 
 

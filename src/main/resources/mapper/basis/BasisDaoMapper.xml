@@ -214,14 +214,15 @@
 	<select id="getSignatureByUserId" parameterType="HashMap" resultType="HashMap">
 		SELECT sign_file_name, real_file
 		  FROM signature 
-		 WHERE company_code = 'FRT100' 
-		   AND emp_no = '20130929'
+		 WHERE company_code = #{company_code}
+		   AND emp_no = #{emp_no}
 		   AND end_date is null
+		 ORDER BY update_date DESC
 	     LIMIT 1
 	</select>
 	
 	<select id="retrieveUserinfoList" parameterType="HashMap" resultType="HashMap">
-		SELECT a.user_id
+		SELECT DISTINCT a.user_id
 		       , a.company_code
 			   , a.dept_name
 			   , a.emp_no
@@ -237,7 +238,6 @@
 			   , a.status
 			   , a.default_language
 			   , b.sign_file_name
-			   , start_date
 			   , COALESCE(end_date, '99991231') AS end_date
 			   , CASE WHEN b.emp_no IS NULL THEN 'N' ELSE 'Y' END AS signature_yn
 			   , CASE WHEN b.emp_no IS NULL THEN '' ELSE '서명권자' END AS signature_text
@@ -266,6 +266,7 @@
 			   , a.fax_no
 			   , a.status
 			   , a.default_language
+			   , b.seq
 			   , b.sign_file_name
 			   , start_date
 			   , NVL(end_date, '99991231') AS end_date
@@ -275,9 +276,553 @@
 		    LEFT OUTER JOIN signature b
 		      ON a.company_code = b.company_code
 			 AND a.emp_no = b.emp_no
-			 AND b.end_date is null
 		   WHERE a.company_code =  #{company_code}
-		     AND a.user_id = #{user_id}
+		     AND a.user_id = #{param_user_id}
+		   ORDER BY b.update_date DESC
   	       LIMIT 1
 	</select>
+	
+	<select id="retrieveSignatureInfo" parameterType="HashMap" resultType="HashMap">
+		SELECT a.seq
+		       ,a.start_date
+		       ,a.end_Date
+			   ,a.remark
+			   ,a.division_code
+		  FROM signature a
+		 WHERE a.company_code = #{company_code}
+		   AND a.seq = ${seq}
+	</select>
+	
+	<select id="selectUserCount"  parameterType="HashMap" resultType="int">
+	    SELECT COUNT(*)
+	      FROM user_info
+	     WHERE user_id = #{user_id}
+	</select>
+	
+	
+	<!-- 사용자 신규 저장시 존재여부 체크 -->
+    <select id="selectSignatureCount"  parameterType="HashMap" resultType="int">
+        SELECT COUNT(*)
+          FROM signature
+         WHERE seq = ${seq}
+    </select>
+    
+     <insert id="insertUserInfo"  parameterType="HashMap">
+		INSERT INTO public.user_info (
+		      user_id
+		    , company_code
+		    , division_code
+		    , dept_name
+		    , password
+		    , emp_no
+		    , name_kor
+		    , name_eng
+		    , name_local
+		    , position_name
+		    , position_name_eng
+		    , email
+		    , cell_phone_no
+		    , office_phone_no
+		    , fax_no
+		    , status
+		    , user_auth
+		    , default_language
+		    , sso_yn
+		    , create_date
+		    , create_by
+		    , update_date
+		    , update_by
+		    , work_yyyy_mm
+		) VALUES (
+		      #{user_id}
+		    , #{company_code}
+		    , #{division_code}
+		    , #{dept_name}
+		    , #{password}
+		    , #{emp_no}
+		    , #{name_kor}
+		    , #{name_eng}
+		    , #{name_local}
+		    , #{position_name}
+		    , #{position_name_eng}
+		    , #{email}
+		    , #{cell_phone_no}
+		    , #{office_phone_no}
+		    , #{fax_no}
+		    , #{status}
+		    , #{user_auth}
+		    , #{default_language}
+		    , #{sso_yn}
+		    , now()
+		    , #{create_by}
+		    , now()
+		    , #{update_by}
+		    , to_char(current_date, 'YYYY-MM')
+		)
+    </insert>
+
+    <!-- 사용자 수정 -->
+    <update id="updateUserInfo"  parameterType="HashMap">
+        UPDATE user_info
+           SET emp_no            = #{emp_no},
+               name_kor          = #{name_kor},
+               name_eng          = #{name_eng},
+               dept_name         = #{dept_name},
+               position_name     = #{position_name},
+               position_name_eng = #{position_name_eng},
+               email             = #{email},
+               office_phone_no   = #{office_phone_no},
+               cell_phone_no     = #{cell_phone_no},
+               fax_no            = #{fax_no},
+               default_language  = #{default_language},
+               status            = #{status},
+               update_date       = NOW(),
+               update_by         = #{update_by}
+        <if test="password != null and password != ''">
+             , password = #{password}
+        </if>
+         WHERE user_id = #{user_id}
+    </update>
+
+    <!-- 다음 seq 조회 -->
+    <select id="selectNextSignatureSeq" resultType="int">
+        SELECT COALESCE(MAX(seq), 0) + 1
+          FROM signature
+    </select>
+
+    <!-- 서명 신규 저장 -->
+    <insert id="insertSignatureInfo"  parameterType="HashMap">
+        INSERT INTO signature
+        (
+            seq,
+            company_code,
+            department_code,
+            division_code,
+            start_date,
+            end_date,
+            remark,
+            department_name,
+            signature_name,
+            "position",
+            emp_no,
+            product_line,
+            sign_file_name,
+            sign_file_path,
+            create_date,
+            create_by,
+            update_date,
+            update_by,
+            real_file
+        )
+        VALUES
+        (
+            ${seq},
+            #{company_code},
+            #{department_code},
+            #{division_code},
+            replace(#{start_date},'-', ''),
+            replace(#{end_date},'-', ''),
+            #{remark},
+            #{department_name},
+            #{signature_name},
+            #{position},
+            #{emp_no},
+            #{product_line},
+            #{sign_file_name},
+            'DB',
+            NOW(),
+            #{create_by},
+            NOW(),
+            #{update_by},
+            #{real_file,jdbcType=BINARY}
+        )
+    </insert>
+
+    <!-- 서명 수정 -->
+    <update id="updateSignatureInfo"  parameterType="HashMap">
+        UPDATE signature
+           SET company_code    = #{company_code},
+               department_code = #{department_code},
+               division_code   = #{division_code},
+               start_date      = replace(#{start_date},'-', ''),
+               department_name = #{department_name},
+               signature_name  = #{signature_name},
+               "position"      = #{position},
+               product_line    = #{product_line},
+               update_date     = NOW(),
+               update_by       = #{update_by}
+         WHERE seq = ${seq}
+    </update>
+    
+    <update id="updateSignatureImage"  parameterType="HashMap">
+        UPDATE signature
+           SET real_file    = #{real_file,jdbcType=BINARY},
+               sign_file_name = #{sign_file_name}
+         WHERE seq = ${seq}
+    </update>
+    
+    
+    <select id="checkDuplicateUserId" resultType="int">
+        SELECT count(*)
+          FROM user_info a
+         WHERE a.company_code = #{company_code}
+           AND a.user_id = #{check_user_id}
+    </select>
+    
+	
+	<update id="cancelUserSignatureInfo"  parameterType="HashMap">
+        UPDATE signature
+           SET end_date        = replace(#{end_date},'-', ''),
+               remark          = #{remark},
+               update_date     = NOW(),
+               update_by       = #{update_by}
+         WHERE seq = ${seq}
+    </update>
+    
+    
+	<select id="retrieveItemList" parameterType="HashMap" resultType="map">
+	    SELECT 
+	        im.item_code,
+	        case #{lang}
+	            when 'KOR' then im.item_name
+	            when 'ENG' then im.item_name_eng
+	        end
+	        || case when im.spec is null then '' else '/' end
+	        || coalesce(im.spec, '') as name_spec,
+	        im.hs_code,
+	        im.item_desc,
+	        im.unit,
+	        im.weight,
+	        case id.mail_send_yn
+	            when 'Y' then 'YES'
+	            else 'NO'
+	        end as mail_send_yn,
+	        case im.process_gubun
+	            when 'Y' then 'YES'
+	            else 'NO'
+	        end as process_gubun,
+	        case #{lang}
+	            when 'KOR' then cd.code_name
+	            when 'ENG' then cd.code_name_eng
+	            when 'LOC' then cd.code_name_loc
+	        end as assets_type,
+	        di.division_code,
+	        case #{lang}
+	            when 'KOR' then di.division_name
+	            when 'ENG' then di.division_name_eng
+	        end as division_name,
+	        case #{lang}
+	            when 'KOR' then pl.product_name
+	            when 'ENG' then pl.product_name_eng
+	        end as product_name,
+	        id.importance_mgt_yn
+	    FROM item_mst im
+	    JOIN item_dtl id
+	        on im.item_code = id.item_code
+	       and im.company_code = id.company_code
+	    JOIN division di
+	        on id.division_code = di.division_code
+	       and id.company_code = di.company_code
+	    LEFT JOIN product_line pl
+	        on im.company_code = pl.company_code
+	       and im.product_code = pl.product_code
+	    LEFT JOIN code_dtl cd
+	        on id.company_code = cd.company_code
+	       and id.assets_type = cd.code
+	       and cd.category = 'AT'
+	    WHERE im.delete_yn = 'N'
+	      AND im.company_code = #{company_code}
+	  <if test="search_division_code != null and search_division_code != ''">
+          AND di.division_code = #{search_division_code}
+      </if>
+
+      <if test="hs_code_missing_yn != null and hs_code_missing_yn == 'YY'">
+          AND (im.hs_code IS NULL OR TRIM(im.hs_code) = '')
+      </if>
+
+      <if test="serch_keyword != null and serch_keyword != '' and search_item != null and search_item != ''">
+          <choose>
+              <when test="search_item == 'ITEM_CODE'">
+                  AND UPPER(im.item_code) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+              </when>
+              <when test="search_item == 'ITEM_NAME'">
+                  AND (
+                      UPPER(im.item_name) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+                      OR UPPER(im.item_name_eng) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+                  )
+              </when>
+              <when test="search_item == 'HS_CODE'">
+                  AND UPPER(im.hs_code) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+              </when>
+          </choose>
+      </if>
+	    ORDER by im.item_code, di.division_code
+	</select>
+
+
+	<select id="retrieveMissingHsCodeCount" parameterType="HashMap" resultType="map">
+		SELECT
+		    COUNT(*) FILTER (where hs_code is not null and trim(hs_code) != '') as hs_code_exists_count,
+		    COUNT(*) FILTER (where hs_code is null or trim(hs_code) = '') as hs_code_missing_count
+		FROM (
+		    SELECT DISTINCT
+		           im.item_code,
+		           im.hs_code
+		      FROM item_mst im
+		      JOIN item_dtl id
+		        ON im.item_code = id.item_code
+		       AND im.company_code = id.company_code
+		      JOIN division di
+		        ON id.division_code = di.division_code
+		       AND id.company_code = di.company_code
+		      LEFT join product_line pl
+		        ON im.company_code = pl.company_code
+		       AND im.product_code = pl.product_code
+		      LEFT join code_dtl cd
+		        ON id.company_code = cd.company_code
+		       AND id.assets_type = cd.code
+		       AND cd.category = 'AT'
+		     WHERE im.delete_yn = 'N'
+		       AND im.company_code = #{company_code}
+		  <if test="search_division_code != null and search_division_code != ''">
+	          AND di.division_code = #{search_division_code}
+	      </if>
+	
+	      <if test="hs_code_missing_yn != null and hs_code_missing_yn == 'YY'">
+	          AND (im.hs_code IS NULL OR TRIM(im.hs_code) = '')
+	      </if>
+	
+	      <if test="serch_keyword != null and serch_keyword != '' and search_item != null and search_item != ''">
+	          <choose>
+	              <when test="search_item == 'ITEM_CODE'">
+	                  AND UPPER(im.item_code) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+	              </when>
+	              <when test="search_item == 'ITEM_NAME'">
+	                  AND (
+	                      UPPER(im.item_name) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+	                      OR UPPER(im.item_name_eng) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+	                  )
+	              </when>
+	              <when test="search_item == 'HS_CODE'">
+	                  AND UPPER(im.hs_code) LIKE '%' || UPPER(#{serch_keyword}) || '%'
+	              </when>
+	          </choose>
+	      </if>
+		) t
+	</select>
+	
+	
+	<select id="retrieveItemDetailMasterInfo" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		    item_code,
+		    item_name,
+		    weight,
+		    unit,
+		    product_code,
+		    hs_code
+		FROM item_mst
+		WHERE company_code = #{company_code}
+		  AND item_code = #{item_code}
+		  AND delete_yn = 'N'
+	</select>
+	
+	<select id="retrieveItemDetailList" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		    mst.item_code,
+		    mst.item_name,
+		    mst.weight,
+		    mst.unit,
+		    mst.product_code,
+		    mst.hs_code,
+		    dtl.division_code,
+		    dtl.assets_type,
+		    dtl.po_group,
+		    dtl.category1,
+		    dtl.category2,
+		    dtl.category3,
+		    dtl.importance_mgt_yn,
+		    dtl.mail_send_yn
+		FROM item_mst mst
+		LEFT OUTER JOIN item_dtl dtl
+		       ON mst.company_code = dtl.company_code
+		      AND mst.item_code = dtl.item_code
+		      AND dtl.delete_yn = 'N'
+		WHERE mst.company_code = #{company_code}
+		  AND mst.item_code = #{item_code}
+		  AND mst.delete_yn = 'N'
+	</select>
+	
+	
+	<select id="checkHsCodeExists" parameterType="HashMap" resultType="int">
+	    SELECT COUNT(1)
+	    FROM hs_code
+	    WHERE hs_code = #{hs_code}
+	      AND delete_yn = 'N'
+	</select>
+	
+	<update id="updateItemHsCode" parameterType="HashMap">
+	    UPDATE item_mst
+	       SET hs_code = #{hs_code},
+	           update_date = NOW(),
+	           update_by = #{update_by}
+	     WHERE item_code = #{item_code}
+	       AND company_code = #{company_code}
+	</update>
+	
+	
+	<select id="retrieveHsCodeDetail" parameterType="HashMap" resultType="HashMap">
+		SELECT
+		    hs_code,
+		    hs_code_name,
+		    hs_code_name_eng,
+		    hs_code_desc
+		FROM hs_code
+		WHERE hs_code = #{hs_code}
+		  AND COALESCE(delete_yn, 'N') = 'N'
+	</select>
+	
+	
+	<select id="retrieveAgreementHsCodeList" parameterType="HashMap" resultType="HashMap">
+		SELECT item.item_code
+		     , item.item_name || '/' || COALESCE(item.spec, '') AS item_name
+		     , item.hs_code
+		     , nation.code_name AS div_type
+		     , fta_hs.fta_hs_code as conv_hs_code
+		  FROM fta_hs_code fta_hs 
+		 INNER JOIN item_mst item
+		    ON fta_hs.item_code = item.item_code
+		   AND fta_hs.company_code = item.company_code
+		 INNER JOIN code_dtl nation
+		    ON fta_hs.nation_code = nation.code
+		   AND fta_hs.company_code = nation.company_code
+		   AND nation.category = 'NA'
+		   AND nation.delete_yn = 'N'
+		 WHERE fta_hs.company_code = #{company_code}
+		   AND fta_hs.item_code = #{item_code}
+		 ORDER BY item.item_name
+		        , item.hs_code
+	</select>
+	
+	
+	<select id="retrieveNationHsCodeList" parameterType="HashMap" resultType="HashMap">
+		SELECT DISTINCT
+		       item.item_code
+		     , item.item_name || '/' || COALESCE(item.spec, '') AS item_name
+		     , item.hs_code
+		     , fta.fta_name AS div_type
+		     , agm_hs.fta_agm_hs_code AS conv_hs_code
+		  FROM fta_agm_hs_code agm_hs
+		 INNER JOIN item_mst item
+		    ON agm_hs.item_code = item.item_code
+		   AND agm_hs.company_code = item.company_code
+		 INNER JOIN fta_master fta
+		    ON agm_hs.fta_code = fta.fta_code
+		 WHERE agm_hs.company_code = #{company_code}
+		   AND agm_hs.item_code = #{item_code}
+		 ORDER BY div_type, conv_hs_code
+	</select>
+
+
+	<select id="retrieveCustomerModelList" parameterType="HashMap" resultType="HashMap">
+	    SELECT
+	          cm.company_code
+	        , cm.division_code
+	        , di.division_name
+	        , cm.item_code
+	        , im.item_name
+	        , im.hs_code
+	        , cm.customer_code
+	        , cu.customer_name
+	        , cm.customer_hs_code
+	        , cm.customer_item_code
+	        , cm.customer_item_name
+	        , cm.customer_standard
+	        , cm.remark
+	        , TO_CHAR(cm.create_date, 'YYYY-MM-DD HH24:MI:SS') AS create_date
+	        , cm.create_by
+	        , TO_CHAR(cm.update_date, 'YYYY-MM-DD HH24:MI:SS') AS update_date
+	        , cm.update_by
+	    FROM customer_model cm
+	    LEFT JOIN item_mst im
+	           ON cm.company_code = im.company_code
+	          AND cm.item_code = im.item_code
+	    LEFT JOIN division di
+	           ON cm.company_code = di.company_code
+	          AND cm.division_code = di.division_code
+	    LEFT JOIN customer cu
+	           ON cm.company_code = cu.company_code
+	          AND cm.customer_code = cu.customer_code	          	          
+	    WHERE 1 = 1
+	      AND cm.company_code = #{company_code}
+	    ORDER BY cm.division_code, cm.item_code, cm.customer_code
+	</select>
+	
+	
+	<select id="countCustomerModel" parameterType="HashMap" resultType="int">
+	    SELECT COUNT(*)
+	      FROM customer_model
+	     WHERE company_code  = #{company_code}
+	       AND division_code = #{division_code}
+	       AND item_code     = #{item_code}
+	       AND customer_code = #{customer_code}
+	</select>
+	
+	
+	<delete id="deleteCustomerModel" parameterType="HashMap">
+	    DELETE FROM customer_model
+	     WHERE company_code  = #{company_code}
+	       AND division_code = #{division_code}
+	       AND item_code     = #{item_code}
+	       AND customer_code = #{customer_code}
+	</delete>
+	
+	
+	<update id="updateCustomerModel" parameterType="HashMap">
+	    UPDATE customer_model
+	       SET customer_hs_code   = #{customer_hs_code}
+	         , customer_item_code = #{customer_item_code}
+	         , customer_item_name = #{customer_item_name}
+	         , customer_standard  = #{customer_standard}
+	         , remark             = #{remark}
+	         , update_date        = now()
+	         , update_by          = #{user_id}
+	     WHERE company_code  = #{company_code}
+	       AND division_code = #{division_code}
+	       AND item_code     = #{item_code}
+	       AND customer_code = #{customer_code}
+	</update>
+	
+	
+	<insert id="insertCustomerModel" parameterType="HashMap">
+	    INSERT INTO customer_model (
+	          company_code
+	        , division_code
+	        , item_code
+	        , customer_code
+	        , customer_hs_code
+	        , customer_item_code
+	        , customer_item_name
+	        , customer_standard
+	        , remark
+	        , create_date
+	        , create_by
+	        , update_date
+	        , update_by
+	    ) VALUES (
+	          #{company_code}
+	        , #{division_code}
+	        , #{item_code}
+	        , #{customer_code}
+	        , #{customer_hs_code}
+	        , #{customer_item_code}
+	        , #{customer_item_name}
+	        , #{customer_standard}
+	        , #{remark}
+	        , now()
+	        , #{user_id}
+	        , now()
+	        , #{user_id}
+	    )
+	</insert>
+
 </mapper>

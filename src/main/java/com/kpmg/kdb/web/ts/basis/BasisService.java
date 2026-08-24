@@ -8,9 +8,15 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.util.ExcelUtil;
+import com.kpmg.kdb.util.FileUtil;
+import com.kpmg.kdb.util.StringUtil;
+import com.kpmg.kdb.web.refundbasis.RefundBasisDao;
 import com.kpmg.kdb.web.testcode.SpringTestDao;
 
 
@@ -424,4 +430,498 @@ public class BasisService extends GeneralService {
     	return result;
     }
         
+    
+    /**
+     * 사용자관리 - 서명권자 정보
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveSignatureInfo(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		Map<String, Object> resultMap = sqlSession.getMapper(BasisDao.class).retrieveSignatureInfo(param);
+    		//회사 버퍼 설정 기준 값
+    		result.setValue(resultMap);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+	 * 엑셀업로드 여러달 업로드 가능한 버전
+	 * @param param
+	 * @param file
+	 * @return
+	 */
+	@Transactional
+    public Result saveUserSignatureInfo(Map<String, Object> param, MultipartFile file) {
+		
+		Result result = new Result();
+		
+		try {
+			
+			String userId = param.get("user_id") == null ? "" : String.valueOf(param.get("user_id")).trim();
+	        String empNo = param.get("emp_no") == null ? "" : String.valueOf(param.get("emp_no")).trim();
+	        String password = param.get("password") == null ? "" : String.valueOf(param.get("password")).trim();
+	        String passwordConfirm = param.get("password_confirm") == null ? "" : String.valueOf(param.get("password_confirm")).trim();
+	        
+	        String seq = param.get("seq") == null ? "" : String.valueOf(param.get("seq")).trim();
+	        
+	        String signFileName = "";
+	        String signFilePath = "";
+
+	        
+	        // 필수값 체크
+	        if (userId.isEmpty()) {
+	            throw new IllegalArgumentException("사용자ID는 필수입니다.");
+	        }
+
+	        if (empNo.isEmpty()) {
+	            throw new IllegalArgumentException("사원번호는 필수입니다.");
+	        }
+
+	        // 사용자 신규/수정 판별
+	        int userCnt = sqlSession.getMapper(BasisDao.class).selectUserCount(param);
+	        boolean isNewUser = (userCnt == 0);
+
+	     // 비밀번호 체크
+	        if (isNewUser) {
+	            if (password.isEmpty()) {
+	                throw new IllegalArgumentException("신규 사용자는 비밀번호가 필수입니다.");
+	            }
+	            if (passwordConfirm.isEmpty()) {
+	                throw new IllegalArgumentException("비밀번호 확인은 필수입니다.");
+	            }
+	            if (!password.equals(passwordConfirm)) {
+	                throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+	            }
+	        } else {
+	            if (!password.isEmpty() || !passwordConfirm.isEmpty()) {
+	                if (!password.equals(passwordConfirm)) {
+	                    throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+	                }
+	            }
+	        }
+	        
+	        if (isNewUser) {
+	            sqlSession.getMapper(BasisDao.class).insertUserInfo(param);
+	        } else {
+	        	sqlSession.getMapper(BasisDao.class).updateUserInfo(param);
+	        }
+	        
+	        
+	        // 4. 서명 처리 여부 판단
+	        boolean hasSignatureSection = hasSignatureData(param, file);
+	        
+	        if (hasSignatureSection) {
+	        	// 5. 서명 신규/수정 저장
+	            saveSignature(param, seq);
+
+	            // 6. 파일이 있으면 이미지 업데이트
+	            if (file != null && !file.isEmpty()) {
+	                saveSignatureFile(param, file);
+	            }
+	        }
+	        result.setSuccess(true);
+	        result.setMessage("저장되었습니다.");
+	        
+		} catch (IllegalArgumentException e) {
+	        result.setSuccess(false);
+	        result.setMessage(e.getMessage());
+	        return result;
+	    } catch (Exception e) {
+	        result.setSuccess(false);
+	        result.setMessage("저장 처리 중 오류가 발생했습니다.");
+	        throw new RuntimeException(e);
+	    }
+		
+		return result;
+	}
+	
+	private boolean hasSignatureData(Map<String, Object> param, MultipartFile file) {
+	    String seq = param.get("seq") == null ? "" : String.valueOf(param.get("seq")).trim();
+	    String startDate = param.get("start_date") == null ? "" : String.valueOf(param.get("start_date")).trim();
+	    String endDate = param.get("end_Date") == null ? "" : String.valueOf(param.get("end_Date")).trim();
+	    String remark = param.get("remark") == null ? "" : String.valueOf(param.get("remark")).trim();
+
+	    return !seq.isEmpty()
+	            || !startDate.isEmpty()
+	            || !endDate.isEmpty()
+	            || !remark.isEmpty()
+	            || (file != null && !file.isEmpty());
+	}
+	
+	private void saveSignature(Map<String, Object> param, String seq) {
+	    param.put("signature_name", param.get("name_kor"));
+	    param.put("department_name", param.get("dept_name"));
+	    param.put("position", param.get("position_name"));
+
+	    int signatureCount = 0;
+	    if (!seq.isEmpty()) {
+	        signatureCount = sqlSession.getMapper(BasisDao.class).selectSignatureCount(param);
+	    }
+
+	    boolean isNewSignature = (signatureCount == 0);
+
+	    if (isNewSignature) {
+	        int nextSeq = sqlSession.getMapper(BasisDao.class).selectNextSignatureSeq(param);
+	        param.put("seq", nextSeq);
+	        sqlSession.getMapper(BasisDao.class).insertSignatureInfo(param);
+	    } else {
+	        sqlSession.getMapper(BasisDao.class).updateSignatureInfo(param);
+	    }
+	}
+	
+	private void saveSignatureFile(Map<String, Object> param, MultipartFile file) throws Exception {
+	    if (!FileUtil.isImageFile(file)) {
+	        throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+	    }
+
+	    param.put("sign_file_name", file.getOriginalFilename());
+	    param.put("real_file", file.getBytes());
+
+	    sqlSession.getMapper(BasisDao.class).updateSignatureImage(param);
+	}
+	
+	/**
+	 * 사용자 중복 체크
+	 * @param param
+	 * @return
+	 */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result checkDuplicateUserId(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		int userCount = sqlSession.getMapper(BasisDao.class).checkDuplicateUserId(param);
+    		//회사 버퍼 설정 기준 값
+    		result.setValue(userCount);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 서명권자 해지
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result cancelUserSignatureInfo(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		int resultCount = sqlSession.getMapper(BasisDao.class).cancelUserSignatureInfo(param);
+    		//회사 버퍼 설정 기준 값
+    		result.setValue(resultCount);
+    		if(resultCount > 0) {
+        		result.setSuccess(true);
+        		result.setMessage(DEFAULT_MESSAGE_OK);    			
+    		}else {
+        		result.setSuccess(false);
+        		result.setMessage(DEFAULT_MESSAGE_ERROR);
+    		}
+
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+	 * 자재관리 - 목록조회
+	 * @param param
+	 * @return
+	 */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveItemList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveItemList(param);
+    		
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 회사관리 - 회사 또는 플렌트 1건 정보 조회 (폼데이터 용)
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveMissingHsCodeCount(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	
+    	try {
+    		Map<String, Object> resultMap = sqlSession.getMapper(BasisDao.class).retrieveMissingHsCodeCount(param);
+    		//회사 버퍼 설정 기준 값
+    		result.setValue(resultMap);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 자재관리 - 상세 - 마스터정보 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveItemDetailMasterInfo(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveItemDetailMasterInfo(param);
+    		
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    /**
+     * 자재관리 - 상세 - 목록조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveItemDetailList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveItemDetailList(param);
+    		
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 자재관리 - 상세 - 마스터정보 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public int checkHsCodeExists(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	int count = 0;
+    	try {
+    		count =  sqlSession.getMapper(BasisDao.class).checkHsCodeExists(param);
+    		
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return count;
+    }
+    
+    /**
+     * 자재관리 - 상세 - 마스터정보 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result updateItemHsCode(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	int count = 0;
+    	try {
+    		count =  sqlSession.getMapper(BasisDao.class).updateItemHsCode(param);
+    		
+    		if(count > 0 ) {
+    			result.setSuccess(true);
+        		result.setMessage(DEFAULT_MESSAGE_OK);
+    		}else {
+    			result.setSuccess(false);
+        		result.setMessage(DEFAULT_MESSAGE_ERROR);
+    		}
+    		
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 자재관리 - 협정별 / 국가별 hscode 팝업 hscode 데이터 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveHsCodeDetail(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		Map<String, Object> returnMap = sqlSession.getMapper(BasisDao.class).retrieveHsCodeDetail(param);
+    		
+    		result.setValue(returnMap);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    /**
+     * 자재관리 - 협정별 / 국가별 hscode 팝업 데이터 리스트 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveAgreementNationHsCodeList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		String search_type = param.get("search_type")+"";
+    		List<Map<String, Object>> list = null;
+    		if("FTA".equalsIgnoreCase(search_type)) {
+    			list = sqlSession.getMapper(BasisDao.class).retrieveAgreementHsCodeList(param);
+    		}else if("NA".equalsIgnoreCase(search_type)) {
+    			list = sqlSession.getMapper(BasisDao.class).retrieveNationHsCodeList(param);    			
+    		}
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    /**
+     * 고객사 자재관리 목록 데이터 조회
+     * @param param
+     * @return
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result retrieveCustomerModelList(Map<String, Object> param){
+    	
+    	Result result = new Result();
+    	try {
+    		List<Map<String, Object>> list = sqlSession.getMapper(BasisDao.class).retrieveCustomerModelList(param);
+    		
+    		result.setValue(list);
+    		result.setSuccess(true);
+    		result.setMessage(DEFAULT_MESSAGE_OK);
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+    	}
+    	
+    	return result;
+    }
+    
+    
+    /**
+     * 고객사 자재관리 저장
+     * @param param
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Result saveCustomerModelList(Map<String, Object> param) {
+
+        Result result = new Result();
+
+        try {
+            List<Map<String, Object>> addList = (List<Map<String, Object>>) param.get("addList");
+            List<Map<String, Object>> updateList = (List<Map<String, Object>>) param.get("updateList");
+            List<Map<String, Object>> deleteList = (List<Map<String, Object>>) param.get("deleteList");
+
+            if (addList != null) {
+                for (Map<String, Object> row : addList) {
+                	super.putCommonFieldsIfAbsent(row, param, "company_code", "user_id");
+                    int cnt = sqlSession.getMapper(BasisDao.class).countCustomerModel(row);
+                    if (cnt > 0) {
+                        result.setSuccess(false);
+                        result.setMessage("이미 존재하는 고객사 자재 정보입니다. [" 
+                            + row.get("item_code") + " / " + row.get("customer_code") + "]");
+                        return result;
+                    }
+
+                    sqlSession.getMapper(BasisDao.class).insertCustomerModel(row);
+                }
+            }
+
+            if (updateList != null) {
+                for (Map<String, Object> row : updateList) {
+                	super.putCommonFieldsIfAbsent(row, param, "company_code", "user_id");
+                    sqlSession.getMapper(BasisDao.class).updateCustomerModel(row);
+                }
+            }
+
+            if (deleteList != null) {
+                for (Map<String, Object> row : deleteList) {
+                	super.putCommonFieldsIfAbsent(row, param, "company_code", "user_id");
+                    sqlSession.getMapper(BasisDao.class).deleteCustomerModel(row);
+                }
+            }
+
+            result.setSuccess(true);
+            result.setMessage(DEFAULT_MESSAGE_OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+        }
+
+        return result;
+    }
 }

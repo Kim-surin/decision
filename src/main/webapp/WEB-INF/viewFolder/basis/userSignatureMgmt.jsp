@@ -152,6 +152,10 @@
 		// 시작점
 		this.Initialize_viewObject = function() {
 
+			BASIS001.retrieveUserInfoList();
+		}
+		
+		this.retrieveUserInfoList = function(){
 			var params = {
 					"dummy" : "dummy"
 			};
@@ -330,7 +334,7 @@
                         + '                    <span class="profile-image d-block " style="background-size: cover;"><i class="sa sa-profile userinfo-photo-icon"></i></span>'
                         + '                </span>'
 		        	    + '                <div class="info-card-text flex-grow-1">'
-		        	    + '                    <a href="javascript:BASIS0001.openUserDeail(\'' + userId + '\');" class="fs-xl text-truncate text-truncate-lg">'
+		        	    + '                    <a href="javascript:BASIS001.openUserDeail(\'' + userId + '\');" class="fs-xl text-truncate text-truncate-lg">'
 		        	    + '                        [' + userId + '] - ' + nameKor + '(' + empNo + ')'
 		        	    + '                    </a>'
 		        	    + '                    <span class="d-block text-truncate text-truncate-lg">' + positionName + '</span>'
@@ -356,7 +360,7 @@
 		        	    + '                    </a>'
 		        	    + '                </div>'
 		        	    + '                <div class="signature-box">'
-		        	    + '                    <img src="/basis/signature/' + empNo + '" alt="signature" onerror="this.style.display=\'none\';">'
+		        	    + '                    <img src="/basis/signature/' + empNo + '" alt="signature" onerror="this.style.display=\'none\';" style="width: 49px;">'
 		        	    + '                </div>'
 		        	    + '            </div>'
 		        	    + '        </div>'
@@ -434,7 +438,10 @@
 		}
 		
 		this.openNewUser = function(){
-			alert(1);
+			var getParams = "?dialog_id="           + "userInfoDetail_Dialog"
+			 + "&opener_pgm_id="    +  "BASIS001"
+
+			KpackageOBJ.sidepanel.open('userInfoDetail_Dialog','/basis/userSignatureDetail_pop' + getParams, '1200px');
 		}
 		
 		

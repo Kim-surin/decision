@@ -621,7 +621,7 @@
 		this.updateCompanyBuffer = function(){
 			
 			var bufferOptionType = KpackageOBJ.object.getFormValue("BASIS000-comp-form", "bf_company_option");
-			var bufferSettingValue = KpackageOBJ.auiGrid.getGridData(BASIS000.grid_BASIS000_02);
+			var bufferSettingValue = KpackageOBJ.auiGrid.getGridDataWithState(BASIS000.grid_BASIS000_02);
 			
 			var params = {
 					"bf_company_option" : bufferOptionType

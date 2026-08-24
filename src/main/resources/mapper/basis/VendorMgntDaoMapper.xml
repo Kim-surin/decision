@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.basis.vendorMgnt.VendorMgntDao">
+	
+ 	<select id="retrieveVendorList" parameterType="HashMap" resultType="HashMap">
+		SELECT VENDOR_CODE AS VC_CODE
+		     , VENDOR_NAME AS VC_NAME
+			 , VENDOR_NAME_ENG AS VC_NAME_ENG
+			 , BUSINESS_NO
+			 , OFFICER_NAME
+			 , OFFICER_NAME_ENG
+			 , NATION_CODE
+			 , ADDRESS
+			 , ADDRESS_ENG
+			 , TEL_NO
+			 , FAX_NO
+			 , IMPORTANCE_MGT_YN AS MGT_YN
+			 , REMARK
+			 , DELETE_YN
+		  FROM VENDOR 
+		 WHERE COMPANY_CODE = #{company_code}
+		<if test="searchCode != null and searchCode != ''">
+	  	   AND (VENDOR_CODE LIKE CONCAT(#{searchCode}, '%') 
+	  	     OR VENDOR_NAME LIKE CONCAT(#{searchCode}, '%')) 
+   		</if>
+   		<if test="searchMgtYn != null and searchMgtYn != ''">
+   		   AND IMPORTANCE_MGT_YN = #{searchMgtYn}
+   		</if>
+      ORDER BY VENDOR_CODE 
+ 	</select>
+ 	
+	<select id="retrieveVendorInChargeList" parameterType="HashMap" resultType="HashMap">
+		SELECT VENDOR_CODE
+		     , VENDOR_ID
+			 , SEQ
+			 , NAME_KOR
+			 , NAME_ENG
+			 , POSITION
+			 , EMAIL
+			 , TEL_NO
+			 , REMARK
+		  FROM VENDOR_IN_CHARGE
+ 		 WHERE COMPANY_CODE = #{company_code}
+		   AND VENDOR_CODE = #{vc_code}
+		ORDER BY SEQ
+	</select>
+	
+	<update id="updateVendorData">
+		UPDATE VENDOR
+		   SET IMPORTANCE_MGT_YN = #{selMgtYn}
+		     , REMARK = #{selRemark}
+		     , UPDATE_DATE = NOW()
+		     , UPDATE_BY = #{update_by}
+		 WHERE VENDOR_CODE = #{selVcCode} 
+		   AND COMPANY_CODE = #{company_code}
+	</update>
+ 	
+ 	<insert id="insertVendorIncharge">
+ 		INSERT INTO VENDOR_IN_CHARGE
+ 		( VENDOR_CODE
+ 		, COMPANY_CODE
+ 		, SEQ
+ 		, VENDOR_ID
+ 		, VENDOR_PASSWORD
+ 		, IN_CHARGE_TYPE
+ 		, NAME_KOR
+ 		, NAME_ENG
+ 		, POSITION
+ 		, EMAIL
+ 		, TEL_NO
+ 		, REMARK
+ 		, CREATE_DATE
+ 		, CREATE_BY
+ 		, UPDATE_DATE
+ 		, UPDATE_BY
+ 		, DELETE_YN)
+		VALUES 
+		( #{vendorCode}
+		, #{company_code}
+		, ( SELECT COALESCE(MAX(SEQ), 0)
+		      FROM VENDOR_IN_CHARGE
+		     WHERE COMPANY_CODE = #{company_code}
+		       AND VENDOR_CODE = #{vendor_code} )
+		, #{vendorCode}
+		, #{vendorCode}
+		, 'O'
+		, #{name_kor}
+		, #{name_eng}
+		, #{position}
+		, #{email}
+		, #{tel_no}
+		, #{remark}
+		, NOW()
+		, #{update_by}
+		, NOW()
+		, #{update_by}
+		, 'N')
+	</insert>
+ 	
+ 	<update id="updateVendorIncharge">
+ 	    UPDATE VENDOR_IN_CHARGE
+		   SET NAME_KOR = #{name_kor}
+		     , NAME_ENG = #{name_eng}
+		     , POSITION = #{position}
+		     , EMAIL = #{email}
+		     , TEL_NO = #{tel_no}
+		     , REMARK = #{remark}
+		     , UPDATE_DATE = NOW()
+		     , UPDATE_BY = #{update_by}
+		 WHERE VENDOR_CODE = #{vendorCode} 
+		   AND COMPANY_CODE = #{company_code}
+		   AND SEQ = #{seq}
+ 	</update>
+
+ 	<delete id="deleteVendorIncharge">
+ 		DELETE FROM VENDOR_IN_CHARGE
+		 WHERE VENDOR_CODE = #{vendorCode} 
+		   AND COMPANY_CODE = #{company_code}
+		   AND SEQ = #{seq}
+ 	</delete>
+
+	<select id="retrieveCustomerList" parameterType="HashMap" resultType="HashMap">
+		 SELECT CUSTOMER_CODE AS VC_CODE
+		      , CUSTOMER_NAME AS VC_NAME
+			  , CUSTOMER_NAME_ENG AS VC_NAME_ENG
+			  , BUSINESS_NO
+			  , OFFICER_NAME
+			  , OFFICER_NAME_ENG
+			  , NATION_CODE
+			  , ADDRESS
+			  , ADDRESS_ENG
+			  , TEL_NO
+			  , FAX_NO
+			  , TARGET_YN AS MGT_YN
+			  , CO_CERTIFIED_EXPORTER_YN
+			  , REMARK
+			  , DELETE_YN
+		   FROM CUSTOMER
+		  WHERE 1 = 1
+		<if test="searchCode != null and searchCode != ''">
+	  	   AND (CUSTOMER_CODE LIKE CONCAT(#{searchCode}, '%') 
+	  	     OR CUSTOMER_NAME LIKE CONCAT(#{searchCode}, '%')) 
+   		</if>
+   		<if test="searchMgtYn != null and searchMgtYn != ''">
+   		   AND TARGET_YN = #{searchMgtYn}
+   		</if>
+      ORDER BY CUSTOMER_CODE 
+ 	</select>
+ 	
+	<update id="updateCustomerData">
+		UPDATE CUSTOMER
+		   SET TARGET_YN = #{selMgtYn}
+		     , REMARK = #{selRemark}
+		     , UPDATE_DATE = NOW()
+		     , UPDATE_BY = #{update_by}
+		 WHERE CUSTOMER_CODE = #{selVcCode} 
+		   AND COMPANY_CODE = #{company_code}
+	</update>
+ 	
+
+</mapper>

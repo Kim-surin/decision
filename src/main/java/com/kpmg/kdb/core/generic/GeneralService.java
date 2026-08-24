@@ -354,4 +354,32 @@ public class GeneralService {
 		Map<String, Long> result = items.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         return result;
     }
+    
+    /**
+     * row.company_code 없으면 param.company_code 넣음
+       row.user_id 없으면 param.user_id 넣음
+       이미 값 있으면 유지
+     * @param row
+     * @param param
+     * @param keys
+     * 
+     * 예시
+     * super.putCommonFieldsIfAbsent(row, param, "company_code", "user_id");
+     * 
+     */
+    protected void putCommonFieldsIfAbsent(Map<String, Object> row, Map<String, Object> param, String... keys) {
+        if (row == null || param == null || keys == null) {
+            return;
+        }
+
+        for (String key : keys) {
+            Object rowValue = row.get(key);
+            Object paramValue = param.get(key);
+
+            if ((!row.containsKey(key) || rowValue == null || "".equals(String.valueOf(rowValue).trim()))
+                    && paramValue != null) {
+                row.put(key, paramValue);
+            }
+        }
+    }
 }

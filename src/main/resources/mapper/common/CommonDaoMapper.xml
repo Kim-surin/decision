@@ -5,37 +5,68 @@
     
 	<select id="retrieveComCdList" parameterType="HashMap" resultType="HashMap">
 		<if test="OPTION_ALL == 'Y'.toString()">
-		SELECT '' CODE
-		      ,'선택' NAME
-		      ,0 SORT_NO
-		  FROM DUAL
+		SELECT #{CATEGORY} AS CATEGORY
+		     , '' CODE
+   			 , COALESCE(#{OPTION_ALL_NAME}, '선택') AS CODE_NAME
+		     , 0 SORT_NO
 		 UNION ALL
 		</if>
-		SELECT C.CODE_CD CODE
-		      ,'['||C.CODE_CD||'] '||C.CODE_NM NAME
-		      ,C.SORT_NO
-		  FROM COM_CD C
-		 WHERE C.CATEGORY_CD = #{CATEGORY_CD}
+		SELECT C.CATEGORY
+		     , C.CODE
+		     , C.CODE_NAME
+		     , C.SORT_NO
+		  FROM CODE_DTL C
+		 WHERE C.CATEGORY = #{CATEGORY}
 		   AND C.USING_YN = 'Y'
-		ORDER  BY SORT_NO ASC
+		   AND C.COMPANY_CODE = #{company_code}
+      ORDER BY SORT_NO ASC
 	</select>
 	
 	
 	<select id="retrievePlantCombo" parameterType="HashMap" resultType="HashMap">
 		<if test="OPTION_ALL == 'Y'.toString()">
-		SELECT '' CODE
-		       ,'선택' NAME
-		       ,'000' SORT_NO
-		  FROM DUAL
-		 UNION ALL
+		select '' code
+		       ,'선택' name
+		       ,'000' sort_no
+		 union all
 		</if>
-		SELECT C.DIVISION_CODE AS  CODE
-		      ,C.DIVISION_NAME AS  NAME
-		      ,DIVISION_CODE AS SORT_NO
-		  FROM PLANT C
-		 WHERE C.STATUS = 'Y'
-		   AND C.COMPANY_CODE = #{COMPANY_CODE}
-		ORDER  BY SORT_NO ASC
+		select c.division_code as  code
+		      ,c.division_name as  name
+		      ,division_code as sort_no
+		  from division c
+		 where c.status = 'Y'
+		   and c.company_code = #{company_code}
+		order  by sort_no asc
+	</select>
+	
+	<select id="retrieveSignatureCombo" parameterType="HashMap" resultType="HashMap">
+	    SELECT code
+	         , name
+	    FROM (
+	        <if test="OPTION_ALL == 'Y'.toString()">
+	            SELECT '' AS code
+	                 , '선택' AS name
+	                 , '000' AS sort_no
+	                 , NULL::timestamp AS create_date
+	            UNION ALL
+	        </if>
+	        SELECT CAST(seq AS varchar) AS code
+	             , signature_name
+	               || CASE WHEN position IS NOT NULL AND position <![CDATA[ <> ]]> '' THEN ' / ' || position ELSE '' END
+	               || CASE WHEN department_name IS NOT NULL AND department_name <![CDATA[ <> ]]> '' THEN ' / ' || department_name ELSE '' END
+	               AS name
+	             , '999' AS sort_no
+	             , create_date
+	        FROM signature
+	        WHERE company_code = #{company_code}
+	          AND start_date <![CDATA[ <= ]]> #{invoice_date}
+	          AND (
+	                end_date IS NULL
+	                OR end_date = ''
+	                OR end_date >= #{invoice_date}
+	              )
+	    ) a
+	    ORDER BY sort_no ASC, create_date DESC
 	</select>
 	
 	<select id="retrieveCodeCombo" parameterType="HashMap" resultType="HashMap">
