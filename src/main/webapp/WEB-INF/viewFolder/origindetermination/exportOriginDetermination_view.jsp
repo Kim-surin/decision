@@ -187,7 +187,7 @@
 						}
 						
 						this.individual_export_origin_determination = function () {
-							var checkItems = AUIGrid.getCheckedRowItems(EXPORT_ORIGIN_DETERMINATION_GRID.grid_EXPORT_ORIGIN_DETERMINATION);
+							var checkItems = AUIGrid.getCheckedRowItems(EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION);
 	
 							if (checkItems.length === 0) {
 								alert("선택된 항목이 없습니다.");
