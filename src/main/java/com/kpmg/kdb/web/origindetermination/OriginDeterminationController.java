@@ -24,13 +24,9 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 public class OriginDeterminationController extends GenericController {
 	@Autowired
 	protected OriginDeterminationService originDeterminationService;
-	
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDetermination")
 	public String domesticOriginDetermination_view(Model model, HttpSession session) {
-		try {
-		} catch(Exception e) {
-			
-		}
 		return "origindetermination/domesticOriginDetermination_view";
 	}
 
@@ -49,6 +45,11 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 	
+	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDetermination")
+	public String exportOriginDetermination_view(Model model, HttpSession session) {
+		return "origindetermination/exportOriginDetermination_view";
+	}
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDeterminationList")
 	@ResponseBody
 	public Result exportOriginDetermination_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
@@ -63,16 +64,12 @@ public class OriginDeterminationController extends GenericController {
 
 		return result;
 	}
-	
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationResult")
 	public String originDeterminationResult_view(Model model, HttpSession session) {
-		try {
-		} catch(Exception e) {
-			
-		}
 		return "origindetermination/originDeterminationResult_view";
 	}
-	
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationResultList")
 	@ResponseBody
 	public Result originDeterminationResult_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
@@ -87,11 +84,10 @@ public class OriginDeterminationController extends GenericController {
 
 		return result;
 	}
-	
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetail_popup")
-	public String originDeterminationDetail_popup(
-			@RequestParam(value = "datas", required = false) String datas,
-	        Model model, HttpSession session) {
+	public String originDeterminationDetail_popup(@RequestParam(value = "datas", required = false) String datas,
+			Model model, HttpSession session) {
 		model.addAttribute("datas", datas);
 
 		return "origindetermination/originDeterminationDetail_popup";
@@ -99,7 +95,8 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")
 	@ResponseBody
-	public Result originDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param) throws Exception {
+	public Result originDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param)
+			throws Exception {
 		Result result;
 
 		try {
@@ -114,7 +111,8 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailResultList")
 	@ResponseBody
-	public Result originDeterminationDetailResultList(@RequestBody OriginDeterminationDetailResultRequestDto param) throws Exception {
+	public Result originDeterminationDetailResultList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+			throws Exception {
 		Result result;
 
 		try {
@@ -126,10 +124,11 @@ public class OriginDeterminationController extends GenericController {
 
 		return result;
 	}
-	
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/executeDomesticOriginDetermination")
 	@ResponseBody
-	public Result executeDomesticOriginDetermination(@RequestBody DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
+	public Result executeDomesticOriginDetermination(@RequestBody DomesticOriginDeterminationExecuteRequestDto param)
+			throws Exception {
 		Result result;
 
 		try {
@@ -140,5 +139,5 @@ public class OriginDeterminationController extends GenericController {
 		}
 
 		return result;
-	}	
+	}
 }
