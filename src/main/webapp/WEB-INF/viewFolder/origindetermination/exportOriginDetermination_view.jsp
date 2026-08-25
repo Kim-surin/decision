@@ -93,7 +93,7 @@
 						    	<div class="col-12">
 									<div class="frame-wrap">
 									    <div class="demo" style="text-align: right;">
-									        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.sidepanel.open('aaaa','/EXPORT_ORIGIN_DETERMINATION_pop01', '1200px');">
+											<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:EXPORT_ORIGIN_DETERMINATIONVIEW.individual_export_origin_determination()">
 									            원산지 판정
 									        </button>
 									    </div>
@@ -112,6 +112,8 @@
 
 					var EXPORT_ORIGIN_DETERMINATIONVIEW = new function () {
 						this.grid_EXPORT_ORIGIN_DETERMINATION = null;
+						// 원산지판정 팝업으로 넘길 수 있는 최대 체크 건수
+						this.MAX_CHECK_COUNT = 50;
 
 						this.Initialize_viewObject = function () {
 							EXPORT_ORIGIN_DETERMINATIONVIEW.createAUIGrid();
@@ -123,8 +125,8 @@
 						this.createAUIGrid = function () {
 							const columnLayout = [
 								{dataField: "invoice_date", headerText: "매출일", width: 120, filter: {showIcon: true}},
-								{dataField: "division_name", headerText: "플랜트", width: 120, filter: {showIcon: true}},
-								{dataField: "customer_name", headerText: "고객사", width: 140, filter: {showIcon: true}},
+								{dataField: "division_name", headerText: "플랜트", width: 200, filter: {showIcon: true}},
+								{dataField: "customer_name", headerText: "고객사", width: 200, filter: {showIcon: true}},
 								{dataField: "invoice_no", headerText: "Invoice No", width: 250, filter: {showIcon: true}},
 								{dataField: "export_nation", headerText: "수출국", width: 130, filter: {showIcon: true}},
 								{dataField: "fta_cnt", headerText: "판정대상 협정", width: 200, filter: {showIcon: true}},
@@ -154,11 +156,11 @@
 
 
 							//EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION = KpackageOBJ.auiGrid.create("oAuiGrid_EXPORT_ORIGIN_DETERMINATION", columnLayout, gridProps, "");
-							const DOMESTIC_ORIGIN_DETERMINATION_GRID = EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION = AUIGrid.create("#oAuiGrid_EXPORT_ORIGIN_DETERMINATION", columnLayout, gridProps);
+							const EXPORT_ORIGIN_DETERMINATION_GRID = EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION = AUIGrid.create("#oAuiGrid_EXPORT_ORIGIN_DETERMINATION", columnLayout, gridProps);
 						
 						
 							// 셀클릭 이벤트 바인딩
-							AUIGrid.bind(DOMESTIC_ORIGIN_DETERMINATION_GRID, "cellClick", function (event) {
+							AUIGrid.bind(EXPORT_ORIGIN_DETERMINATION_GRID, "cellClick", function (event) {
 								const rowIndex = event.rowIndex;
 
 								// 이미 체크 선택되었는지 검사
@@ -182,6 +184,31 @@
 							}
 
 							KpackageOBJ.auiGrid.retrieve(EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION, "/origin/compliance/origindetermination/exportOriginDeterminationList", params);
+						}
+						
+						this.individual_export_origin_determination = function () {
+							var checkItems = AUIGrid.getCheckedRowItems(EXPORT_ORIGIN_DETERMINATION_GRID.grid_EXPORT_ORIGIN_DETERMINATION);
+	
+							if (checkItems.length === 0) {
+								alert("선택된 항목이 없습니다.");
+								return;
+							}
+	
+							// 전체선택 체크박스 등으로 체크 가능 건수(최대 50건)를 초과한 경우 방어
+							if (checkItems.length > EXPORT_ORIGIN_DETERMINATIONVIEW.MAX_CHECK_COUNT) {
+								KpackageOBJ.object.alert("한 번에 최대 " + EXPORT_ORIGIN_DETERMINATIONVIEW.MAX_CHECK_COUNT + "건까지 선택할 수 있습니다.");
+								return;
+							}
+	
+							var datas = checkItems.map(function(row) {
+							        return row.item;
+							    });
+							
+							var request = {
+								datas: JSON.stringify(datas)
+							}
+							
+							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', request);
 						}
 
 					}
