@@ -1,0 +1,928 @@
+   	CODE	CATEGORY	COMPANY_CODE	CODE_NAME	CODE_NAME_ENG	CODE_NAME_LOC	SORT_NO	TXT_VALUE1	TXT_VALUE2	TXT_VALUE3	TXT_VALUE4	TXT_VALUE5	NUM_VALUE1	NUM_VALUE2	NUM_VALUE3	NUM_VALUE4	NUM_VALUE5	USING_YN	DELETE_YN	CREATE_DATE	CREATE_BY	UPDATE_DATE	UPDATE_BY
+1	Y	AR	PLS100	역내	IN AREA1	역내	1	1	1	1	1	1	0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+2	N	AR	PLS100	역외	OUT AREA	역외	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+3	B	AT	PLS100	부산물	B	B	8											N	N	2014-03-24  14:52:19	fta	2014-03-24  14:52:19	fta
+4	S	AT	PLS100	support	support		6											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+5	X	AT	PLS100	저장품	Supplies	저장품	6											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+6	P	AT	PLS100	제품	PRODUCT1	제품	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+7	H	AT	PLS100	반제품	HALF PRODUCT	반제품	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+8	R	AT	PLS100	원재료	RAW MATERIAL	원재료	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+9	M	AT	PLS100	상품	MATERIAL	상품	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+10	T	AT	PLS100	임가공품	TALL PROCESSING PRODUCT	임가공품	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+11	I	AT	PLS100	중간재	INTERMEDIATE		7											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+12	R	BOM	PLS100	생산 BOM			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+13	M	BOM	PLS100	표준 BOM			2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+14	CA01	CA	PLS100	DEFAULT	DEFAULT	DEFAULT	1						1					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+15	Y	CC	PLS100	발급	CERTIFY	발급	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+16	N	CC	PLS100	미발급	NOT CERTIFY	미발급	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+17	G	CD	PLS100	원산지 증명서(기관)			3											Y	N	2013-12-27  14:33:17	fta	2013-12-27  14:33:17	fta
+18	S	CD	PLS100	원산지 증명서(자율)			2											Y	N	2013-12-27  14:32:33	fta	2013-12-27  14:32:33	fta
+19	E	CD	PLS100	원산지 포괄확인서			1											Y	N	2013-12-27  14:32:59	fta	2013-12-27  14:32:59	fta
+20	C	CE	PLS100	포괄	COVER 	포괄	1	포괄										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+21	N	CE	PLS100	개별	INDIVIDUAL	개별	2	개별										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+22	S	CI	PLS100	자율발급	Self-issued	자율발급	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+23	G	CI	PLS100	기관발급	Authority issued	기관발급	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+24	E	CI	PLS100	기타	Etc	기타	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+25	CO01	CO	PLS100	원산지 포괄 확인서			1	coo_list	20100101	20130221			11					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+26	CO02	CO	PLS100	원산지 소명서			2	coo_sms	20100101				12					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+27	CO03	CO	PLS100	한-미 원산지 증명서			3	coo_usa.mrd	20100101				13					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+28	CO04	CO	PLS100	한-칠레 원산지 증명서			4	coo_chile.mrd	20100101				14					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+29	CO05	CO	PLS100	제조원가 명세서			5	poduct_cost_calculate.mrd	20100101				5					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+30	CO06	CO	PLS100	한-EU  원산지 증명서			6	coo_eu_efta.mrd	20100101				6					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+31	CO07	CO	PLS100	한-페루 원산지 증명서			7	coo_pe_ru.mrd	20100101				7					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+32	CO09	CO	PLS100	한-EFTA 원산지 증명서			9	coo_eu_efta.mrd	20100101				9					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+33	CO10	CO	PLS100	한-미(GM용) 원산지 증명서			10	coo_usa_gm.mrd	20100101				10					Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+34	CO11	CO	PLS100	원산지포괄 확인서 (20120222 개정)			11	coo_list_201303.mrd	20120222								11	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+35	Purchasing	CP	PLS100	구매품이므로 전개안함			4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+36	K_Stock	CP	PLS100	구매품이므로 전개안함			5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+37	K_Stock[CS]	CP	PLS100	구매품이므로 전개안함			6											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+38	Purchasing[CS]	CP	PLS100	구매품이므로 전개안함			7											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+39	K_STOCK[OSP]	CP	PLS100	구매품이므로 전개안함	K_STOCK[OSP]		8											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+40	MERCHANDISE	CP	PLS100	구매품이므로 전개안함	MERCHANDISE		9											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+41	PURCHASING[OSP]	CP	PLS100	구매품이므로 전개안함	PURCHASING[OSP]		13											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+42	R	CS	PLS100	요청	REQUEST	요청	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+43	P	CS	PLS100	정산중	PROCESS	정산중	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+44	C	CS	PLS100	완료	CLOSE	완료	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+45	CS_ASSEMBLY	CS	PLS100	사급품이므로 전개안함	CS_ASSEMBLY		1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+46	CS[CS]	CS	PLS100	사급품이므로 전개안함	CS[CS]		2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+47	CS[OSP]	CS	PLS100	사급품이므로 전개안함	CS[OSP]		3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+48	10	CT	PLS100	서울세관		서울세관	0	서울세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+49	11	CT	PLS100	의정부출장소		의정부출장소	0	서울세관 의정부 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+50	12	CT	PLS100	성남세관		성남세관	0	성남세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+51	13	CT	PLS100	국제우편출장소		국제우편출장소	0	서울세관 국제우편 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+52	14	CT	PLS100	안산세관		안산세관	0	안산세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+53	16	CT	PLS100	평택세관		평택세관	0	평택세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+54	17	CT	PLS100	파주감시소		파주감시소	0	파주감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+55	73	CT	PLS100	노화도감시소		노화도감시소	0	노화도감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+56	72	CT	PLS100	완도감시소		완도감시소	0	완도감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+57	80	CT	PLS100	군산세관		군산세관	0	군산세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+58	38	CT	PLS100	삼남감시소		삼남감시소	0	삼남감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+59	39	CT	PLS100	용당세관		용당세관	0	용당세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+60	40	CT	PLS100	인천공항세관		인천공항세관	0	인천공항세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+61	41	CT	PLS100	김포출장소		김포출장소	0	김포출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+62	50	CT	PLS100	마산세관		마산세관	0	마산세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+63	51	CT	PLS100	거제세관		거제세관	0	거제세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+64	52	CT	PLS100	사천출장소		사천출장소	0	거제세관 사천 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+65	53	CT	PLS100	창원세관		창원세관	0	창원세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+66	54	CT	PLS100	통영출장소		통영출장소	0	거제세관 통영 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+67	55	CT	PLS100	진해감시소		진해감시소	0	진해감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+68	56	CT	PLS100	진주출장소		진주출장소	0	마산세관 진주 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+69	57	CT	PLS100	온산감시소		온산감시소	0	온산감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+70	58	CT	PLS100	미포감시소		미포감시소	0	미포감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+71	59	CT	PLS100	마산수출자유지역		마산수출자유지역	0	마산수출자유지역										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+72	60	CT	PLS100	여수세관		여수세관	0	여수세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+73	62	CT	PLS100	광양세관		광양세관	0	광양세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+74	70	CT	PLS100	목포세관		목포세관	0	목포세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+75	71	CT	PLS100	광주세관		광주세관	0	광주세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+76	33	CT	PLS100	양산세관		양산세관	0	양산세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+77	35	CT	PLS100	사상출장소		사상출장소	0	사상출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+78	36	CT	PLS100	감천감시소		감천감시소	0	감천감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+79	18	CT	PLS100	동두천감시소		동두천감시소	0	동두천감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+80	20	CT	PLS100	인천세관		인천세관	0	인천세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+81	21	CT	PLS100	수원세관		수원세관	0	수원세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+82	81	CT	PLS100	익산출장소		익산출장소	0	군산세관 익산 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+83	82	CT	PLS100	전주출장소		전주출장소	0	군산세관 전주 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+84	83	CT	PLS100	군산외항감시소		군산외항감시소	0	군산외항감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+85	90	CT	PLS100	제주세관		제주세관	0	제주세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+86	100	CT	PLS100	동해세관		동해세관	0	동해세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+87	101	CT	PLS100	속초출장소		속초출장소	0	속초출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+88	110	CT	PLS100	울산세관		울산세관	0	울산세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+89	111	CT	PLS100	삼량감시소		삼량감시소	0	삼량감시소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+90	120	CT	PLS100	대구세관		대구세관	0	대구세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+91	121	CT	PLS100	구미세관		구미세관	0	구미세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+92	122	CT	PLS100	포항세관		포항세관	0	포항세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+93	130	CT	PLS100	구로세관		구로세관	0	구로세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+94	131	CT	PLS100	안양세관		안양세관	0	안양세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+95	140	CT	PLS100	김해세관		김해세관	0	김해세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+96	150	CT	PLS100	대전세관		대전세관	0	대전세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+97	151	CT	PLS100	청주세관		청주세관	0	청주세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+98	152	CT	PLS100	천안세관		천안세관	0	천안세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+99	153	CT	PLS100	충주출장소		충주출장소	0	청주세관 충주 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+100	154	CT	PLS100	대산출장소		대산출장소	0	천안세관 대산 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+101	22	CT	PLS100	주안출장소		주안출장소	0	인천세관 주안 출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+102	23	CT	PLS100	부평출장소		부평출장소	0	부평출장소										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+103	30	CT	PLS100	부산세관		부산세관	0	부산세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+104	32	CT	PLS100	동래세관		동래세관	0	동래세관										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+105	2	CU	PLS100	매출/매입		매출/매입	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+106	3	CU	PLS100	매출		매출	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+107	1	CU	PLS100	매입		매입	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+108	Uiseong-gun	CY	PLS100	의성군	Uiseong-gun	의성군	118											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+109	Uiwang-si	CY	PLS100	의왕시	Uiwang-si	의왕시	119											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+110	Uijeongbu-si	CY	PLS100	의정부시	Uijeongbu-si	의정부시	120											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+111	Jinju-si	CY	PLS100	진주시	Jinju-si	진주시	137											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+112	Icheon-si	CY	PLS100	이천시	Icheon-si	이천시	121											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+113	Iksan-si	CY	PLS100	익산시	Iksan-si	익산시	122											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+114	Inje-gun	CY	PLS100	인제군	Inje-gun	인제군	123											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+115	Incheon	CY	PLS100	인천	Incheon	인천	124											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+116	Imsil-gun	CY	PLS100	임실군	Imsil-gun	임실군	125											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+117	Jangseong-gun	CY	PLS100	장성군	Jangseong-gun	장성군	126											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+118	Jangsu-gun	CY	PLS100	장수군	Jangsu-gun	장수군	127											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+119	Jangheung-gun	CY	PLS100	장흥군	Jangheung-gun	장흥군	128											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+120	Jeonju-si	CY	PLS100	전주시	Jeonju-si	전주시	129											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+121	Jeongseon-gun	CY	PLS100	정선군	Jeongseon-gun	정선군	130											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+122	Jeongeup-si	CY	PLS100	정읍시	Jeongeup-si	정읍시	131											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+123	Jeju-si	CY	PLS100	제주시	Jeju-si	제주시	132											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+124	Jecheon-si	CY	PLS100	제천시	Jecheon-si	제천시	133											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+125	Jeungpyeong-gun	CY	PLS100	증평군	Jeungpyeong-gun	증평군	134											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+126	Jindo-gun	CY	PLS100	진도군	Jindo-gun	진도군	135											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+127	Jinan-gun	CY	PLS100	진안군	Jinan-gun	진안군	136											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+128	Gochang-gun	CY	PLS100	고창군	Gochang-gun	고창군	13											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+129	Goheung-gun	CY	PLS100	고흥군	Goheung-gun	고흥군	14											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+130	Gokseong-gun	CY	PLS100	곡성군	Gokseong-gun	곡성군	15											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+131	Gongju-si	CY	PLS100	공주시	Gongju-si	공주시	16											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+132	Gwacheon-si	CY	PLS100	과천시	Gwacheon-si	과천시	17											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+133	Gwangmyeong-si	CY	PLS100	광명시	Gwangmyeong-si	광명시	18											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+134	Gwangyang-si	CY	PLS100	광양시	Gwangyang-si	광양시	19											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+135	Gwangju	CY	PLS100	광주	Gwangju	광주	20											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+136	Gwangju-si	CY	PLS100	광주시	Gwangju-si	광주시	21											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+137	Gimhae-si	CY	PLS100	김해시	Gimhae-si	김해시	34											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+138	Naju-si	CY	PLS100	나주시	Naju-si	나주시	35											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+139	Changnyeong-gun	CY	PLS100	창녕군	Changnyeong-gun	창녕군	140											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+140	Changwon-si	CY	PLS100	창원시	Changwon-si	창원시	141											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+141	Cheonan-si	CY	PLS100	천안시	Cheonan-si	천안시	142											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+142	Cheorwon-gun	CY	PLS100	철원군	Cheorwon-gun	철원군	143											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+143	Cheongdo-gun	CY	PLS100	청도군	Cheongdo-gun	청도군	144											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+144	Jincheon-gun	CY	PLS100	진천군	Jincheon-gun	진천군	138											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+145	Jinhae-si	CY	PLS100	진해시	Jinhae-si	진해시	139											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+146	Cheongsong-gun	CY	PLS100	청송군	Cheongsong-gun	청송군	145											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+147	Cheongyang-gun	CY	PLS100	청양군	Cheongyang-gun	청양군	146											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+148	Cheongwon-gun	CY	PLS100	청원군	Cheongwon-gun	청원군	147											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+149	Cheongju-si	CY	PLS100	청주시	Cheongju-si	청주시	148											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+150	Chuncheon-si	CY	PLS100	춘천시	Chuncheon-si	춘천시	149											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+151	Chungju-si	CY	PLS100	충주시	Chungju-si	충주시	150											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+152	Chilgok-gun	CY	PLS100	칠곡군	Chilgok-gun	칠곡군	151											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+153	Taebaek-si	CY	PLS100	태백시	Taebaek-si	태백시	152											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+154	Taean-gun	CY	PLS100	태안군	Taean-gun	태안군	153											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+155	Tongyeong-si	CY	PLS100	통영시	Tongyeong-si	통영시	154											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+156	Paju-si	CY	PLS100	파주시	Paju-si	파주시	155											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+157	Pyeongchang-gun	CY	PLS100	평창군	Pyeongchang-gun	평창군	156											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+158	Pyeongtaek-si	CY	PLS100	평택시	Pyeongtaek-si	평택시	157											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+159	Pocheon-si	CY	PLS100	포천시	Pocheon-si	포천시	158											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+160	Pohang-si	CY	PLS100	포항시	Pohang-si	포항시	159											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+161	Hanam-si	CY	PLS100	하남시	Hanam-si	하남시	160											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+162	Hadong-gun	CY	PLS100	하동군	Hadong-gun	하동군	161											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+163	Haman-gun	CY	PLS100	함안군	Haman-gun	함안군	162											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+164	Hamyang-gun	CY	PLS100	함양군	Hamyang-gun	함양군	163											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+165	Hampyeong-gun	CY	PLS100	함평군	Hampyeong-gun	함평군	164											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+166	Hapcheon-gun	CY	PLS100	합천군	Hapcheon-gun	합천군	165											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+167	Donghae-si	CY	PLS100	동해시	Donghae-si	동해시	48											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+168	Masan-si	CY	PLS100	마산시	Masan-si	마산시	49											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+169	Mapo-gu	CY	PLS100	마포구	Mapo-gu	마포구	50											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+170	Mokpo-si	CY	PLS100	목포시	Mokpo-si	목포시	51											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+171	Muan-gun	CY	PLS100	무안군	Muan-gun	무안군	52											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+172	Muju-gun	CY	PLS100	무주군	Muju-gun	무주군	53											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+173	Mungyeong-si	CY	PLS100	문경시	Mungyeong-si	문경시	54											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+174	Miryang-si	CY	PLS100	밀양시	Miryang-si	밀양시	55											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+175	Boryeong-si	CY	PLS100	보령시	Boryeong-si	보령시	56											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+176	Boseong-gun	CY	PLS100	보성군	Boseong-gun	보성군	57											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+177	Boeun-gun	CY	PLS100	보은군	Boeun-gun	보은군	58											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+178	Bonghwa-gun	CY	PLS100	봉화군	Bonghwa-gun	봉화군	59											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+179	Busan	CY	PLS100	부산	Busan	부산	60											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+180	Busanjin-gu	CY	PLS100	부산진구	Busanjin-gu	부산진구	61											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+181	Buan-gun	CY	PLS100	부안군	Buan-gun	부안군	62											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+182	Buyeo-gun	CY	PLS100	부여군	Buyeo-gun	부여군	63											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+183	Bucheon-si	CY	PLS100	부천시	Bucheon-si	부천시	64											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+184	Sacheon-si	CY	PLS100	사천시	Sacheon-si	사천시	65											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+185	Ulju-gun	CY	PLS100	울주군	Ulju-gun	울주군	113											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+186	Uljin-gun	CY	PLS100	울진군	Uljin-gun	울진군	114											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+187	Wonju-si	CY	PLS100	원주시	Wonju-si	원주시	115											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+188	Eumseong-gun	CY	PLS100	음성군	Eumseong-gun	음성군	116											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+189	Uiryeong-gun	CY	PLS100	의령군	Uiryeong-gun	의령군	117											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+190	Haenam-gun	CY	PLS100	해남군	Haenam-gun	해남군	166											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+191	Hongseong-gun	CY	PLS100	홍성군	Hongseong-gun	홍성군	167											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+192	Hongcheon-gun	CY	PLS100	홍천군	Hongcheon-gun	홍천군	168											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+193	Hwaseong-si	CY	PLS100	화성시	Hwaseong-si	화성시	169											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+194	Hwasun-gun	CY	PLS100	화순군	Hwasun-gun	화순군	170											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+195	Hwacheon-gun	CY	PLS100	화천군	Hwacheon-gun	화천군	171											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+196	Hoengseong-gun	CY	PLS100	횡성군	Hoengseong-gun	횡성군	172											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+197	Sinan-gun	CY	PLS100	신안군	Sinan-gun	신안군	79											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+198	Asan-si	CY	PLS100	아산시	Asan-si	아산시	80											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+199	Andong-si	CY	PLS100	안동시	Andong-si	안동시	81											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+200	Ansan-si	CY	PLS100	안산시	Ansan-si	안산시	82											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+201	Anseong-si	CY	PLS100	안성시	Anseong-si	안성시	83											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+202	Anyang-si	CY	PLS100	안양시	Anyang-si	안양시	84											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+203	Yanggu-gun	CY	PLS100	양구군	Yanggu-gun	양구군	85											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+204	Yangsan-si	CY	PLS100	양산시	Yangsan-si	양산시	86											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+205	Yangyang-gun	CY	PLS100	양양군	Yangyang-gun	양양군	87											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+206	Yangju-si	CY	PLS100	양주시	Yangju-si	양주시	88											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+207	Yangpyeong-gun	CY	PLS100	양평군	Yangpyeong-gun	양평군	89											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+208	Gapyeong-gun	CY	PLS100	가평군	Gapyeong-gun	가평군	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+209	Gangneung-si	CY	PLS100	강릉시	Gangneung-si	강릉시	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+210	Gangjin-gun	CY	PLS100	강진군	Gangjin-gun	강진군	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+211	Ganghwa-gun	CY	PLS100	강화군	Ganghwa-gun	강화군	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+212	Geoje-si	CY	PLS100	거제시	Geoje-si	거제시	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+213	Geochang-gun	CY	PLS100	거창군	Geochang-gun	거창군	6											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+214	Gyeongsan-si	CY	PLS100	경산시	Gyeongsan-si	경산시	7											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+215	Gyeongju-si	CY	PLS100	경주시	Gyeongju-si	경주시	8											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+216	Gyeryong-si	CY	PLS100	계룡시	Gyeryong-si	계룡시	9											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+217	Goryeong-gun	CY	PLS100	고령군	Goryeong-gun	고령군	10											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+218	Goseong-gun	CY	PLS100	고성군	Goseong-gun	고성군	11											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+219	Goyang-si	CY	PLS100	고양시	Goyang-si	고양시	12											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+220	Okcheon-gun	CY	PLS100	옥천군	Okcheon-gun	옥천군	106											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+221	Yeosu-si	CY	PLS100	여수시	Yeosu-si	여수시	90											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+222	Yeoju-gun	CY	PLS100	여주군	Yeoju-gun	여주군	91											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+223	Yeongi-gun	CY	PLS100	연기군	Yeongi-gun	연기군	92											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+224	Yeoncheon-gun	CY	PLS100	연천군	Yeoncheon-gun	연천군	93											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+225	Yeonggwang-gun	CY	PLS100	영광군	Yeonggwang-gun	영광군	94											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+226	Yeongdeok-gun	CY	PLS100	영덕군	Yeongdeok-gun	영덕군	95											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+227	Yeongdong-gun	CY	PLS100	영동군	Yeongdong-gun	영동군	96											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+228	Yeongdeungpo-gu	CY	PLS100	영등포구	Yeongdeungpo-gu	영등포구	97											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+229	Yeongwol-gun	CY	PLS100	영월군	Yeongwol-gun	영월군	100											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+230	Yeongju-si	CY	PLS100	영주시	Yeongju-si	영주시	101											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+231	Yeongcheon-si	CY	PLS100	영천시	Yeongcheon-si	영천시	102											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+232	Yesan-gun	CY	PLS100	예산군	Yesan-gun	예산군	103											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+233	Yecheon-gun	CY	PLS100	예천군	Yecheon-gun	예천군	104											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+234	Osan-si	CY	PLS100	오산시	Osan-si	오산시	105											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+235	Goesan-gun	CY	PLS100	괴산군	Goesan-gun	괴산군	22											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+236	Namhae-gun	CY	PLS100	남해군	Namhae-gun	남해군	38											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+237	Nonsan-si	CY	PLS100	논산시	Nonsan-si	논산시	39											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+238	Danyang-gun	CY	PLS100	단양군	Danyang-gun	단양군	40											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+239	Dalseo-gu	CY	PLS100	달서구	Dalseo-gu	달서구	41											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+240	Dalseong-gun	CY	PLS100	달성군	Dalseong-gun	달성군	42											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+241	Damyang-gun	CY	PLS100	담양군	Damyang-gun	담양군	43											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+242	Dangjin-gun	CY	PLS100	당진군	Dangjin-gun	당진군	44											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+243	Daegu	CY	PLS100	대구	Daegu	대구	45											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+244	Daejeon	CY	PLS100	대전	Daejeon	대전	46											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+245	Dongducheon-si	CY	PLS100	동두천시	Dongducheon-si	동두천시	47											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+246	Gimpo-si	CY	PLS100	김포시	Gimpo-si	김포시	33											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+247	Ulleung-gun	CY	PLS100	울릉군	Ulleung-gun	울릉군	111											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+248	Ulsan	CY	PLS100	울산	Ulsan	울산	112											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+249	Gurye-gun	CY	PLS100	구례군	Gurye-gun	구례군	23											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+250	Guri-si	CY	PLS100	구리시	Guri-si	구리시	24											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+251	Gumi-si	CY	PLS100	구미시	Gumi-si	구미시	25											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+252	Gunsan-si	CY	PLS100	군산시	Gunsan-si	군산시	26											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+253	Gunwi-gun	CY	PLS100	군위군	Gunwi-gun	군위군	27											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+254	Gunpo-si	CY	PLS100	군포시	Gunpo-si	군포시	28											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+255	Geumsan-gun	CY	PLS100	금산군	Geumsan-gun	금산군	29											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+256	Gijang-gun	CY	PLS100	기장군	Gijang-gun	기장군	30											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+257	Gimje-si	CY	PLS100	김제시	Gimje-si	김제시	31											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+258	Gimcheon-si	CY	PLS100	김천시	Gimcheon-si	김천시	32											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+259	Sancheong-gun	CY	PLS100	산청군	Sancheong-gun	산청군	66											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+260	Samcheok-si	CY	PLS100	삼척시	Samcheok-si	삼척시	67											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+261	Sangju-si	CY	PLS100	상주시	Sangju-si	상주시	68											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+262	Seogwipo-si	CY	PLS100	서귀포시	Seogwipo-si	서귀포시	69											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+263	Seoul	CY	PLS100	서울	Seoul	서울	70											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+264	Seocheon-gun	CY	PLS100	서천군	Seocheon-gun	서천군	71											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+265	Seongnam-si	CY	PLS100	성남시	Seongnam-si	성남시	72											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+266	Seongju-gun	CY	PLS100	성주군	Seongju-gun	성주군	73											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+267	Sokcho-si	CY	PLS100	속초시	Sokcho-si	속초시	74											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+268	Suwon-si	CY	PLS100	수원시	Suwon-si	수원시	75											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+269	Sunchang-gun	CY	PLS100	순창군	Sunchang-gun	순창군	76											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+270	Suncheon-si	CY	PLS100	순천시	Suncheon-si	순천시	77											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+271	Yeongam-gun	CY	PLS100	영암군	Yeongam-gun	영암군	98											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+272	Yeongyang-gun	CY	PLS100	영양군	Yeongyang-gun	영양군	99											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+273	Siheung-si	CY	PLS100	시흥시	Siheung-si	시흥시	78											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+274	Ongjin-gun	CY	PLS100	옹진군	Ongjin-gun	옹진군	107											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+275	Wando-gun	CY	PLS100	완도군	Wando-gun	완도군	108											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+276	Wanju-gun	CY	PLS100	완주군	Wanju-gun	완주군	109											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+277	Yongin-si	CY	PLS100	용인시	Yongin-si	용인시	110											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+278	Namyangju-si	CY	PLS100	남양주시	Namyangju-si	남양주시	36											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+279	Namwon-si	CY	PLS100	남원시	Namwon-si	남원시	37											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+280	N	DE	PLS100	불충족	Non Satisfy	Non Satisfy	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+281	Y	DE	PLS100	충족	Satisfy	Satisfy	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+282	F103	DO	PLS100	미결 요청서			4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+283	F105	DO	PLS100	원산지확인서 사본			5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+284	F104	DO	PLS100	결과 통보서			3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+285	35	DP	PLS100	재전송			2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+286	9	DP	PLS100	최초전송			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+287	1	DP	PLS100	취소전송(기존자료 삭제)			3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+288	0	DS	PLS100	미판정	Pre	미판정	0											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+289	2	DS	PLS100	판정요청	Request	판정요청	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+290	1	DS	PLS100	판정전	Pre	판정전	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+291	4	DS	PLS100	판정완료	Complete	판정완료	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+292	3	DS	PLS100	판정중	Ing	판정중	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+293	5	DS	PLS100	판정에러	Error	판정에러	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+294	P	DT	PLS100	플랜트	PLANT	공장	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+295	S	DT	PLS100	영업조직	SALES	영업소	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+296	A	DT	PLS100	공용	SALES	영업소	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+297	D	EF	PLS100	내수	DOMESTIC	내수	0						0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+298	E	EF	PLS100	수출	EXPORT	수출	0						0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+299	ERROR809	ER	PLS100	판정할 수 없는 룰 코드	UNKNOWN RULE CODE	판정할 수 없는 룰 코드	9											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+300	ERROR807	ER	PLS100	분모값이 0인경우	AMOUNT IS ZERO IN IM_FCR_DTL	분모값이 0인경우	7											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+301	ERROR808	ER	PLS100	RVC 비율이 100 또는 -100을 넘어간다.	RVC Rate is more than 100%	RVC 비율이 100 또는 -100을 넘어간다.	8											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+302	ERROR802	ER	PLS100	룰조건이 SP 인 경우에 ETC_RULE 에 Y 또는 N 의 값이 아닙니다.	Rule Code is SP But Etc_rule value is not Y or N	룰조건이 SP 인 경우에 ETC_RULE 에 Y 또는 N 의 값이 아닙니다.	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+303	ERROR999	ER	PLS100	에러내용을 확인할 수 없습니다.	UNKNOWN ERROR CODE	에러내용을 확인할 수 없습니다.	99											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+304	ERROR804	ER	PLS100	FCR_MST 의 HS_CODE 가 6자리보다 작습니다.	HS_CODE in FCR_MST is not available code for CTC Decision	FCR_MST 의 HS_CODE 가 6자리보다 작습니다.	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+305	ERROR805	ER	PLS100	FCR_DTL 의 HS_CODE 가 6자리보다 작습니다.	HS_CODE in FCR_DTL is not available code for CTC Decision	FCR_DTL 의 HS_CODE 가 6자리보다 작습니다.	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+306	ERROR801	ER	PLS100	해당룰이 존재하지 않음	Fta Rule Data is Not Found	해당룰이 존재하지 않음	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+307	ERROR803	ER	PLS100	FCR_DTL 이 존재하지 않습니다.	FCR_DTL Data is not found for CTC Decision	FCR_DTL 이 존재하지 않습니다.	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+308	ERROR806	ER	PLS100	협정의 분모값이 FOB 또는 EXW 가 아닙니다.	INKOTERMS_TYPE IN FTA_MASTER IS NOT FOB OR EXW	협정의 분모값이 FOB 또는 EXW 가 아닙니다.	6											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+309	G	EX	PLS100	해당 세번의 원산지 중량기준이 00% 이상인 경우		해당 세번의 원산지 중량기준이 00% 이상인 경우	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+310	X	EX	PLS100	해당 세번으로부터의 세번변경은 불인정		해당 세번으로부터의 세번변경은 불인정	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+311	I	EX	PLS100	해당 세번으로부터의 세번변경만 인정		해당 세번으로부터의 세번변경만 인정	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+312	W	EX	PLS100	해당 세번의 원재료는 원산지 상품이어야함		해당 세번의 원재료는 원산지 상품이어야함	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+313	V	EX	PLS100	해당 세번의 원재료에 대해서만 부가가치 기준 적용		해당 세번의 원재료에 대해서만 부가가치 기준 적용	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+314	PKRAS	FC	PLS100	한-아세안	KR-ASEAN	한-아세안	1	한-아세안	KR-ASEAN	KASEAN	한-아쉐아							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+315	PKRZZ	FC	PLS100	한-APTA	KR-APTA	한-APTA	2	한-APTA	KR-APTA	APTA	아-아프다							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+316	PKREF	FC	PLS100	한-EFTA	KR-EFT	한-EFTA	3	한-EFTA	KR-EFT	EFTA	한-이쁘타							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+317	PKREU	FC	PLS100	한-EU	KR-EU	한-EU	4	한-EU	KR-EU	EU	한-이유							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+318	PKRUS	FC	PLS100	한-미	KR-USA	한-미	5	한-미	KR-USA	USA	한-미쿡							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+319	PKRSI	FC	PLS100	한-싱가포르	KR-SING	한-싱가포르	6	한-싱가포르	KR-SING	SING	한-싱							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+320	PKRIN	FC	PLS100	한-인도	KR-IND	한-인도	7	한-인도	KR-IND	IND	한-잉도							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+321	PKRCL	FC	PLS100	한-칠레	KR-CHI	한-칠레	8	한-칠레	KR-CHI	CHI	한-칠래?							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+322	PKRPE	FC	PLS100	한-페루	KR-PERU	한-페루	9	한-페루	KR-PERU	PERU	한-페루?							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+323	PKRTR	FC	PLS100	한-터키	KR-TR	한-터키	10	한-터키	KR-TR	TR	한-터키?							Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+324	FM01	FM	PLS100	2013-03 이전 양식			1	20100101	20121031	coo_list								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+325	FM02	FM	PLS100	2013-03  이후 양식			2	20121101	99991231	coo_list_201303								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+326	0	FS	PLS100	협상	Negotiation	협상	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+327	1	FS	PLS100	체결	Signed	체결	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+328	2	FS	PLS100	타결	Settlement	타결	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+329	3	FS	PLS100	비준	Ratification	비준	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+330	4	FS	PLS100	발효	Fermentation	발효	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+331	ARR	GD	PLS100	배열			1											N	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+332	EXW	IC	PLS100	EXW	EXW	EXW	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+333	FOB	IC	PLS100	FOB	FOB	FOB	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+334	H	ICP	PLS100	화성			1											Y	N	2014-03-31  17:31:17	fta	2014-03-31  17:31:17	fta
+335	S	ICP	PLS100	수지	수지	수지	2											Y	N	2014-03-31  17:31:37	fta	2014-03-31  17:31:37	fta
+336	I	IE	PLS100	수입	IMPORT	수입	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+337	E	IE	PLS100	수출	EXPORT	수출	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+338	FCA	IK	PLS100	FCA	FCA	FCA	6											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+339	FAS	IK	PLS100	FAS	FAS	FAS	7											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+340	CFR	IK	PLS100	CFR	CFR	CFR	8											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+341	CPT	IK	PLS100	CPT	CPT	CPT	9											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+342	CIP	IK	PLS100	CIP	CIP	CIP	10											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+343	FOB	IK	PLS100	FOB	FOB	FOB	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+344	EXW	IK	PLS100	EXW	EXW	EXW	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+345	DAF	IK	PLS100	DAF	DAF	DAF	11											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+346	DES	IK	PLS100	DES	DES	DES	12											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+347	DEQ	IK	PLS100	DEQ	DEQ	DEQ	13											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+348	DDP	IK	PLS100	DDP	DDP	DDP	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+349	DDU	IK	PLS100	DDU	DDU	DDU	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+350	CIF	IK	PLS100	CIF	CIF	CIF	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+351	A	IM	PLS100	타공장대체		타공장대체	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+352	B	IM	PLS100	당공장투입		당공장투입	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+353	C	IM	PLS100	생산입고		생산입고	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+354	O	IN	PLS100	OutBound	OutBound		2											Y	N	2013-12-06  15:47:48	fta	2013-12-06  15:47:53	fta
+355	I	IN	PLS100	Inbound	Inbound		1											Y	N	2013-12-06  15:47:31	fta	2013-12-06  15:47:31	fta
+356	O	IT	PLS100	외부	OUTER	외부	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+357	I	IT	PLS100	내부	INNER	내부	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+358	KOR	LA	PLS100	한국어	Korean	한국어	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+359	ENG	LA	PLS100	영어	English	영어	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+360	LOC	LA	PLS100	로컬언어	Local language	로컬언어	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+361	BTN	ME	PLS100	버튼			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+362	BAT	ME	PLS100	배치			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+363	MSG	ME	PLS100	메세지			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+364	ERR	ME	PLS100	에러			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+365	TTL	ME	PLS100	제목			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+366	TXT	ME	PLS100	문자			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+367	VAL	ME	PLS100	VALIDATION			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+368	ETC	ME	PLS100	기타			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+369	Y	MS	PLS100	수취대상	SEND YES	수취대상	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+370	N	MS	PLS100	수취미대상	SEND NO	수취미대상	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+371	A	MT	PLS100	전계층모두	ALL	전계층모두	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+372	O	MT	PLS100	전계층중하나	ONE	전계층중하나	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+373	IQ	NA	PLS100	이라크	IRAQ	이라크	170	IRAQ	IRQ	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+374	GH	NA	PLS100	가나	GHANA	가나	1	GHANA	GHA	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+375	GA	NA	PLS100	가봉	GABON	가봉	2	GABON	GAB	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+376	GY	NA	PLS100	가이아나	GUYANA	가이아나	3	GUYANA	GUY	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+377	GM	NA	PLS100	감비아	GAMBIA	감비아	4	GAMBIA	GMB	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+378	FR	NA	PLS100	프랑스	FRANCE	프랑스	234	FRANCE	FRA	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+379	GR	NA	PLS100	그리스	GREECE	그리스	11	GREECE	GRC	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+380	GL	NA	PLS100	그린랜드	GREENLAND	그린랜드	12	GREENLAND	GRL	북아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+381	GN	NA	PLS100	기니	GUINEA	기니	13	GUINEA	GIN	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+382	GW	NA	PLS100	기니비사우	GUINEA-BISSAU	기니비사우	14	GUINEA-BISSAU	GNB	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+383	NA	NA	PLS100	나미비아	NAMIBIA	나미비아	15	NAMIBIA	NAM	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+384	NR	NA	PLS100	나우루	NAURU	나우루	16	NAURU	NRU	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+385	NG	NA	PLS100	나이지리아	NIGERIA	나이지리아	17	NIGERIA	NGA	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+386	AQ	NA	PLS100	남극	ANTARCTICA	남극	18	ANTARCTICA	ATA									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+387	ZA	NA	PLS100	남아프리카공화국	SOUTH AFRICA	남아프리카공화국	19	SOUTH AFRICA	ZAF	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+388	GS	NA	PLS100	남조지아·남샌드위치군도	SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS	남조지아·남샌드위치군도	20	SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS	SGS	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+389	NL	NA	PLS100	네덜란드	NETHERLANDS	네덜란드	21	NETHERLANDS	NLD	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+390	PA	NA	PLS100	파나마	PANAMA	파나마	225	PANAMA	PAN									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+391	PY	NA	PLS100	파라과이	PARAGUAY	파라과이	226	PARAGUAY	PRY	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+392	FO	NA	PLS100	파로에군도	FAROE ISLANDS	파로에군도	227	FAROE ISLANDS	FRO	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+393	PK	NA	PLS100	파키스탄	PAKISTAN	파키스탄	228	PAKISTAN	PAK	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+394	PG	NA	PLS100	파푸아뉴기니	PAPUA NEW GUINEA	파푸아뉴기니	229	PAPUA NEW GUINEA	PNG	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+395	PE	NA	PLS100	페루	PERU	페루	230	PERU										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+396	PT	NA	PLS100	포르투갈	PORTUGAL		231	PORTUGAL	PRT	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+397	PL	NA	PLS100	폴란드	POLAND		232	POLAND	POL	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+398	PR	NA	PLS100	푸에토리코	PUERTO RICO	푸에토리코	233	PUERTO RICO	PRI									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+399	AN	NA	PLS100	네덜란드령 안틸레스	NETHERLANDS ANTILLES	네덜란드령 안틸레스	22	NETHERLANDS ANTILLES	ANT									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+400	NP	NA	PLS100	네팔	NEPAL	네팔	23	NEPAL	NPL	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+401	NO	NA	PLS100	노르웨이	NORWAY	노르웨이	24	NORWAY	NOR	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+402	NF	NA	PLS100	노퍽섬	NORFOLK ISLAND	노퍽섬	25	NORFOLK ISLAND	NFK	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+403	NZ	NA	PLS100	뉴질랜드	NEW ZEALAND	뉴질랜드	26	NEW ZEALAND	NZL	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+404	NC	NA	PLS100	뉴칼레도니아	NEW CALEDONIA	뉴칼레도니아	27	NEW CALEDONIA	NCL	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+405	NU	NA	PLS100	니우에	NIUE	니우에	28	NIUE	NIU	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+406	NE	NA	PLS100	니제르	NIGER	니제르	29	NIGER	NER	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+407	NI	NA	PLS100	니카라과	NICARAGUA	니카라과	30	NICARAGUA	NIC									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+408	TW	NA	PLS100	대만	TAIWAN, PROVINCE OF CHINA	대만	31	TAIWAN, PROVINCE OF CHINA	TWN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+409	KR	NA	PLS100	대한민국	KOREA, REPUBLIC OF	대한민국	32	KOREA, REPUBLIC OF	KOR	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+410	DK	NA	PLS100	덴마크	DENMARK	덴마크	33	DENMARK	DNK	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+411	DO	NA	PLS100	도미니카 공화국	DOMINICAN REPUBLIC	도미니카 공화국	34	DOMINICAN REPUBLIC	DOM									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+412	DM	NA	PLS100	도미니카연방	DOMINICA	도미니카연방	35	DOMINICA	DMA									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+413	DE	NA	PLS100	독일	GERMANY	독일	36	GERMANY	DEU	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+414	TL	NA	PLS100	동티모르	TIMOR-LESTE	동티모르	37	TIMOR-LESTE	TLS	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+415	LA	NA	PLS100	라오스	LAO PEOPLE'S DEMOCRATIC REPUBLIC	라오스	38	LAO PEOPLE'S DEMOCRATIC REPUBLIC	LAO	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+416	LR	NA	PLS100	라이베리아	LIBERIA	라이베리아	39	LIBERIA	LBR	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+417	LV	NA	PLS100	라트비아	LATVIA	라트비아	40	LATVIA	LVA	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+418	RU	NA	PLS100	러시아	RUSSIAN FEDERATION	러시아	41	RUSSIAN FEDERATION	RUS	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+419	LB	NA	PLS100	레바논	LEBANON	레바논	42	LEBANON	LBN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+420	LS	NA	PLS100	레소토	LESOTHO	레소토	43	LESOTHO	LSO	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+421	RE	NA	PLS100	레위니옹	REUNION	레위니옹	44	REUNION	REU	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+422	RO	NA	PLS100	루마니아	ROMANIA	루마니아	45	ROMANIA	ROU	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+423	LU	NA	PLS100	룩셈부르크	LUXEMBOURG	룩셈부르크	46	LUXEMBOURG	LUX	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+424	RW	NA	PLS100	르완다	RWANDA	르완다	47	RWANDA	RWA	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+425	LY	NA	PLS100	리비아	LIBYAN ARAB JAMAHIRIYA	리비아	48	LIBYAN ARAB JAMAHIRIYA	LBY	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+426	LT	NA	PLS100	리투아니아	LITHUANIA	리투아니아	49	LITHUANIA	LTU	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+427	LI	NA	PLS100	리히텐슈타인	LIECHTENSTEIN	리히텐슈타인	50	LIECHTENSTEIN	LIE	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+428	MG	NA	PLS100	마다가스카르	MADAGASCAR	마다가스카르	51	MADAGASCAR	MDG	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+429	MH	NA	PLS100	마샬군도	MARSHALL ISLANDS	마샬군도	52	MARSHALL ISLANDS	MHL	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+430	YT	NA	PLS100	마요티	MAYOTTE	마요티	53	MAYOTTE	MYT	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+431	MO	NA	PLS100	마카오	MACAO	마카오	54	MACAO	MAC	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+432	MK	NA	PLS100	마케도니아 공화국	MACEDONIA, THE FORMER YUGOSLAV REPUBLIC OF	마케도니아 공화국	55	MACEDONIA, THE FORMER YUGOSLAV REPUBLIC OF	MKO	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+433	MW	NA	PLS100	말라위	MALAWI	말라위	56	MALAWI	MWI	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+434	MY	NA	PLS100	말레이지아	MALAYSIA	말레이지아	57	MALAYSIA	MYS	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+435	ML	NA	PLS100	말리	MALI	말리	58	MALI	MLI	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+436	MA	NA	PLS100	모로코	MOROCCO KINGDOM OF	모로코	59	MOROCCO KINGDOM OF	MAR	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+437	MQ	NA	PLS100	말티니크	MARTINIQUE	말티니크	60	MARTINIQUE	MTQ									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+438	IM	NA	PLS100	맨섬	ISLE OF MAN	맨섬	61	ISLE OF MAN	IMN	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+439	MX	NA	PLS100	멕시코	MEXICO	멕시코	62	MEXICO	MWI	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+440	MR	NA	PLS100	모리타니	MAURITANIA	모리타니	63	MAURITANIA	MRT	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+441	MZ	NA	PLS100	모잠비크	MOZAMBIQUE	모잠비크	64	MOZAMBIQUE	MOZ	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+442	ME	NA	PLS100	몬테네그로	MONTENEGRO	몬테네그로	65	MONTENEGRO	MNE	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+443	MS	NA	PLS100	몬트세라트	MONTSERRAT	몬트세라트	66	MONTSERRAT	MSR									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+444	MD	NA	PLS100	몰도바	MOLDOVA, REPUBLIC OF	몰도바	67	MOLDOVA, REPUBLIC OF	MDA	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+445	MV	NA	PLS100	몰디브	MALDIVES	몰디브	68	MALDIVES	MDV	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+446	MT	NA	PLS100	몰타	MALTA	몰타	69	MALTA	MLT	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+447	MN	NA	PLS100	몽골	MONGOLIA	몽골	70	MONGOLIA	MNG	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+448	US	NA	PLS100	미국	UNITED STATES	미국	71	UNITED STATES	USA	북아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+449	VI	NA	PLS100	미국령 버진아일랜드	VIRGIN ISLANDS, U.S.	미국령 버진아일랜드	72	VIRGIN ISLANDS, U.S.	VIR									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+450	AS	NA	PLS100	미국령 사모아	AMERICAN SAMOA	미국령 사모아	73	AMERICAN SAMOA	ASM	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+451	UM	NA	PLS100	미국령 태평양군도	UNITED STATES MINOR OUTLYING ISLANDS	미국령 태평양군도	74	UNITED STATES MINOR OUTLYING ISLANDS	UMI	북아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+452	MM	NA	PLS100	미얀마	MYANMAR	미얀마	75	MYANMAR	MMR	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+453	FM	NA	PLS100	미크로네시아	MICRONESIA, FEDERATED STATES OF	미크로네시아	76	MICRONESIA, FEDERATED STATES OF	FSM	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+454	VU	NA	PLS100	바누아투	VANUATU	바누아투	77	VANUATU	VUT	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+455	BH	NA	PLS100	바레인	BAHRAIN	바레인	78	BAHRAIN	BHR	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+456	BB	NA	PLS100	바베이도스	BARBADOS	바베이도스	79	BARBADOS	BRB									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+457	VA	NA	PLS100	바티칸 시국	HOLY SEE (VATICAN CITY STATE)	바티칸 시국	80	HOLY SEE (VATICAN CITY STATE)	VAT	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+458	HN	NA	PLS100	온두라스	HONDURAS	온두라스	161	HONDURAS	HND									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+459	AX	NA	PLS100	올란드 제도	ALAND ISLANDS	올란드 제도	162	ALAND ISLANDS	ALA	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+460	JO	NA	PLS100	요르단	JORDAN	요르단	163	JORDAN	JOR	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+461	UG	NA	PLS100	우간다	UGANDA	우간다	164	UGANDA	UGA	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+462	UY	NA	PLS100	우르과이	URUGUAY	우르과이	165	URUGUAY	URY	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+463	UZ	NA	PLS100	우즈베키스탄	UZBEKISTAN	우즈베키스탄	166	UZBEKISTAN	UZB	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+464	UA	NA	PLS100	우크라이나	UKRAINE	우크라이나	167	UKRAINE	UKR	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+465	WF	NA	PLS100	월리스 푸투나	WALLIS AND FUTUNA	월리스 푸투나	168	WALLIS AND FUTUNA	WLF	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+466	YU	NA	PLS100	유고슬라비아	YUGOSLAVIA	유고슬라비아	169	YUGOSLAVIA	YUG									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+467	ZR	NA	PLS100	자이르	ZAIRE	자이르	179	ZAIRE	ZAR									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+468	ZM	NA	PLS100	잠비아	ZAMBIA	잠비아	180	ZAMBIA	ZMB	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+469	JE	NA	PLS100	저지	JERSEY	저지	181	JERSEY	JEY	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+470	GQ	NA	PLS100	적도 기니	EQUATORIAL GUINEA	적도 기니	182	EQUATORIAL GUINEA	GNQ	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+471	CN	NA	PLS100	중국	CHINA	중국	183	CHINA	CHN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+472	TJ	NA	PLS100	타지키스탄	TAJIKISTAN	타지키스탄	213	TAJIKISTAN	TJK	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+473	JM	NA	PLS100	자메이카	JAMAICA	자메이카	178	JAMAICA	JAM									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+474	AO	NA	PLS100	앙골라	ANGOLA	앙골라	147	ANGOLA	AGO	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+475	AG	NA	PLS100	앤티가 바부다	ANTIGUA AND BARBUDA	앤티가 바부다	148	ANTIGUA AND BARBUDA	ATG									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+476	ER	NA	PLS100	에리트리아	ERITREA	에리트리아	149	ERITREA	ERI	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+477	EE	NA	PLS100	에스토니아	ESTONIA	에스토니아	150	ESTONIA	EST	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+478	EC	NA	PLS100	에콰도르	ECUADOR	에콰도르	151	ECUADOR	ECU	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+479	ET	NA	PLS100	에티오피아	ETHIOPIA	에티오피아	152	ETHIOPIA	ETH	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+480	SV	NA	PLS100	엘살바도르	EL SALVADOR	엘살바도르	153	EL SALVADOR	SLV									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+481	GB	NA	PLS100	영국	UNITED KINGDOM	영국	154	UNITED KINGDOM	GBR	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+482	IO	NA	PLS100	영국령 인도양지역	BRITISH INDIAN OCEAN TERRITORY	영국령 인도양지역	156	BRITISH INDIAN OCEAN TERRITORY	IOT	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+483	YE	NA	PLS100	예멘	YEMEN	예멘	157	YEMEN	YEM	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+484	OM	NA	PLS100	오만	OMAN	오만	158	OMAN	OMN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+485	AU	NA	PLS100	오스트레일리아	AUSTRALIA	오스트레일리아	159	AUSTRALIA	AUS	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+486	AT	NA	PLS100	오스트리아	AUSTRIA	오스트리아	160	AUSTRIA	AUT	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+487	CF	NA	PLS100	중앙아프리카공화국	CENTRAL AFRICAN REPUBLIC	중앙아프리카공화국	184	CENTRAL AFRICAN REPUBLIC	CAF	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+488	DJ	NA	PLS100	지부티	DJIBOUTI	지부티	185	DJIBOUTI	DJI	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+489	GI	NA	PLS100	지브롤터	GIBRALTAR	지브롤터	186	GIBRALTAR	GIB	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+490	ZW	NA	PLS100	짐바브웨	ZIMBABWE	짐바브웨	187	ZIMBABWE	ZWE	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+491	TD	NA	PLS100	차드	CHAD	차드	188	CHAD	TCD	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+492	CZ	NA	PLS100	체코	CZECH REPUBLIC	체코	189	CZECH REPUBLIC	CZE	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+493	VG	NA	PLS100	영국령 버진아일랜드	VIRGIN ISLANDS, BRITISH	영국령 버진아일랜드	155	VIRGIN ISLANDS, BRITISH	VGB									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+494	CL	NA	PLS100	칠레	CHILE	칠레	190	CHILE	CHL	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+495	CO	NA	PLS100	콜롬비아	COLOMBIA	콜롬비아	203	COLOMBIA	COL	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+496	CG	NA	PLS100	콩고	CONGO	콩고	204	CONGO	COG	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+497	CD	NA	PLS100	콩고민주공화국		콩고민주공화국	205											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+498	CU	NA	PLS100	쿠바	CUBA	쿠바	206	CUBA	CUB									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+499	KW	NA	PLS100	쿠웨이트	KUWAIT	쿠웨이트	207	KUWAIT	KWT	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+500	CK	NA	PLS100	쿠크군도	COOK ISLANDS	쿠크군도	208	COOK ISLANDS	COK	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+501	HR	NA	PLS100	크로아티아	CROATIA (local name: Hrvatska)	크로아티아	209	CROATIA (local name: Hrvatska)	HRV	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+502	CX	NA	PLS100	크리스마스도	CHRISTMAS ISLAND	크리스마스도	210	CHRISTMAS ISLAND	CXR	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+503	KG	NA	PLS100	키르기스스탄	KYRGYZSTAN	키르기스스탄	211	KYRGYZSTAN	KGZ	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+504	KI	NA	PLS100	키리바시	KIRIBATI	키리바시	212	KIRIBATI	KIR	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+505	TZ	NA	PLS100	탄자니아	TANZANIA, UNITED REPUBLIC OF	탄자니아	214	TANZANIA, UNITED REPUBLIC OF	TZA	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+506	TH	NA	PLS100	태국	THAILAND	태국	215	THAILAND	THA	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+507	SN	NA	PLS100	세네갈	SENEGAL	세네갈	110	SENEGAL	SEN	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+508	RS	NA	PLS100	세르비아	SERBIA	세르비아	111	SERBIA	SRB	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+509	SC	NA	PLS100	세이셸	SEYCHELLES	세이셸	112	SEYCHELLES	SYC	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+510	LC	NA	PLS100	세인트 루치아	SAINT LUCIA	세인트 루치아	113	SAINT LUCIA	LCA									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+511	MF	NA	PLS100	세인트 마틴	SAINT MARTIN	세인트 마틴	114	SAINT MARTIN	MAF									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+512	BL	NA	PLS100	세인트 바돌로메	SAINT BARTHELEMY	세인트 바돌로메	115	SAINT BARTHELEMY	BLM									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+513	VC	NA	PLS100	세인트 빈센트 그레나딘	SAINT VINCENT AND THE GRENADINES	세인트 빈센트 그레나딘	116	SAINT VINCENT AND THE GRENADINES	VCT									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+514	KN	NA	PLS100	세인트 킷츠 네비스	SAINT KITTS AND NEVIS	세인트 킷츠 네비스	117	SAINT KITTS AND NEVIS	KNA									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+515	SH	NA	PLS100	세인트헬레나	SAINT HELENA	세인트헬레나	118	SAINT HELENA	SHN	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+516	SO	NA	PLS100	소말리아	SOMALIA	소말리아	119	SOMALIA	SOM	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+517	SB	NA	PLS100	솔로몬군도	SOLOMON ISLANDS	솔로몬군도	120	SOLOMON ISLANDS	SLB	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+518	SD	NA	PLS100	수단	SUDAN	수단	121	SUDAN	SDN	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+519	SR	NA	PLS100	수리남	SURINAME	수리남	122	SURINAME	SUR	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+520	LK	NA	PLS100	스리랑카	SRI LANKA	스리랑카	123	SRI LANKA	LKA	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+521	SJ	NA	PLS100	스발바르 얀마옌	SVALBARD AND JAN MAYEN	스발바르 얀마옌	124	SVALBARD AND JAN MAYEN	SJM	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+522	SZ	NA	PLS100	스와질랜드	SWAZILAND	스와질랜드	125	SWAZILAND	SWZ	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+523	SE	NA	PLS100	스웨덴	SWEDEN	스웨덴	126	SWEDEN	SWE	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+524	CH	NA	PLS100	스위스	SWITZERLAND	스위스	127	SWITZERLAND	CHE	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+525	ES	NA	PLS100	스페인	SPAIN	스페인	128	SPAIN	ESP	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+526	SK	NA	PLS100	슬로바키아	SLOVAKIA	슬로바키아	129	SLOVAKIA	SVK	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+527	SI	NA	PLS100	슬로베니아	SLOVENIA	슬로베니아	130	SLOVENIA	SVN	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+528	SY	NA	PLS100	시리아	SYRIAN ARAB REPUBLIC	시리아	131	SYRIAN ARAB REPUBLIC	SYR	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+529	SL	NA	PLS100	시에라리온	SIERRA LEONE	시에라리온	132	SIERRA LEONE	SLE	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+530	SG	NA	PLS100	싱가포르	SINGAPORE	싱가포르	133	SINGAPORE	SGP	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+531	AE	NA	PLS100	아랍에미리트	UNITED ARAB EMIRATES	아랍에미리트	134	UNITED ARAB EMIRATES	ARE	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+532	AW	NA	PLS100	아루바	ARUBA	아루바	135	ARUBA	ABW									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+533	AM	NA	PLS100	아르메니아	ARMENIA	아르메니아	136	ARMENIA	ARM	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+534	AR	NA	PLS100	아르헨티나	ARGENTINA	아르헨티나	137	ARGENTINA	ARG	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+535	TC	NA	PLS100	터크스·카이코스군도	TURKS AND CAICOS ISLANDS	터크스·카이코스군도	216	TURKS AND CAICOS ISLANDS	TCA									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+536	TR	NA	PLS100	터키	TURKEY	터키	217	TURKEY	TUR	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+537	TG	NA	PLS100	토고	TOGO	토고	218	TOGO	TGO	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+538	TK	NA	PLS100	토켈라우	TOKELAU	토켈라우	219	TOKELAU	TKL	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+539	TO	NA	PLS100	통가	TONGA	통가	220	TONGA	TON	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+540	TM	NA	PLS100	투르크메니스탄	TURKMENISTAN	투르크메니스탄	221	TURKMENISTAN	TKM	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+541	TV	NA	PLS100	투발루	TUVALU	투발루	222	TUVALU	TUV	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+542	TN	NA	PLS100	튀니지	TUNISIA	튀니지	223	TUNISIA	TUN	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+543	TT	NA	PLS100	트리니다드·토바고	TRINIDAD AND TOBAGO	트리니다드·토바고	224	TRINIDAD AND TOBAGO	TTO									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+544	BS	NA	PLS100	바하마	BAHAMAS	바하마	81	BAHAMAS	BHS									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+545	BD	NA	PLS100	방글라데시	BANGLADESH	방글라데시	82	BANGLADESH	BGD	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+546	BM	NA	PLS100	버뮤다	BERMUDA	버뮤다	83	BERMUDA	BMU	북아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+547	BJ	NA	PLS100	베냉	BENIN	베냉	84	BENIN	BEN	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+548	VE	NA	PLS100	베네수엘라	VENEZUELA, BOLIVARIAN REPUBLIC OF	베네수엘라	85	VENEZUELA, BOLIVARIAN REPUBLIC OF	VEN	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+549	VN	NA	PLS100	베트남	VIET NAM	베트남	86	VIET NAM	VNM	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+550	BE	NA	PLS100	벨기에	BELGIUM	벨기에	87	BELGIUM	BEL	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+551	BY	NA	PLS100	벨라루스	BELARUS	벨라루스	88	BELARUS	BLR	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+552	BZ	NA	PLS100	벨리즈	BELIZE	벨리즈	89	BELIZE	BLZ									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+553	BA	NA	PLS100	보스니아 헤르체고비나	BOSNIA AND HERZEGOVINA	보스니아 헤르체고비나	90	BOSNIA AND HERZEGOVINA	BIH	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+554	BW	NA	PLS100	보츠와나	BOTSWANA	보츠와나	91	BOTSWANA	BWA	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+555	BO	NA	PLS100	볼리비아	BOLIVIA, PLURINATIONAL STATE OF	볼리비아	92	BOLIVIA, PLURINATIONAL STATE OF	BOL	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+556	BI	NA	PLS100	부룬디	BURUNDI	부룬디	93	BURUNDI	BDI	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+557	BF	NA	PLS100	부르키나 파소	BURKINA FASO	부르키나 파소	94	BURKINA FASO	BFA	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+558	BV	NA	PLS100	부베도	BOUVET ISLAND	부베도	95	BOUVET ISLAND	BVT									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+559	BT	NA	PLS100	부탄	BHUTAN	부탄	96	BHUTAN	BTN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+560	MP	NA	PLS100	북마리아나군도	NORTHERN MARIANA ISLANDS	북마리아나군도	97	NORTHERN MARIANA ISLANDS	MNP	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+561	KP	NA	PLS100	북한	KOREA, DEMOCRATIC PEOPLE'S REPUBLIC OF	북한	98	KOREA, DEMOCRATIC PEOPLE'S REPUBLIC OF	PRK	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+562	BG	NA	PLS100	불가리아	BULGARIA	불가리아	99	BULGARIA	BGR	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+563	BR	NA	PLS100	브라질	BRAZIL	브라질	100	BRAZIL	BRA	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+564	BN	NA	PLS100	브루나이	BRUNEI DARUSSALAM	브루나이	101	BRUNEI DARUSSALAM	BRN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+565	ZZ	NA	PLS100	미상	Non Foreign	비역내	102											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+566	SA	NA	PLS100	사우디아라비아	SAUDI ARABIA	사우디아라비아	103	SAUDI ARABIA	SAU	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+567	CY	NA	PLS100	사이프러스	CYPRUS	사이프러스	104	CYPRUS	CYP	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+568	SM	NA	PLS100	산마리노	SAN MARINO	산마리노	105	SAN MARINO	SMR	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+569	ST	NA	PLS100	상투메 프린시페	SAO TOME AND PRINCIPE	상투메 프린시페	106	SAO TOME AND PRINCIPE	STP	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+570	PM	NA	PLS100	생피에르 미클롱	SAINT PIERRE AND MIQUELON	생피에르 미클롱	107	SAINT PIERRE AND MIQUELON	SPM	북아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+571	WS	NA	PLS100	서사모아	SAMOA	서사모아	108	SAMOA	WSM	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+572	EH	NA	PLS100	서사하라	WESTERN SAHARA	서사하라	109	WESTERN SAHARA	ESH	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+573	GG	NA	PLS100	건지	GUERNSEY	건지	5	GUERNSEY	GGY	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+574	GP	NA	PLS100	과달루프	GUADELOUPE	과달루프	6	GUADELOUPE	GLP									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+575	GT	NA	PLS100	과테말라	GUATEMALA	과테말라	7	GUATEMALA	GTM									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+576	GU	NA	PLS100	괌	GUAM	괌	8	GUAM	GUM	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+577	GD	NA	PLS100	그레나다	GRENADA	그레나다	9	GRENADA	GRD									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+578	GE	NA	PLS100	그루지아	GEORGIA	그루지아	10	GEORGIA	GEO	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+579	CC	NA	PLS100	코코스군도	COCOS (KEELING) ISLANDS	코코스군도	201	COCOS (KEELING) ISLANDS	CCK	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+580	CI	NA	PLS100	코트디브아르	COTE D'IVOIRE	코트디브아르	202	COTE D'IVOIRE	CIV	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+581	IT	NA	PLS100	이탈리아	ITALY	이탈리아	174	ITALY	ITA	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+582	IN	NA	PLS100	인도	INDIA	인도	175	INDIA	IND	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+583	ID	NA	PLS100	인도네시아	INDONESIA	인도네시아	176	INDONESIA	IDN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+584	JP	NA	PLS100	일본	JAPAN	일본	177	JAPAN	JPN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+585	CM	NA	PLS100	카메룬	CAMEROON	카메룬	191	CAMEROON	CMR	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+586	CV	NA	PLS100	카보베르데	CAPE VERDE	카보베르데	192	CAPE VERDE	CPV	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+587	KZ	NA	PLS100	카자흐스탄	KAZAKHSTAN	카자흐스탄	193	KAZAKHSTAN	KAZ	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+588	QA	NA	PLS100	카타르	QATAR	카타르	194	QATAR	QAT	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+589	KH	NA	PLS100	캄보디아	CAMBODIA	캄보디아	195	CAMBODIA	KHM	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+590	CA	NA	PLS100	캐나다	CANADA	캐나다	196	CANADA	CAN	북아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+591	KE	NA	PLS100	케냐	KENYA	케냐	197	KENYA	KEN	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+592	KY	NA	PLS100	케이만군도	CAYMAN ISLANDS	케이만군도	198	CAYMAN ISLANDS	CYM									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+593	KM	NA	PLS100	코모로	COMOROS	코모로	199	COMOROS	COM	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+594	CR	NA	PLS100	코스타리카	COSTA RICA	코스타리카	200	COSTA RICA	CRI									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+595	IS	NA	PLS100	아이슬란드	ICELAND	아이슬란드	138	ICELAND	ISL	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+596	HT	NA	PLS100	아이티	HAITI	아이티	139	HAITI	HTI									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+597	IE	NA	PLS100	아일랜드	IRELAND	아일랜드	140	IRELAND	IRL	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+598	AZ	NA	PLS100	아제르바이잔	AZERBAIJAN	아제르바이잔	141	AZERBAIJAN	AZE	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+599	AF	NA	PLS100	아프가니스탄	AFGHANISTAN	아프가니스탄	142	AFGHANISTAN	AFG	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+600	AI	NA	PLS100	안길라	ANGUILLA	안길라	143	ANGUILLA	AIA									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+601	AD	NA	PLS100	안도라	ANDORRA	안도라	144	ANDORRA	AND	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+602	AL	NA	PLS100	알바니아	ALBANIA	알바니아	145	ALBANIA	ALB	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+603	DZ	NA	PLS100	알제리	ALGERIA	알제리	146	ALGERIA	DZA	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+604	IR	NA	PLS100	이란	IRAN, ISLAMIC REPUBLIC OF	이란	171	IRAN, ISLAMIC REPUBLIC OF	IRN	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+605	IL	NA	PLS100	이스라엘	ISRAEL	이스라엘	172	ISRAEL	ISR	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+606	EG	NA	PLS100	이집트	EGYPT	이집트	173	EGYPT	EGY	아프리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+607	FX	NA	PLS100	프랑스 본국	FRANCE, METROPOLITAN	프랑스 본국	235	FRANCE, METROPOLITAN	FXX									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+608	TF	NA	PLS100	프랑스령 극남군도	FRENCH SOUTHERN TERRITORIES	프랑스령 극남군도	236	FRENCH SOUTHERN TERRITORIES	ATF									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+609	GF	NA	PLS100	프랑스령 기아나	FRENCH GUIANA	프랑스령 기아나	237	FRENCH GUIANA	GUF	남아메리카								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+610	PF	NA	PLS100	프랑스령 폴리네시아	FRENCH POLYNESIA	프랑스령 폴리네시아	238	FRENCH POLYNESIA	PYF	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+611	FJ	NA	PLS100	피지	FIJI	피지	239	FIJI	FJI	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+612	FI	NA	PLS100	핀란드	FINLAND	핀란드	240	FINLAND	FIN	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+613	PH	NA	PLS100	필리핀	PHILIPPINES	필리핀	241	PHILIPPINES	PHL	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+614	PN	NA	PLS100	핏카인도	PITCAIRN	핏카인도	242	PITCAIRN	PCN	오세아니아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+615	HM	NA	PLS100	허드 맥도날드 제도	HEARD ISLAND AND MCDONALD ISLANDS	허드 맥도날드 제도	243	HEARD ISLAND AND MCDONALD ISLANDS	HMD									Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+616	HU	NA	PLS100	헝가리	HUNGARY	헝가리	244	HUNGARY	HUN	유럽								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+617	HK	NA	PLS100	홍콩	HONG KONG	홍콩	245	HONG KONG	HKG	아시아								Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+618	0	NO	PLS100	선택	Select	NULL	0	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+619	1	NO	PLS100	수입상품/제품	Import Material	NULL	1	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+620	2	NO	PLS100	판정불충족	NULL	NULL	2	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+621	3	NO	PLS100	HS CODE 불일치	HS CODE Mismatch	NULL	3	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+622	4	NO	PLS100	BOM 미확정/변동	Undetermination of BOM	NULL	4	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+623	5	NO	PLS100	단가 미확정/변동	Undetermination of unit price	NULL	5	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+624	6	NO	PLS100	비정규오더/단산품	Prototype/Balance out	NULL	6	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+625	7	NO	PLS100	예외규정 불충족	Exceptional rules	NULL	7	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+626	8	NO	PLS100	원재료/상품 거래처 변경(국내) 불충족	NULL	NULL	8	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+627	9	NO	PLS100	확인서미수취	NULL	NULL	9	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+628	10	NO	PLS100	기타	etc.	NULL	10	NULL	NULL	NULL	NULL	NULL						Y	N	2026-01-28  15:23:10	fta	2026-01-28  15:23:10	fta
+629	E	OCT	PLS100	한국-APTA			5											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+630	G	OCT	PLS100	한국-싱가포르FTA			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+631	I	OCT	PLS100	한국-아세안			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+632	J	OCT	PLS100	한국-인도			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+633	K	OCT	PLS100	한국-페루			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+634	1	ODRT	PLS100	삭제			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+635	18	ODRT	PLS100	재발행			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+636	35	ODRT	PLS100	수정			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+637	9	ODRT	PLS100	최초			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+638	Y	ON	PLS100	한국산	ORIGIN	한국산	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+639	N	ON	PLS100	역외산	NONORIGIN	역외산	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+640	KRJHH	OPOS	PLS100	CHANGHANG.항구			4	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+641	KRJPH	OPOS	PLS100	장승포항.항구			110	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+642	KRJSP	OPOS	PLS100	JANG SUNG PHO.항구			28	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+643	KRKAG	OPOS	PLS100	KANGNUNG.항구			33	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+644	KRKAN	OPOS	PLS100	KWANGYANG.항구			47	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+645	KRKCN	OPOS	PLS100	KAMCHUN.항구			32	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+646	KRKHH	OPOS	PLS100	KOHYON.항구			36	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+647	KRKHN	OPOS	PLS100	KOHYON.항구			37	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+648	KRKJE	OPOS	PLS100	KOJE.항구			38	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+649	KRKJH	OPOS	PLS100	KOJONG.항구			39	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+650	KRKOJ	OPOS	PLS100	KOJONG.항구			40	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+651	KRKPO	OPOS	PLS100	POHANG.항구			65	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+652	KRKUV	OPOS	PLS100	KUNSAN.항구			43	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+653	KRKWJ	OPOS	PLS100	KWANGJU.항구			45	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+654	KRMAS	OPOS	PLS100	MASAN.항구			49	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+655	KRMIH	OPOS	PLS100	MIPO.항구			50	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+656	KRMIP	OPOS	PLS100	MIPO.항구			51	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+657	KRMOK	OPOS	PLS100	MOKPO.항구			52	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+658	KRMPK	OPOS	PLS100	MOKPO APT.항구			54	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+659	KRMUK	OPOS	PLS100	MUKHO.항구			56	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+660	KROKK	OPOS	PLS100	OKKYE.항구			57	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+661	KROKP	OPOS	PLS100	OKPO.항구			59	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+662	KRONS	OPOS	PLS100	ONSAN.항구			61	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+663	KROPH	OPOS	PLS100	OKPO.항구			58	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+664	RSU	OPOS	PLS100	YOSU.공항			108	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+665	SEL	OPOS	PLS100	SEOUL.공항			77	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+666	SHO	OPOS	PLS100	SOKCHO.공항			80	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+667	SSN	OPOS	PLS100	SUNGNAM (SEOUL AB).공항			83	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+668	SUK	OPOS	PLS100	SAMCHEOK (EX SAMCHOK).공항			72	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+669	SWU	OPOS	PLS100	SUWON (EX SU WON CITY).공항			86	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+670	SYS	OPOS	PLS100	SUNCHEON (EX SUNCHON).공항			82	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+671	TAE	OPOS	PLS100	TAGUE.공항			92	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+672	TAH	OPOS	PLS100	TAEGUE AIRPORT.공항			89	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+673	USN	OPOS	PLS100	ULSAN.공항			97	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+674	WJU	OPOS	PLS100	WONJU.공항			101	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+675	YEC	OPOS	PLS100	YECHON.공항			104	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+676	YNY	OPOS	PLS100	YANGYANG INTERNATIONAL AIRPORT.공항			103	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+677	KUZ	OPOS	PLS100	GUSAN (EX KUSAN).공항			22	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+678	KWH	OPOS	PLS100	GWANGJU AIRPORT.공항			23	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+679	KWJ	OPOS	PLS100	KWANGJU.공항			46	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+680	MPK	OPOS	PLS100	MOKPO.공항			53	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+681	MWX	OPOS	PLS100	MUAN AIRPORT.공항			55	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+682	OGH	OPOS	PLS100	OSAN AIRPORT.공항			64	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+683	OSN	OPOS	PLS100	OSAN.공항			63	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+684	PUS	OPOS	PLS100	PUSAN.공항			69	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+685	QET	OPOS	PLS100	DEADEOK (EX TAEDOK).공항			15	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+686	KRRSU	OPOS	PLS100	YOSU APT.항구			109	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+687	KRSCP	OPOS	PLS100	SAMCHONPO.항구			75	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+688	KRSEL	OPOS	PLS100	KIMPO APT/SEOUL.항구			35	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+689	KRSGH	OPOS	PLS100	SOGWIPO.항구			79	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+690	KRSHG	OPOS	PLS100	POHANG NEW PORT.항구			67	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+691	KRSHO	OPOS	PLS100	SOKCHO.항구			81	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+692	KRSPH	OPOS	PLS100	SAMCHONPO.항구			74	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+693	KRSPO	OPOS	PLS100	SOGWIPO.항구			78	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+694	KRSSN	OPOS	PLS100	SUNGNAM (SEOUL AB).항구			84	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+695	KRSSP	OPOS	PLS100	SEONGSAN-PO.항구			76	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+696	KRSUK	OPOS	PLS100	SAMCHOK.항구			73	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+697	KRSUO	OPOS	PLS100	SUWON.항구			85	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+698	KRTAE	OPOS	PLS100	TAEGU.항구			88	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+699	KRTAN	OPOS	PLS100	TAEAN.항구			87	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+700	KRTGH	OPOS	PLS100	TONGHAE.항구			94	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+701	KRTJI	OPOS	PLS100	TAHNGJIN.항구			93	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+702	KRTSN	OPOS	PLS100	TAESAN.항구			91	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+703	KRTYG	OPOS	PLS100	TONGYOUNG.항구			95	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+704	KRUSL	OPOS	PLS100	ULSAN.항구			96	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+705	KRUSN	OPOS	PLS100	ULSAN.항구			98	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+706	KRWDH	OPOS	PLS100	WANDO.항구			100	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+707	KRWND	OPOS	PLS100	WANDO.항구			99	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+708	KRWSN	OPOS	PLS100	WONSAN.항구			102	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+709	KRYEC	OPOS	PLS100	YECHON.항구			105	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+710	KRYOC	OPOS	PLS100	YOCHON.항구			106	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+711	KRYOS	OPOS	PLS100	YOSU.항구			107	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+712	KRZZZ	OPOS	PLS100	KOREA, REPUBLIC OF/O.항구			42	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+713	KUV	OPOS	PLS100	KUNSAN.공항			44	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+714	KROSH	OPOS	PLS100	ONSAN.항구			60	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+715	KROSN	OPOS	PLS100	OSAN.항구			62	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+716	KRPTH	OPOS	PLS100	PYONGTAEK.항구			70	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+717	KRPTK	OPOS	PLS100	PYONGTAEK.항구			71	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+718	KRPUS	OPOS	PLS100	PUSAN.항구			68	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+719	KRBUK	OPOS	PLS100	BUKPYONG.항구			2	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+720	KRCHA	OPOS	PLS100	CHEJU.항구			5	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+721	KRCHF	OPOS	PLS100	CHINHAE APT.항구			9	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+722	KRCHG	OPOS	PLS100	CHANGHANG.항구			3	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+723	KRCJU	OPOS	PLS100	CHEJU APT.항구			7	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+724	KRCMH	OPOS	PLS100	CHUNGMU.항구			12	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+725	KRDAS	OPOS	PLS100	DAESAN (CF TAESAN).항구			14	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+726	KRDBL	OPOS	PLS100	DAEBUL.항구			13	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+727	KRDHH	OPOS	PLS100	DOHGNAE.항구			16	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+728	KRDRS	OPOS	PLS100	DORASAN.항구			17	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+729	KRDSH	OPOS	PLS100	TAESAN.항구			90	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+730	KRGIN	OPOS	PLS100	KYUNGIN.항구			48	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+731	KRGSG	OPOS	PLS100	GOSEONG.항구			21	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+732	KRHIN	OPOS	PLS100	CHINJU.항구			10	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+733	KRHSN	OPOS	PLS100	HWASUN.항구			24	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+734	KRINC	OPOS	PLS100	INCHON.항구			26	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+735	CHF	OPOS	PLS100	JINHAE (EX CHINHAE).공항			30	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+736	CHN	OPOS	PLS100	JEONJU (EX CHONJU).공항			29	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+737	CJJ	OPOS	PLS100	CHEONGJU.공항			8	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+738	CJU	OPOS	PLS100	CHEJU.공항			6	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+739	GMP	OPOS	PLS100	GIMPO AIRPORT.공항			20	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+740	HIN	OPOS	PLS100	CHINJU.공항			11	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+741	ICN	OPOS	PLS100	INCHEON INTERNATIONAL AIRPORT.공항			25	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+742	INC	OPOS	PLS100	INCHON.공항			27	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+743	JDG	OPOS	PLS100	JUNGSEOK AIRPORT.공항			31	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+744	JGE	OPOS	PLS100	GEOJE.공항			18	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+745	KAG	OPOS	PLS100	KANGNUNG.공항			34	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+746	KIH	OPOS	PLS100	GIMHAE INTERNATIONAL AIRPORT.공항			19	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+747	KPO	OPOS	PLS100	POHANG.공항			66	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+748	KRBOR	OPOS	PLS100	BORYOUNG.항구			1	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+749	KRBUH	OPOS	PLS100	KOREA, REPUBLIC OF/O.항구			41	KR  										Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+750	1	ORC	PLS100	수출신고번호			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+751	2	ORC	PLS100	기타번호(까르네)			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+752	3	ORC	PLS100	기타번호(휴대반출)			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+753	4	ORC	PLS100	기타번호(간이수출)			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+754	5	ORC	PLS100	기타번호(기타)			5											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+755	201	ORNC	PLS100	발급신청서 보정			11											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+756	202	ORNC	PLS100	제출서류 보정			12											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+757	203	ORNC	PLS100	기타			13											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+758	301	ORNC	PLS100	신청자격 불충족			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+759	302	ORNC	PLS100	선적 후 1년 경과			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+760	303	ORNC	PLS100	협정관세 미적용 품목			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+761	304	ORNC	PLS100	원산지결정기준 불충족			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+762	305	ORNC	PLS100	발급신청서 기재요령 불일치			5											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+763	306	ORNC	PLS100	발급 신청서류 미 구비			6											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+764	307	ORNC	PLS100	보정요구 불이행(기간경과)			7											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+765	308	ORNC	PLS100	현지확인 거부			8											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+766	309	ORNC	PLS100	고의 또는 허위에 의한 발급신청			9											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+767	310	ORNC	PLS100	기타			10											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+768	401	ORNC	PLS100	정상 승인			14											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+769	402	ORNC	PLS100	직권정정 승인			15											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+770	1	ORNT	PLS100	현지확인 통보			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+771	2	ORNT	PLS100	보정요구 통보			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+772	3	ORNT	PLS100	반려 통보			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+773	4	ORNT	PLS100	승인 통보			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+774	CB	ORPT	PLS100	관세사			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+775	EX	ORPT	PLS100	수출자			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+776	GD	ORPT	PLS100	생산자			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+777	ZZZ	ORPT	PLS100	기타			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+778	A	ORRD	PLS100	발급			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+779	B	ORRD	PLS100	재발급			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+780	C	ORRD	PLS100	보정발급			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+781	D	ORRD	PLS100	정정발급			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+782	18	ORST	PLS100	재발행			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+783	35	ORST	PLS100	수정			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+784	9	ORST	PLS100	원본			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+785	A	ORT	PLS100	신청			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+786	B	ORT	PLS100	선적후발급			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+787	OSP[CS]	OS	PLS100	사급품이므로 전개안함	OSP[CS]		1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+788	OSP_ASSEMBLY	OS	PLS100	사급품이므로 전개안함	OSP_ASSEMBLY		2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+789	OSP_PURCHASING	OS	PLS100	사급품이므로 전개안함	OSP_PURCHASING		3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+790	1	OSS	PLS100	작성중			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+791	2	OSS	PLS100	송신중			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+792	3	OSS	PLS100	오류			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+793	4	OSS	PLS100	접수			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+794	5	OSS	PLS100	보정			5											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+795	6	OSS	PLS100	반려			6											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+796	7	OSS	PLS100	완료			7											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+797	10	OTT	PLS100	선박에 의한 운송			5											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+798	20	OTT	PLS100	철도에 의한 운송			8											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+799	30	OTT	PLS100	차량에 의한 운송			7											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+800	40	OTT	PLS100	항공기에 의한 운송			9											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+801	50	OTT	PLS100	우편물 운송			6											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+802	60	OTT	PLS100	복합운송			4											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+803	70	OTT	PLS100	고정운송설비에 의한 운송			1											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+804	80	OTT	PLS100	내륙수로에 의한 운송			3											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+805	90	OTT	PLS100	기타			2											Y	N	2014-01-02  13:41:41	fta	2014-01-02  13:41:41	fta
+806	A21	PLANT	PLS100	울산공장	Ulsan Plant	울산공장	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+807	A30	PLANT	PLS100	전주공장	jeonju Plant	전주공장	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+808	M	PR	PLS100	수불부단가	MATERIAL Price		2											Y	N	2013-01-24  8:49:19	fta	2013-02-22  13:45:20	fta
+809	S	PR	PLS100	표준단가	standard cost		1											Y	N	2013-01-24  8:49:19	fta	2013-01-24  8:49:19	fta
+810	N	PR	PLS100	없음	none		3											Y	N	2013-01-24  8:49:19	fta	2013-01-24  8:49:19	fta
+811	P	PR	PLS100	구매단가	PO Price		4											Y	N	2013-01-24  8:49:19	fta	2013-01-24  8:49:19	fta
+812	GDI	PT	PLS100	GDI			2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+813	HEV	PT	PLS100	HEV			3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+814	R	PT	PLS100	BSM			4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+815	TAU	PT	PLS100	TAU			5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+816	MA	PT	PLS100	MA			6											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+817	MPI	PT	PLS100	MPI			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+818	GEAR	PT	PLS100	GEAR			7											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+819	00	PU	PLS100	본사		본사	2											Y	Y	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+820	0	RT	PLS100	문자			1											Y	N	2013-12-12  12:15:22	fta	2013-12-12  12:15:22	fta
+821	6	RT	PLS100	숫자			3											Y	N	2013-12-12  12:15:49	fta	2013-12-12  12:15:49	fta
+822	1	RT	PLS100	날짜			2											Y	N	2013-12-12  12:15:36	fta	2013-12-12  12:15:36	fta
+823	MC	SA	PLS100	월마감		월마감	0	0										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+824	YC	SA	PLS100	년마감		년마감	1	1										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+825	MN	SB	PLS100	월중		월중	0	0										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+826	VC	SB	PLS100	가마감		가마감	1	1										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+827	3060	SD	PLS100	CA 해외영업팀	CA 해외영업팀	CA 해외영업팀	1	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+828	3050	SD	PLS100	CA 사업기획팀(사용안함)	CA 사업기획팀(사용안함)	CA 사업기획팀(사용안함)	2	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+829	5030	SD	PLS100	SOLAR 기획팀	SOLAR 기획팀	SOLAR 기획팀	3	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+830	5000	SD	PLS100	신사업 공통	신사업 공통	신사업 공통	4	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+831	3030	SD	PLS100	염소유도체영업팀	염소유도체영업팀	염소유도체영업팀	5	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+832	2060	SD	PLS100	가소제영업팀	가소제영업팀	가소제영업팀	6	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+833	2050	SD	PLS100	PVC 시장개발팀(사용안함)	PVC 시장개발팀(사용안함)	PVC 시장개발팀(사용안함)	7	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+834	3010	SD	PLS100	가성소다영업팀	가성소다영업팀	가성소다영업팀	8	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+835	2080	SD	PLS100	PVC 마케팅팀	PVC 마케팅팀	PVC 마케팅팀	9	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+836	5040	SD	PLS100	SOLAR 사업팀	SOLAR 사업팀	SOLAR 사업팀	10	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+837	5100	SD	PLS100	신사업 Nano사업팀	신사업 Nano사업팀	신사업 Nano사업팀	11	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+838	6020	SD	PLS100	폴리실리콘영업팀	폴리실리콘영업팀	폴리실리콘영업팀	12	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+839	5080	SD	PLS100	신사업 전지재료사업팀	신사업 전지재료사업팀	신사업 전지재료사업팀	13	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+840	5090	SD	PLS100	신사업 Nano기획팀	신사업 Nano기획팀	신사업 Nano기획팀	14	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+841	N100	SD	PLS100	영업팀	영업팀	영업팀	15	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+842	T020	SD	PLS100	FLR  SALES	FLR  SALES	FLR  SALES	16	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+843	10001	SD	PLS100	PE 공통	PE 공통	PE 공통	17	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+844	N200	SD	PLS100	기획팀	기획팀	기획팀	18	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+845	T010	SD	PLS100	ASR/EMP SALES	ASR/EMP SALES	ASR/EMP SALES	19	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+846	1070	SD	PLS100	PO 마케팅팀	PO 마케팅팀	PO 마케팅팀	20	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+847	1060	SD	PLS100	PO 사업기획팀	PO 사업기획팀	PO 사업기획팀	21	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+848	2010	SD	PLS100	경질영업팀	경질영업팀	경질영업팀	22	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+849	2000	SD	PLS100	PVC 공통	PVC 공통	PVC 공통	23	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+850	1050	SD	PLS100	PO 필름영업팀	PO 필름영업팀	PO 필름영업팀	24	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+851	1020	SD	PLS100	PO 코팅영업팀	PO 코팅영업팀	PO 코팅영업팀	25	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+852	1010	SD	PLS100	PO 특수영업팀	PO 특수영업팀	PO 특수영업팀	26	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+853	1040	SD	PLS100	PO EVA영업팀	PO EVA영업팀	PO EVA영업팀	27	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+854	1030	SD	PLS100	PO W&C영업팀	PO W&C영업팀	PO W&C영업팀	28	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+855	9010	SD	PLS100	울산공통	울산공통	울산공통	29	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+856	2020	SD	PLS100	연질영업팀	연질영업팀	연질영업팀	30	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+857	M010	SD	PLS100	Sales Team	Sales Team	Sales Team	31	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+858	2040	SD	PLS100	화성사업기획팀	화성사업기획팀	화성사업기획팀	32	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+859	2030	SD	PLS100	PVC 해외영업팀	PVC 해외영업팀	PVC 해외영업팀	33	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+860	H030	SD	PLS100	Beijing	Beijing	Beijing	34	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+861	9999	SD	PLS100	기타	기타	기타	35	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+862	9020	SD	PLS100	여수공통	여수공통	여수공통	36	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+863	H020	SD	PLS100	Guangzhou	Guangzhou	Guangzhou	37	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+864	H010	SD	PLS100	Shanghai	Shanghai	Shanghai	38	1000										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+865	A	SET	PLS100	평균법	AVERAGE METHOD		1	A:평균법, I:재고회전법										Y	N	2014-03-19  8:26:47	fta	2014-03-19  8:26:47	fta
+866	PROD_SALES	SF	PLS100	수기			2											Y	N	2013-12-30  13:37:07	fta	2013-12-30  13:37:07	fta
+867	SALES	SF	PLS100	매출			1											Y	N	2013-12-30  13:36:51	fta	2013-12-30  13:36:51	fta
+868	2	SI	PLS100	경기도			2											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+869	3	SI	PLS100	경상남도			3											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+870	4	SI	PLS100	경상북도			4											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+871	5	SI	PLS100	광주광역시			5											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+872	6	SI	PLS100	대구광역시			6											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+873	7	SI	PLS100	대전광역시			7											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+874	8	SI	PLS100	부산광역시			8											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+875	9	SI	PLS100	서울특별시			9											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+876	10	SI	PLS100	세종특별자치시			10											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+877	11	SI	PLS100	울산광역시			11											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+878	12	SI	PLS100	인천광역시			12											Y	N	2013-12-23  14:41:53	fta	2014-01-20  16:19:57	fta
+879	13	SI	PLS100	전라남도			13											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+880	14	SI	PLS100	전라북도			14											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+881	15	SI	PLS100	제주특별자치도			15											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+882	16	SI	PLS100	충청남도			16											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+883	17	SI	PLS100	충청북도			17											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+884	1	SI	PLS100	강원도			1											Y	N	2013-12-23  14:41:53	fta	2013-12-23  14:41:53	fta
+885	2	SM	PLS100	미발급		미발급	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+886	1	SM	PLS100	사급요청	Request	사급요청	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+887	3	SM	PLS100	발급완료		발급완료	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+888	S	SR	PLS100	송신	SEND	송신	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+889	R	SR	PLS100	수신	RECIVE		2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+890	0	SS	PLS100	작성중	Incomplete	작성중	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+891	3	SS	PLS100	재작성요청	Rewrite the Request	재작성요청	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+892	4	SS	PLS100	작성완료	Submitted	제출완료	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+893	BD	ST	PLS100	BD	BD	BD	1	N										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+894	BU	ST	PLS100	BU	BU	BU	2	N					0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+895	CC	ST	PLS100	CC	CC	CC	3	N					0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+896	CC+BD	ST	PLS100	CC+BD	CC+BD	CC+BD	4	Y					0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+897	CC+BU	ST	PLS100	CC+BU	CC+BU	CC+BU	5	Y					0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+898	CC+MC	ST	PLS100	CC+MC	CC+MC	CC+MC	6	Y					0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+899	CTH	ST	PLS100	CTH	CTH	CTH	7	Y					0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+900	CTH+BD	ST	PLS100	CTH+BD	CTH+BD	CTH+BD	8	Y					0	0	0	0	0	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+901	WO	ST	PLS100	WO	WO	WO	18											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+902	B55	ST	PLS100	B55	B55	B55	1	N										Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+903	CTH+BU	ST	PLS100	CTH+BU	CTH+BU	CTH+BU	9											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+904	CTH+MC	ST	PLS100	CTH+MC	CTH+MC	CTH+MC	10											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+905	CTSH	ST	PLS100	CTSH	CTSH	CTSH	11											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+906	CTSH+BD	ST	PLS100	CTSH+BD	CTSH+BD	CTSH+BD	12											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+907	CTSH+BU	ST	PLS100	CTSH+BU	CTSH+BU	CTSH+BU	13											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+908	MC	ST	PLS100	MC	MC	MC	14											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+909	NC	ST	PLS100	NC	NC	NC	16											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+910	SP	ST	PLS100	SP	SP	SP	17											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+911	A	SU	PLS100	첨부	ATTACH	첨부	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+912	S	SU	PLS100	시스템	SYSTEM	시스템	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+913	X	SU	PLS100	미첨부	NOT ATTACH	미첨부	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+914	change	US	PLS100	변경	Change	변경	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+915	equal	US	PLS100	동일	Equal	동일	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+916	R	VR	PLS100	발급요청			1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+917	C	VR	PLS100	발급완료			2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+918	F	VR	PLS100	발급가능			3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+919	T	VR	PLS100	임시저장			4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+920	IMP	WT	PLS100	외자		외자	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+921	FACT	WT	PLS100	공장간 대체		공장간 대체	3											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+922	DOM	WT	PLS100	내자		내자	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+923	RKWA	WT	PLS100	위탁		위탁	4											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+924	ETC	WT	PLS100	기타		기타	5											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+925	Y	YN	PLS100	Yes	Yes	Yes	1											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+926	N	YN	PLS100	No	No	No	2											Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
+927	AA	ZQ	PLS100	테스트	AA	테스트	1	1	2	3	4	5	11	22	33	44	55	Y	N	2013-10-28  18:37:12	fta	2013-10-28  18:37:12	fta
