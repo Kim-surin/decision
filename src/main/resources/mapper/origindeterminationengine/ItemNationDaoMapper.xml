@@ -2,24 +2,14 @@
 
 <mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ItemNationDao">
 	<!--
-		레거시 FC01_GET_ITEM_NATION 의 PO_LEDGER/EXT_COO_CERTIFY_MST/EXT_COO_CERTIFY_DTL 조회 이관.
-		ItemOriginRateDaoMapper.xml 의 selectNonCertifiedOriginSummary 와 조인 구조(ECM/ECD/COO_DIVISION_V,
-		DOCUMENT_TYPE/APPLY_TYPE 에 따른 DIVISION_CODE CASE)가 동일하다.
-		원본은 P_ASSETS_TYPE 이 'P'/'H' 일 때만 ECD.HS_CODE 조건을 자기 자신으로 바꿔치기(사실상 조건
-		무력화)하는 분기가 있었지만, 이 함수의 유일한 호출부(COO_DECISION, FTA_CODE='PKRRC')는
-		P_ASSETS_TYPE 을 넘기지 않아(NULL) 항상 ELSE 분기(HS_CODE = 파라미터 값)로 귀결된다. 그 분기만
-		이관하고 P_ASSETS_TYPE 자체는 옮기지 않았다(호출부 조건에서 도달 불가능한 경로 생략).
-		FTA_CODE 는 원본처럼 'PKRRC' 로 하드코딩한다(원본도 파라미터를 쓰지 않고 하드코딩).
+		FC01_GET_ITEM_NATION 의 PO_LEDGER/EXT_COO_CERTIFY_MST/EXT_COO_CERTIFY_DTL 조회 이관
+		(ItemOriginRateDaoMapper.xml selectNonCertifiedOriginSummary 와 조인 구조 동일). 이 함수의 유일한
+		호출부(COO_DECISION, FTA_CODE='PKRRC')는 P_ASSETS_TYPE 을 넘기지 않아 원본의 'P'/'H' 분기는
+		도달 불가능해 이관하지 않았다. FTA_CODE 는 원본처럼 'PKRRC' 로 하드코딩한다.
 
-		[버그 수정 이력] ECM.DIVISION_CODE 조건은 원래 DOCUMENT_TYPE/APPLY_TYPE 값에 따라 비교 대상을
-		고르는 CASE WHEN 이었다(원본 PL/SQL 도 동일 — DOCUMENT_TYPE='D' AND APPLY_TYPE='A' 분기는
-		ECM.DIVISION_CODE = ECM.DIVISION_CODE 로 자기 자신과 비교하는데, 이는 "확인서 전사 적용"일 때
-		DIVISION_CODE 제약이 없어야 한다는 의도된 무조건-참 설계다). 이번 세션에서 "조인/WHERE 조건에
-		컬럼을 CASE 로 비교"하는 패턴이 selectMaterialCandidates 등에서 실제로 PostgreSQL 플래너를
-		오작동시켜 특정 파라미터 조합에서만 수 초~수 분씩 튀는 사례를 여러 번 확인해서, 이 쿼리도 같은
-		위험을 예방적으로 제거했다 — CASE 를 DOCUMENT_TYPE/APPLY_TYPE 값으로 분기하는 OR-of-AND 로
-		풀어써서 ECM.DIVISION_CODE 비교가 항상 리터럴 컬럼 비교(또는 조건 자체가 없음)가 되도록
-		했다(원본 CASE 와 동일한 3가지 분기, 동일한 무조건-참 의미를 그대로 보존).
+		[버그 수정 이력] ECM.DIVISION_CODE 의 CASE WHEN 이 PostgreSQL 플래너를 오작동시켜(selectMaterialCandidates
+		등과 동일 이력) DOCUMENT_TYPE/APPLY_TYPE 값으로 분기하는 OR-of-AND 로 풀어썼다(원본과 동일한 3가지
+		분기, 동일한 무조건-참 의미 보존).
 	-->
 	<select id="selectCooNation" resultType="string">
 		SELECT CASE WHEN COUNT(*) > 1 THEN 'TT' ELSE MAX(COO_NATION) END
@@ -56,14 +46,9 @@
 		        AND    PL.WAREHOUSING_DATE BETWEEN #{fromDate} AND #{toDate}) X
 	</select>
 	<!--
-		selectCooNation 의 배치 버전. determineOrigin() 1회 호출에서 PKRRC 후보로 모인 distinct
-		(companyCode,itemCode,hsCode) 조합마다 조회구간(fromDate/toDate)이 다를 수 있어(자재별 수불부
-		데이터 기준으로 ItemNationService 가 순수 Java 로 미리 계산) 요청 1건씩 통째로 받는다.
-
-		selectMaterialCandidates 처럼 ORDER BY/FETCH FIRST 로 "여러 행 중 1건"을 고르는 구조가 아니라
-		COUNT/MAX 집계(GROUP BY 없음, 항상 정확히 1행)라서, LATERAL 안에 ORDER BY CASE 류를 넣을 필요가
-		전혀 없다 — 이 세션에서 반복된 "LATERAL 안에 ORDER BY CASE/OR" 플래너 회귀 패턴이 애초에 적용될
-		여지가 없는 안전한 배치화다.
+		selectCooNation 의 배치 버전. distinct (companyCode,itemCode,hsCode) 조합마다 조회구간이 다를 수
+		있어 요청 1건씩 통째로 받는다. COUNT/MAX 집계(GROUP BY 없음, 항상 정확히 1행)라 LATERAL 안에
+		ORDER BY CASE 가 필요 없어 플래너 회귀 위험이 없는 안전한 배치화다.
 	-->
 	<select id="selectCooNationBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.CooNationBatchResult">
 		SELECT V.REQ_KEY AS reqKey

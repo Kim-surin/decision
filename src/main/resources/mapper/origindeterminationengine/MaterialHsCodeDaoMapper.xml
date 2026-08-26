@@ -39,19 +39,12 @@
 	</select>
 
 	<!--
-		selectHsCodeCandidates 의 배치 버전. 같은 제품이 FTA_CODE 후보 수만큼(3-2단계, salesLines ×
-		ftaMasters) 반복 조회되므로 요청받은 조합 전체를 UNION ALL 파생 테이블(V)로 한 번에 던진다.
-		LATERAL 서브쿼리 본문은 selectHsCodeCandidates 와 완전히 동일한 조인 구조/순서를 그대로 옮기고
-		바인딩 소스만 V 의 컬럼으로 바꿨다 — 원본이 우선순위 조인 사이의 동점(같은 키에 여러 행이
-		매칭되는 경우)을 명시적 정렬 없이 FETCH FIRST 1 ROW ONLY 로만 끊어내던 동작(어느 행이 선택될지
-		DB 실행계획에 의존)까지 그대로 보존한다.
+		selectHsCodeCandidates 의 배치 버전. FTA_CODE 후보 수만큼 반복 조회되던 것을 요청 조합 전체를
+		UNION ALL 파생 테이블(V)로 던진다. LATERAL 서브쿼리 본문은 단건 쿼리와 동일한 조인 구조를 유지해,
+		동점 시 FETCH FIRST 1 ROW ONLY 로만 끊어내는 동작(DB 실행계획 의존)까지 그대로 보존한다.
 
-		REQ_BASE_DATE(원본 baseDate, null 가능)와 BASE_DATE(HsCodeCriteria#getResolvedBaseDate, null이면
-		오늘 날짜로 치환된 값)를 별도 컬럼으로 나눠 받는다 — HISTORY_ITEM_HS_CODE 조인의 BETWEEN 비교에는
-		실제 조회에 쓰인 BASE_DATE 가 필요하지만, 요청을 다시 묶는 키(reqBaseDate)는 호출자
-		(MaterialHsCodeService#prefetchHsCode/CreateFcrService#resolveHsCodeCached)가 원래 넘긴 원본 baseDate
-		그대로여야 캐시 키가 어긋나지 않는다(수출 분기는 baseDate 를 의도적으로 null 로 넘긴다 —
-		MaterialHsCodeService 클래스의 "원본 결함 재현" 관련 주석 참고).
+		REQ_BASE_DATE(원본 baseDate, null 가능)와 BASE_DATE(치환된 값)를 별도 컬럼으로 나눠 받는다 —
+		BETWEEN 비교엔 치환된 BASE_DATE 가 필요하지만 요청 재매칭 키는 원본 baseDate 그대로여야 한다.
 	-->
 	<select id="selectHsCodeCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeBatchResult">
 		SELECT V.COMPANY_CODE   AS reqCompanyCode

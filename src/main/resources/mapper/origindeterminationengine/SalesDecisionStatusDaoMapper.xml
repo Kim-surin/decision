@@ -4,11 +4,9 @@
 
 	<!--
 		===================== 5. 원산지판정 (판정대상 1건 처리) =====================
-		원본의 "SALES_DTL.DECISION_YN='Y' 마킹 -> 그 값을 다시 조회해 스코프 판단" 2단계 과정은
-		제거했다. 판정 대상 제품 스코프는 CreateFcrService/OriginDeterminationService 호출 시 넘긴
-		productCodes 파라미터로 이미 결정되며, 아래 마무리 갱신 쿼리들도 DECISION_YN 조건 대신
-		productCodes(null 이면 salesNo 전체 제품)로 스코프를 맞춘다. DECISION_YN 컬럼은 다른
-		화면/리포트도 읽지 않는 것으로 확인되어 이 값에 더 이상 의미를 두지 않는다.
+		원본의 "SALES_DTL.DECISION_YN='Y' 마킹 -> 재조회해 스코프 판단" 2단계는 제거했다. 판정 대상
+		제품 스코프는 호출 시 넘긴 productCodes 파라미터로 이미 결정되며, 아래 갱신 쿼리들도 DECISION_YN
+		대신 productCodes(null 이면 salesNo 전체 제품)로 스코프를 맞춘다.
 	-->
 
 	<update id="updateSalesMstDecisionComplete">
