@@ -3,12 +3,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 import java.math.BigDecimal;
 
 /**
- * 레거시 FCR_INFO_TEMP(원산지판정용 임시 워킹테이블) 한 행.
- *
- * 원본은 Oracle GLOBAL TEMPORARY TABLE 로, 매출 1건(FM_LIST) 판정을 시작할 때 FCR_DTL(BOM 소요량)
- * 에서 INSERT 로 적재한 뒤 판정 로직 전체(배제기준/CTC/RVC/RCEP 등)가 이 테이블을 수십 차례 반복 조회한다.
- * Java 이관에서는 이 테이블을 그대로 옮기지 않고, 매출 1건당 한 번만 조회해 이 DTO 리스트로 메모리에
- * 적재한 뒤 이후의 모든 판정 로직이 스트림 연산으로 처리하도록 설계했다(반복 DB 호출 제거).
+ * 원산지판정용 워킹데이터(BOM 소요량 기준) 한 행. 매출 1건당 한 번만 조회해 이 DTO 리스트로 메모리에
+ * 적재한 뒤 판정 로직 전체(배제기준/CTC/RVC/RCEP 등)가 스트림 연산으로 처리한다(반복 DB 호출 제거).
  */
 public class MaterialOriginRow {
 

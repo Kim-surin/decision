@@ -3,12 +3,9 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 import java.math.BigDecimal;
 
 /**
- * 레거시 PKG99_COO_DECISION 패키지 전역변수 VG_FRD_REC(FCR_RESULT%ROWTYPE) 대체 객체.
- *
- * 원본은 패키지 레벨 전역변수라 하나의 판정 룰(FTA_RULE 한 건) 처리 동안 여러 프로시저
- * (EXCLUTION_RULE_DECISION → COO_DECISION_FOR_CTC/RVC → GET_RCEP_* → INSERT_FRD_PROCESS)가
- * 이 값을 이어받아 채워나간다. Java 에서는 {@link com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationContext}
- * 가 들고 있는 인스턴스 필드로 대체해 판정 1건(스레드) 단위로 격리시킨다(동시성 안전).
+ * 판정 룰(FTA_RULE) 1건 처리 동안 예외판정/세번변경기준/부가가치기준/RCEP 단계가 이어받아 채워나가는
+ * FCR_RESULT 행 하나. {@link com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationContext}
+ * 가 판정 1건 단위로 들고 있어 동시성 안전하다.
  */
 public class OriginDeterminationResult {
 
@@ -364,12 +361,7 @@ public class OriginDeterminationResult {
 		this.rcepCooNation = rcepCooNation;
 	}
 
-	/**
-	 * 현재 필드값을 그대로 복사한 새 인스턴스를 만든다. 이 객체는 판정 룰 1건 처리마다 같은 인스턴스가
-	 * 재사용되며(원본 VG_FRD_REC 전역변수 대체) {@link #resetForNextRule()} 로 매 룰마다 초기화되므로,
-	 * INSERT 를 즉시 실행하지 않고 여러 건 모았다가 배치로 저장하려면(OriginDeterminationSupportService
-	 * 참고) reset 되기 전에 이렇게 스냅샷을 떠 둬야 한다.
-	 */
+	/** 현재 필드값의 스냅샷 복사본을 만든다. 이 인스턴스는 룰마다 재사용/초기화되므로 배치 저장 전 떠둬야 한다. */
 	public OriginDeterminationResult copy() {
 		OriginDeterminationResult copy = new OriginDeterminationResult();
 		copy.salesNo = this.salesNo;
@@ -414,10 +406,7 @@ public class OriginDeterminationResult {
 		return copy;
 	}
 
-	/**
-	 * 레거시 INSERT_FRD_PROCESS 말미의 VG_FRD_REC 필드 초기화 블록을 그대로 이관.
-	 * INSERT 직후 다음 룰 판정을 위해 상태값만 남기고 모두 초기화한다(STATUS='N').
-	 */
+	/** 다음 룰 판정을 위해 필드를 모두 초기화한다(STATUS='N'). */
 	public void resetForNextRule() {
 		this.salesNo = null;
 		this.salesSeq = 0; // 다음 룰 처리 직전에 FM_LIST.SALES_SEQ 로 재설정되므로 0은 실제로 읽히지 않는다
