@@ -303,10 +303,10 @@
 
 		// 수출은 "일괄 원산지 판정"만 제공하고, 특정 매출번호 1건만 다시 판정하는 "개별 원산지 판정"은
 		// 제공하지 않는다(내수처럼 매출년월/고객사/플랜트/품번 단위로 좁혀 재판정할 그룹 개념이 없음)
+		// TODO: "개별 원산지 판정" 버튼 임시 비노출 처리(2026-08-26). 다시 노출하려면 아래
+		// this.mode !== 'domestic' 조건으로 되돌리면 됨
 		this.applyModeVisibility = function() {
-			if (this.mode !== 'domestic') {
-				$('#originDetermination_popup_individualBtn').hide();
-			}
+			$('#originDetermination_popup_individualBtn').hide();
 		};
 
 		// 좌측 사이드바 렌더링 (매출년월/품번/품명) - this.groupedItems(품번+품명 단위) 기준.
