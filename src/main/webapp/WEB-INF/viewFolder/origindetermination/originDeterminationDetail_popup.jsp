@@ -75,6 +75,9 @@
 		text-align: center;
 		padding: 40px 0;
 	}
+	.origin-detail-line-row {
+		cursor: pointer;
+	}
 	.origin-result-row {
 		cursor: pointer;
 	}
@@ -179,8 +182,15 @@
 		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
 		this.mode = 'domestic';
 
+		// 내수는 좌측 항목 1건 = SALES_DTL 1라인(SALES_SEQ 고정)이라 salesNo+salesSeq로 유일하지만,
+		// 수출은 좌측 항목 1건 = SALES_NO(송장) 전체라 그 안에 여러 SALES_SEQ(품목)가 있을 수 있다.
+		// 그래서 수출은 salesSeq를 무시하고 SALES_NO만으로 키를 만들어, 그 SALES_NO의 모든 라인을
+		// 한 좌측 항목 아래 함께 묶는다.
 		this.buildKey = function(salesNo, salesSeq) {
-			return salesNo + "_" + salesSeq;
+			if (this.mode === 'domestic') {
+				return salesNo + "_" + salesSeq;
+			}
+			return salesNo + "_ALL";
 		};
 
 		// KpackageOBJ.ajax.doSubmit는 통신 실패 시 항상 네이티브 alert()를 호출하는데,
@@ -304,7 +314,10 @@
 					self.detailMap = {};
 					list.forEach(function(row) {
 						var key = self.buildKey(row.sales_no, row.sales_seq);
-						self.detailMap[key] = row;
+						if (!self.detailMap[key]) {
+							self.detailMap[key] = [];
+						}
+						self.detailMap[key].push(row);
 					});
 
 					if (self.datas.length > 0) {
@@ -324,12 +337,14 @@
 			$('#originDetermination_popup_sidebar .list-group-item').removeClass('active');
 			$('#originDetermination_popup_sidebar .list-group-item[data-key="' + key + '"]').addClass('active');
 
-			this.renderDetail(this.detailMap[key]);
+			var details = this.detailMap[key] || [];
+			this.renderDetail(details);
 
-			// 판정완료(status=4) 건만 판정결과/판정 상세내용 섹션을 보여줌
+			// 판정완료(status=4) 건만 판정결과/판정 상세내용 섹션을 보여줌. 판정 품목이 여러 라인(수출)이면
+			// 일단 첫 라인 기준으로 보여주고, 다른 라인을 클릭하면 selectDetailLine이 그 라인으로 바꾼다.
 			var row = this.findRowByKey(key);
-			if (row && this.isDetermined(row.status)) {
-				this.retrieveResultList(row);
+			if (details.length > 0 && row && this.isDetermined(row.status)) {
+				this.selectDetailLine(details[0]);
 			} else {
 				this.hideResultSections();
 			}
@@ -352,28 +367,55 @@
 			$('#originDetermination_popup_resultSection').hide();
 		};
 
-		this.renderDetail = function(detail) {
+		// details: 판정 품목 라인 목록. 내수는 좌측 항목당 항상 1건, 수출은 그 SALES_NO에 속한
+		// 전체 SALES_DTL 라인(1건 이상)이 올 수 있다 - 여러 건이면 라인을 클릭해서 그 라인 기준
+		// 판정결과를 볼 수 있게 한다.
+		this.renderDetail = function(details) {
 			var $body = $('#originDetermination_popup_detailBody');
 			$body.empty();
 
-			if (!detail) {
+			if (!details || details.length === 0) {
 				$body.append('<tr><td colspan="7" class="origin-detail-empty">상세 정보가 없습니다.</td></tr>');
 				return;
 			}
 
-			var $row = $(
-				'<tr>' +
-					'<td>' + (detail.product_code || '') + '</td>' +
-					'<td>' + (detail.product_name || '') + '</td>' +
-					'<td>' + (detail.hs_code || '') + '</td>' +
-					'<td class="text-end">' + (detail.quantity || '') + '</td>' +
-					'<td>' + (detail.unit || '') + '</td>' +
-					'<td class="text-end">' + (detail.unit_price || '') + '</td>' +
-					'<td class="text-end">' + (detail.amount || '') + '</td>' +
-				'</tr>'
-			);
+			var self = this;
+			var selectable = details.length > 1;
 
-			$body.append($row);
+			details.forEach(function(detail, index) {
+				var $row = $(
+					'<tr' + (selectable ? ' class="origin-detail-line-row"' : '') + '>' +
+						'<td>' + (detail.product_code || '') + '</td>' +
+						'<td>' + (detail.product_name || '') + '</td>' +
+						'<td>' + (detail.hs_code || '') + '</td>' +
+						'<td class="text-end">' + (detail.quantity || '') + '</td>' +
+						'<td>' + (detail.unit || '') + '</td>' +
+						'<td class="text-end">' + (detail.unit_price || '') + '</td>' +
+						'<td class="text-end">' + (detail.amount || '') + '</td>' +
+					'</tr>'
+				);
+
+				if (selectable) {
+					if (index === 0) {
+						$row.addClass('table-active');
+					}
+
+					$row.on('click', function() {
+						$body.find('tr').removeClass('table-active');
+						$row.addClass('table-active');
+						self.selectDetailLine(detail);
+					});
+				}
+
+				$body.append($row);
+			});
+		};
+
+		// 판정 품목의 특정 라인(SALES_NO+SALES_SEQ) 기준으로 판정결과를 조회한다.
+		// 판정결과(FCR_MST)는 SALES_SEQ 단위라서, 수출처럼 한 좌측 항목에 라인이 여러 건이면
+		// 어느 라인 기준인지 항상 명시해야 한다.
+		this.selectDetailLine = function(detail) {
+			this.retrieveResultList({ sales_no: detail.sales_no, sales_seq: detail.sales_seq });
 		};
 
 		// 판정완료 건의 판정결과(협정별)와 판정 상세내용(기준별)을 한 번에 조회.
@@ -617,9 +659,8 @@
 				function(response) {
 					var list = (response && response.value) ? response.value : [];
 
-					list.forEach(function(r) {
-						self.detailMap[self.buildKey(r.sales_no, r.sales_seq)] = r;
-					});
+					// key(salesNo+salesSeq 또는 salesNo_ALL)에 해당하는 라인 전체를 최신 값으로 교체
+					self.detailMap[key] = list;
 
 					if (self.selectedKey === key) {
 						self.renderDetail(self.detailMap[key]);
