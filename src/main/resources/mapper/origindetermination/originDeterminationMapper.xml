@@ -144,13 +144,13 @@
        		, SD.AMOUNT
        FROM (
        <foreach collection="datas" item="d" separator=" UNION ALL ">
-       		SELECT #{d.sales_no} AS SALES_NO, #{d.division_code} AS DIVISION_CODE, #{d.sales_seq} AS SALES_SEQ
+       		SELECT #{d.sales_no} AS SALES_NO, #{d.division_code} AS DIVISION_CODE, #{d.sales_seq}::numeric AS SALES_SEQ
        </foreach>
        ) KEYS
        INNER JOIN SALES_MST SM
        		ON SM.COMPANY_CODE = #{company_code}
        		AND SM.SALES_NO = KEYS.SALES_NO
-       		AND (KEYS.DIVISION_CODE IS NULL OR SM.DIVISION_CODE = KEYS.DIVISION_CODE)
+       		AND SM.DIVISION_CODE = KEYS.DIVISION_CODE
        INNER JOIN SALES_DTL SD
        		ON SM.COMPANY_CODE = SD.COMPANY_CODE
        		AND SM.SALES_NO = SD.SALES_NO
