@@ -147,10 +147,15 @@
        		ON IM.COMPANY_CODE = SD.COMPANY_CODE
        		AND IM.ITEM_CODE = SD.PRODUCT_CODE
        WHERE SM.COMPANY_CODE = #{company_code}
-       AND (SM.SALES_NO, SD.SALES_SEQ) IN
-       <foreach collection="datas" item="d" open="(" separator="," close=")">
-       		(#{d.sales_no}, #{d.sales_seq})
+       AND (
+       <foreach collection="datas" item="d" separator=" OR ">
+       		(SM.SALES_NO = #{d.sales_no}
+       		<if test="d.sales_seq != null">
+       		AND SD.SALES_SEQ = #{d.sales_seq}
+       		</if>
+       		)
        </foreach>
+       )
     </select>
 
     <!-- 판정완료(status=4) 건의 판정결과: 해당 품목에 적용되는 협정(FTA)별 결과 목록 -->
