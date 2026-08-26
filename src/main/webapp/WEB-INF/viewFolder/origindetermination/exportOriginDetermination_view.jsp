@@ -143,7 +143,8 @@
 						
 						this.STATUS_NAME_STYLE = {
 							'0' : 'origin-determination-non',
-							'1' : 'origin-determination-fail'	
+							'1' : 'origin-determination-non',
+							'5' : 'origin-determination-fail'	
 						}
 
 						this.Initialize_viewObject = function () {

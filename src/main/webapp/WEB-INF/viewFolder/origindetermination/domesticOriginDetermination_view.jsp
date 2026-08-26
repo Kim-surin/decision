@@ -158,7 +158,8 @@
 						
 						this.STATUS_NAME_STYLE = {
 							'0' : 'origin-determination-non',
-							'1' : 'origin-determination-fail'	
+							'1' : 'origin-determination-non',
+							'5' : 'origin-determination-fail'	
 						}
 
 						this.Initialize_viewObject = function () {
@@ -192,7 +193,7 @@
 
 							const gridProps = {
 								showRowCheckColumn: true,     	// 최좌측에 행 선택 체크박스 컬럼 생성
-								showRowAllCheckBox: true,     	// 헤더에 전체 선택 체크박스 표시
+								/*showRowAllCheckBox: true,     	// 헤더에 전체 선택 체크박스 표시*/
 								rowNumColumnWidth: 50,			// 행번호 너비
 								usePaging: true,
 								pageRowCount: 20,
