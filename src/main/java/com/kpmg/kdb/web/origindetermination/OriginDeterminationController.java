@@ -17,6 +17,7 @@ import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.MonthlyOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
@@ -151,6 +152,22 @@ public class OriginDeterminationController extends GenericController {
 
 		try {
 			result = originDeterminationService.executeExportOriginDetermination(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/executeMonthlyOriginDetermination")
+	@ResponseBody
+	public Result executeMonthlyOriginDetermination(@RequestBody MonthlyOriginDeterminationExecuteRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.executeMonthlyOriginDetermination(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

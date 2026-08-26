@@ -101,6 +101,9 @@
 						    	<div class="col-12">
 									<div class="frame-wrap">
 									    <div class="demo" style="text-align: right;">
+									        <button type="button" class="btn btn-sm btn-primary waves-effect waves-themed" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.executeMonthlyOriginDetermination();">
+									            월 판정
+									        </button>
 									        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.sidepanel.open('aaaa','/DOMESTIC_ORIGIN_DETERMINATION_RESULT_pop01', '1200px');">
 									            원산지 판정
 									        </button>
@@ -180,6 +183,47 @@
 						KpackageOBJ.auiGrid.retrieve(DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION_RESULT, "/origin/compliance/origindetermination/originDeterminationResultList", params);
 					}
 					
+					// 검색 조건의 매출일자(from_date~to_date) 범위가 걸치는 매출년월 전체를 대상으로
+					// 월 판정(내수+수출 통합)을 진행한다. 대상 회사는 세션값이 서버에서 자동 주입된다.
+					this.executeMonthlyOriginDetermination = function () {
+						var fromDate = KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "from_date").replace(/-/gi, "");
+						var toDate = KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION_RESULT-form", "to_date").replace(/-/gi, "");
+
+						if (!fromDate || !toDate) {
+							KpackageOBJ.object.alert("매출일자(From/To)를 입력하세요.");
+							return;
+						}
+
+						if (!confirm("매출일자 " + fromDate + " ~ " + toDate + " 범위의 매출년월을 대상으로 월 판정을 진행하시겠습니까?")) {
+							return;
+						}
+
+						var params = {
+							"from_date": fromDate,
+							"to_date": toDate
+						};
+
+						KpackageOBJ.ajax.doSubmit("/origin/compliance/origindetermination/executeMonthlyOriginDetermination", params, DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.executeMonthlyOriginDetermination_CallBack);
+					}
+
+					this.executeMonthlyOriginDetermination_CallBack = function (res) {
+						if (!res || !res.success) {
+							KpackageOBJ.object.alert("월 판정 실행 중 오류가 발생했습니다.");
+							return;
+						}
+
+						var value = res.value || {};
+						var failedCount = value.failedTargets ? value.failedTargets.length : 0;
+						var message = (value.groupCount || 0) + "건 월 판정을 진행했습니다.";
+
+						if (failedCount > 0) {
+							message += " (실패 " + failedCount + "건)";
+						}
+
+						KpackageOBJ.object.alert(message);
+						DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.retrieve_GridData();
+					}
+
 					// 이 화면은 내수(EXPORT_FLAG='D')/수출(EXPORT_FLAG='E') 데이터가 함께 조회되므로,
 					// 클릭한 행의 판매구분에 맞춰 팝업이 내수/수출 판정 API를 호출하도록 mode를 함께 넘긴다
 					this.retrive_DetailData = function (data) {

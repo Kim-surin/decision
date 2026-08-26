@@ -1,5 +1,8 @@
 package com.kpmg.kdb.web.origindetermination;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -12,6 +15,7 @@ import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.MonthlyOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultDetailResponseDto;
@@ -23,6 +27,7 @@ import com.kpmg.kdb.web.origindeterminationengine.BulkDecisionResult;
 import com.kpmg.kdb.web.origindeterminationengine.DomesticBulkDecisionService;
 import com.kpmg.kdb.web.origindeterminationengine.ExportBulkDecisionService;
 import com.kpmg.kdb.web.origindeterminationengine.ExportDecisionTarget;
+import com.kpmg.kdb.web.origindeterminationengine.MonthlyBulkDecisionService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
@@ -34,6 +39,10 @@ public class OriginDeterminationService extends GeneralService {
 
 	@Autowired
 	private ExportBulkDecisionService exportBulkDecisionService;
+
+	@Autowired
+	private MonthlyBulkDecisionService monthlyBulkDecisionService;
+
 	public Result retrieveDomesticOriginDetermination(OriginDeterminationRequestDto param) throws Exception {
 		Result result = new Result();
 
@@ -212,5 +221,55 @@ public class OriginDeterminationService extends GeneralService {
 		}
 
 		return result;
+	}
+
+	/**
+	 * 검색 조건의 매출일자(from_date~to_date) 범위가 걸치는 매출년월마다 {@link MonthlyBulkDecisionService}
+	 * 를 호출해 월 판정을 진행한다. companyCode는 BaseRequestDto 공통 처리로 세션값이 자동 주입된다.
+	 */
+	public Result executeMonthlyOriginDetermination(MonthlyOriginDeterminationExecuteRequestDto param) throws Exception {
+		Result result = new Result();
+
+		try {
+			int groupCount = 0;
+			List<SalesTarget> targets = new ArrayList<>();
+			List<SalesTarget> failedTargets = new ArrayList<>();
+
+			for (String yyyymm : resolveYyyymmRange(param.getFrom_date(), param.getTo_date())) {
+				VirtualSalesGenerationParams filter = new VirtualSalesGenerationParams();
+				filter.setCompanyCode(param.getCompany_code());
+				filter.setYyyymmdd(yyyymm);
+
+				BulkDecisionResult monthResult = monthlyBulkDecisionService.run(filter);
+
+				groupCount += monthResult.getGroupCount();
+				targets.addAll(monthResult.getTargets());
+				failedTargets.addAll(monthResult.getFailedTargets());
+			}
+
+			result.setValue(new BulkDecisionResult(groupCount, targets, failedTargets));
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	/** fromDate~toDate(YYYYMMDD)가 걸치는 매출년월(YYYYMM) 목록을 오름차순으로 만든다. */
+	private List<String> resolveYyyymmRange(String fromDate, String toDate) {
+		LocalDate from = LocalDate.parse(fromDate, DateTimeFormatter.BASIC_ISO_DATE);
+		LocalDate to = LocalDate.parse(toDate, DateTimeFormatter.BASIC_ISO_DATE);
+
+		List<String> yyyymmList = new ArrayList<>();
+		YearMonth cursor = YearMonth.from(from);
+		YearMonth last = YearMonth.from(to);
+		while (!cursor.isAfter(last)) {
+			yyyymmList.add(cursor.format(DateTimeFormatter.ofPattern("yyyyMM")));
+			cursor = cursor.plusMonths(1);
+		}
+		return yyyymmList;
 	}
 }
