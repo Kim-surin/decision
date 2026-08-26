@@ -3,10 +3,9 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 import java.math.BigDecimal;
 
 /**
- * {@link OriginCriteriaBatchRequest} 1건에 대응하는 배치 조회 결과 행. 여러 요청을 한 쿼리로 묶어
- * 보내므로, 어느 요청에서 나온 행인지 구분하려면 요청 키(reqHsCode/reqFtaCode/reqHsCodeSubCategory)를
- * 같이 돌려받아야 한다 — {@link OriginCriteria#getHsCode()} 는 매칭된 룰의 HS코드(요청보다 짧은
- * 접두어일 수 있음)라 그룹핑 키로 쓸 수 없다.
+ * {@link OriginCriteriaBatchRequest} 1건에 대응하는 배치 조회 결과 행. 요청 키(reqHsCode/reqFtaCode/
+ * reqHsCodeSubCategory)를 같이 돌려받아야 한다 — {@link OriginCriteria#getHsCode()} 는 매칭된 룰의
+ * HS코드(요청보다 짧은 접두어일 수 있음)라 그룹핑 키로 쓸 수 없다.
  */
 public class OriginCriteriaBatchResult {
 

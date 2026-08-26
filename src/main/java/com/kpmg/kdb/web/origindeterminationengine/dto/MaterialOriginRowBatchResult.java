@@ -3,10 +3,9 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 import java.math.BigDecimal;
 
 /**
- * {@link MaterialOriginRowsRequest} 1건(FM_LIST 행 1건)에 대응하는 배치 조회 결과 행. 원본 FCR_INFO_TEMP
- * 적재처럼 요청 1건당 0~N 행(BOM 자재 수만큼)이 나올 수 있어, 매칭되는 자재가 하나도 없으면 그 요청은
- * 결과에 아예 나타나지 않는다(단건 조회가 빈 리스트를 반환하던 것과 동일 — 호출자가 Map 조회 결과 없으면
- * 빈 리스트로 처리).
+ * {@link MaterialOriginRowsRequest} 1건(FM_LIST 행 1건)에 대응하는 배치 조회 결과 행. 요청 1건당 0~N 행
+ * (BOM 자재 수만큼)이 나올 수 있어, 매칭 자재가 없으면 그 요청은 결과에 아예 나타나지 않는다(호출자는
+ * Map 조회 결과 없으면 빈 리스트로 처리).
  */
 public class MaterialOriginRowBatchResult {
 

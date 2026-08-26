@@ -3,10 +3,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 import java.math.BigDecimal;
 
 /**
- * {@link MaterialCandidatesRequest} 1건(품목 1건)에 대응하는 배치 조회 결과 행. 원본 C_MAT 커서처럼
- * 요청 1건당 0~N 행(BOM 자재 0/1건 + 대체(FUNGIBLE) 자재 0..N건)이 나올 수 있어, 요청에 매칭되는 자재가
- * 하나도 없으면 그 요청은 결과에 아예 나타나지 않는다(단건 조회가 빈 리스트를 반환하던 것과 동일 —
- * 호출자가 Map 조회 결과 없으면 빈 리스트로 처리).
+ * {@link MaterialCandidatesRequest} 1건(품목 1건)에 대응하는 배치 조회 결과 행. 요청 1건당 0~N 행(BOM
+ * 0/1건 + 대체(FUNGIBLE) 0..N건)이 나올 수 있어, 매칭 자재가 없으면 결과에 아예 나타나지 않는다.
  */
 public class MaterialCandidatesBatchResult {
 
