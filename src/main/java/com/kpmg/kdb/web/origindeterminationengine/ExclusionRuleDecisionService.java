@@ -16,46 +16,27 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 
 /**
- * 레거시 EXCLUTION_RULE_DECISION 이관.
+ * 예외판정 (레거시 EXCLUTION_RULE_DECISION).
  *
- * 판정 대상 룰(FR_LIST)에 걸린 예외타입(FTA_EXCLUSION_RULE, 타입 1~16)을 순서대로 평가해
- * VG_FRD_REC.EXCLUSION_YN / EXCLUSION_CONDITION 을 결정한다. FCR_INFO_TEMP 조회는 매번 SQL을
- * 던지는 대신 {@link OriginDeterminationContext#getMaterialOriginRows()}(매출 1건당 1회 조회한 리스트)를
- * 스트림으로 집계해 처리한다.
+ * 판정 대상 룰에 걸린 예외타입(1~17)을 순서대로 평가해 EXCLUSION_YN/EXCLUSION_CONDITION을 결정한다.
  *
- * <p><b>원본 결함 수정(TYPE 17):</b> 원본 소스에서는 "예외 TYPE 17" 처리 블록이 실수로 TYPE 16
- * 처리 안의 CTH_RULE 분기(CC/CTH/CTSH) 체인의 4번째 ELSIF 로 잘못 중첩되어 있었다.
- * FER_LIST.EXCLUSION_TYPE 은 그 분기에 진입한 시점에 이미 '16' 으로 고정되어 있어
- * "ELSIF FER_LIST.EXCLUSION_TYPE = '17'" 조건이 그 문맥에서 항상 거짓이 되고, TYPE 17 로
- * 등록된 예외룰은 실제로는 전혀 평가되지 않은 채 V_EXCLUSION_YN 이 직전 반복 값을 그대로
- * 유지하고 다음 단계로 넘어가는 결함이 있었다. 이 메서드는 해당 결함을 수정해 TYPE 17 을 실제로
- * 평가한다. 판정 로직은 TYPE 4 / TYPE 16 2단계와 동일하게 "비역내산 재료비 비율이 예외HS코드별
- * 최대 기준율 미만인지"를 계산하는 공용 패턴을 사용한다({@link #nonOriginatingAmountRatioBelowMaxRate}
- * 참고). 원본에서 TYPE 17 코드가 도달 불가능했던 탓에 이 로직은 실제 운영 데이터로 검증된 적이
- * 없으므로, TYPE 17 예외룰이 등록된 협정(예: 캐나다 FTA)에 대해서는 판정 결과를 업무팀이 별도
- * 검증할 필요가 있다.
+ * <p><b>원본 결함 수정(TYPE 17):</b> 원본은 TYPE 17 처리 블록이 TYPE 16 분기 안에 잘못 중첩돼 있어
+ * TYPE 17 예외룰이 실제로는 전혀 평가되지 않는 결함이 있었다. 이 메서드는 그 결함을 수정해 TYPE 17을
+ * 실제로 평가한다(TYPE 4/16-2단계와 동일한 판정 패턴 사용). 원본에서 도달 불가능했던 코드라 실제
+ * 운영 데이터로 검증된 적이 없어, TYPE 17이 등록된 협정(예: 캐나다 FTA)은 업무팀 별도 검증이 필요하다.
  */
 @Service
 public class ExclusionRuleDecisionService extends GeneralService {
 
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
-	/**
-	 * CTC 전용 모드에서 값기준(RVC성) 예외타입은 평가 자체가 불가능해 무조건 'N' 처리한다(원본 주석
-	 * 처리 블록과 동일). TYPE 17 은 원본에서 도달 불가능한 코드였던 탓에 이 목록에 포함된 적이 없었지만,
-	 * TYPE 4/16-2단계와 동일하게 VG_INKOTERMS_AMOUNT(값기준) 를 분모로 사용하는 패턴이므로 결함 수정과
-	 * 함께 동일하게 강제 'N' 처리 대상에 포함했다.
-	 */
+	/** CTC 전용 모드에서는 값기준(RVC성) 예외타입을 평가할 수 없어 무조건 'N' 처리한다. */
 	private static final Set<String> CTC_ONLY_FORCED_N_TYPES = Set.of("4", "6", "13", "15", "16", "17");
 
-	/** 단발성 호출용 편의 오버로드(테스트 등) — 이 호출 1건 범위에서만 유효한 캐시를 새로 만들어 위임한다. */
+	/** 단발성 호출용 편의 오버로드 — 캐시를 새로 만들어 위임한다. */
 	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
 		decide(ctx, frData, mode, new ExclusionRuleCache(sqlSession.getMapper(ExclusionRuleDao.class)));
 	}
 
-	/**
-	 * @param cache determineOrigin() 1회 호출(FM_LIST 전체 루프) 범위에서 공유되는 캐시.
-	 *              {@link OriginDeterminationExecutionService#decideOneFtaLine} 참고.
-	 */
 	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode,
 			ExclusionRuleCache cache) {
 		try {

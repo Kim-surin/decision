@@ -24,37 +24,21 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmLookupRequest;
 
 /**
- * PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 두 패키지에 완전(또는 거의) 동일하게 존재하던
- * 공용 헬퍼 프로시저 이관:
- * GET_BUFFER, GET_MP_ITEM, GET_RCEP_NATION, GET_RCEP_RVC_NATION,
- * ERROR_MARKING_PROCESS, INSERT_FRD_PROCESS, UPDATE_FRM_PROCEDURE
- *
- * FCR_INFO_TEMP(임시테이블) 조회가 필요한 GET_RCEP_NATION / GET_RCEP_RVC_NATION 은
- * {@link OriginDeterminationContext#getMaterialOriginRows()} (매출 1건당 1회 조회해 메모리에 올린 리스트)를
- * 스트림으로 집계해 원본의 반복 SQL 호출을 제거했다.
+ * 원산지 판정(COO_DECISION) 공용 헬퍼: 버퍼율/최소공정 판단, RCEP 최대기여국 산정, 판정결과
+ * 저장, FCR_MST 최종 판정결과 갱신을 담당한다.
  */
 @Service
 public class OriginDeterminationSupportService extends GeneralService {
 
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
-	/** GET_RCEP_RVC_NATION 의 로컬 상수(원본 V_COMPANY_RVC_RATE := 20). RCEP BD20 기준이며 회사버퍼율과 무관 */
+	/** RCEP 최대기여국(BD20) 판단 기준 비율 */
 	private static final BigDecimal RCEP_BD20_THRESHOLD = BigDecimal.valueOf(20);
-	/** {@link #flushPendingResultsBatch}/{@link #resolveDeferredUpdateFrm} 배치 조회 1회당 최대 요청 건수 */
 	private static final int BATCH_CHUNK_SIZE = 500;
 
 	@Autowired
 	private CooDecisionReferenceDataService referenceDataService;
 
-	/**
-	 * 레거시 GET_BUFFER 이관. COMPANY_OPTION.OPTION_CODE='BF' 산정기준에 따라
-	 * 회사/사업부/제품군/FTA 4개 소스 중 하나에서 RVC·미소기준 버퍼율을 조회해 컨텍스트에 채운다.
-	 *
-	 * <p>PRD(제품군) 소스만 {@link CooDecisionReferenceDataService} 의 {@code @Cacheable} 을 타지 않는다
-	 * — ITEM_MST 를 조인해 조회 키(productCode)가 품목 수만큼 고카디널리티라 전역 캐시에 담기엔
-	 * 부적합하기 때문이다(클래스 상단 COM/DIV/FTA 와의 비교 참고). 대신 determineOrigin() 1회 호출
-	 * 범위에서만 유효한 productLineBufferCache 로 그 안에서의 반복 조회만 없앤다 — 같은 제품이 FTA
-	 * 후보 수만큼(FM_LIST 행) 반복되는 경우가 대상이다.
-	 */
+	/** COMPANY_OPTION(OPTION_CODE='BF') 산정기준에 따라 회사/사업부/제품군/FTA 중 하나에서 버퍼율을 조회해 컨텍스트에 채운다. */
 	public void loadBuffer(OriginDeterminationContext ctx, String companyCode, String divisionCode, String ftaCode,
 			String productCode, Map<String, BufferRates> productLineBufferCache) {
 		try {
@@ -76,7 +60,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 				ctx.setCompanyCtcRate(rates.getDeMinimisRate());
 			}
 		} catch (Exception e) {
-			// 원본 EXCEPTION WHEN OTHERS 와 동일하게 예외를 흡수하고 오류 정보만 컨텍스트에 남긴다(재발생 없음)
 			ctx.setErrorCode("GET_BUFFER");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			ctx.setReturnCode(-1);
@@ -84,11 +67,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 	}
 
-	/**
-	 * 레거시 GET_MP_ITEM 이관: 최소공정 제외 품목 해당 여부('Y'/'N'). 조회 키(companyCode/divisionCode/
-	 * salesNo/salesSeq)가 FM_LIST 1건(=ctx)의 모든 룰에서 항상 동일해, ctx 에 결과를 캐싱해 룰마다
-	 * 반복 조회하지 않는다(원본은 PKRRC 후보의 매 룰 판정마다 다시 조회했다).
-	 */
+	/** 최소공정 제외 품목 해당 여부('Y'/'N'). FM_LIST 1건의 모든 룰에서 조회 키가 같아 ctx에 캐싱한다. */
 	public String getMinimalProcessItemYn(OriginDeterminationContext ctx, String companyCode, String divisionCode,
 			String salesNo, int salesSeq) {
 		if (!ctx.isMinimalProcessItemYnLoaded()) {
@@ -99,15 +78,10 @@ public class OriginDeterminationSupportService extends GeneralService {
 		return ctx.getMinimalProcessItemYn();
 	}
 
-	/**
-	 * 레거시 GET_RCEP_NATION 이관. FCR_INFO_TEMP 를 매번 재조회하는 대신
-	 * {@link OriginDeterminationContext#getMaterialOriginRows()} 를 스트림으로 집계한다.
-	 */
+	/** RCEP 대상 자재의 원산지국 구성(KR/RCEP역내/역외)으로 KR·RCEP·ZZ 중 판정한다. */
 	public String resolveRcepNation(OriginDeterminationContext ctx) {
 		List<MaterialOriginRow> rows = ctx.getMaterialOriginRows();
 		if (rows.isEmpty()) {
-			// 원본은 COUNT/SUM 이 모두 0/NULL 이 되어 3개 분기 중 어느것도 성립하지 않고
-			// RETURN 없이 종료(ORA-06503, 함수가 값을 반환하지 않음)되는 상태를 그대로 반영한다.
 			throw new IllegalStateException("RCEP 원산지 판정 대상 자재(FCR_INFO_TEMP)가 없습니다.");
 		}
 
@@ -126,14 +100,10 @@ public class OriginDeterminationSupportService extends GeneralService {
 		if (itemCnt > rcepCnt) {
 			return "ZZ";
 		}
-		// itemCnt >= rcepCnt >= krCnt >= 0 항상 성립하므로 도달 불가(방어적 처리)
 		throw new IllegalStateException("RCEP 원산지 판정 결과를 산출할 수 없습니다.");
 	}
 
-	/**
-	 * 레거시 GET_RCEP_RVC_NATION(P_AMOUNT) 이관.
-	 * 컨텍스트의 rcepKrYn / rcepCooNation 필드를 채운다(원본도 OUT 파라미터 없이 전역변수만 설정).
-	 */
+	/** RCEP 부가가치기준(RVC) 비율을 계산해 최대기여국을 컨텍스트에 채운다. */
 	public void resolveRcepRvcNation(OriginDeterminationContext ctx, BigDecimal amount) {
 		List<MaterialOriginRow> rows = ctx.getMaterialOriginRows();
 
@@ -143,7 +113,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 				.filter(Objects::nonNull)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-		// (P_AMOUNT - SUM(INPUT_AMOUNT)) / P_AMOUNT * 100 -- amount=0 이면 원본과 동일하게 예외 전파(ArithmeticException)
 		BigDecimal rvcRate = amount.subtract(nonKrInputAmount).divide(amount, 8, RoundingMode.HALF_UP)
 				.multiply(HUNDRED);
 
@@ -166,12 +135,11 @@ public class OriginDeterminationSupportService extends GeneralService {
 		if (topNation != null) {
 			ctx.setRcepCooNation(topNation);
 		} else {
-			// 원본 EXCEPTION WHEN NO_DATA_FOUND 분기와 동일
 			ctx.setRcepCooNation("Y".equals(ctx.getRcepKrYn()) ? "KR" : "");
 		}
 	}
 
-	/** 레거시 ERROR_MARKING_PROCESS 이관 */
+	/** 판정결과를 오류로 마킹하고 다음 판정을 위해 컨텍스트 오류 상태를 초기화한다. */
 	public void markError(OriginDeterminationContext ctx) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		rec.setSpCooYn("N");
@@ -189,18 +157,11 @@ public class OriginDeterminationSupportService extends GeneralService {
 		rec.setErrorCode(ctx.getErrorCode());
 		rec.setErrorMsg(ctx.getErrorMsg());
 
-		// 다음 판정을 위하여 컨텍스트 오류 상태 초기화
 		ctx.setReturnCode(0);
 		ctx.setErrorCode("");
 	}
 
-	/**
-	 * 레거시 INSERT_FRD_PROCESS 이관: 판정결과 1건을 저장 대기열(ctx)에 담아두고 다음 룰 판정을 위해
-	 * 레코드를 초기화한다. 실제 INSERT 는 즉시 실행하지 않고 {@link #flushPendingResultsBatch} 가
-	 * determineOrigin() 의 FM_LIST 루프 전체가 끝난 시점에 한 번에 배치로 실행한다 — 원본은 룰마다 단건
-	 * INSERT였지만, 여러 룰의 결과를 모았다가 한 번에 저장해도 (INSERT 순서에 의미가 없어) 최종 저장
-	 * 결과는 같다.
-	 */
+	/** 판정결과 1건을 저장 대기열에 담고 다음 룰 판정을 위해 레코드를 초기화한다. 실제 INSERT는 flushPendingResultsBatch가 배치로 처리한다. */
 	public void insertFrdAndReset(OriginDeterminationContext ctx, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		try {
@@ -224,15 +185,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 	}
 
 	/**
-	 * {@link #insertFrdAndReset} 이 determineOrigin() 1회 호출의 FM_LIST 행 전체에 걸쳐 쌓아둔 판정결과를
-	 * 한 번에 배치 INSERT 로 저장한다. FM_LIST 루프 전체가 끝난 뒤, {@link #resolveDeferredUpdateFrm}
-	 * 호출 전에 반드시 먼저 실행해야 한다 — resolveDeferredUpdateFrm 이 방금 저장한 FCR_RESULT 를 다시
-	 * 조회해 사용하기 때문이다.
-	 *
-	 * <p>원본/이전 구현은 FM_LIST 1건(FTA 후보) 처리가 끝날 때마다 즉시 flush 했지만(그래야 바로 이어지는
-	 * UPDATE_FRM_PROCEDURE 의 재조회가 방금 쓴 값을 볼 수 있으므로), 그 재조회 자체도 이제
-	 * {@link #resolveDeferredUpdateFrm} 로 미뤄 FM_LIST 루프 전체가 끝난 뒤 한 번에 처리하므로, INSERT 도
-	 * 같이 미뤄 determineOrigin() 1회당 왕복 횟수를 FM_LIST 행 수만큼에서 청크 단위로 줄인다.
+	 * 대기열에 쌓인 판정결과를 배치 INSERT로 저장한다. FM_LIST 루프가 끝난 뒤,
+	 * resolveDeferredUpdateFrm보다 먼저 호출해야 한다(그쪽이 방금 저장한 결과를 재조회하므로).
 	 */
 	public void flushPendingResultsBatch(List<OriginDeterminationResult> allPendingResults) {
 		if (allPendingResults.isEmpty()) {
@@ -253,14 +207,10 @@ public class OriginDeterminationSupportService extends GeneralService {
 	}
 
 	/**
-	 * 레거시 UPDATE_FRM_PROCEDURE 앞부분(DB 조회가 필요 없는 "룰 없음"/"재료비 0원" 오류 검사)만 수행한다.
-	 * 둘 중 하나에 해당하면 그 자리에서 FCR_MST 갱신 행을 바로 확정해 pendingFcrMstUpdates 에 담고, 아니면
-	 * 역내산/역외산 판정결과 재조회(원본 UPDATE_FRM_PROCEDURE 뒷부분)가 필요한 FM_LIST 행으로 판단해
-	 * deferredTargets 에 등록한다 — 실제 재조회는 {@link #resolveDeferredUpdateFrm} 이 FM_LIST 루프 전체가
-	 * 끝난 뒤 한 번에 배치로 처리한다.
+	 * "룰 없음"/"재료비 0원" 오류를 검사해 즉시 확정하거나, 그 외에는 판정결과 재조회가 필요한 행으로
+	 * deferredTargets에 등록한다. 실제 재조회는 resolveDeferredUpdateFrm이 배치로 처리한다.
 	 *
-	 * @param mode RVC_CTC 인 경우에만 "재료비가 없는 자재 존재" 오류를 검사한다(CTC 전용 모드에서는
-	 *             원본에서 이 검사 블록 전체가 주석 처리되어 비활성화되어 있었다).
+	 * @param mode RVC_CTC일 때만 "재료비 0원" 오류를 검사한다(CTC 전용 모드는 값기준 계산이 없어 미검사).
 	 */
 	public void prepareUpdateFrm(OriginDeterminationContext ctx, OriginDeterminationMode mode,
 			List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates, List<OriginDeterminationTarget> deferredTargets) {
@@ -286,12 +236,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 	}
 
-	/**
-	 * {@link #prepareUpdateFrm} 이 DB 조회가 필요하다고 표시한 FM_LIST 행 전체(원본 UPDATE_FRM_PROCEDURE
-	 * 뒷부분: 역내산 우선, 없으면 역외산만 존재 재조회)를 한 번의 배치 쿼리로 처리해 FCR_MST 갱신 행을
-	 * 확정한다. {@link #flushPendingResultsBatch} 로 이 determineOrigin() 호출의 FCR_RESULT INSERT 가
-	 * 전부 반영된 뒤에 호출해야 한다(방금 저장한 값을 재조회하므로).
-	 */
+	/** deferredTargets 전체(역내산 우선, 없으면 역외산만 존재 재조회)를 배치로 처리해 FCR_MST 갱신 행을 확정한다. */
 	public void resolveDeferredUpdateFrm(List<OriginDeterminationTarget> deferredTargets,
 			List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates) {
 		if (deferredTargets.isEmpty()) {
@@ -316,9 +261,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 				}
 			}
 		} catch (Exception e) {
-			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — resultsByKey 가 비어있으면
-			// 아래에서 각 FM_LIST 행이 전부 단건 폴백 조회(selectOwnCooFcrResult/selectNonCooFcrResult)로
-			// 대체된다.
 			logger.error("UPDATE_FRM_PROCEDURE(배치 재조회) 실패. count={}", deferredTargets.size(), e);
 		}
 
@@ -346,7 +288,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 	}
 
-	/** {@link #resolveDeferredUpdateFrm} 배치 조회에 빠진(=배치 자체가 실패한) FM_LIST 행의 단건 폴백. */
+	/** 배치 조회에 빠진 FM_LIST 행의 단건 폴백 조회 */
 	private OriginDeterminationResult resolveOwnOrNonCooFallback(OriginDeterminationSupportDao dao, OriginDeterminationTarget fm) {
 		List<OriginDeterminationResult> own = dao.selectOwnCooFcrResult(fm.getSalesNo(), fm.getSalesSeq(), fm.getFtaCode(),
 				fm.getDivisionCode(), fm.getCompanyCode());
@@ -378,10 +320,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 		return value == null ? "" : value;
 	}
 
-	/**
-	 * {@link #prepareUpdateFrm}/{@link #resolveDeferredUpdateFrm} 이 쌓아둔 FCR_MST 갱신을 한 번의
-	 * 배치 UPDATE 로 반영한다. determineOrigin() 의 FM_LIST 루프 전체가 끝난 뒤 한 번만 호출한다.
-	 */
+	/** 대기 중인 FCR_MST 갱신을 배치 UPDATE로 반영한다. */
 	public void flushFcrMstUpdates(List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates) {
 		if (pendingFcrMstUpdates.isEmpty()) {
 			return;

@@ -27,18 +27,10 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow;
 
 /**
- * 레거시 FC10_GET_ITEM_PRICE 이관. FC10_GET_ITEM_PRICE_NOTE(근거 텍스트)는 별도로 조회하지 않는다.
+ * 자재 단가 조회 (레거시 FC10_GET_ITEM_PRICE).
  *
- * 원본은 "재료 단가"(FC10_GET_ITEM_PRICE)와 "그 근거"(FC10_GET_ITEM_PRICE_NOTE)가 각각 독립적으로
- * 4단계 fallback(수불부-자기PLANT → 수불부-타PLANT → 구매단가 → 표준원가)을 조회하는 별개 함수였고,
- * 단계별 조회조건/공식이 완전히 같지는 않았다(예: 수불부 단계의 MAX(YYYYMM) 판단 기준이 서로 다름).
- * 이 이관에서는 근거 텍스트를 위한 별도 조회를 하지 않고, {@link #resolveItemPriceWithNote} 가
- * FC10_GET_ITEM_PRICE 쪽 조회에서 가격(price &gt; 0)을 찾은 바로 그 행의 데이터로 근거 텍스트를
- * 함께 만든다 — 쿼리 결과가 원본 NOTE 함수의 것과 정확히 일치하지 않을 수 있음을 감수한 단순화다.
- *
- * <p>1~2단계(자기 PLANT/전체 PLANT)는 {@link ItemPriceDao#selectDivisionBalanceForPrice} 단일 쿼리로
- * 통합했다(왕복 1회로 축소 — ItemPriceDaoMapper.xml 의 쿼리 주석 참고). 3단계(구매단가)는 원본에서도
- * 두 함수가 완전히 동일한 조회였다.
+ * 수불부(자기 PLANT → 전체 PLANT) → 최근 구매단가 → 표준원가(사업부 → 전체) 순으로 4단계
+ * fallback 조회하며, 가격(price &gt; 0)을 찾으면 그 즉시 근거 텍스트와 함께 반환한다.
  */
 @Service
 public class ItemPriceService extends GeneralService {
@@ -56,14 +48,7 @@ public class ItemPriceService extends GeneralService {
 		return resolveItemPrice(criteria, Map.of(), Map.of(), Map.of());
 	}
 
-	/**
-	 * @param divisionBalanceCache {@link #prefetchDivisionBalanceForPrice} 로 미리 배치 조회해둔 1단계(수불부)
-	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
-	 * @param purchasePriceCache   {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
-	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
-	 * @param standardCostCache    {@link #prefetchStandardCostByDivision} 로 미리 배치 조회해둔 4단계(표준원가)
-	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
-	 */
+	/** @param divisionBalanceCache/purchasePriceCache/standardCostCache 각 단계 배치 사전조회 캐시(없으면 단건 조회로 대체) */
 	public BigDecimal resolveItemPrice(ItemPriceCriteria criteria, Map<String, MaterialBalanceTierRow> divisionBalanceCache,
 			Map<String, PoLedgerPriceRow> purchasePriceCache, Map<String, StandardCostRow> standardCostCache) {
 		return resolveItemPriceWithNote(criteria, divisionBalanceCache, purchasePriceCache, standardCostCache).getPrice();
@@ -73,18 +58,7 @@ public class ItemPriceService extends GeneralService {
 		return resolveItemPriceWithNote(criteria, Map.of(), Map.of(), Map.of());
 	}
 
-	/**
-	 * FC10_GET_ITEM_PRICE 4단계 fallback(수불부-자기/전체PLANT → 구매단가 → 표준원가-division → 표준원가-전체)을
-	 * 순서대로 조회하다 가격(price &gt; 0)을 찾으면, 별도 조회 없이 그 행의 데이터로 근거 텍스트(NOTE)도
-	 * 함께 만들어 돌려준다 — 클래스 주석 참고.
-	 *
-	 * @param divisionBalanceCache {@link #prefetchDivisionBalanceForPrice} 로 미리 배치 조회해둔 1단계(수불부)
-	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
-	 * @param purchasePriceCache   {@link #prefetchRecentPurchasePrices} 로 미리 배치 조회해둔 3단계(구매단가)
-	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
-	 * @param standardCostCache    {@link #prefetchStandardCostByDivision} 로 미리 배치 조회해둔 4단계(표준원가)
-	 *                              결과. 캐시에 없는 조합은 그 자리에서 바로 단건 조회로 대체한다.
-	 */
+	/** 4단계 fallback을 순서대로 조회하다 가격을 찾으면 그 행 데이터로 근거 텍스트(NOTE)도 함께 만든다. */
 	public ItemPriceWithNote resolveItemPriceWithNote(ItemPriceCriteria criteria,
 			Map<String, MaterialBalanceTierRow> divisionBalanceCache, Map<String, PoLedgerPriceRow> purchasePriceCache,
 			Map<String, StandardCostRow> standardCostCache) {
@@ -154,14 +128,7 @@ public class ItemPriceService extends GeneralService {
 		return dao.selectStandardCostByDivision(criteria);
 	}
 
-	/**
-	 * {@link ItemPriceDao#selectDivisionBalanceForPrice} 가 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
-	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map, Map, Map)}/
-	 * {@link #resolveItemPriceWithNote(ItemPriceCriteria, Map, Map, Map)} 에 그대로 넘기면 그 안에서 추가
-	 * DB 호출 없이 값을 재사용한다. 1단계(수불부)는 항상(무조건) 시도되는 첫 단계라 대상 자재 전체가
-	 * 그대로 배치 조회 대상이다(3~4단계 사전조회처럼 "어디까지 내려올지 몰라 전체를 미리 조회"하는
-	 * 것과 달리, 여기는 전량이 확실히 필요하다).
-	 */
+	/** 1단계(수불부) 단가를 자재 목록 전체에 대해 배치로 미리 조회한다. 1단계는 항상 조회되므로 전량이 대상이다. */
 	public Map<String, MaterialBalanceTierRow> prefetchDivisionBalanceForPrice(List<ItemPriceCriteria> criteriaList) {
 		if (criteriaList == null || criteriaList.isEmpty()) {
 			return Map.of();
@@ -195,24 +162,12 @@ public class ItemPriceService extends GeneralService {
 			}
 			return cache;
 		} catch (Exception e) {
-			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// resolveItemPrice/resolveItemPriceWithNote 가 그 자리에서 단건 조회로 대체한다.
 			logger.error("수불부 단가(1단계) 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
 			return Map.of();
 		}
 	}
 
-	/**
-	 * {@link ItemPriceDao#selectRecentPurchasePrice} 가 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
-	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map, Map, Map)}/
-	 * {@link #resolveItemPriceWithNote(ItemPriceCriteria, Map, Map, Map)} 에 그대로 넘기면 그 안에서 추가 DB
-	 * 호출 없이 값을 재사용한다.
-	 *
-	 * <p>이 조회는 1~2단계(수불부)에서 이미 가격을 찾은 자재에는 필요 없지만, 어떤 자재가 거기서 실패해
-	 * 3단계까지 내려올지는 그 단계를 먼저 실행해봐야 알 수 있다. 그래서 대상 자재 전체에 대해 미리
-	 * 한 번에 조회해두고, 실제로 3단계까지 내려온 자재만 캐시에서 값을 꺼내 쓴다 — 쓰이지 않는 조회
-	 * 결과가 일부 섞이더라도, 자재 수만큼 반복되던 왕복을 통째로 없애는 효과가 더 크다.
-	 */
+	/** 3단계(최근 구매단가)를 자재 목록 전체에 대해 배치로 미리 조회한다(어떤 자재가 여기까지 내려올지는 실행 전엔 알 수 없어 전체 대상). */
 	public Map<String, PoLedgerPriceRow> prefetchRecentPurchasePrices(List<ItemPriceCriteria> criteriaList) {
 		if (criteriaList == null || criteriaList.isEmpty()) {
 			return Map.of();
@@ -246,23 +201,12 @@ public class ItemPriceService extends GeneralService {
 			}
 			return cache;
 		} catch (Exception e) {
-			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// resolveItemPrice/resolveItemPriceWithNote 가 그 자리에서 단건 조회로 대체한다.
 			logger.error("최근 구매단가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
 			return Map.of();
 		}
 	}
 
-	/**
-	 * {@link ItemPriceDao#selectStandardCostByDivision} 이 BOM 리프 자재마다 반복 호출되던 것을 배치 조회
-	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveItemPrice(ItemPriceCriteria, Map, Map)}/
-	 * {@link #resolveItemPriceWithNote(ItemPriceCriteria, Map, Map)} 에 그대로 넘기면 그 안에서 추가 DB
-	 * 호출 없이 값을 재사용한다.
-	 *
-	 * <p>{@link #prefetchRecentPurchasePrices} 와 동일한 이유로(1~3단계에서 이미 가격을 찾은 자재에는
-	 * 이 4단계 조회가 애초에 필요 없지만, 어떤 자재가 거기까지 내려올지는 먼저 실행해봐야 안다) 대상
-	 * 자재 전체에 대해 미리 한 번에 조회해두고, 실제로 4단계까지 내려온 자재만 캐시에서 값을 꺼내 쓴다.
-	 */
+	/** 4단계(표준원가)를 자재 목록 전체에 대해 배치로 미리 조회한다. */
 	public Map<String, StandardCostRow> prefetchStandardCostByDivision(List<ItemPriceCriteria> criteriaList) {
 		if (criteriaList == null || criteriaList.isEmpty()) {
 			return Map.of();
@@ -295,8 +239,6 @@ public class ItemPriceService extends GeneralService {
 			}
 			return cache;
 		} catch (Exception e) {
-			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// resolveItemPrice/resolveItemPriceWithNote 가 그 자리에서 단건 조회로 대체한다.
 			logger.error("표준원가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
 			return Map.of();
 		}

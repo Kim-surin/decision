@@ -34,28 +34,20 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryBatch
 import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryRequest;
 
 /**
- * 레거시 FC10_GET_ITEM_ORIGIN_RATE 이관 (원재료 역내산 비율 조회).
+ * 원재료 역내산 비율 조회 (레거시 FC10_GET_ITEM_ORIGIN_RATE).
  *
- * 원본은 대상 품목의 BOM 원재료 + 대체(FUNGIBLE) 자재 목록을 커서로 순회하며, 각 자재별로 구매원장을
- * 조회해 역내산 비율을 계산하고 0(역외산)을 만나는 즉시 반환하는 단락평가(short-circuit) 구조다.
- * 자재 목록은 품목당 소량(BOM 구성 수준)이므로 청크 분할 없이 한 번의 쿼리로 전량 조회한 뒤
- * 단순 반복문으로 처리한다. (대용량 分할 처리는 다수의 판정대상 매출 건을 순회하는 상위 배치 계층에서 적용)
- *
- * <p>이 조회는 {@link ItemOriginRateCriteria#getFtaCode()} 를 마지막 단계(비인증 원산지 구매 집계,
- * {@link ItemOriginRateDao#selectNonCertifiedOriginSummary}) 에서만 쓴다. 그 앞단(대상 자재 목록,
- * 자재별 조회구간, 구매원장 집계, 그 과정에서의 0 확정)은 FTA_CODE 와 무관하다. 같은 품목을 FTA_CODE 만
- * 바꿔가며 반복 조회하는 CREATE_FCR 3-3 단계(BOM 리프 자재 × 협정 수)에서 이 앞단을 반복하지 않도록
- * {@link #precheckOriginRate}/{@link #resolveOriginRate(ItemOriginRateCriteria, OriginRatePrecheck)}
- * 로 분리해뒀다 — 호출자가 precheck 결과를 (회사/사업부/품목/기준일) 단위로 캐싱해 재사용할 수 있다.
+ * 품목의 BOM 원재료/대체(FUNGIBLE) 자재별로 구매원장을 조회해 역내산 비율을 계산하고,
+ * 역외산(0)이 확인되면 즉시 반환한다. FTA_CODE와 무관한 계산(precheck)과 FTA_CODE에
+ * 의존하는 마지막 단계(resolveOriginRate)를 분리해, 같은 품목을 여러 FTA_CODE로 반복
+ * 조회할 때 앞단을 재사용할 수 있다.
  */
 @Service
 public class ItemOriginRateService extends GeneralService {
 
 	private static final DateTimeFormatter YYYYMM = DateTimeFormatter.ofPattern("yyyyMM");
 	private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.BASIC_ISO_DATE;
-	/** 원본 V_MAX_MONTHS NUMBER := 6; (다른 FC10_* 함수와 달리 회사설정값이 아닌 고정값) */
+	/** 조회 대상 기간(개월 수). 원본 V_MAX_MONTHS 고정값 */
 	private static final int MAX_MONTHS = 6;
-	/** {@link #prefetchNonCertifiedOriginSummaries} 배치 조회 1회당 최대 요청 건수(바인드 파라미터 상한 방지) */
 	private static final int BATCH_CHUNK_SIZE = 500;
 
 	@Autowired
@@ -65,16 +57,12 @@ public class ItemOriginRateService extends GeneralService {
 		return resolveOriginRate(criteria, precheckOriginRate(criteria));
 	}
 
-	/** FTA_CODE 와 무관한 부분만 미리 계산. {@link OriginRatePrecheck} 클래스 주석 참고. */
+	/** FTA_CODE와 무관한 부분만 미리 계산한다. */
 	public OriginRatePrecheck precheckOriginRate(ItemOriginRateCriteria criteria) {
 		return precheckOriginRate(criteria, Map.of());
 	}
 
-	/**
-	 * @param lastInputYyyyMmCache {@link #prefetchLastInputYyyyMm} 로 미리 배치 조회해둔 결과. 캐시에 없는
-	 *                              조합(호출자가 미리 넘기지 않았거나 비어있는 맵인 경우)은 그 자리에서 바로
-	 *                              단건 조회로 대체한다.
-	 */
+	/** @param lastInputYyyyMmCache 미리 조회해둔 최근 입고월 캐시(없으면 단건 조회로 대체) */
 	public OriginRatePrecheck precheckOriginRate(ItemOriginRateCriteria criteria, Map<String, String> lastInputYyyyMmCache) {
 		try {
 			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
@@ -89,24 +77,15 @@ public class ItemOriginRateService extends GeneralService {
 			LookupPlan plan = buildLookupPlan(dao, criteria, materials, toMonth, lastInputYyyyMmCache);
 			return assemblePrecheck(dao, criteria, plan, Map.of());
 		} catch (Exception e) {
-			// 원본 EXCEPTION WHEN OTHERS THEN RETURN 0; 과 동일
 			logger.error("원재료 역내산 비율 사전조회 실패. criteria={}", criteria, e);
 			return OriginRatePrecheck.zero();
 		}
 	}
 
-	/**
-	 * precheckOriginRate 의 순수 계산부(DB 는 selectLastInputYyyyMm 캐시 폴백만 필요하면 호출)만 떼어낸 것.
-	 * {@link #prefetchPurchaseLedgerSummaries} 가 구매원장 배치 조회 전에 "어떤 (itemCode,조회구간) 조합이
-	 * 필요한지"를 실제 조회 없이 먼저 계산(dry run)하기 위해 쓴다 — 자재 루프의 단락평가(재고회전 계산
-	 * 불능 -> 즉시 0 확정)만 여기서 그대로 재현하고, selectPurchaseLedgerSummary 호출 자체는 하지 않는다.
-	 */
+	/** 자재별 구매원장 조회 구간을 계산한다. 재고회전 계산이 불가능하면 즉시 역외(0)로 확정한다. */
 	private LookupPlan buildLookupPlan(ItemOriginRateDao dao, ItemOriginRateCriteria criteria,
 			List<MaterialBalanceRow> materials, YearMonth toMonth, Map<String, String> lastInputYyyyMmCache) {
 		List<StageCandidate> candidates = new ArrayList<>();
-		// selectLastInputYyyyMm 의 바인딩 파라미터(companyCode/divisionCode/itemCode/toMonth)는 자재(material)와
-		// 무관하게 criteria 하나로 고정돼 있어 루프 안에서 매번 다시 조회해도 같은 값이 나온다. 자재가 여러 건
-		// (BOM + 대체자재)이어도 최초 1회만 조회하도록 루프 밖으로 뺐다(지연 초기화 — 필요 없으면 아예 안 부른다).
 		String lastInputYyyyMm = null;
 		boolean lastInputYyyyMmLoaded = false;
 
@@ -158,11 +137,7 @@ public class ItemOriginRateService extends GeneralService {
 		return LookupPlan.of(candidates);
 	}
 
-	/**
-	 * {@link #buildLookupPlan} 이 세운 계획을 실제 구매원장 집계(poSummaryCache 우선, 없으면 단건 폴백 조회)로
-	 * 채워 최종 {@link OriginRatePrecheck} 를 조립한다 — 원본의 자재 순회 순서/단락평가(poCount==0 -> 즉시
-	 * 0 확정)를 그대로 재현한다.
-	 */
+	/** 구매원장 집계 결과가 0건(poCount==0)인 자재를 만나면 즉시 역외(0)로 확정한다. */
 	private OriginRatePrecheck assemblePrecheck(ItemOriginRateDao dao, ItemOriginRateCriteria criteria,
 			LookupPlan plan, Map<String, PurchaseLedgerSummary> poSummaryCache) {
 		if (plan.isZero()) {
@@ -189,17 +164,12 @@ public class ItemOriginRateService extends GeneralService {
 		return OriginRatePrecheck.stages(stages);
 	}
 
-	/** FTA_CODE 에 의존하는 마지막 단계. precheck 는 같은 (회사/사업부/품목/기준일) 조합이면 재사용 가능. */
+	/** FTA_CODE에 의존하는 마지막 단계. precheck는 같은 (회사/사업부/품목/기준일) 조합이면 재사용 가능. */
 	public BigDecimal resolveOriginRate(ItemOriginRateCriteria criteria, OriginRatePrecheck precheck) {
 		return resolveOriginRate(criteria, precheck, Map.of());
 	}
 
-	/**
-	 * @param summaryCache {@link #prefetchNonCertifiedOriginSummaries} 로 미리 배치 조회해둔 결과.
-	 *                      캐시에 없는 조합(호출자가 미리 넘기지 않았거나 비어있는 맵인 경우)은 그 자리에서
-	 *                      바로 단건 조회로 대체한다 — 배치 사전조회는 성능 최적화일 뿐이라 누락돼도 결과가
-	 *                      틀려지지 않는다.
-	 */
+	/** @param summaryCache 미리 조회해둔 비인증 원산지 구매 집계 캐시(없으면 단건 조회로 대체) */
 	public BigDecimal resolveOriginRate(ItemOriginRateCriteria criteria, OriginRatePrecheck precheck,
 			Map<String, PurchaseLedgerSummary> summaryCache) {
 		if (precheck.isZero()) {
@@ -217,6 +187,7 @@ public class ItemOriginRateService extends GeneralService {
 							criteria.getFtaCode(), stage.getFromDate(), stage.getLookupEnd());
 				}
 
+				// 회사 설정(ME/IA)에 따라 금액기준(비원산지 금액 비율)/건수기준(비원산지 구매 존재 여부) 중 하나로 계산
 				boolean amountBasedCalc = companySettingService.isSettingValue(criteria.getCompanyCode(), "ME", "IA");
 				if (amountBasedCalc) {
 					BigDecimal nonOriginAmount = nonCertified.getWarehousingAmountSum();
@@ -238,28 +209,14 @@ public class ItemOriginRateService extends GeneralService {
 
 			return originRate;
 		} catch (Exception e) {
-			// 원본 EXCEPTION WHEN OTHERS THEN RETURN 0; 과 동일
 			logger.error("원재료 역내산 비율 조회 실패. criteria={}", criteria, e);
 			return BigDecimal.ZERO;
 		}
 	}
 
 	/**
-	 * {@link ItemOriginRateDao#selectNonCertifiedOriginSummary} 가 (품목,FTA_CODE) 조합마다 반복 호출되던
-	 * 것(예: CreateFcrService 의 BOM 리프 자재 루프 — 자재 수 × FTA_CODE 후보 수만큼 반복)을 배치 조회
-	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #resolveOriginRate(ItemOriginRateCriteria,
-	 * OriginRatePrecheck, Map)} 에 그대로 넘기면 그 안에서 추가 DB 호출 없이 값을 재사용한다.
-	 *
-	 * <p>precheck 는 FTA_CODE 와 무관하므로 (companyCode,divisionCode,itemCode,baseDate) 조합별로 1회만
-	 * 계산해 precheckCache 에 채운다 — 호출자가 이후 resolveOriginRateCached 등에서 같은 맵을 계속
-	 * 재사용할 수 있도록 호출자가 만든 맵을 그대로 받는다. 이미 0으로 확정된(precheck.isZero()) 조합은
-	 * 배치 요청에서 제외한다(어차피 FTA_CODE 조회 없이 0이 확정되므로).
-	 *
-	 * <p>기존 단건 경로는 자재의 여러 단계(stages) 중 앞 단계에서 이미 비율이 0으로 확정되면 뒤 단계는
-	 * 조회를 건너뛰는 단락평가를 했지만, 이 배치 조회는 어차피 한 번의 SQL 호출로 묶이므로 그 단락평가로
-	 * 아낄 수 있었던 개별 쿼리 1~2건보다 (품목×FTA_CODE) 조합 수만큼의 왕복을 통째로 없애는 효과가 훨씬
-	 * 크다고 판단해 모든 단계를 한 번에 조회한다 — 최종 계산 결과(originRate)는 어느 단계를 조회했는지가
-	 * 아니라 단계별 결과를 어떻게 조합하는지로 결정되므로 동일하다.
+	 * 비인증 원산지 구매 집계를 (품목,FTA_CODE) 조합 전체에 대해 배치로 미리 조회한다.
+	 * 반환된 맵을 resolveOriginRate에 그대로 넘기면 추가 DB 호출 없이 재사용한다.
 	 */
 	public Map<String, PurchaseLedgerSummary> prefetchNonCertifiedOriginSummaries(
 			List<ItemOriginRateCriteria> criteriaList, Map<String, OriginRatePrecheck> precheckCache) {
@@ -267,16 +224,8 @@ public class ItemOriginRateService extends GeneralService {
 			return Map.of();
 		}
 
-		// 배치 호출 1회는 항상 같은 회사 스코프(createFcr() 1회 호출)에서만 이뤄지므로 첫 건의 companyCode 를 사용한다.
 		String companyCode = criteriaList.get(0).getCompanyCode();
-		// precheckOriginRate 내부에서 자재(material) 건별로 반복 조회되던 selectLastInputYyyyMm 도
-		// 여기서 미리 한 번에 배치 조회해둔다(자재와 무관하게 (company,division,item,baseDate) 조합
-		// 하나로 고정된 값이라 자재 루프 안에서는 최초 1회만 쓰이지만, 서로 다른 품목끼리는 여전히
-		// 품목 수만큼 반복 호출되고 있었다).
 		Map<String, String> lastInputYyyyMmCache = prefetchLastInputYyyyMm(criteriaList);
-		// precheckOriginRate 안에서 자재(material) 건별로 반복 조회되던 selectPurchaseLedgerSummary 도 여기서
-		// 미리 배치 조회해 precheckCache 를 채운다 — 아래 루프의 computeIfAbsent 는 이미 채워진 항목에 대해
-		// 폴백 단건 호출 없이 바로 캐시를 재사용하게 된다(prefetchPurchaseLedgerSummaries 클래스 주석 참고).
 		prefetchPurchaseLedgerSummaries(criteriaList, lastInputYyyyMmCache, precheckCache);
 
 		List<NonCertifiedOriginSummaryRequest> requests = new ArrayList<>();
@@ -307,8 +256,6 @@ public class ItemOriginRateService extends GeneralService {
 		try {
 			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
 			Map<String, PurchaseLedgerSummary> summaryCache = new HashMap<>();
-			// 요청 건수가 아주 많은 경우(대량 BOM 자재 x 다수 FTA_CODE)를 대비해 CreateFcrService 의 다건
-			// INSERT 청크 크기(500)와 동일한 단위로 나눠 호출한다(바인드 파라미터 수 상한 방지).
 			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
 				List<NonCertifiedOriginSummaryRequest> chunk = requests.subList(from,
 						Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
@@ -321,19 +268,12 @@ public class ItemOriginRateService extends GeneralService {
 			}
 			return summaryCache;
 		} catch (Exception e) {
-			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// resolveOriginRate 가 그 자리에서 단건 조회로 대체한다(클래스 상단 summaryCache 파라미터 설명 참고).
 			logger.error("비인증 원산지 구매 집계 배치조회 실패. requestCount={}", requests.size(), e);
 			return Map.of();
 		}
 	}
 
-	/**
-	 * {@link ItemOriginRateDao#selectLastInputYyyyMm} 이 서로 다른 품목마다(BOM 리프 자재 종류 수만큼)
-	 * 반복 호출되던 것을 배치 조회 1회로 대체하기 위한 사전조회. companyCode/uptoYyyyMm(기준월)은 이
-	 * 호출 범위(createFcr() 1회 호출, 단일 salesNo)에서 항상 같은 값이라 (divisionCode,itemCode)
-	 * 조합만 배치로 조회한다.
-	 */
+	/** 자재별 최근 입고월을 (사업부,품목) 조합 전체에 대해 배치로 미리 조회한다. */
 	public Map<String, String> prefetchLastInputYyyyMm(List<ItemOriginRateCriteria> criteriaList) {
 		if (criteriaList == null || criteriaList.isEmpty()) {
 			return Map.of();
@@ -362,9 +302,7 @@ public class ItemOriginRateService extends GeneralService {
 					cache.put(lastInputYyyyMmKey(companyCode, r.getDivisionCode(), r.getItemCode(), uptoYyyyMm),
 							r.getLastInputYyyyMm());
 				}
-				// 매칭되는 자재 원장이 없는 (divisionCode,itemCode) 는 GROUP BY 결과에 아예 나타나지 않는다.
-				// 그 값도 "조회 완료, 결과 NULL"로 명시해둬야 precheckOriginRate 가 불필요한 단건 폴백
-				// 조회를 다시 하지 않는다(원본 MAX(...)=NULL 1행과 동등한 결과이므로 null 로 채운다).
+				// 매칭되는 원장이 없는 조합도 null로 명시해둬야 폴백 단건 조회를 다시 하지 않는다
 				for (DivisionItemKey requested : chunk) {
 					cache.putIfAbsent(lastInputYyyyMmKey(companyCode, requested.getDivisionCode(), requested.getItemCode(),
 							uptoYyyyMm), null);
@@ -372,26 +310,12 @@ public class ItemOriginRateService extends GeneralService {
 			}
 			return cache;
 		} catch (Exception e) {
-			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// precheckOriginRate 가 그 자리에서 단건 조회로 대체한다.
 			logger.error("최근 입고월 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
 			return Map.of();
 		}
 	}
 
-	/**
-	 * {@link ItemOriginRateDao#selectMaterialCandidates}(C_MAT 커서)가 precheckOriginRate/
-	 * {@link #prefetchPurchaseLedgerSummaries} 안에서 distinct 품목마다 반복 호출되던 것을 배치 조회
-	 * 1회로 대체하기 위한 사전조회. 반환된 맵을 {@link #buildLookupPlan} 호출 전에 조회해 넘기면 그 안에서
-	 * 추가 DB 호출 없이 값을 재사용한다.
-	 *
-	 * <p>단건 조회는 요청 1건당 0~N 행(BOM 자재 0/1건 + 대체(FUNGIBLE) 자재 0..N건)을 돌려주는 다중행
-	 * 커서라, 다른 배치 조회들(top-1 LATERAL 방식)과 달리 {@link ItemOriginRateDao#selectMaterialCandidatesBatch}
-	 * 는 요청받은 (divisionCode,itemCode,조회구간) 조합 전체를 UNION ALL 파생 테이블로 넘겨 원본과 동일한
-	 * JOIN 구조로 다중행을 그대로 받는다(ItemOriginRateDaoMapper.xml 의 쿼리 주석 참고). 매칭되는 자재가
-	 * 하나도 없는 요청은 결과에 나타나지 않으므로, 그 경우도 빈 리스트로 명시적으로 채워 "조회 완료, 결과
-	 * 없음"과 "아직 조회 안 함"을 구분한다.
-	 */
+	/** BOM 원재료/대체(FUNGIBLE) 자재 후보를 (사업부,품목,기준일) 조합 전체에 대해 배치로 미리 조회한다. */
 	public Map<String, List<MaterialBalanceRow>> prefetchMaterialCandidates(List<ItemOriginRateCriteria> criteriaList) {
 		if (criteriaList == null || criteriaList.isEmpty()) {
 			return Map.of();
@@ -424,8 +348,7 @@ public class ItemOriginRateService extends GeneralService {
 					String key = precheckKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(), r.getReqBaseDate());
 					cache.computeIfAbsent(key, k -> new ArrayList<>()).add(r.toMaterialBalanceRow());
 				}
-				// 매칭되는 자재가 하나도 없는 요청은 결과에 아예 나타나지 않는다 — "조회 완료, 결과 없음"을
-				// 명시적으로 빈 리스트로 채워둬야 호출자가 불필요한 단건 폴백 조회를 다시 하지 않는다.
+				// 매칭 자재가 없는 요청도 빈 리스트로 명시해둬야 폴백 단건 조회를 다시 하지 않는다
 				for (MaterialCandidatesRequest requested : chunk) {
 					String key = precheckKey(companyCode, requested.getDivisionCode(), requested.getItemCode(),
 							requested.getBaseDate());
@@ -434,41 +357,15 @@ public class ItemOriginRateService extends GeneralService {
 			}
 			return cache;
 		} catch (Exception e) {
-			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// prefetchPurchaseLedgerSummaries 가 그 자리에서 단건 조회로 대체한다.
 			logger.error("BOM/대체자재 후보 배치조회 실패. companyCode={}, itemCount={}", companyCode, requests.size(), e);
 			return Map.of();
 		}
 	}
 
 	/**
-	 * {@link ItemOriginRateDao#selectPurchaseLedgerSummary} 가 precheckOriginRate 의 자재(material) 루프
-	 * 안에서 자재별로(그리고 서로 다른 품목끼리는 품목 수만큼) 반복 호출되던 것을 배치 조회 1회로 대체하기
-	 * 위한 사전조회.
-	 *
-	 * <p>이 조회는 자재 루프 도중 poCount==0 을 만나면 즉시 0으로 확정하고 뒤 자재는 조회조차 하지 않는
-	 * 단락평가 구조라(precheckOriginRate 주석 참고), 무엇을 조회해야 하는지 자체가 "먼저 조회해봐야" 알 수
-	 * 있는 순서 의존적 구조다. 이를 3단계로 나눠 해결한다.
-	 * <ol>
-	 *   <li>계획 수립(dry run): distinct (company,division,item,baseDate) 조합마다 {@link #buildLookupPlan}
-	 *       으로 실제 구매원장 조회 없이 "필요한 (itemCode,조회구간) 후보 목록"만 계산한다(재고회전 계산
-	 *       불능으로 인한 0 확정은 이 단계에서 이미 반영됨).</li>
-	 *   <li>배치 조회: 모든 조합의 후보를 합집합으로 모아 {@link ItemOriginRateDao#selectPurchaseLedgerSummaryBatch}
-	 *       로 한 번에 조회한다.</li>
-	 *   <li>조립(assemble): {@link #assemblePrecheck} 로 원본과 동일한 자재 순회 순서 및 단락평가
-	 *       (poCount==0 을 만나는 자재에서 즉시 0 확정, 그 뒤 자재는 결과에 반영하지 않음)를 그대로
-	 *       재현해 최종 {@link OriginRatePrecheck} 를 만든다.</li>
-	 * </ol>
-	 *
-	 * <p>원래 단락평가로 아낄 수 있었던 건 조합당 자재 후반부의 개별 쿼리 몇 건인데, 이 배치 조회는 그
-	 * 자재들의 조회구간도 (어차피 한 번의 SQL 호출에 묶이므로) 함께 조회해버린다 — 소량 추가 조회를
-	 * 대가로 (품목 수)만큼의 왕복 자체를 없애는 효과가 훨씬 크다고 판단했다(다른 배치화 지점과 동일한
-	 * 트레이드오프).
-	 *
-	 * <p>결과는 {@code precheckCache} 에 (계획을 세울 수 있었던 조합에 한해) 직접 채워 넣는다 — 이 맵은
-	 * {@link #prefetchNonCertifiedOriginSummaries} 가 이어서 쓰는 것과 같은 맵이라, 그쪽의
-	 * {@code computeIfAbsent} 호출이 이미 채워진 항목에 대해 폴백 단건 조회 없이 캐시를 그대로 재사용하게
-	 * 된다(계획 수립 단계에서 예외가 나 caching 되지 못한 조합만 그 폴백 경로로 처리됨 — defensive).
+	 * 구매원장 집계를 배치로 미리 조회한다. 자재 순회 도중 역외(0)로 확정되면 이후 자재는 조회하지
+	 * 않는 원본 단락평가를 재현하기 위해, 먼저 조회 없이 계획(필요한 조회 후보)만 세운 뒤 그 후보들을
+	 * 한 번에 배치 조회하고, 마지막에 원본과 동일한 순서로 결과를 조립한다.
 	 */
 	public void prefetchPurchaseLedgerSummaries(List<ItemOriginRateCriteria> criteriaList,
 			Map<String, String> lastInputYyyyMmCache, Map<String, OriginRatePrecheck> precheckCache) {
@@ -486,8 +383,6 @@ public class ItemOriginRateService extends GeneralService {
 			distinctCriteria.putIfAbsent(precheckKey, criteria);
 		}
 
-		// selectMaterialCandidates(C_MAT 커서) 도 distinct 품목 수만큼 반복 호출되던 것을 여기서 미리
-		// 배치 조회해둔다 — prefetchMaterialCandidates 클래스 주석 참고.
 		Map<String, List<MaterialBalanceRow>> materialCandidatesCache = prefetchMaterialCandidates(
 				new ArrayList<>(distinctCriteria.values()));
 
@@ -519,9 +414,7 @@ public class ItemOriginRateService extends GeneralService {
 					}
 				}
 			} catch (Exception e) {
-				// 이 조합만 계획 수립 실패 -> plans 에 없으므로 아래 조립 단계에서 precheckCache 에 채워지지
-				// 않고, prefetchNonCertifiedOriginSummaries 의 computeIfAbsent 가 단건 precheckOriginRate 로
-				// 재시도한다(defensive fallback).
+				// 이 조합만 계획 수립 실패 -> precheckCache에 안 채워지고, 호출자가 단건 조회로 재시도한다
 				logger.error("구매원장 집계 사전조회 계획 수립 실패. precheckKey={}", precheckKey, e);
 			}
 		}
@@ -529,8 +422,6 @@ public class ItemOriginRateService extends GeneralService {
 		Map<String, PurchaseLedgerSummary> poSummaryCache = new HashMap<>();
 		if (!requests.isEmpty()) {
 			try {
-				// CreateFcrService 의 다건 INSERT 청크 크기(500)와 동일한 단위로 나눠 호출한다(바인드
-				// 파라미터 수 상한 방지).
 				for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
 					List<PurchaseLedgerSummaryRequest> chunk = requests.subList(from,
 							Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
@@ -542,8 +433,6 @@ public class ItemOriginRateService extends GeneralService {
 					}
 				}
 			} catch (Exception e) {
-				// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — poSummaryCache 가
-				// 비어있으면 assemblePrecheck 가 그 자리에서 단건 조회로 대체한다.
 				logger.error("구매원장 집계 배치조회 실패. requestCount={}", requests.size(), e);
 			}
 		}
@@ -554,14 +443,12 @@ public class ItemOriginRateService extends GeneralService {
 			try {
 				precheckCache.put(precheckKey, assemblePrecheck(dao, criteria, entry.getValue(), poSummaryCache));
 			} catch (Exception e) {
-				// 원본 EXCEPTION WHEN OTHERS THEN RETURN 0; 과 동일
 				logger.error("원재료 역내산 비율 사전조회(배치 조립) 실패. precheckKey={}", precheckKey, e);
 				precheckCache.put(precheckKey, OriginRatePrecheck.zero());
 			}
 		}
 	}
 
-	/** {@link #prefetchNonCertifiedOriginSummaries} 와 {@link #resolveOriginRate} 가 공유하는 캐시 키 규칙. */
 	public static String precheckKey(String companyCode, String divisionCode, String itemCode, String baseDate) {
 		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(baseDate));
 	}
@@ -586,14 +473,7 @@ public class ItemOriginRateService extends GeneralService {
 		return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).format(YYYYMMDD);
 	}
 
-	/**
-	 * MATERIAL_INV_BAL.AGING_PERIOD(자재 재고회전 기간)가 비정상적으로 큰 값(데이터 이상)이면
-	 * minusMonths 자체는 성공하지만 4자리 연도를 벗어나 format() 이 {@link DateTimeException} 을 던진다
-	 * — 원본 Oracle DATE 산술은 자릿수 제약이 없어 이런 경우에도 그냥 먼 과거 날짜를 조용히 만들어냈을
-	 * 뿐이다. 표현 가능한 가장 이른 날짜로 클램프해도 결과는 동일하다(그 시점 이전 PO_LEDGER 데이터는
-	 * 어차피 없으므로 구매원장 집계가 0건으로 나와 역외로 판정된다) — 굳이 예외를 던져 상위 호출부의
-	 * try/catch 폴백(단건 재조회)까지 타게 할 필요가 없다.
-	 */
+	/** 자재 재고회전 기간이 비정상적으로 크면 연산 결과가 표현 범위를 벗어날 수 있어 최소값으로 클램프한다. */
 	private static String firstDayMinusMonths(String yyyyMm, int months) {
 		try {
 			return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).minusMonths(months).format(YYYYMMDD);
@@ -610,10 +490,7 @@ public class ItemOriginRateService extends GeneralService {
 		return YearMonth.parse(yyyyMm, YYYYMM).atEndOfMonth().format(YYYYMMDD);
 	}
 
-	/**
-	 * V_LAST_YYYYMM || '01' 을 이관한 값. Oracle 의 문자열 연결(||)은 NULL 을 빈 문자열로 취급하므로
-	 * V_LAST_YYYYMM 이 NULL 이면 '01' 이 된다(원본의 알려진 특이 동작을 그대로 보존).
-	 */
+	/** 최근 입고월이 없으면(NULL) '01'만 남는 원본(Oracle NULL||문자열) 동작을 그대로 보존한다. */
 	private static String plusDay01(String yyyyMm) {
 		return (yyyyMm == null ? "" : yyyyMm) + "01";
 	}
@@ -622,12 +499,7 @@ public class ItemOriginRateService extends GeneralService {
 		return a.compareTo(b) < 0 ? a : b;
 	}
 
-	/**
-	 * {@link #buildLookupPlan} 결과: 이미 0(역외산)으로 확정됐는지, 아니면 구매원장 조회가 필요한 자재별
-	 * 후보(candidates) 목록인지. {@link OriginRatePrecheck} 와 형태는 비슷하지만 구매원장 집계값이 아직
-	 * 채워지지 않은 "조회 계획" 단계라는 점이 다르다 — dto 패키지로 옮기지 않고 이 클래스 내부 구현
-	 * 상세로만 쓴다.
-	 */
+	/** buildLookupPlan 결과: 역외(0)로 확정됐는지, 아니면 구매원장 조회가 필요한 자재별 후보 목록인지. */
 	private static final class LookupPlan {
 
 		private static final LookupPlan ZERO = new LookupPlan(true, List.of());
@@ -657,7 +529,7 @@ public class ItemOriginRateService extends GeneralService {
 		}
 	}
 
-	/** {@link LookupPlan} 1건(자재 1건)이 필요로 하는 구매원장 조회 키(itemCode, 조회구간). */
+	/** 자재 1건이 필요로 하는 구매원장 조회 키(품목코드, 조회구간). */
 	private static final class StageCandidate {
 
 		private final String itemCode;
