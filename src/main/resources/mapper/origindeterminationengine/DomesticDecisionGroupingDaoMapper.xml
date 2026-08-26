@@ -1,0 +1,24 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.DomesticDecisionGroupingDao">
+
+	<!--
+		mergeAggregatedSalesMst 가 MERGE 문의 USING 서브쿼리(WHERE + GROUP BY)로 감춰서 처리하던 대상
+		그룹을, 그와 동일한 WHERE 조건으로 먼저 SELECT DISTINCT 조회한다 — mergeAggregatedSalesMst 의
+		WHERE 절과 반드시 같이 맞춰야 한다(둘 중 하나만 고치면 그룹 발견 결과와 실제 집계 대상이 어긋난다).
+	-->
+	<select id="selectPendingDomesticGroups" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PendingDomesticGroup">
+		SELECT DISTINCT SM.COMPANY_CODE  AS companyCode
+		      ,SM.DIVISION_CODE         AS divisionCode
+		      ,SM.CUSTOMER_CODE         AS customerCode
+		FROM   SALES_MST SM
+		WHERE  SM.COMPANY_CODE = #{p.companyCode}
+		AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
+		AND    SM.EXPORT_FLAG = 'D'
+		AND    SM.VIRTUAL_YN = 'N'
+		AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE)
+		AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		AND    SM.DELIVERY_CUSTOMER_CODE = COALESCE(#{p.deliveryCustomerCode}, SM.DELIVERY_CUSTOMER_CODE)
+		ORDER  BY SM.DIVISION_CODE, SM.CUSTOMER_CODE
+	</select>
+</mapper>

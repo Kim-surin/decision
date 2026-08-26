@@ -1,0 +1,246 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.AggregatedVirtualSalesDao">
+
+	<!--
+		===================== 1. 내수 포괄 매출 생성 =====================
+		[버그 수정 이력 1] deleteAggregatedSalesDtl/deleteAggregatedSalesMst 는 원래 companyCode+기간
+		으로만 걸러 회사+기간의 기존 가상매출 전체를 지웠다(원본 MONTHLY_DECISION_PROC 도 동일 — 원래는
+		호출 1번이 회사+기간 전체를 한 번에 재생성하는 용도라 문제가 없었다). 그런데
+		DomesticBulkDecisionService 처럼 같은 회사+기간에 대해 고객사 그룹마다 generateVirtualSales 를
+		반복 호출하면, 그룹 B 처리 시의 삭제가 이미 처리 완료된 그룹 A 의 가상 SALES_MST/SALES_DTL 을
+		함께 지워버린다(FCR_MST 는 이미 그 SALES_NO 를 참조해 생성된 뒤라 orphan 이 됨). 그래서
+		mergeAggregatedSalesMst 와 동일하게 CUSTOMER_CODE/DIVISION_CODE COALESCE 조건을 추가했다 —
+		두 파라미터가 null 이면(기존 회사+기간 전체 호출) 조건이 무력화돼 원래 동작과 동일하다.
+
+		[버그 수정 이력 2] 원본 레거시(개별판정 화면, OriginDeterminCoverDAO#insertSalesMstVirtual)는
+		개별/특정 제품 판정 시 SALES_MST/SALES_DTL 을 DELETE 하지 않고 MERGE(WHEN MATCHED 시 QUANTITY/
+		UNIT_PRICE/AMOUNT/HS_CODE 갱신, WHEN NOT MATCHED 시 신규 SALES_SEQ 로 INSERT)만 수행한다 —
+		DELETE-후-재생성은 MONTHLY_DECISION_PROC(월판정) 전용이었다. 그런데 이관 시 deleteAggregatedSalesDtl/
+		deleteAggregatedSalesMst 를 productCodes 유무와 무관하게(월판정이든 개별판정이든) 항상 먼저
+		실행하도록 공용화해버려서, 개별판정으로 좁혀 반복 실행할 때마다 그 제품의 가상 SALES_DTL 이
+		매번 삭제 후 새 SALES_SEQ 로 재삽입됐다. createFcr()/determineOrigin() 의 FCR_MST/FCR_DTL/
+		FCR_RESULT 삭제는 "현재 SALES_DTL 과 SALES_SEQ 가 일치하는 행"만 지우므로, SALES_SEQ 가 매번
+		바뀌면 예전 FCR_* 행들이 고아로 남아 판정을 반복할수록 누적된다(FCR_RESULT 는 FTA_CODE/
+		RULE_SEQ 조합만큼 여러 행이라 특히 눈에 띄게 쌓인다). 그래서 productCodes 가 지정된(개별/특정
+		제품 한정) 호출에서는 {@link AggregatedVirtualSalesGenerator} 가 이 두 DELETE 를 아예 건너뛰고
+		MERGE 만 수행하도록 바꿨고, mergeAggregatedSalesDtl 의 WHEN MATCHED 절도 원본과 동일하게
+		QUANTITY/UNIT_PRICE/AMOUNT/HS_CODE 까지 갱신하도록 맞췄다(기존에는 PRODUCT_ASSETS_TYPE 만
+		갱신해 매출 값이 바뀌어도 가상 집계가 갱신되지 않는 별개의 문제도 있었다). companyCode+기간
+		전체를 다루는 월판정(productCodes 없음)에서는 기존과 동일하게 삭제 후 재생성한다.
+	-->
+
+	<delete id="deleteAggregatedSalesDtl">
+		DELETE FROM SALES_DTL
+		WHERE  SALES_NO IN (SELECT #{virtualSalesNo}
+		                     FROM   SALES_MST SM
+		                     WHERE  SM.COMPANY_CODE = #{p.companyCode}
+		                     AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
+		                     AND    SM.EXPORT_FLAG = 'D'
+		                     AND    SM.VIRTUAL_YN = 'Y'
+		                     AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		                     AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE))
+	</delete>
+
+	<delete id="deleteAggregatedSalesMst">
+		DELETE FROM SALES_MST
+		WHERE  SALES_NO IN (SELECT #{virtualSalesNo}
+		                     FROM   SALES_MST SM
+		                     WHERE  SM.COMPANY_CODE = #{p.companyCode}
+		                     AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
+		                     AND    SM.EXPORT_FLAG = 'D'
+		                     AND    SM.VIRTUAL_YN = 'Y'
+		                     AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		                     AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE))
+	</delete>
+
+	<insert id="mergeAggregatedSalesMst">
+		MERGE INTO SALES_MST SM
+		USING (SELECT #{virtualSalesNo} AS SALES_NO
+		             ,SM.DIVISION_CODE                                   AS DIVISION_CODE
+		             ,SM.COMPANY_CODE                                    AS COMPANY_CODE
+		             ,SM.CUSTOMER_CODE                                   AS CUSTOMER_CODE
+		             ,MAX(SM.EXPORT_FLAG)                                AS EXPORT_FLAG
+		             ,MAX(SM.DEPARTMENT_CODE)                            AS DEPARTMENT_CODE
+		             ,MAX(SM.INVOICE_DATE)                               AS INVOICE_DATE
+		             ,'1'                                                AS STATUS
+		             ,MAX(SM.EXPORTER_NAME)                              AS EXPORTER_NAME
+		             ,MAX(SM.EXPORTER_REPRESENTATIVE_NAME)               AS EXPORTER_REPRESENTATIVE_NAME
+		             ,MAX(SM.EXPORTER_BIZ_NO)                            AS EXPORTER_BIZ_NO
+		             ,MAX(SM.EXPORTER_TEL_NO)                            AS EXPORTER_TEL_NO
+		             ,MAX(SM.EXPORTER_ADDRESS)                           AS EXPORTER_ADDRESS
+		             ,MAX(SM.PRODUCER_NAME)                              AS PRODUCER_NAME
+		             ,MAX(SM.PRODUCER_REPRESENTATIVE_NAME)               AS PRODUCER_REPRESENTATIVE_NAME
+		             ,MAX(SM.PRODUCER_BIZ_NO)                            AS PRODUCER_BIZ_NO
+		             ,MAX(SM.PRODUCER_TEL_NO)                            AS PRODUCER_TEL_NO
+		             ,MAX(SM.PRODUCER_ADDRESS)                           AS PRODUCER_ADDRESS
+		             ,MAX(SM.DELIVERY_CUSTOMER_CODE)                     AS DELIVERY_CUSTOMER_CODE
+		             ,'Y'                                                AS VIRTUAL_YN
+		       FROM   SALES_MST SM
+		       WHERE  SM.COMPANY_CODE = #{p.companyCode}
+		       AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
+		       AND    SM.EXPORT_FLAG = 'D'
+		       AND    SM.VIRTUAL_YN = 'N'
+		       AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		       AND    SM.EXPORT_FLAG = COALESCE(#{p.exportFlag}, SM.EXPORT_FLAG)
+		       AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE)
+		       GROUP  BY SM.COMPANY_CODE, SM.DIVISION_CODE, SM.CUSTOMER_CODE) VSM
+		ON (SM.SALES_NO = VSM.SALES_NO AND SM.COMPANY_CODE = VSM.COMPANY_CODE AND SM.DIVISION_CODE = VSM.DIVISION_CODE)
+		WHEN NOT MATCHED THEN
+			INSERT
+				(SALES_NO, DIVISION_CODE, COMPANY_CODE, CUSTOMER_CODE, EXPORT_FLAG, DEPARTMENT_CODE,
+				 INVOICE_DATE, STATUS, EXPORTER_NAME, EXPORTER_REPRESENTATIVE_NAME, EXPORTER_BIZ_NO,
+				 EXPORTER_TEL_NO, EXPORTER_ADDRESS, PRODUCER_NAME, PRODUCER_REPRESENTATIVE_NAME,
+				 PRODUCER_BIZ_NO, PRODUCER_TEL_NO, PRODUCER_ADDRESS, DELETE_YN, VIRTUAL_YN,
+				 DELIVERY_CUSTOMER_CODE, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY)
+			VALUES
+				(VSM.SALES_NO, VSM.DIVISION_CODE, VSM.COMPANY_CODE, VSM.CUSTOMER_CODE, VSM.EXPORT_FLAG,
+				 VSM.DEPARTMENT_CODE, VSM.INVOICE_DATE, VSM.STATUS, VSM.EXPORTER_NAME,
+				 VSM.EXPORTER_REPRESENTATIVE_NAME, VSM.EXPORTER_BIZ_NO, VSM.EXPORTER_TEL_NO,
+				 VSM.EXPORTER_ADDRESS, VSM.PRODUCER_NAME, VSM.PRODUCER_REPRESENTATIVE_NAME,
+				 VSM.PRODUCER_BIZ_NO, VSM.PRODUCER_TEL_NO, VSM.PRODUCER_ADDRESS, 'N', VSM.VIRTUAL_YN,
+				 VSM.DELIVERY_CUSTOMER_CODE, CURRENT_TIMESTAMP, 'MONTHLY_DECISION_PROC', CURRENT_TIMESTAMP,
+				 'MONTHLY_DECISION_PROC')
+	</insert>
+
+	<!-- ===================== 2. 포괄 SALES_DTL 생성 ===================== -->
+
+	<!--
+		SALES_SEQ 채번: 원본은 ROWNUM(스캔 순서에 의존, GROUP BY 와 무관하게 결과집합 전체에 걸쳐
+		하나의 카운터를 사용해 이식성/결정성이 없었다)을 사용했다. ROW_NUMBER() OVER(PARTITION BY
+		CUSTOMER_CODE, DIVISION_CODE ORDER BY ...) 로 교체해 그룹(매출번호)별로 결정적인 연속 채번이
+		되도록 개선했다 — 사용자 요청(표준 SQL 사용)에 따른 의도적 수정.
+
+		기존 MAX(SALES_SEQ)+1 조회는 SELECT 목록의 상관 서브쿼리(VSD 참조)로 작성했었는데, PostgreSQL
+		이 MERGE 의 USING 서브쿼리 안에서는 그 서브쿼리 자신의 FROM 절 별칭(VSD)을 상관 서브쿼리가
+		보지 못한다("missing FROM-clause entry" 오류, mergeFcrMstOriginDetermination 에서 처음
+		확인됨). LATERAL 조인으로 바꿔 상관관계를 명시적인 JOIN 으로 표현했다 — MAX 는 GROUP BY 없이
+		항상 정확히 1행을 반환하므로(매칭 없으면 NULL) LEFT JOIN LATERAL ... ON TRUE 로도 매 VSD
+		행마다 정확히 1행이 매칭되어 기존 상관 서브쿼리와 동일하게 동작한다.
+	-->
+	<insert id="mergeAggregatedSalesDtl">
+		MERGE INTO SALES_DTL SD
+		USING (SELECT #{virtualSalesNo} AS SALES_NO
+		             ,(NS.NEXT_SEQ + ROW_NUMBER() OVER (PARTITION BY VSD.CUSTOMER_CODE, VSD.DIVISION_CODE
+		                                     ORDER BY VSD.PRODUCT_CODE, VSD.PROD_DIVISION_CODE,
+		                                              VSD.DELIVERY_CUSTOMER_CODE) - 1) AS SALES_SEQ
+		             ,VSD.DIVISION_CODE          AS DIVISION_CODE
+		             ,VSD.COMPANY_CODE           AS COMPANY_CODE
+		             ,VSD.PRODUCT_CODE           AS PRODUCT_CODE
+		             ,VSD.PRODUCT_NAME           AS PRODUCT_NAME
+		             ,VSD.CUSTOMER_ITEM_CODE     AS CUSTOMER_ITEM_CODE
+		             ,VSD.HS_CODE                AS HS_CODE
+		             ,VSD.PRODUCT_UNIT           AS PRODUCT_UNIT
+		             ,VSD.PRODUCT_ASSETS_TYPE    AS PRODUCT_ASSETS_TYPE
+		             ,VSD.PROD_DIVISION_CODE     AS PROD_DIVISION_CODE
+		             ,VSD.QUANTITY               AS QUANTITY
+		             ,VSD.UNIT_PRICE             AS UNIT_PRICE
+		             ,VSD.AMOUNT                 AS AMOUNT
+		             ,'0'                        AS BOM_STATUS
+		             ,'1'                        AS STATUS
+		             ,VSD.DELIVERY_CUSTOMER_CODE AS DELIVERY_CUSTOMER_CODE
+		       FROM   (SELECT SD.DIVISION_CODE
+		                     ,SD.COMPANY_CODE
+		                     ,SM.CUSTOMER_CODE
+		                     ,SD.PRODUCT_CODE
+		                     ,SD.PRODUCT_NAME
+		                     ,IM.HS_CODE
+		                     ,SD.PRODUCT_UNIT
+		                     ,SD.PRODUCT_ASSETS_TYPE
+		                     ,SD.PROD_DIVISION_CODE
+		                     ,SD.DELIVERY_CUSTOMER_CODE
+		                     ,SUM(SD.QUANTITY) AS QUANTITY
+		                     ,COALESCE(SUM(SD.AMOUNT) / NULLIF(SUM(SD.QUANTITY), 0), 0) AS UNIT_PRICE
+		                     ,SUM(SD.AMOUNT) AS AMOUNT
+		                     ,MAX(SD.CUSTOMER_ITEM_CODE) AS CUSTOMER_ITEM_CODE
+		               FROM   SALES_MST SM
+		               INNER  JOIN SALES_DTL SD
+		               ON     SM.SALES_NO = SD.SALES_NO
+		               AND    SM.COMPANY_CODE = SD.COMPANY_CODE
+		               AND    SM.DIVISION_CODE = SD.DIVISION_CODE
+		               INNER  JOIN ITEM_MST IM
+		               ON     IM.COMPANY_CODE = SD.COMPANY_CODE
+		               AND    IM.ITEM_CODE = SD.PRODUCT_CODE
+		               WHERE  SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
+		               AND    SM.EXPORT_FLAG = 'D'
+		               AND    SM.VIRTUAL_YN = 'N'
+		               AND    SM.COMPANY_CODE = #{p.companyCode}
+		               AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		               AND    SD.DELIVERY_CUSTOMER_CODE = COALESCE(#{p.deliveryCustomerCode}, SM.DELIVERY_CUSTOMER_CODE)
+		               AND    SM.EXPORT_FLAG = COALESCE(#{p.exportFlag}, SM.EXPORT_FLAG)
+		               <if test="p.productCodes != null and !p.productCodes.isEmpty()">
+		               AND    SD.PRODUCT_CODE IN
+		                      <foreach collection="p.productCodes" item="productCode" open="(" separator="," close=")">
+		                          #{productCode}
+		                      </foreach>
+		               </if>
+		               AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE)
+		               GROUP  BY SD.DIVISION_CODE, SD.COMPANY_CODE, SD.PRODUCT_CODE, SM.CUSTOMER_CODE,
+		                        SD.PRODUCT_NAME, SD.PRODUCT_UNIT, SD.PRODUCT_ASSETS_TYPE, IM.HS_CODE,
+		                        SD.PROD_DIVISION_CODE, SD.DELIVERY_CUSTOMER_CODE) VSD
+		       LEFT   JOIN LATERAL (SELECT COALESCE(MAX(SALES_SEQ) + 1, 1) AS NEXT_SEQ
+		                            FROM   SALES_DTL
+		                            WHERE  SALES_NO = #{virtualSalesNo}
+		                            AND    COMPANY_CODE = VSD.COMPANY_CODE
+		                            AND    DIVISION_CODE = VSD.DIVISION_CODE) NS ON TRUE
+		       WHERE  VSD.QUANTITY > 0) VSD
+		ON (SD.SALES_NO = VSD.SALES_NO AND SD.PRODUCT_CODE = VSD.PRODUCT_CODE AND SD.DIVISION_CODE = VSD.DIVISION_CODE
+		    AND SD.PROD_DIVISION_CODE = VSD.PROD_DIVISION_CODE AND SD.COMPANY_CODE = VSD.COMPANY_CODE
+		    AND SD.DELIVERY_CUSTOMER_CODE = VSD.DELIVERY_CUSTOMER_CODE)
+		WHEN MATCHED THEN
+			UPDATE
+			SET    PRODUCT_ASSETS_TYPE = VSD.PRODUCT_ASSETS_TYPE
+			      ,HS_CODE             = VSD.HS_CODE
+			      ,QUANTITY            = VSD.QUANTITY
+			      ,UNIT_PRICE          = VSD.UNIT_PRICE
+			      ,AMOUNT              = VSD.AMOUNT
+			      ,UPDATE_DATE         = CURRENT_TIMESTAMP
+			      ,UPDATE_BY           = 'MONTHLY_DECISION_PROC'
+		WHEN NOT MATCHED THEN
+			INSERT
+				(SALES_NO, SALES_SEQ, DIVISION_CODE, COMPANY_CODE, PRODUCT_CODE, PRODUCT_NAME, PRODUCT_UNIT,
+				 PRODUCT_ASSETS_TYPE, HS_CODE, PROD_DIVISION_CODE, QUANTITY, UNIT_PRICE, AMOUNT, BOM_STATUS,
+				 STATUS, CUSTOMER_ITEM_CODE, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY,
+				 DELIVERY_CUSTOMER_CODE)
+			VALUES
+				(VSD.SALES_NO, VSD.SALES_SEQ, VSD.DIVISION_CODE, VSD.COMPANY_CODE, VSD.PRODUCT_CODE,
+				 VSD.PRODUCT_NAME, VSD.PRODUCT_UNIT, VSD.PRODUCT_ASSETS_TYPE, VSD.HS_CODE,
+				 VSD.PROD_DIVISION_CODE, VSD.QUANTITY, VSD.UNIT_PRICE, VSD.AMOUNT, VSD.BOM_STATUS, VSD.STATUS,
+				 VSD.CUSTOMER_ITEM_CODE, CURRENT_TIMESTAMP, 'MONTHLY_DECISION_PROC', CURRENT_TIMESTAMP,
+				 'MONTHLY_DECISION_PROC', VSD.DELIVERY_CUSTOMER_CODE)
+	</insert>
+
+	<!-- ===================== 4. 판정대상 커서(C_SALES_MST) ===================== -->
+
+	<select id="selectDecisionTargets" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget">
+		SELECT COMPANY_CODE  AS companyCode
+		      ,DIVISION_CODE AS divisionCode
+		      ,SALES_NO      AS salesNo
+		FROM   (SELECT SM.COMPANY_CODE
+		              ,SM.DIVISION_CODE
+		              ,SM.SALES_NO
+		              ,SM.EXPORT_FLAG
+		              ,SM.CUSTOMER_CODE
+		        FROM   SALES_MST SM
+		        INNER  JOIN SALES_DTL SD
+		        ON     SD.SALES_NO = SM.SALES_NO
+		        AND    SD.DIVISION_CODE = SM.DIVISION_CODE
+		        AND    SD.COMPANY_CODE = SM.COMPANY_CODE
+		        WHERE  SM.COMPANY_CODE = #{p.companyCode}
+		        AND    SM.DIVISION_CODE = COALESCE(#{p.divisionCode}, SM.DIVISION_CODE)
+		        AND    ((SM.EXPORT_FLAG = 'D' AND SM.VIRTUAL_YN = 'Y')
+		                OR (SM.EXPORT_FLAG = 'E' AND SM.TARGET_FTA_CODE IS NOT NULL))
+		        AND    SM.INVOICE_DATE LIKE #{p.yyyymmdd} || '%'
+		        AND    SM.CUSTOMER_CODE = COALESCE(#{p.customerCode}, SM.CUSTOMER_CODE)
+		        AND    SM.DELIVERY_CUSTOMER_CODE = COALESCE(#{p.deliveryCustomerCode}, SM.DELIVERY_CUSTOMER_CODE)
+		        AND    SM.EXPORT_FLAG = COALESCE(#{p.exportFlag}, SM.EXPORT_FLAG)
+		        <if test="p.productCodes != null and !p.productCodes.isEmpty()">
+		        AND    SD.PRODUCT_CODE IN
+		               <foreach collection="p.productCodes" item="productCode" open="(" separator="," close=")">
+		                   #{productCode}
+		               </foreach>
+		        </if>) X
+		GROUP  BY COMPANY_CODE, DIVISION_CODE, SALES_NO, EXPORT_FLAG, CUSTOMER_CODE
+		ORDER  BY EXPORT_FLAG, CUSTOMER_CODE
+	</select>
+</mapper>

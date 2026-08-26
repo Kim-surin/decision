@@ -1,0 +1,486 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.CreateFcrDao">
+
+	<!-- ===================== 1. 파라미터 셋업 작업 ===================== -->
+
+	<select id="selectSalesInvoiceHeader" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader">
+		SELECT EXPORT_FLAG   AS exportFlag
+		      ,SM.INVOICE_DATE AS invoiceDate
+		      ,VIRTUAL_YN    AS virtualYn
+		FROM   SALES_MST SM
+		WHERE  SALES_NO = #{salesNo}
+		AND    SM.DIVISION_CODE = #{divisionCode}
+		AND    SM.COMPANY_CODE = #{companyCode}
+	</select>
+
+	<select id="countIntermediateApplyFcrMst" resultType="long">
+		SELECT COUNT(*)
+		FROM   FCR_MST
+		WHERE  SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
+		AND    COMPANY_CODE = #{companyCode}
+		AND    IM_APPLY_YN = 'MF'
+	</select>
+
+	<!-- ===================== 2. 실적 BOM 및 표준 BOM 확인 작업 ===================== -->
+
+	<select id="selectSalesDtlBomTargets" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget">
+		SELECT SALES_SEQ          AS salesSeq
+		      ,PRODUCT_CODE       AS productCode
+		      ,PROD_DIVISION_CODE AS prodDivisionCode
+		      ,STATUS             AS status
+		FROM   SALES_DTL
+		WHERE  SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
+		AND    COMPANY_CODE = #{companyCode}
+		AND    PRODUCT_ASSETS_TYPE IN ('P', 'H')
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</select>
+
+	<!--
+		selectOwnDivisionBom/selectAnyDivisionBom(원본 각각 ROWNUM=1, 정렬기준 없음)을 C_SALES_DTL
+		커서 대상(사업장,제품) 조합 전체에 대해 한 번의 왕복으로 배치 조회한다. own/any 를 각각
+		LATERAL 로 병렬 조회해두고(원본처럼 own 이 없을 때만 any 를 보는 2단계 대신 항상 둘 다 계산),
+		Java(CreateFcrService#checkBomAvailability)에서 own 우선으로 골라 쓴다 — own 이 있으면 그대로
+		쓰고 없으면 any 로 폴백하므로 결과는 원본과 동일하다.
+	-->
+	<select id="selectBomAvailabilityBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult">
+		SELECT V.PROD_DIVISION_CODE AS reqProdDivisionCode
+		      ,V.PRODUCT_CODE       AS reqProductCode
+		      ,OWN.DIVISION_CODE    AS ownDivisionCode
+		      ,OWN.YYYYMM           AS ownYyyymm
+		      ,ANY_.DIVISION_CODE   AS anyDivisionCode
+		      ,ANY_.YYYYMM          AS anyYyyymm
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.prodDivisionCode} AS PROD_DIVISION_CODE, #{r.productCode} AS PRODUCT_CODE
+		       </foreach>
+		       ) V
+		LEFT   JOIN LATERAL (SELECT DIVISION_CODE
+		                            ,FBD.YYYYMM
+		                      FROM   FTA_BOM_DTL FBD
+		                      WHERE  FBD.COMPANY_CODE = #{companyCode}
+		                      AND    FBD.DIVISION_CODE = V.PROD_DIVISION_CODE
+		                      AND    FBD.PRODUCT_CODE = V.PRODUCT_CODE
+		                      AND    FBD.TXN_TYPE = #{bomType}
+		                      AND    FBD.REQ_QTY >= 0
+		                      AND    FBD.YYYYMM = (SELECT MAX(FBDT.YYYYMM)
+		                                            FROM   FTA_BOM_DTL FBDT
+		                                            WHERE  FBDT.COMPANY_CODE = #{companyCode}
+		                                            AND    FBDT.DIVISION_CODE = V.PROD_DIVISION_CODE
+		                                            AND    FBDT.PRODUCT_CODE = V.PRODUCT_CODE
+		                                            AND    FBDT.TXN_TYPE = #{bomType}
+		                                            AND    FBDT.YYYYMM BETWEEN #{bomPreviousYyyymm} AND #{yyyymm})
+		                      FETCH FIRST 1 ROW ONLY) OWN ON TRUE
+		LEFT   JOIN LATERAL (SELECT DIVISION_CODE
+		                            ,FBD.YYYYMM
+		                      FROM   FTA_BOM_DTL FBD
+		                      WHERE  FBD.COMPANY_CODE = #{companyCode}
+		                      AND    FBD.PRODUCT_CODE = V.PRODUCT_CODE
+		                      AND    FBD.TXN_TYPE = #{bomType}
+		                      AND    FBD.REQ_QTY >= 0
+		                      AND    FBD.YYYYMM = (SELECT MAX(FBDT.YYYYMM)
+		                                            FROM   FTA_BOM_DTL FBDT
+		                                            WHERE  FBDT.COMPANY_CODE = #{companyCode}
+		                                            AND    FBDT.PRODUCT_CODE = V.PRODUCT_CODE
+		                                            AND    FBDT.TXN_TYPE = #{bomType}
+		                                            AND    FBDT.YYYYMM BETWEEN #{bomPreviousYyyymm} AND #{yyyymm})
+		                      FETCH FIRST 1 ROW ONLY) ANY_ ON TRUE
+	</select>
+
+	<update id="updateSalesDtlBomStatusBatch">
+		UPDATE SALES_DTL SD
+		SET    STATUS            = V.STATUS
+		      ,BOM_STATUS        = V.BOM_STATUS
+		      ,BOM_YYYYMM        = V.BOM_YYYYMM
+		      ,BOM_DIVISION_CODE = V.BOM_DIVISION_CODE
+		      ,UPDATE_DATE       = CURRENT_TIMESTAMP
+		FROM   (
+		       <foreach collection="rows" item="r" separator="UNION ALL">
+		       SELECT #{r.salesSeq} AS SALES_SEQ, #{r.productCode} AS PRODUCT_CODE, #{r.status} AS STATUS,
+		              #{r.bomStatus} AS BOM_STATUS, #{r.bomYyyymm} AS BOM_YYYYMM,
+		              #{r.bomDivisionCode} AS BOM_DIVISION_CODE
+		       </foreach>
+		       ) V
+		WHERE  SD.SALES_NO = #{salesNo}
+		AND    SD.DIVISION_CODE = #{divisionCode}
+		AND    SD.COMPANY_CODE = #{companyCode}
+		AND    SD.SALES_SEQ = V.SALES_SEQ
+		AND    SD.PRODUCT_CODE = V.PRODUCT_CODE
+	</update>
+
+	<!-- ===================== 3-1. 전 처리 작업 ===================== -->
+
+	<delete id="deleteFcrDtl">
+		DELETE FROM FCR_DTL FM
+		WHERE  SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
+		AND    COMPANY_CODE = #{companyCode}
+		AND    EXISTS (SELECT 1
+		               FROM   SALES_DTL SD
+		               WHERE  SD.SALES_NO = FM.SALES_NO
+		               AND    SD.SALES_SEQ = FM.SALES_SEQ
+		               AND    SD.DIVISION_CODE = FM.DIVISION_CODE
+		               AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		               AND    SD.SALES_NO = #{salesNo}
+		               AND    SD.DIVISION_CODE = #{divisionCode}
+		               AND    SD.COMPANY_CODE = #{companyCode}
+		               <if test="productCodes != null and !productCodes.isEmpty()">
+		               AND    SD.PRODUCT_CODE IN
+		                      <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                          #{productCode}
+		                      </foreach>
+		               </if>
+		               )
+	</delete>
+
+	<delete id="deleteFcrResult">
+		DELETE FROM FCR_RESULT FM
+		WHERE  SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
+		AND    COMPANY_CODE = #{companyCode}
+		AND    EXISTS (SELECT 1
+		               FROM   SALES_DTL SD
+		               WHERE  SD.SALES_NO = FM.SALES_NO
+		               AND    SD.SALES_SEQ = FM.SALES_SEQ
+		               AND    SD.DIVISION_CODE = FM.DIVISION_CODE
+		               AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		               AND    SD.SALES_NO = #{salesNo}
+		               AND    SD.DIVISION_CODE = #{divisionCode}
+		               AND    SD.COMPANY_CODE = #{companyCode}
+		               <if test="productCodes != null and !productCodes.isEmpty()">
+		               AND    SD.PRODUCT_CODE IN
+		                      <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                          #{productCode}
+		                      </foreach>
+		               </if>
+		               )
+	</delete>
+
+	<delete id="deleteFcrMst">
+		DELETE FROM FCR_MST FM
+		WHERE  SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
+		AND    COMPANY_CODE = #{companyCode}
+		AND    EXISTS (SELECT 1
+		               FROM   SALES_DTL SD
+		               WHERE  SD.SALES_NO = FM.SALES_NO
+		               AND    SD.SALES_SEQ = FM.SALES_SEQ
+		               AND    SD.DIVISION_CODE = FM.DIVISION_CODE
+		               AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		               AND    SD.SALES_NO = #{salesNo}
+		               AND    SD.DIVISION_CODE = #{divisionCode}
+		               AND    SD.COMPANY_CODE = #{companyCode}
+		               <if test="productCodes != null and !productCodes.isEmpty()">
+		               AND    SD.PRODUCT_CODE IN
+		                      <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                          #{productCode}
+		                      </foreach>
+		               </if>
+		               )
+	</delete>
+
+	<!-- ===================== 3-2. FCR_MST 데이터 생성 ===================== -->
+
+	<select id="selectDomesticSalesLines" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine">
+		SELECT SM.SALES_NO                                  AS salesNo
+		      ,SD.SALES_SEQ                                 AS salesSeq
+		      ,SD.PRODUCT_CODE                               AS productCode
+		      ,SD.DIVISION_CODE                              AS divisionCode
+		      ,SM.COMPANY_CODE                               AS companyCode
+		      ,SD.STANDARD                                   AS standard
+		      ,(SD.AMOUNT / SD.QUANTITY)                     AS amount
+		      ,COALESCE(SD.SP_COO_YN, 'N')                   AS spCooYn
+		      ,CASE WHEN SD.PRODUCT_ASSETS_TYPE = 'B' THEN 'Y' ELSE 'N' END AS woCooYn
+		      ,SD.PRODUCT_UNIT                               AS productUnit
+		      ,SD.PRODUCT_ASSETS_TYPE                        AS productAssetsType
+		      ,SD.PROD_DIVISION_CODE                         AS prodDivisionCode
+		      ,SM.INVOICE_DATE                               AS invoiceDate
+		      ,SM.EXPORT_FLAG                                AS exportFlag
+		      ,SD.DELIVERY_CUSTOMER_CODE                     AS deliveryCustomerCode
+		      ,SM.ARRIVAL_NATION                             AS arrivalNation
+		FROM   SALES_MST SM
+		INNER  JOIN SALES_DTL SD
+		ON     SM.SALES_NO = SD.SALES_NO
+		AND    SM.COMPANY_CODE = SD.COMPANY_CODE
+		AND    SM.DIVISION_CODE = SD.DIVISION_CODE
+		WHERE  SM.SALES_NO = #{salesNo}
+		AND    SM.DIVISION_CODE = #{divisionCode}
+		AND    SM.COMPANY_CODE = #{companyCode}
+		AND    SD.QUANTITY > 0
+		AND    SD.BOM_STATUS &lt;&gt; '1'
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    SD.PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</select>
+
+	<select id="selectActiveFtaMasters" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive">
+		SELECT FTA_CODE       AS ftaCode
+		      ,INTERMEDIATE_YN AS intermediateYn
+		FROM   FTA_MASTER
+		WHERE  DELETE_YN = 'N'
+		AND    COMPANY_CODE = #{companyCode}
+	</select>
+
+	<select id="selectExportSalesLines" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine">
+		SELECT FM.FTA_CODE                                   AS ftaCode
+		      ,SALES.SALES_NO                                AS salesNo
+		      ,SALES.SALES_SEQ                                AS salesSeq
+		      ,SALES.PRODUCT_CODE                             AS productCode
+		      ,SALES.DIVISION_CODE                            AS divisionCode
+		      ,SALES.COMPANY_CODE                             AS companyCode
+		      ,SALES.STANDARD                                 AS standard
+		      ,SALES.QUANTITY                                 AS quantity
+		      ,SALES.AMOUNT                                   AS amount
+		      ,SALES.INKOTERMS                                AS inkoterms
+		      ,SALES.SP_COO_YN                                AS spCooYn
+		      ,SALES.WO_COO_YN                                AS woCooYn
+		      ,SALES.PRODUCT_UNIT                             AS productUnit
+		      ,SALES.PRODUCT_ASSETS_TYPE                      AS productAssetsType
+		      ,SALES.PROD_DIVISION_CODE                       AS prodDivisionCode
+		      ,SALES.EXPORT_FLAG                              AS exportFlag
+		      ,SALES.ARRIVAL_NATION                           AS arrivalNation
+		      ,SALES.INVOICE_DATE                             AS invoiceDate
+		      ,SALES.DELIVERY_CUSTOMER_CODE                   AS deliveryCustomerCode
+		      ,FM.INTERMEDIATE_YN                             AS intermediateYn
+		FROM   (SELECT SM.SALES_NO
+		              ,SD.SALES_SEQ
+		              ,SD.PRODUCT_CODE
+		              ,SD.DIVISION_CODE
+		              ,SD.COMPANY_CODE
+		              ,SD.STANDARD
+		              ,SD.QUANTITY
+		              ,(SD.AMOUNT / SD.QUANTITY) AS AMOUNT
+		              ,SM.INKOTERMS
+		              ,SM.TARGET_FTA_CODE AS TARGET_FTA_CODE
+		              ,COALESCE(SD.SP_COO_YN, 'N') AS SP_COO_YN
+		              ,CASE WHEN SD.PRODUCT_ASSETS_TYPE = 'B' THEN 'Y' ELSE 'N' END AS WO_COO_YN
+		              ,SD.PRODUCT_UNIT
+		              ,SD.PRODUCT_ASSETS_TYPE
+		              ,SD.PROD_DIVISION_CODE
+		              ,SM.EXPORT_FLAG
+		              ,COALESCE(SM.ARRIVAL_NATION, C.NATION_CODE) AS ARRIVAL_NATION
+		              ,SM.INVOICE_DATE
+		              ,SD.DELIVERY_CUSTOMER_CODE
+		        FROM   SALES_MST SM
+		        INNER  JOIN SALES_DTL SD
+		        ON     SM.SALES_NO = SD.SALES_NO
+		        AND    SM.DIVISION_CODE = SD.DIVISION_CODE
+		        AND    SM.COMPANY_CODE = SD.COMPANY_CODE
+		        AND    SD.BOM_STATUS &lt;&gt; '1'
+		        INNER  JOIN CUSTOMER C
+		        ON     SM.CUSTOMER_CODE = C.CUSTOMER_CODE
+		        AND    SM.COMPANY_CODE = C.COMPANY_CODE
+		        WHERE  SM.SALES_NO = #{salesNo}
+		        AND    SM.DIVISION_CODE = #{divisionCode}
+		        AND    SM.COMPANY_CODE = #{companyCode}
+		        <if test="productCodes != null and !productCodes.isEmpty()">
+		        AND    SD.PRODUCT_CODE IN
+		               <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                   #{productCode}
+		               </foreach>
+		        </if>
+		        ) SALES
+		INNER  JOIN FTA_APPLY_NATION FAN
+		ON     FAN.NATION_CODE = SALES.ARRIVAL_NATION
+		AND    FAN.EFFECT_DATE &lt;= SALES.INVOICE_DATE
+		INNER  JOIN FTA_MASTER FM
+		ON     FM.DELETE_YN = 'N'
+		AND    FM.FTA_CODE = SALES.TARGET_FTA_CODE
+		AND    FM.COMPANY_CODE = SALES.COMPANY_CODE
+		AND    FM.FTA_CODE = FAN.FTA_CODE
+		AND    FM.FTA_STATUS = '4'
+	</select>
+
+	<!--
+		DECISION_YN 컬럼: 판정 대상 스코프는 더 이상 이 컬럼으로 표시하지 않고 호출부가 넘기는
+		productCodes 파라미터로 직접 제어하며, 이제 이 컬럼이 완전히 미사용임이 확인되어 INSERT
+		대상에서도 제거했다.
+	-->
+	<insert id="insertFcrMstRows">
+		INSERT INTO FCR_MST
+			(FTA_CODE, SALES_NO, SALES_SEQ, PRODUCT_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, STANDARD,
+			 AMOUNT, NET_COST_AMOUNT, EXWORK_AMOUNT, FOB_AMOUNT, INAREA_AMOUNT, OUTAREA_AMOUNT, SP_COO_YN,
+			 WO_COO_YN, PRODUCT_UNIT, PRODUCT_ASSETS_TYPE, PROD_DIVISION_CODE, IM_APPLY_YN, CREATE_DATE,
+			 CREATE_BY, UPDATE_DATE, UPDATE_BY)
+		VALUES
+		<foreach collection="rows" item="row" separator=",">
+			(#{row.ftaCode}, #{row.salesNo}, #{row.salesSeq}, #{row.productCode}, #{row.divisionCode},
+			 #{row.companyCode}, #{row.hsCode}, #{row.standard}, #{row.amount}, #{row.netCostAmount},
+			 #{row.exworkAmount}, #{row.fobAmount}, 0, 0, #{row.spCooYn}, #{row.woCooYn}, #{row.productUnit},
+			 #{row.productAssetsType}, #{row.prodDivisionCode}, #{row.imApplyYn}, CURRENT_TIMESTAMP,
+			 'CREATE_FCR', CURRENT_TIMESTAMP, 'CREATE_FCR')
+		</foreach>
+	</insert>
+
+	<!-- ===================== 3-3. 제품 BOM 소요량(FCR_DTL leaf 자재) ===================== -->
+
+	<select id="selectBomLeafRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow">
+		SELECT FBD.ITEM_CODE                                 AS itemCode
+		      ,FM.FTA_CODE                                   AS ftaCode
+		      ,FM.SALES_NO                                   AS salesNo
+		      ,FM.SALES_SEQ                                  AS salesSeq
+		      ,FM.PRODUCT_CODE                                AS productCode
+		      ,FM.DIVISION_CODE                               AS divisionCode
+		      ,FM.COMPANY_CODE                                AS companyCode
+		      ,COALESCE(IM.HS_CODE, COALESCE(FM.HS_CODE, ' ')) AS hsCode
+		      ,IM.HS_CODE                                     AS itemHsCode
+		      ,FBD.REQ_QTY * SD.UNIT_EXCHANGE_RATE            AS requirementQty
+		      ,FBD.FROM_DIVISION_CODE                         AS fromDivisionCode
+		FROM   (SELECT SD.SALES_NO
+		              ,SD.SALES_SEQ
+		              ,SD.PRODUCT_CODE
+		              ,SD.DIVISION_CODE
+		              ,SD.COMPANY_CODE
+		              ,SD.BOM_STATUS
+		              ,SD.BOM_YYYYMM
+		              ,SD.BOM_DIVISION_CODE
+		              ,CAST(COALESCE(SD.ATTRIBUTE02, '1') AS DECIMAL) AS UNIT_EXCHANGE_RATE
+		        FROM   SALES_DTL SD
+		        INNER  JOIN SALES_MST SM
+		        ON     SD.SALES_NO = SM.SALES_NO
+		        AND    SD.DIVISION_CODE = SM.DIVISION_CODE
+		        AND    SD.COMPANY_CODE = SM.COMPANY_CODE
+		        WHERE  SD.SALES_NO = #{salesNo}
+		        AND    SD.DIVISION_CODE = #{divisionCode}
+		        AND    SD.COMPANY_CODE = #{companyCode}
+		        AND    SD.BOM_STATUS &lt;&gt; '1'
+		        <if test="productCodes != null and !productCodes.isEmpty()">
+		        AND    SD.PRODUCT_CODE IN
+		               <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                   #{productCode}
+		               </foreach>
+		        </if>
+		        ) SD
+		INNER  JOIN FCR_MST FM
+		ON     SD.SALES_NO = FM.SALES_NO
+		AND    SD.SALES_SEQ = FM.SALES_SEQ
+		AND    SD.DIVISION_CODE = FM.DIVISION_CODE
+		AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		AND    SD.PRODUCT_CODE = FM.PRODUCT_CODE
+		INNER  JOIN FTA_BOM_DTL FBD
+		ON     FBD.PRODUCT_CODE = SD.PRODUCT_CODE
+		AND    FBD.DIVISION_CODE = SD.BOM_DIVISION_CODE
+		AND    FBD.COMPANY_CODE = SD.COMPANY_CODE
+		AND    FBD.YYYYMM = SD.BOM_YYYYMM
+		AND    FBD.ISLEAF_YN = 'Y'
+		INNER  JOIN ITEM_MST IM
+		ON     FBD.ITEM_CODE = IM.ITEM_CODE
+		AND    FBD.COMPANY_CODE = IM.COMPANY_CODE
+		AND    IM.DELETE_YN = 'N'
+		WHERE  FM.PRODUCT_ASSETS_TYPE IN ('P', 'H')
+		AND    FBD.TXN_TYPE = #{bomType}
+		AND    FBD.REQ_QTY >= 0
+		AND    NOT EXISTS (SELECT 1
+		                    FROM   EXCEPT_ITEM E
+		                    WHERE  FBD.ITEM_CODE = E.ITEM_CODE
+		                    AND    FM.FTA_CODE = E.FTA_CODE
+		                    AND    E.COMPANY_CODE = #{companyCode})
+	</select>
+	<!-- FM(FCR_MST)은 SD.PRODUCT_CODE=FM.PRODUCT_CODE 로 이미 SD 와 1:1 상관되어 있어(위 SD 서브쿼리가
+	     productCodes 로 스코프를 잡음) FM 쪽에 별도 제품 필터가 필요 없다. -->
+
+	<!-- ===================== 3-4. 상품/부산물 FCR_DTL ===================== -->
+
+	<select id="selectProductFcrDtlSourceRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow">
+		SELECT FM.PRODUCT_CODE                               AS productCode
+		      ,FM.FTA_CODE                                    AS ftaCode
+		      ,FM.SALES_NO                                    AS salesNo
+		      ,FM.SALES_SEQ                                   AS salesSeq
+		      ,FM.DIVISION_CODE                               AS divisionCode
+		      ,FM.COMPANY_CODE                                AS companyCode
+		      ,COALESCE(IM.HS_CODE, COALESCE(FM.HS_CODE, ' ')) AS hsCode
+		      ,FM.HS_CODE                                     AS itemHsCode
+		      ,SD.UNIT_PRICE                                  AS unitPrice
+		      ,SD.PRODUCT_ASSETS_TYPE                         AS productAssetsType
+		      ,SD.PROD_DIVISION_CODE                          AS prodDivisionCode
+		FROM   FCR_MST FM
+		INNER  JOIN SALES_DTL SD
+		ON     SD.SALES_NO = FM.SALES_NO
+		AND    SD.SALES_SEQ = FM.SALES_SEQ
+		AND    SD.DIVISION_CODE = FM.DIVISION_CODE
+		AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		INNER  JOIN SALES_MST SM
+		ON     SD.SALES_NO = SM.SALES_NO
+		AND    SD.DIVISION_CODE = SM.DIVISION_CODE
+		AND    SD.COMPANY_CODE = SM.COMPANY_CODE
+		INNER  JOIN ITEM_MST IM
+		ON     SD.PRODUCT_CODE = IM.ITEM_CODE
+		AND    SD.COMPANY_CODE = IM.COMPANY_CODE
+		WHERE  SD.SALES_NO = #{salesNo}
+		AND    SD.DIVISION_CODE = #{divisionCode}
+		AND    SD.COMPANY_CODE = #{companyCode}
+		AND    SD.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    SD.PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</select>
+
+	<insert id="insertFcrDtlRows">
+		INSERT INTO FCR_DTL
+			(ITEM_CODE, FTA_CODE, SALES_NO, SALES_SEQ, PRODUCT_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE,
+			 REQUIREMENT_QTY, INPUT_AMOUNT, INAREA_QTY, INAREA_AMOUNT, OUTAREA_QTY, OUTAREA_AMOUNT,
+			 HS_CODE_YN, PRICE_NOTE, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY)
+		VALUES
+		<foreach collection="rows" item="row" separator=",">
+			(#{row.itemCode}, #{row.ftaCode}, #{row.salesNo}, #{row.salesSeq}, #{row.productCode},
+			 #{row.divisionCode}, #{row.companyCode}, #{row.hsCode}, #{row.requirementQty}, #{row.inputAmount},
+			 #{row.originatingQty}, #{row.originatingAmount}, #{row.nonOriginatingQty}, #{row.nonOriginatingAmount}, #{row.hsCodeYn},
+			 #{row.priceNote}, CURRENT_TIMESTAMP, 'CREATE_FCR', CURRENT_TIMESTAMP, 'CREATE_FCR')
+		</foreach>
+	</insert>
+
+	<!--
+		===================== 3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE =====================
+		(과거 3-5/3-6 단계였던 상품(M,R,B) 원산지 판정은
+		com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao 로 옮겼다 — 판정 관련 로직을
+		OriginDeterminationService.determineOrigin 에 모으기 위함. 이 3-7 단계는 판정이 아니라 FCR_DTL
+		에 이미 계산된 금액을 FCR_MST 로 집계하는 데이터 준비 작업이라 CREATE_FCR 에 그대로 남겨뒀다.)
+	-->
+
+	<update id="mergeFcrMstMaterialAmountTotals">
+		MERGE INTO FCR_MST FM
+		USING (SELECT FCM.FTA_CODE
+		             ,FCM.SALES_NO
+		             ,FCM.SALES_SEQ
+		             ,FCM.DIVISION_CODE
+		             ,FCM.COMPANY_CODE
+		             ,SUM(FCD.INAREA_AMOUNT)  AS INAREA_AMOUNT
+		             ,SUM(FCD.OUTAREA_AMOUNT) AS OUTAREA_AMOUNT
+		       FROM   FCR_MST FCM
+		       INNER  JOIN FCR_DTL FCD
+		       ON     FCM.FTA_CODE = FCD.FTA_CODE
+		       AND    FCM.SALES_NO = FCD.SALES_NO
+		       AND    FCM.SALES_SEQ = FCD.SALES_SEQ
+		       AND    FCM.DIVISION_CODE = FCD.DIVISION_CODE
+		       AND    FCM.COMPANY_CODE = FCD.COMPANY_CODE
+		       WHERE  FCM.SALES_NO = #{salesNo}
+		       AND    FCM.DIVISION_CODE = #{divisionCode}
+		       AND    FCM.COMPANY_CODE = #{companyCode}
+		       <if test="productCodes != null and !productCodes.isEmpty()">
+		       AND    FCM.PRODUCT_CODE IN
+		              <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                  #{productCode}
+		              </foreach>
+		       </if>
+		       GROUP  BY FCM.FTA_CODE, FCM.SALES_NO, FCM.SALES_SEQ, FCM.DIVISION_CODE, FCM.COMPANY_CODE) FMD
+		ON (FM.FTA_CODE = FMD.FTA_CODE AND FM.SALES_NO = FMD.SALES_NO AND FM.SALES_SEQ = FMD.SALES_SEQ
+		    AND FM.DIVISION_CODE = FMD.DIVISION_CODE AND FM.COMPANY_CODE = FMD.COMPANY_CODE)
+		WHEN MATCHED THEN
+			UPDATE
+			SET    INAREA_AMOUNT  = FMD.INAREA_AMOUNT
+			      ,OUTAREA_AMOUNT = FMD.OUTAREA_AMOUNT
+	</update>
+</mapper>
