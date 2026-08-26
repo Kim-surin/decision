@@ -155,13 +155,16 @@
 						this.grid_DOMESTIC_ORIGIN_DETERMINATION = null;
 						// 원산지판정 팝업으로 넘길 수 있는 최대 체크 건수
 						this.MAX_CHECK_COUNT = 50;
+						
+						this.STATUS_NAME_STYLE = {
+							'0' : 'origin-determination-non',
+							'1' : 'origin-determination-fail'	
+						}
 
 						this.Initialize_viewObject = function () {
 							DOMESTIC_ORIGIN_DETERMINATIONVIEW.createAUIGrid();
 							AUIGrid.setGridData(DOMESTIC_ORIGIN_DETERMINATIONVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION, DOMESTIC_ORIGIN_DETERMINATIONVIEW.data);
 						}
-
-						this.data = [];
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
@@ -180,12 +183,8 @@
 								{dataField: "status", headerText: "판정상태", width: 130, visible: false},
 								{dataField: "status_name", headerText: "판정상태", width: 130, filter: {showIcon: true}, 
 									styleFunction: function(rowIndex, columnIndex, value, headerText, item, dataField){
-										if(item.status === 5){
-											return "origin-determination-fail";
-										}
-										
-										if(item.status === 0){
-											return "origin-determination-non";
+										if(Object.hasOwn(DOMESTIC_ORIGIN_DETERMINATIONVIEW.STATUS_NAME_STYLE, item.status)){
+											return DOMESTIC_ORIGIN_DETERMINATIONVIEW.STATUS_NAME_STYLE[item.status];
 										}
 										
 									}}

@@ -99,6 +99,11 @@
 
 					var EXPORT_ORIGIN_DETERMINATIONVIEW = new function () {
 						this.grid_EXPORT_ORIGIN_DETERMINATION = null;
+						
+						this.STATUS_NAME_STYLE = {
+							'0' : 'origin-determination-non',
+							'1' : 'origin-determination-fail'	
+						}
 
 						this.Initialize_viewObject = function () {
 							EXPORT_ORIGIN_DETERMINATIONVIEW.createAUIGrid();
@@ -121,12 +126,8 @@
 								{dataField: "status", headerText: "판정상태", width: 130, visible: false},
 								{dataField: "status_name", headerText: "판정상태", width: 130, filter: {showIcon: true}, 
 									styleFunction: function(rowIndex, columnIndex, value, headerText, item, dataField){
-										if(item.status === 5){
-											return "origin-determination-fail";
-										}
-										
-										if(item.status === 0){
-											return "origin-determination-non";
+										if(Object.hasOwn(EXPORT_ORIGIN_DETERMINATIONVIEW.STATUS_NAME_STYLE, item.status)){
+											return EXPORT_ORIGIN_DETERMINATIONVIEW.STATUS_NAME_STYLE[item.status];
 										}
 										
 									}}
