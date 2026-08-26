@@ -123,7 +123,7 @@
 								{dataField: "customer_name", headerText: "고객사", width: 200, filter: {showIcon: true}},
 								{dataField: "invoice_no", headerText: "Invoice No", width: 250, filter: {showIcon: true}},
 								{dataField: "export_nation", headerText: "수출국", width: 130, filter: {showIcon: true}},
-								{dataField: "fta_cnt", headerText: "판정대상 협정", width: 200, filter: {showIcon: true}},
+								{dataField: "fta_name", headerText: "판정대상 협정", width: 120, filter: {showIcon: true}},
 								{dataField: "status", headerText: "판정상태", width: 130, visible: false},
 								{dataField: "status_name", headerText: "판정상태", width: 130, filter: {showIcon: true}, 
 									styleFunction: function(rowIndex, columnIndex, value, headerText, item, dataField){
