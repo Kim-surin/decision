@@ -150,6 +150,9 @@
        AND (
        <foreach collection="datas" item="d" separator=" OR ">
        		(SM.SALES_NO = #{d.sales_no}
+       		<if test="d.division_code != null">
+       		AND SM.DIVISION_CODE = #{d.division_code}
+       		</if>
        		<if test="d.sales_seq != null">
        		AND SD.SALES_SEQ = #{d.sales_seq}
        		</if>
@@ -197,7 +200,9 @@
     </select>
 
     <select id="retrieveExportOriginDetermination" parameterType="HashMap" resultType="HashMap">
-       SELECT SM.INVOICE_DATE
+       SELECT SM.SALES_NO
+       		, SM.DIVISION_CODE
+       		, SM.INVOICE_DATE
        		, D.DIVISION_NAME
        		, C.CUSTOMER_NAME
        		, SM.INVOICE_NO

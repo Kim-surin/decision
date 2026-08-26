@@ -27,6 +27,11 @@ public class OriginDeterminationDetailRequestDto extends BaseRequestDto {
 		@JsonProperty("sales_seq")
 		private Integer sales_seq;
 
+		// SALES_NO만으로는 사업장(플랜트)이 다른 동일 SALES_NO를 함께 끌어올 수 있어,
+		// 있으면 항상 같이 매칭에 사용한다
+		@JsonProperty("division_code")
+		private String division_code;
+
 		public String getSales_no() {
 			return sales_no;
 		}
@@ -41,6 +46,14 @@ public class OriginDeterminationDetailRequestDto extends BaseRequestDto {
 
 		public void setSales_seq(Integer sales_seq) {
 			this.sales_seq = sales_seq;
+		}
+
+		public String getDivision_code() {
+			return division_code;
+		}
+
+		public void setDivision_code(String division_code) {
+			this.division_code = division_code;
 		}
 	}
 }
