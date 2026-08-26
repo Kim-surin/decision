@@ -194,7 +194,7 @@
 							const gridProps = {
 								showRowCheckColumn: true,     	// 최좌측에 행 선택 체크박스 컬럼 생성
 								showRowAllCheckBox: true,     	// 헤더에 전체 선택 체크박스 표시
-								rowNumColumnWidth: 40,			// 행번호 너비
+								rowNumColumnWidth: 50,			// 행번호 너비
 								usePaging: true,
 								pageRowCount: 20,
 								showPageRowSelect: true,
