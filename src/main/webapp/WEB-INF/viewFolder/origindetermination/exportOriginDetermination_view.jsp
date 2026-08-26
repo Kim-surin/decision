@@ -90,19 +90,6 @@
 					</div>
 					
 					<div class="row">
-						    	<div class="col-12">
-									<div class="frame-wrap">
-									    <div class="demo" style="text-align: right;">
-											<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:EXPORT_ORIGIN_DETERMINATIONVIEW.individual_export_origin_determination()">
-									            원산지 판정
-									        </button>
-									    </div>
-									</div>
-						    	</div>
-						    </div>
-							
-							
-					<div class="row">
 						<div class="col-12">
 							<div id="oAuiGrid_EXPORT_ORIGIN_DETERMINATION" style="width:100%;height:700px; margin:0 auto;"></div>
 						</div>
@@ -112,8 +99,6 @@
 
 					var EXPORT_ORIGIN_DETERMINATIONVIEW = new function () {
 						this.grid_EXPORT_ORIGIN_DETERMINATION = null;
-						// 원산지판정 팝업으로 넘길 수 있는 최대 체크 건수
-						this.MAX_CHECK_COUNT = 50;
 
 						this.Initialize_viewObject = function () {
 							EXPORT_ORIGIN_DETERMINATIONVIEW.createAUIGrid();
@@ -160,18 +145,9 @@
 							const EXPORT_ORIGIN_DETERMINATION_GRID = EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION = AUIGrid.create("#oAuiGrid_EXPORT_ORIGIN_DETERMINATION", columnLayout, gridProps);
 						
 						
-							// 셀클릭 이벤트 바인딩
+							// 셀클릭 시 별도 버튼 없이, 그 행 1건만 대상으로 바로 원산지 판정 팝업을 띄움
 							AUIGrid.bind(EXPORT_ORIGIN_DETERMINATION_GRID, "cellClick", function (event) {
-								const rowIndex = event.rowIndex;
-
-								// 이미 체크 선택되었는지 검사
-								if (AUIGrid.isCheckedRowById(event.pid, rowIndex)) {
-									// 엑스트라 체크박스 체크해제 추가
-									AUIGrid.addUncheckedRowsByIds(event.pid, rowIndex);
-								} else {
-									// 엑스트라 체크박스 체크 추가
-									AUIGrid.addCheckedRowsByIds(event.pid, rowIndex);
-								}
+								EXPORT_ORIGIN_DETERMINATIONVIEW.openOriginDeterminationPopup(event.item);
 							});
 						}
 
@@ -187,26 +163,10 @@
 							KpackageOBJ.auiGrid.retrieve(EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION, "/origin/compliance/origindetermination/exportOriginDeterminationList", params);
 						}
 						
-						this.individual_export_origin_determination = function () {
-							var checkItems = AUIGrid.getCheckedRowItems(EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION);
-	
-							if (checkItems.length === 0) {
-								alert("선택된 항목이 없습니다.");
-								return;
-							}
-	
-							// 전체선택 체크박스 등으로 체크 가능 건수(최대 50건)를 초과한 경우 방어
-							if (checkItems.length > EXPORT_ORIGIN_DETERMINATIONVIEW.MAX_CHECK_COUNT) {
-								KpackageOBJ.object.alert("한 번에 최대 " + EXPORT_ORIGIN_DETERMINATIONVIEW.MAX_CHECK_COUNT + "건까지 선택할 수 있습니다.");
-								return;
-							}
-	
-							var datas = checkItems.map(function(row) {
-							        return row.item;
-							    });
-							
+						// 클릭한 행(item) 1건만 대상으로 원산지 판정 팝업을 띄움
+						this.openOriginDeterminationPopup = function (item) {
 							var request = {
-								datas: JSON.stringify(datas),
+								datas: JSON.stringify([item]),
 								mode: 'export'
 							}
 
