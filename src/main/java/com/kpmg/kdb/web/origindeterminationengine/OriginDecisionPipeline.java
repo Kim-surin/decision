@@ -13,8 +13,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
- * 원산지판정 전체 흐름(레거시 MONTHLY_DECISION_PROC + CREATE_FCR + PKG99_COO_DECISION.COO_DECISION)을
- * 메서드 체이닝으로 호출하는 컨트롤 파이프라인. 내수/수출은 사용하는 단계가 다르다.
+ * 원산지판정 흐름(가상매출생성 -&gt; CREATE_FCR -&gt; COO_DECISION -&gt; STATUS 업데이트)을 메서드 체이닝으로
+ * 실행하는 파이프라인. 내수/수출은 사용 단계가 다르다.
  *
  * <pre>
  * 내수) generateVirtualSales(params) -&gt; createFcr() -&gt; determineOrigin() -&gt; updateStatus()
@@ -22,15 +22,9 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  * </pre>
  *
  * 각 단계는 {@link VirtualSalesGenerator}/{@link FcrCreator}/{@link OriginDecider}/
- * {@link DecisionStatusUpdater} 부품으로 분리되어 있어 {@code with*} 메서드로 다른 구현체와
- * 갈아끼울 수 있다. 기본 부품(기존 CreateFcrService/OriginDeterminationExecutionService/
- * AggregatedVirtualSalesDao/SalesDecisionStatusDao 등 이관 코드)은 {@link OriginDecisionPipelineFactory} 가 채워준다.
- *
- * <p>내수는 {@link #generateVirtualSales} 호출 시점에 회사/기간 범위의 판정 대상(SALES_NO)이 여러
- * 건 채워질 수 있어, 그 뒤의 각 단계는 현재 판정 대상 전체에 대해 반복 수행된다. 수출은 파이프라인
- * 생성 시 이미 확정된 SALES_NO 1건만 대상으로 한다. 원본 C_SALES_MST 커서 루프와 동일하게, 판정
- * 대상 1건에서 예외가 발생하면 그 대상만 이후 단계에서 제외하고 나머지는 계속 진행한다(전체 파이프라인이
- * 중단되지 않는다).
+ * {@link DecisionStatusUpdater} 부품으로 분리되어 {@code with*} 로 교체 가능하며, 기본 부품은
+ * {@link OriginDecisionPipelineFactory} 가 채워준다. 판정 대상 1건에서 예외가 발생하면 그 대상만
+ * 이후 단계에서 제외하고 나머지는 계속 진행한다.
  */
 public class OriginDecisionPipeline {
 
@@ -90,10 +84,7 @@ public class OriginDecisionPipeline {
 
 	// ==================== 단계 ====================
 
-	/**
-	 * "1. 가상매출 생성"(내수 전용). 회사/기간 단위로 SALES_MST/SALES_DTL 가상매출을 만들고, 그 결과를
-	 * 판정 대상 목록으로 갱신한다. 수출 파이프라인에서는 호출하지 않는다.
-	 */
+	/** "1. 가상매출 생성"(내수 전용). SALES_MST/SALES_DTL 가상매출을 만들고 판정 대상 목록을 갱신한다. */
 	public OriginDecisionPipeline generateVirtualSales(VirtualSalesGenerationParams params) {
 		this.targets = virtualSalesGenerator.generate(params);
 		this.failedTargets.clear();

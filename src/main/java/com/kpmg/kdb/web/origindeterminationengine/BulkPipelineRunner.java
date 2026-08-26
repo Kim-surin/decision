@@ -8,14 +8,9 @@ import java.util.function.Function;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 
 /**
- * "그룹(또는 대상)마다 {@link OriginDecisionPipeline} 을 새로 만들어 실행하고 targets/failedTargets 를
- * 취합"하는 루프를 {@link IndividualBulkDecisionService}/{@link DomesticBulkDecisionService}/{@link
- * ExportBulkDecisionService} 가 각자 거의 동일하게 반복하고 있어 한 곳으로 뽑았다. 항목 1건 처리 중
- * 예외가 나도 그 항목만 건너뛰고 나머지는 계속 진행하는 규칙(원본 C_SALES_MST 커서 루프와 동일)은 그대로
- * 유지한다.
- *
- * <p>groupCount/성공-실패 로그 메시지 형식은 서비스마다 달라 호출측이 그대로 갖고 있고, 이 클래스는
- * 순회-실행-취합 부분만 담당한다.
+ * 그룹(또는 대상)마다 {@link OriginDecisionPipeline} 을 새로 만들어 실행하고 targets/failedTargets 를
+ * 취합하는 공통 루프. 항목 1건에서 예외가 나도 그 항목만 건너뛰고 나머지는 계속 진행한다. 로그 메시지는
+ * 호출측이 그대로 갖고, 이 클래스는 순회-실행-취합만 담당한다.
  */
 final class BulkPipelineRunner {
 
