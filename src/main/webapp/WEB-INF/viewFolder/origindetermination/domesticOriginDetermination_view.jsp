@@ -257,22 +257,19 @@
 						this.updateStats = function (list) {
 							var doneCount = 0;
 							var failCount = 0;
-							var nonCount = 0;
 
 							list.forEach(function (row) {
 								if (row.status === '4') {
 									doneCount++;
 								} else if (row.status === '5') {
 									failCount++;
-								} else if (row.status === '0') {
-									nonCount++;
-								}
+								} 
 							});
 
 							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_total').text(list.length);
 							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_done').text(doneCount);
 							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_fail').text(failCount);
-							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_non').text(nonCount);
+							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_non').text(list.length - (doneCount + failCount));
 						}
 						
 						this.individual_domestic_origin_determination = function () {

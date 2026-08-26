@@ -222,22 +222,19 @@
 						this.updateStats = function (list) {
 							var doneCount = 0;
 							var failCount = 0;
-							var nonCount = 0;
 
 							list.forEach(function (row) {
 								if (row.status === '4') {
 									doneCount++;
 								} else if (row.status === '5') {
 									failCount++;
-								} else if (row.status === '0') {
-									nonCount++;
 								}
 							});
 
 							$('#EXPORT_ORIGIN_DETERMINATION_stat_total').text(list.length);
 							$('#EXPORT_ORIGIN_DETERMINATION_stat_done').text(doneCount);
 							$('#EXPORT_ORIGIN_DETERMINATION_stat_fail').text(failCount);
-							$('#EXPORT_ORIGIN_DETERMINATION_stat_non').text(nonCount);
+							$('#EXPORT_ORIGIN_DETERMINATION_stat_non').text(list.length - (doneCount + failCount));
 						}
 						
 						// 클릭한 행(item) 1건만 대상으로 원산지 판정 팝업을 띄움
