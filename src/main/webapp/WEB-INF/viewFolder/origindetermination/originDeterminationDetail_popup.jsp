@@ -75,9 +75,6 @@
 		text-align: center;
 		padding: 40px 0;
 	}
-	.origin-detail-line-row {
-		cursor: pointer;
-	}
 	.origin-result-row {
 		cursor: pointer;
 	}
@@ -170,9 +167,14 @@
 </body>
 <script>
 	var ORIGIN_DETERMINATION_DETAIL_POPUP = new function() {
-		// 좌측에서 체크되어 넘어온 판정 대상 목록 (invoice_month, product_code, product_name, sales_no, sales_seq 등)
+		// 팝업을 연 화면에서 체크되어 넘어온 원본 목록. 내수는 이미 라인(SALES_NO+SALES_SEQ) 단위라
+		// 좌측 목록에도 그대로 쓰지만, 수출은 송장(SALES_NO) 단위라 좌측 목록/상세 렌더링에는
+		// this.lineItems(라인 단위로 펼친 목록)를 쓰고, this.datas는 일괄/개별 판정 실행(executeOriginDetermination)
+		// 대상 식별에만 쓴다.
 		this.datas = [];
-		// sales_no + '_' + sales_seq 를 key 로 하는 상세정보 맵
+		// 좌측 사이드바/선택에 실제로 쓰는 라인(SALES_NO+SALES_SEQ) 단위 목록 - retrieveDetailList 응답으로 채워짐
+		this.lineItems = [];
+		// sales_no + '_' + sales_seq 를 key 로 하는 라인별 상세정보 맵
 		this.detailMap = {};
 		this.selectedKey = null;
 		// 현재 선택된 판정 품목의 판정 상세내용(기준별) 전체 목록 - fta_code로 필터링해서 사용
@@ -182,15 +184,8 @@
 		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
 		this.mode = 'domestic';
 
-		// 내수는 좌측 항목 1건 = SALES_DTL 1라인(SALES_SEQ 고정)이라 salesNo+salesSeq로 유일하지만,
-		// 수출은 좌측 항목 1건 = SALES_NO(송장) 전체라 그 안에 여러 SALES_SEQ(품목)가 있을 수 있다.
-		// 그래서 수출은 salesSeq를 무시하고 SALES_NO만으로 키를 만들어, 그 SALES_NO의 모든 라인을
-		// 한 좌측 항목 아래 함께 묶는다.
 		this.buildKey = function(salesNo, salesSeq) {
-			if (this.mode === 'domestic') {
-				return salesNo + "_" + salesSeq;
-			}
-			return salesNo + "_ALL";
+			return salesNo + "_" + salesSeq;
 		};
 
 		// KpackageOBJ.ajax.doSubmit는 통신 실패 시 항상 네이티브 alert()를 호출하는데,
@@ -251,7 +246,6 @@
 			this.mode = rawMode || 'domestic';
 			this.applyModeVisibility();
 
-			this.renderSidebar();
 			this.retrieveDetailList();
 		};
 
@@ -263,24 +257,24 @@
 			}
 		};
 
-		// 좌측 사이드바 렌더링 (매출년월/품번/품명)
+		// 좌측 사이드바 렌더링 (매출년월/품번/품명) - this.lineItems(라인 단위) 기준
 		this.renderSidebar = function() {
 			var $sidebar = $('#originDetermination_popup_sidebar');
 			$sidebar.empty();
 
-			if (this.datas.length === 0) {
+			if (this.lineItems.length === 0) {
 				$sidebar.append('<div class="origin-detail-empty">선택된 항목이 없습니다.</div>');
 				return;
 			}
 
 			var self = this;
-			this.datas.forEach(function(row) {
+			this.lineItems.forEach(function(row) {
 				var key = self.buildKey(row.sales_no, row.sales_seq);
 				var statusClass = self.getStatusBadgeClass(row.status);
 
 				var $item = $(
 					'<a href="javascript:void(0)" class="list-group-item list-group-item-action" data-key="' + key + '">' +
-						'<span class="badge bg-secondary">' + (row.invoice_month || '') + '</span> ' +
+						(row.invoice_month ? '<span class="badge bg-secondary">' + row.invoice_month + '</span> ' : '') +
 						'<span class="badge ' + statusClass + '">' + (row.status_name || '') + '</span>' +
 						'<span class="item-product-code">' + (row.product_code || '') + '</span>' +
 						'<span class="item-product-name">' + (row.product_name || '') + '</span>' +
@@ -295,7 +289,9 @@
 			});
 		};
 
-		// 초기 진입 시, 체크되어 넘어온 모든 항목의 상세정보를 한번에 조회
+		// 체크되어 넘어온 항목(this.datas)의 상세정보를 한번에 조회하고, 그 응답으로 좌측 목록
+		// (this.lineItems)까지 새로 구성한다. 일괄/개별 판정 실행 뒤 최신화할 때도 이 함수를 그대로
+		// 다시 호출한다(선택 중이던 라인이 남아있으면 그 라인을, 없으면 첫 라인을 다시 선택).
 		this.retrieveDetailList = function() {
 			var self = this;
 
@@ -310,24 +306,61 @@
 				request,
 				function(response) {
 					var list = (response && response.value) ? response.value : [];
+					var previousKey = self.selectedKey;
 
-					self.detailMap = {};
-					list.forEach(function(row) {
-						var key = self.buildKey(row.sales_no, row.sales_seq);
-						if (!self.detailMap[key]) {
-							self.detailMap[key] = [];
-						}
-						self.detailMap[key].push(row);
-					});
+					self.buildDetailMapAndLineItems(list);
+					self.renderSidebar();
 
-					if (self.datas.length > 0) {
-						self.selectItem(self.buildKey(self.datas[0].sales_no, self.datas[0].sales_seq));
+					var keyToSelect = (previousKey && self.findRowByKey(previousKey)) ? previousKey : null;
+					if (!keyToSelect && self.lineItems.length > 0) {
+						keyToSelect = self.buildKey(self.lineItems[0].sales_no, self.lineItems[0].sales_seq);
+					}
+
+					if (keyToSelect) {
+						self.selectItem(keyToSelect);
 					}
 				},
 				function() {
 					KpackageOBJ.object.alert('판정 품목 상세 조회 중 오류가 발생했습니다.');
 				}
 			);
+		};
+
+		// detailMap: buildKey(sales_no, sales_seq) -> 그 라인의 상세 1건.
+		// lineItems: 좌측 사이드바/선택 기준이 되는 라인 목록. 내수는 this.datas 자체가 이미 라인
+		// 단위라 그대로 쓰고, 수출은 this.datas가 송장(SALES_NO) 단위라 방금 받은 라인 목록으로
+		// 새로 구성한다 - 품번/품명은 그 라인 상세에서, 판정상태는 그 라인이 속한 송장의 원본
+		// this.datas 항목에서 가져온다(판정상태는 송장 단위라 같은 송장의 모든 라인이 공유).
+		this.buildDetailMapAndLineItems = function(list) {
+			var self = this;
+
+			this.detailMap = {};
+			list.forEach(function(row) {
+				self.detailMap[self.buildKey(row.sales_no, row.sales_seq)] = row;
+			});
+
+			if (this.mode === 'domestic') {
+				this.lineItems = this.datas;
+				return;
+			}
+
+			var invoiceBySalesNo = {};
+			this.datas.forEach(function(d) {
+				invoiceBySalesNo[d.sales_no] = d;
+			});
+
+			this.lineItems = list.map(function(row) {
+				var invoice = invoiceBySalesNo[row.sales_no] || {};
+				return {
+					sales_no: row.sales_no,
+					sales_seq: row.sales_seq,
+					division_code: invoice.division_code,
+					product_code: row.product_code,
+					product_name: row.product_name,
+					status: invoice.status,
+					status_name: invoice.status_name
+				};
+			});
 		};
 
 		// 좌측 항목 선택 시, 우측 상세 렌더링
@@ -337,23 +370,21 @@
 			$('#originDetermination_popup_sidebar .list-group-item').removeClass('active');
 			$('#originDetermination_popup_sidebar .list-group-item[data-key="' + key + '"]').addClass('active');
 
-			var details = this.detailMap[key] || [];
-			this.renderDetail(details);
+			this.renderDetail(this.detailMap[key]);
 
-			// 판정완료(status=4) 건만 판정결과/판정 상세내용 섹션을 보여줌. 판정 품목이 여러 라인(수출)이면
-			// 일단 첫 라인 기준으로 보여주고, 다른 라인을 클릭하면 selectDetailLine이 그 라인으로 바꾼다.
+			// 판정완료(status=4) 건만 판정결과/판정 상세내용 섹션을 보여줌
 			var row = this.findRowByKey(key);
-			if (details.length > 0 && row && this.isDetermined(row.status)) {
-				this.selectDetailLine(details[0]);
+			if (row && this.isDetermined(row.status)) {
+				this.retrieveResultList(row);
 			} else {
 				this.hideResultSections();
 			}
 		};
 
-		// 좌측 목록(datas)에서 key에 해당하는 원본 row 를 찾음
+		// 좌측 목록(lineItems)에서 key에 해당하는 라인을 찾음
 		this.findRowByKey = function(key) {
 			var self = this;
-			return this.datas.filter(function(row) {
+			return this.lineItems.filter(function(row) {
 				return self.buildKey(row.sales_no, row.sales_seq) === key;
 			})[0];
 		};
@@ -367,55 +398,29 @@
 			$('#originDetermination_popup_resultSection').hide();
 		};
 
-		// details: 판정 품목 라인 목록. 내수는 좌측 항목당 항상 1건, 수출은 그 SALES_NO에 속한
-		// 전체 SALES_DTL 라인(1건 이상)이 올 수 있다 - 여러 건이면 라인을 클릭해서 그 라인 기준
-		// 판정결과를 볼 수 있게 한다.
-		this.renderDetail = function(details) {
+		// 좌측에서 선택한 라인 1건의 상세를 보여줌
+		this.renderDetail = function(detail) {
 			var $body = $('#originDetermination_popup_detailBody');
 			$body.empty();
 
-			if (!details || details.length === 0) {
+			if (!detail) {
 				$body.append('<tr><td colspan="7" class="origin-detail-empty">상세 정보가 없습니다.</td></tr>');
 				return;
 			}
 
-			var self = this;
-			var selectable = details.length > 1;
+			var $row = $(
+				'<tr>' +
+					'<td>' + (detail.product_code || '') + '</td>' +
+					'<td>' + (detail.product_name || '') + '</td>' +
+					'<td>' + (detail.hs_code || '') + '</td>' +
+					'<td class="text-end">' + (detail.quantity || '') + '</td>' +
+					'<td>' + (detail.unit || '') + '</td>' +
+					'<td class="text-end">' + (detail.unit_price || '') + '</td>' +
+					'<td class="text-end">' + (detail.amount || '') + '</td>' +
+				'</tr>'
+			);
 
-			details.forEach(function(detail, index) {
-				var $row = $(
-					'<tr' + (selectable ? ' class="origin-detail-line-row"' : '') + '>' +
-						'<td>' + (detail.product_code || '') + '</td>' +
-						'<td>' + (detail.product_name || '') + '</td>' +
-						'<td>' + (detail.hs_code || '') + '</td>' +
-						'<td class="text-end">' + (detail.quantity || '') + '</td>' +
-						'<td>' + (detail.unit || '') + '</td>' +
-						'<td class="text-end">' + (detail.unit_price || '') + '</td>' +
-						'<td class="text-end">' + (detail.amount || '') + '</td>' +
-					'</tr>'
-				);
-
-				if (selectable) {
-					if (index === 0) {
-						$row.addClass('table-active');
-					}
-
-					$row.on('click', function() {
-						$body.find('tr').removeClass('table-active');
-						$row.addClass('table-active');
-						self.selectDetailLine(detail);
-					});
-				}
-
-				$body.append($row);
-			});
-		};
-
-		// 판정 품목의 특정 라인(SALES_NO+SALES_SEQ) 기준으로 판정결과를 조회한다.
-		// 판정결과(FCR_MST)는 SALES_SEQ 단위라서, 수출처럼 한 좌측 항목에 라인이 여러 건이면
-		// 어느 라인 기준인지 항상 명시해야 한다.
-		this.selectDetailLine = function(detail) {
-			this.retrieveResultList({ sales_no: detail.sales_no, sales_seq: detail.sales_seq });
+			$body.append($row);
 		};
 
 		// 판정완료 건의 판정결과(협정별)와 판정 상세내용(기준별)을 한 번에 조회.
@@ -587,7 +592,7 @@
 				url,
 				request,
 				function(response) {
-					self.handleExecuteResponse(response, rows);
+					self.handleExecuteResponse(response);
 				},
 				function() {
 					KpackageOBJ.object.alert('원산지 판정 실행 중 오류가 발생했습니다.');
@@ -595,10 +600,9 @@
 			);
 		};
 
-		// executeOriginDetermination 응답(내수/수출 공용) 처리: 결과 메시지 표시 후 처리 대상
-		// row들의 판정 품목 상세를 재조회해 우측 화면을 최신화
-		this.handleExecuteResponse = function(response, rows) {
-			var self = this;
+		// executeOriginDetermination 응답(내수/수출 공용) 처리: 결과 메시지 표시 후 좌측 목록/상세
+		// 전체를 다시 조회해 최신화한다(선택 중이던 라인이 남아있으면 그 라인을 그대로 유지).
+		this.handleExecuteResponse = function(response) {
 			var value = (response && response.value) ? response.value : {};
 			var failedCount = value.failedTargets ? value.failedTargets.length : 0;
 			var message = (value.groupCount || 0) + "건 원산지 판정을 진행했습니다.";
@@ -609,9 +613,7 @@
 
 			KpackageOBJ.object.alert(message);
 
-			rows.forEach(function(row) {
-				self.refetchDetail(row);
-			});
+			this.retrieveDetailList();
 		};
 
 		// 우측의 모든 품목을 대상으로 원산지 판정 진행
@@ -639,37 +641,9 @@
 			this.executeOriginDetermination([selectedRow]);
 		};
 
-		// 좌측 목록(datas)에서 현재 선택된(selectedKey) 항목의 원본 row 를 찾음
+		// 좌측 목록(lineItems)에서 현재 선택된(selectedKey) 라인을 찾음
 		this.findSelectedRow = function() {
 			return this.findRowByKey(this.selectedKey);
-		};
-
-		// 판정 실행 후, 해당 건 1개의 상세 결과만 다시 조회해 우측 화면을 최신화
-		this.refetchDetail = function(row) {
-			var self = this;
-			var key = this.buildKey(row.sales_no, row.sales_seq);
-
-			var request = {
-				datas: [{ sales_no: row.sales_no, sales_seq: row.sales_seq, division_code: row.division_code }]
-			};
-
-			this.postJson(
-				'/origin/compliance/origindetermination/originDeterminationDetailList',
-				request,
-				function(response) {
-					var list = (response && response.value) ? response.value : [];
-
-					// key(salesNo+salesSeq 또는 salesNo_ALL)에 해당하는 라인 전체를 최신 값으로 교체
-					self.detailMap[key] = list;
-
-					if (self.selectedKey === key) {
-						self.renderDetail(self.detailMap[key]);
-					}
-				},
-				function() {
-					KpackageOBJ.object.alert('판정 결과 재조회 중 오류가 발생했습니다.');
-				}
-			);
 		};
 	};
 
