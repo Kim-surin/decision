@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
@@ -87,8 +88,9 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetail_popup")
 	public String originDeterminationDetail_popup(@RequestParam(value = "datas", required = false) String datas,
-			Model model, HttpSession session) {
+			@RequestParam(value = "mode", required = false) String mode, Model model, HttpSession session) {
 		model.addAttribute("datas", datas);
+		model.addAttribute("mode", mode);
 
 		return "origindetermination/originDeterminationDetail_popup";
 	}
@@ -133,6 +135,22 @@ public class OriginDeterminationController extends GenericController {
 
 		try {
 			result = originDeterminationService.executeDomesticOriginDetermination(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/executeExportOriginDetermination")
+	@ResponseBody
+	public Result executeExportOriginDetermination(@RequestBody ExportOriginDeterminationExecuteRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.executeExportOriginDetermination(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

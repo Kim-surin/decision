@@ -119,7 +119,7 @@
 			<div class="origin-detail-main">
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<h6 class="mb-0">판정 품목</h6>
-					<button type="button" class="btn btn-sm btn-primary" onclick="javascript:ORIGIN_DETERMINATION_DETAIL_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
+					<button type="button" id="originDetermination_popup_individualBtn" class="btn btn-sm btn-primary" onclick="javascript:ORIGIN_DETERMINATION_DETAIL_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
 				</div>
 				<table class="table table-bordered table-sm">
 					<thead class="table-light">
@@ -174,6 +174,10 @@
 		this.selectedKey = null;
 		// 현재 선택된 판정 품목의 판정 상세내용(기준별) 전체 목록 - fta_code로 필터링해서 사용
 		this.currentDetailList = [];
+		// 팝업을 연 화면(내수/수출) - 값이 없으면(구버전 호출부 등) 내수로 취급.
+		// 내수는 "개별/일괄 원산지 판정" 버튼이 둘 다 있고 executeDomesticOriginDetermination을,
+		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
+		this.mode = 'domestic';
 
 		this.buildKey = function(salesNo, salesSeq) {
 			return salesNo + "_" + salesSeq;
@@ -226,6 +230,7 @@
 		// 시작점
 		this.Initialize_viewObject = function() {
 			var rawDatas = '${datas}';
+			var rawMode = '${mode}';
 
 			try {
 				this.datas = rawDatas ? JSON.parse(rawDatas) : [];
@@ -233,8 +238,19 @@
 				this.datas = [];
 			}
 
+			this.mode = rawMode || 'domestic';
+			this.applyModeVisibility();
+
 			this.renderSidebar();
 			this.retrieveDetailList();
+		};
+
+		// 수출은 "일괄 원산지 판정"만 제공하고, 특정 매출번호 1건만 다시 판정하는 "개별 원산지 판정"은
+		// 제공하지 않는다(내수처럼 매출년월/고객사/플랜트/품번 단위로 좁혀 재판정할 그룹 개념이 없음)
+		this.applyModeVisibility = function() {
+			if (this.mode !== 'domestic') {
+				$('#originDetermination_popup_individualBtn').hide();
+			}
 		};
 
 		// 좌측 사이드바 렌더링 (매출년월/품번/품명)
@@ -275,7 +291,7 @@
 
 			var request = {
 				datas: this.datas.map(function(row) {
-					return { sales_no: row.sales_no, sales_seq: row.sales_seq };
+					return { sales_no: row.sales_no, sales_seq: row.sales_seq, division_code: row.division_code };
 				})
 			};
 
@@ -493,46 +509,67 @@
 			});
 		};
 
-		// (invoice_month, customer_code, division_code, product_code) 라인 목록으로 원산지 판정을 실행하고,
-		// 완료 후 처리 대상 row들의 판정 품목 상세를 재조회해 우측 화면을 최신화
+		// 내수는 (invoice_month, customer_code, division_code, product_code) 라인 목록으로
+		// executeDomesticOriginDetermination을, 수출은 (sales_no, division_code) 목록으로
+		// executeExportOriginDetermination을 호출한다 - 응답 형태(groupCount/failedTargets)는
+		// 동일해서 처리(handleExecuteResponse)는 공용으로 쓴다.
 		// 주의: 판정상태(status) 배지는 좌측 목록(datas)이 팝업을 열 때 넘어온 값을 그대로 쓰고 있어,
 		// 여기서는 갱신하지 않는다 - 최신 판정상태를 보려면 팝업을 닫고 다시 열어야 한다.
 		this.executeOriginDetermination = function(rows) {
 			var self = this;
+			var url;
+			var request;
 
-			var request = {
-				datas: rows.map(function(row) {
-					return {
-						invoice_month: row.invoice_month,
-						customer_code: row.customer_code,
-						division_code: row.division_code,
-						product_code: row.product_code
-					};
-				})
-			};
+			if (this.mode === 'export') {
+				url = '/origin/compliance/origindetermination/executeExportOriginDetermination';
+				request = {
+					datas: rows.map(function(row) {
+						return { sales_no: row.sales_no, division_code: row.division_code };
+					})
+				};
+			} else {
+				url = '/origin/compliance/origindetermination/executeDomesticOriginDetermination';
+				request = {
+					datas: rows.map(function(row) {
+						return {
+							invoice_month: row.invoice_month,
+							customer_code: row.customer_code,
+							division_code: row.division_code,
+							product_code: row.product_code
+						};
+					})
+				};
+			}
 
 			this.postJson(
-				'/origin/compliance/origindetermination/executeDomesticOriginDetermination',
+				url,
 				request,
 				function(response) {
-					var value = (response && response.value) ? response.value : {};
-					var failedCount = value.failedTargets ? value.failedTargets.length : 0;
-					var message = (value.groupCount || 0) + "건 원산지 판정을 진행했습니다.";
-
-					if (failedCount > 0) {
-						message += " (실패 " + failedCount + "건)";
-					}
-
-					KpackageOBJ.object.alert(message);
-
-					rows.forEach(function(row) {
-						self.refetchDetail(row);
-					});
+					self.handleExecuteResponse(response, rows);
 				},
 				function() {
 					KpackageOBJ.object.alert('원산지 판정 실행 중 오류가 발생했습니다.');
 				}
 			);
+		};
+
+		// executeOriginDetermination 응답(내수/수출 공용) 처리: 결과 메시지 표시 후 처리 대상
+		// row들의 판정 품목 상세를 재조회해 우측 화면을 최신화
+		this.handleExecuteResponse = function(response, rows) {
+			var self = this;
+			var value = (response && response.value) ? response.value : {};
+			var failedCount = value.failedTargets ? value.failedTargets.length : 0;
+			var message = (value.groupCount || 0) + "건 원산지 판정을 진행했습니다.";
+
+			if (failedCount > 0) {
+				message += " (실패 " + failedCount + "건)";
+			}
+
+			KpackageOBJ.object.alert(message);
+
+			rows.forEach(function(row) {
+				self.refetchDetail(row);
+			});
 		};
 
 		// 우측의 모든 품목을 대상으로 원산지 판정 진행
@@ -571,7 +608,7 @@
 			var key = this.buildKey(row.sales_no, row.sales_seq);
 
 			var request = {
-				datas: [{ sales_no: row.sales_no, sales_seq: row.sales_seq }]
+				datas: [{ sales_no: row.sales_no, sales_seq: row.sales_seq, division_code: row.division_code }]
 			};
 
 			this.postJson(

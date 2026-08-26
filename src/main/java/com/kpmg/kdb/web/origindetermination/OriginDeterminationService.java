@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultDetailResponseDto;
@@ -20,6 +21,8 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResponseDto;
 import com.kpmg.kdb.web.origindeterminationengine.BulkDecisionResult;
 import com.kpmg.kdb.web.origindeterminationengine.DomesticBulkDecisionService;
+import com.kpmg.kdb.web.origindeterminationengine.ExportBulkDecisionService;
+import com.kpmg.kdb.web.origindeterminationengine.ExportDecisionTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
@@ -28,6 +31,9 @@ public class OriginDeterminationService extends GeneralService {
 
 	@Autowired
 	private DomesticBulkDecisionService domesticBulkDecisionService;
+
+	@Autowired
+	private ExportBulkDecisionService exportBulkDecisionService;
 	public Result retrieveDomesticOriginDetermination(OriginDeterminationRequestDto param) throws Exception {
 		Result result = new Result();
 
@@ -168,6 +174,36 @@ public class OriginDeterminationService extends GeneralService {
 			}
 
 			result.setValue(new BulkDecisionResult(groupCount, targets, failedTargets));
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	/**
+	 * 팝업(originDeterminationDetail_popup)에서 선택한 (SALES_NO, DIVISION_CODE) 라인들을 대상으로 수출
+	 * 원산지 판정을 실행한다. 수출은 이미 존재하는 실제 SALES_NO를 그대로 판정 대상으로 삼아 내수처럼
+	 * 매출년월/고객사/품번으로 그룹핑하거나 가상매출을 생성할 필요가 없어 {@link ExportBulkDecisionService}에
+	 * 대상 목록을 그대로 넘긴다.
+	 */
+	public Result executeExportOriginDetermination(ExportOriginDeterminationExecuteRequestDto param) throws Exception {
+		Result result = new Result();
+
+		try {
+			List<ExportDecisionTarget> targets = new ArrayList<>();
+
+			for (ExportOriginDeterminationExecuteRequestDto.Line line : param.getDatas()) {
+				targets.add(new ExportDecisionTarget(param.getCompany_code(), line.getDivision_code(),
+						line.getSales_no(), null));
+			}
+
+			BulkDecisionResult bulkResult = exportBulkDecisionService.run(targets);
+
+			result.setValue(bulkResult);
 			result.setSuccess(true);
 			result.setMessage(DEFAULT_MESSAGE_OK);
 		} catch (Exception e) {

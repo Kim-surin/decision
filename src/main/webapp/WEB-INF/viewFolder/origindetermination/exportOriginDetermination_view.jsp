@@ -209,9 +209,10 @@
 							    });
 							
 							var request = {
-								datas: JSON.stringify(datas)
+								datas: JSON.stringify(datas),
+								mode: 'export'
 							}
-							
+
 							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', request);
 						}
 
