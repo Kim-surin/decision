@@ -192,8 +192,11 @@
     </select>
 
     <select id="retrieveExportOriginDetermination" parameterType="HashMap" resultType="HashMap">
-       SELECT SM.INVOICE_DATE
+       SELECT SM.SALES_NO
+       		, SM.INVOICE_DATE
+       		, D.DIVISION_CODE
        		, D.DIVISION_NAME
+       		, C.CUSTOMER_CODE
        		, C.CUSTOMER_NAME
        		, SM.INVOICE_NO
        		, SM.STATUS
