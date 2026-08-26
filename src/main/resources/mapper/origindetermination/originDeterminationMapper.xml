@@ -128,8 +128,12 @@
 		ORDER BY SM.INVOICE_MONTH, C.CUSTOMER_CODE, D.DIVISION_CODE, SM.PRODUCT_CODE, SM.SALES_NO, SM.SALES_SEQ
     </select>
 
+    <!-- datas(체크된 판정 대상 라인)를 UNION ALL로 키 목록(KEYS)을 만들고 JOIN해서 조회.
+         division_code/sales_seq는 넘어오지 않을 수 있어(수출은 SALES_NO만으로 그 송장의 모든
+         라인을 조회), KEYS의 해당 컬럼이 NULL이면 그 조건은 없는 것으로 취급(OR IS NULL)한다.
+         하나의 실제 라인이 여러 KEYS 행과 동시에 매칭될 수 있어 DISTINCT로 중복을 제거한다 -->
     <select id="retrieveOriginDeterminationDetailList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto" resultType="HashMap">
-       SELECT SM.SALES_NO
+       SELECT DISTINCT SM.SALES_NO
        		, SD.SALES_SEQ
        		, SD.PRODUCT_CODE
        		, IM.ITEM_NAME AS PRODUCT_NAME
@@ -138,27 +142,23 @@
        		, IM.UNIT
        		, SD.UNIT_PRICE
        		, SD.AMOUNT
-       FROM SALES_MST SM
+       FROM (
+       <foreach collection="datas" item="d" separator=" UNION ALL ">
+       		SELECT #{d.sales_no} AS SALES_NO, #{d.division_code} AS DIVISION_CODE, #{d.sales_seq} AS SALES_SEQ
+       </foreach>
+       ) KEYS
+       INNER JOIN SALES_MST SM
+       		ON SM.COMPANY_CODE = #{company_code}
+       		AND SM.SALES_NO = KEYS.SALES_NO
+       		AND (KEYS.DIVISION_CODE IS NULL OR SM.DIVISION_CODE = KEYS.DIVISION_CODE)
        INNER JOIN SALES_DTL SD
        		ON SM.COMPANY_CODE = SD.COMPANY_CODE
        		AND SM.SALES_NO = SD.SALES_NO
        		AND SM.DIVISION_CODE = SD.DIVISION_CODE
+       		AND (KEYS.SALES_SEQ IS NULL OR SD.SALES_SEQ = KEYS.SALES_SEQ)
        INNER JOIN ITEM_MST IM
        		ON IM.COMPANY_CODE = SD.COMPANY_CODE
        		AND IM.ITEM_CODE = SD.PRODUCT_CODE
-       WHERE SM.COMPANY_CODE = #{company_code}
-       AND (
-       <foreach collection="datas" item="d" separator=" OR ">
-       		(SM.SALES_NO = #{d.sales_no}
-       		<if test="d.division_code != null">
-       		AND SM.DIVISION_CODE = #{d.division_code}
-       		</if>
-       		<if test="d.sales_seq != null">
-       		AND SD.SALES_SEQ = #{d.sales_seq}
-       		</if>
-       		)
-       </foreach>
-       )
     </select>
 
     <!-- 판정완료(status=4) 건의 판정결과: 해당 품목에 적용되는 협정(FTA)별 결과 목록 -->
