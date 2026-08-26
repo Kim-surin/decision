@@ -44,11 +44,8 @@
 	</select>
 
 	<!--
-		selectOwnDivisionBom/selectAnyDivisionBom(원본 각각 ROWNUM=1, 정렬기준 없음)을 C_SALES_DTL
-		커서 대상(사업장,제품) 조합 전체에 대해 한 번의 왕복으로 배치 조회한다. own/any 를 각각
-		LATERAL 로 병렬 조회해두고(원본처럼 own 이 없을 때만 any 를 보는 2단계 대신 항상 둘 다 계산),
-		Java(CreateFcrService#checkBomAvailability)에서 own 우선으로 골라 쓴다 — own 이 있으면 그대로
-		쓰고 없으면 any 로 폴백하므로 결과는 원본과 동일하다.
+		자기 사업장 BOM(own)/타 사업장 BOM(any) 조회를 대상 조합 전체에 대해 LATERAL 로 배치 조회한다.
+		Java(CreateFcrService#checkBomAvailability)에서 own 우선, 없으면 any 로 폴백한다.
 	-->
 	<select id="selectBomAvailabilityBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult">
 		SELECT V.PROD_DIVISION_CODE AS reqProdDivisionCode
@@ -301,11 +298,7 @@
 		AND    FM.FTA_STATUS = '4'
 	</select>
 
-	<!--
-		DECISION_YN 컬럼: 판정 대상 스코프는 더 이상 이 컬럼으로 표시하지 않고 호출부가 넘기는
-		productCodes 파라미터로 직접 제어하며, 이제 이 컬럼이 완전히 미사용임이 확인되어 INSERT
-		대상에서도 제거했다.
-	-->
+	<!-- 판정 대상 스코프는 DECISION_YN 컬럼 대신 호출부의 productCodes 파라미터로 제어한다(컬럼 미사용 확인 후 INSERT 대상에서 제거). -->
 	<insert id="insertFcrMstRows">
 		INSERT INTO FCR_MST
 			(FTA_CODE, SALES_NO, SALES_SEQ, PRODUCT_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, STANDARD,
@@ -444,10 +437,8 @@
 
 	<!--
 		===================== 3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE =====================
-		(과거 3-5/3-6 단계였던 상품(M,R,B) 원산지 판정은
-		com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao 로 옮겼다 — 판정 관련 로직을
-		OriginDeterminationService.determineOrigin 에 모으기 위함. 이 3-7 단계는 판정이 아니라 FCR_DTL
-		에 이미 계산된 금액을 FCR_MST 로 집계하는 데이터 준비 작업이라 CREATE_FCR 에 그대로 남겨뒀다.)
+		상품(M,R,B) 판정 로직은 CommodityOriginDeterminationDao 로 옮겼다. 이 단계는 판정이 아니라
+		FCR_DTL 에 계산된 금액을 FCR_MST 로 집계하는 데이터 준비 작업이라 CREATE_FCR 에 남겨뒀다.
 	-->
 
 	<update id="mergeFcrMstMaterialAmountTotals">

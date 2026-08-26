@@ -32,22 +32,14 @@
 	<!-- ===================== CURSOR C_FCR_MST ===================== -->
 
 	<!--
-		[버그 수정 이력 1] TARIFF_DIFFERENTIALS 를 LEFT OUTER JOIN 으로 붙이던 원래 구조(원본 Oracle
-		커서의 DECODE(FCRM.EXPORT_FLAG,'E',FCRM.ARRIVAL_NATION,TD.NATION_CODE) 를 그대로 이관한 것)는,
-		내수(EXPORT_FLAG&lt;&gt;'E') 매출에서 TD.NATION_CODE = TD.NATION_CODE 가 되어(자기 자신과 비교)
-		사실상 "조건 없음"이 되는 항등식이었다 — 같은 (FTA_CODE,HS_CODE,기간)에 해당하는
-		TARIFF_DIFFERENTIALS 행이 여러 국가(NATION_CODE)에 걸쳐 여러 건 있으면 JOIN이 매칭 건수만큼
-		팬아웃될 수 있는 잠재 결함이라 TD 의 다른 컬럼은 쓰이지 않고 TARIFF_YN 플래그(존재 여부)로만
-		쓰이므로, JOIN 대신 EXISTS 로 바꿔 매칭 건수와 무관하게 FM_LIST 행은 항상 1건만 나오도록
-		고쳤다 — TARIFF_YN 값 자체(원본의 항등식 매칭 조건 포함)는 그대로 유지한다.
+		[버그 수정 이력 1] TARIFF_DIFFERENTIALS LEFT JOIN 이 TD 행 매칭 건수만큼 팬아웃될 수 있는 잠재
+		결함이 있었다(TD 컬럼은 TARIFF_YN 존재 여부로만 쓰임) — JOIN 대신 EXISTS 로 바꿔 FM_LIST 행이
+		항상 1건만 나오도록 고쳤다.
 
-		[버그 수정 이력 2, 실제 원인] FCR_RESULT 에 같은 (FTA_CODE,SALES_SEQ 등) 조합의 판정결과가 여러
-		벌 중복 저장되는 문제의 실제 원인은 위 1번이 아니라 이 FTA_MASTER INNER JOIN 에 COMPANY_CODE
-		조건이 없었던 것이었다 — TO-BE DB 에서 FTA_MASTER 에 COMPANY_CODE 컬럼이 추가되어(회사마다
-		협정 정보를 따로 가짐) 이제 같은 FTA_CODE 라도 회사별로 여러 행이 존재할 수 있는데,
-		FM.COMPANY_CODE = FCRM.COMPANY_CODE 없이 FTA_CODE 만으로 조인하면 그 행 수만큼 FM_LIST 가
-		팬아웃된다. 다른 FTA_MASTER 참조 쿼리들(selectExportSalesLines, selectFtaBuffer)에도 같은
-		누락이 있어 함께 고쳤다 — CreateFcrDaoMapper.xml/OriginDeterminationSupportDaoMapper.xml 참고.
+		[버그 수정 이력 2, 실제 원인] FCR_RESULT 판정결과 중복 저장의 실제 원인은 이 FTA_MASTER INNER
+		JOIN 에 COMPANY_CODE 조건이 없었던 것 — 같은 FTA_CODE 라도 회사별로 여러 행이 존재할 수 있어
+		FM.COMPANY_CODE = FCRM.COMPANY_CODE 없이 조인하면 팬아웃된다. selectExportSalesLines/
+		selectFtaBuffer 에도 같은 누락이 있어 함께 고쳤다.
 	-->
 	<select id="selectOriginDeterminationTargets" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget">
 		SELECT FTAFM.FTA_CODE                                                    AS ftaCode
@@ -181,11 +173,9 @@
 	</select>
 
 	<!--
-		selectMaterialOriginRows 의 배치 버전. FM_LIST 행(FTA 후보)마다 반복 호출되던 것을, 요청받은
-		(ftaCode,divisionCode,salesSeq) 조합 전체를 UNION ALL 파생 테이블(V)로 한 번에 던져 조회한다.
-		원본은 요청 1건당 0~N 행(BOM 자재 수만큼)을 돌려주는 다중행 조회라(selectMaterialCandidatesBatch
-		와 동일한 이유로) LEFT JOIN LATERAL(top-1) 이 아니라 V 를 그대로 드라이빙하는 일반 JOIN 을 쓴다.
-		parentHsCode 는 FI 조회조건이 아니라 결과에 그대로 echo 되는 상수값이라 V 의 컬럼을 그대로 쓴다.
+		selectMaterialOriginRows 의 배치 버전. 요청받은 (ftaCode,divisionCode,salesSeq) 조합 전체를
+		UNION ALL 파생 테이블(V)로 던진다. 요청 1건당 0~N 행(BOM 자재 수만큼)이 나오는 다중행 조회라
+		LATERAL top-1이 아니라 V를 드라이빙하는 일반 JOIN을 쓴다.
 	-->
 	<select id="selectMaterialOriginRowsBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowBatchResult">
 		SELECT V.FTA_CODE         AS reqFtaCode
@@ -252,13 +242,9 @@
 		AND    FTA_CODE = #{ftaCode}
 		AND    HS_CODE_SUB_CATEGORY = #{hsCodeSubCategory}
 		<!--
-			2018.07.03 APTA NEW PSR 적용: INVOICE_DATE 기준 V_NEW_APTA_PSR_FLAG 에 따라 APTA 협정만 추가
-			PSR 적용여부를 다르게 한다. 원래 "RULE_SEQ = CASE WHEN A THEN '1' ELSE RULE_SEQ END" 형태였는데,
-			PostgreSQL 이 컬럼을 자기 자신이 포함된 CASE 식과 비교하는 조건은 sargable 하지 않아 인덱스를
-			못 쓰고 훨씬 느린 계획을 선택하는 문제가 있었다(배치 버전에서 조회시간 2분 이상 -> 아래 동치
-			OR 조건으로 바꾼 뒤 0.3초, selectApplicableOriginCriteriaBatch 참고). RULE_SEQ IS NOT NULL 로
-			감싸 원본의 "RULE_SEQ 가 NULL이면 어느 분기든 비교가 NULL이 되어 제외"되는 동작까지 그대로
-			보존했다.
+			APTA NEW PSR 적용: INVOICE_DATE 기준 플래그로 APTA 협정만 PSR 적용여부를 다르게 한다.
+			[버그 수정 이력] 원래 "RULE_SEQ = CASE WHEN..." 형태는 자기 자신이 포함된 CASE 식 비교라
+			PostgreSQL이 인덱스를 못 써 조회시간 2분 이상 걸렸다 — 동치인 OR 조건으로 바꿔 0.3초로 개선.
 		-->
 		AND    RULE_SEQ IS NOT NULL
 		AND    (FTA_CODE &lt;&gt; 'PKRAP' OR #{newAptaPsrFlag} &lt;&gt; '0' OR RULE_SEQ = '1')
@@ -266,15 +252,10 @@
 	</select>
 
 	<!--
-		selectApplicableOriginCriteria 의 배치 버전. 같은 salesNo 안에서 (hsCode,hsCodeSubCategory)가 같은
-		제품이 FTA_CODE 후보(~25개)마다 FM_LIST 행을 만들어 이 조회가 반복되므로, 요청받은 조합 전체를
-		UNION ALL 파생 테이블(V)로 한 번에 던진다. CTSH&gt;CTH&gt;CC 매칭에 쓰는 "최대 HS_CODE 길이" 서브쿼리는
-		조합(V 의 각 행)마다 다시 계산해야 해서 LATERAL 조인으로 상관관계를 명시했다(단건 쿼리의 콤마 조인은
-		V 자신의 컬럼을 상관 서브쿼리가 볼 수 없어 그대로 쓸 수 없다).
-
-		V.HS_CODE(요청 원본 HS코드)와 FR.HS_CODE(매칭된 룰의 HS코드, 더 짧은 접두어일 수 있음)는 다른
-		값이라 결과를 요청별로 다시 묶으려면 reqHsCode/reqFtaCode/reqHsCodeSubCategory 로 요청 키를
-		그대로 돌려줘야 한다(OriginCriteriaBatchResult 클래스 주석 참고).
+		selectApplicableOriginCriteria 의 배치 버전. FTA_CODE 후보(~25개)마다 반복되던 조회를 요청 조합
+		전체를 UNION ALL 파생 테이블(V)로 던져 한 번에 처리한다. "최대 HS_CODE 길이" 서브쿼리는 V의 각
+		행마다 다시 계산해야 해서 LATERAL 조인으로 상관관계를 명시했다. V.HS_CODE(요청)와 FR.HS_CODE
+		(매칭된 룰, 더 짧은 접두어일 수 있음)가 달라 reqHsCode 등으로 요청 키를 함께 돌려준다.
 	-->
 	<select id="selectApplicableOriginCriteriaBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchResult">
 		SELECT V.HS_CODE                                            AS reqHsCode
