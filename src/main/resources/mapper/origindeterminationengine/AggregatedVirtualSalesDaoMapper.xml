@@ -4,30 +4,16 @@
 
 	<!--
 		===================== 1. 내수 포괄 매출 생성 =====================
-		[버그 수정 이력 1] deleteAggregatedSalesDtl/deleteAggregatedSalesMst 는 원래 companyCode+기간
-		으로만 걸러 회사+기간의 기존 가상매출 전체를 지웠다(원본 MONTHLY_DECISION_PROC 도 동일 — 원래는
-		호출 1번이 회사+기간 전체를 한 번에 재생성하는 용도라 문제가 없었다). 그런데
-		DomesticBulkDecisionService 처럼 같은 회사+기간에 대해 고객사 그룹마다 generateVirtualSales 를
-		반복 호출하면, 그룹 B 처리 시의 삭제가 이미 처리 완료된 그룹 A 의 가상 SALES_MST/SALES_DTL 을
-		함께 지워버린다(FCR_MST 는 이미 그 SALES_NO 를 참조해 생성된 뒤라 orphan 이 됨). 그래서
-		mergeAggregatedSalesMst 와 동일하게 CUSTOMER_CODE/DIVISION_CODE COALESCE 조건을 추가했다 —
-		두 파라미터가 null 이면(기존 회사+기간 전체 호출) 조건이 무력화돼 원래 동작과 동일하다.
+		[버그 수정 이력 1] deleteAggregatedSalesDtl/deleteAggregatedSalesMst 가 companyCode+기간으로만
+		걸러 지우면, DomesticBulkDecisionService 처럼 고객사 그룹마다 반복 호출할 때 그룹 B 처리 시의
+		삭제가 이미 처리된 그룹 A의 가상매출까지 지워 FCR_MST 가 orphan 이 된다. mergeAggregatedSalesMst
+		와 동일하게 CUSTOMER_CODE/DIVISION_CODE COALESCE 조건을 추가해 막았다(null이면 기존과 동일).
 
-		[버그 수정 이력 2] 원본 레거시(개별판정 화면, OriginDeterminCoverDAO#insertSalesMstVirtual)는
-		개별/특정 제품 판정 시 SALES_MST/SALES_DTL 을 DELETE 하지 않고 MERGE(WHEN MATCHED 시 QUANTITY/
-		UNIT_PRICE/AMOUNT/HS_CODE 갱신, WHEN NOT MATCHED 시 신규 SALES_SEQ 로 INSERT)만 수행한다 —
-		DELETE-후-재생성은 MONTHLY_DECISION_PROC(월판정) 전용이었다. 그런데 이관 시 deleteAggregatedSalesDtl/
-		deleteAggregatedSalesMst 를 productCodes 유무와 무관하게(월판정이든 개별판정이든) 항상 먼저
-		실행하도록 공용화해버려서, 개별판정으로 좁혀 반복 실행할 때마다 그 제품의 가상 SALES_DTL 이
-		매번 삭제 후 새 SALES_SEQ 로 재삽입됐다. createFcr()/determineOrigin() 의 FCR_MST/FCR_DTL/
-		FCR_RESULT 삭제는 "현재 SALES_DTL 과 SALES_SEQ 가 일치하는 행"만 지우므로, SALES_SEQ 가 매번
-		바뀌면 예전 FCR_* 행들이 고아로 남아 판정을 반복할수록 누적된다(FCR_RESULT 는 FTA_CODE/
-		RULE_SEQ 조합만큼 여러 행이라 특히 눈에 띄게 쌓인다). 그래서 productCodes 가 지정된(개별/특정
-		제품 한정) 호출에서는 {@link AggregatedVirtualSalesGenerator} 가 이 두 DELETE 를 아예 건너뛰고
-		MERGE 만 수행하도록 바꿨고, mergeAggregatedSalesDtl 의 WHEN MATCHED 절도 원본과 동일하게
-		QUANTITY/UNIT_PRICE/AMOUNT/HS_CODE 까지 갱신하도록 맞췄다(기존에는 PRODUCT_ASSETS_TYPE 만
-		갱신해 매출 값이 바뀌어도 가상 집계가 갱신되지 않는 별개의 문제도 있었다). companyCode+기간
-		전체를 다루는 월판정(productCodes 없음)에서는 기존과 동일하게 삭제 후 재생성한다.
+		[버그 수정 이력 2] 개별/특정 제품 판정에서 DELETE-후-재생성을 매번 실행하면 SALES_SEQ 가 바뀔
+		때마다 예전 FCR_* 행이 고아로 남아 누적된다. productCodes 가 지정된 호출에서는
+		{@link AggregatedVirtualSalesGenerator} 가 DELETE 를 건너뛰고 MERGE 만 수행하도록 바꿨고,
+		mergeAggregatedSalesDtl 의 WHEN MATCHED 절도 QUANTITY/UNIT_PRICE/AMOUNT/HS_CODE 까지 갱신하도록
+		맞췄다(기존엔 PRODUCT_ASSETS_TYPE 만 갱신). 월판정(productCodes 없음)은 기존대로 삭제 후 재생성한다.
 	-->
 
 	<delete id="deleteAggregatedSalesDtl">
@@ -106,17 +92,12 @@
 	<!-- ===================== 2. 포괄 SALES_DTL 생성 ===================== -->
 
 	<!--
-		SALES_SEQ 채번: 원본은 ROWNUM(스캔 순서에 의존, GROUP BY 와 무관하게 결과집합 전체에 걸쳐
-		하나의 카운터를 사용해 이식성/결정성이 없었다)을 사용했다. ROW_NUMBER() OVER(PARTITION BY
-		CUSTOMER_CODE, DIVISION_CODE ORDER BY ...) 로 교체해 그룹(매출번호)별로 결정적인 연속 채번이
-		되도록 개선했다 — 사용자 요청(표준 SQL 사용)에 따른 의도적 수정.
+		SALES_SEQ 채번: 원본 ROWNUM(이식성/결정성 없음) 대신 ROW_NUMBER() OVER(PARTITION BY CUSTOMER_CODE,
+		DIVISION_CODE ORDER BY ...) 로 그룹(매출번호)별 결정적 연속 채번을 하도록 의도적으로 변경했다.
 
-		기존 MAX(SALES_SEQ)+1 조회는 SELECT 목록의 상관 서브쿼리(VSD 참조)로 작성했었는데, PostgreSQL
-		이 MERGE 의 USING 서브쿼리 안에서는 그 서브쿼리 자신의 FROM 절 별칭(VSD)을 상관 서브쿼리가
-		보지 못한다("missing FROM-clause entry" 오류, mergeFcrMstOriginDetermination 에서 처음
-		확인됨). LATERAL 조인으로 바꿔 상관관계를 명시적인 JOIN 으로 표현했다 — MAX 는 GROUP BY 없이
-		항상 정확히 1행을 반환하므로(매칭 없으면 NULL) LEFT JOIN LATERAL ... ON TRUE 로도 매 VSD
-		행마다 정확히 1행이 매칭되어 기존 상관 서브쿼리와 동일하게 동작한다.
+		[버그 수정 이력] MAX(SALES_SEQ)+1 조회를 SELECT 목록의 상관 서브쿼리로 작성하면, PostgreSQL이
+		MERGE의 USING 서브쿼리 안에서 그 서브쿼리 자신의 FROM 절 별칭을 상관 서브쿼리가 보지 못해
+		"missing FROM-clause entry" 오류가 난다. LATERAL 조인으로 바꿔 상관관계를 명시적으로 표현했다.
 	-->
 	<insert id="mergeAggregatedSalesDtl">
 		MERGE INTO SALES_DTL SD

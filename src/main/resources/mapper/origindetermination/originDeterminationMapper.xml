@@ -17,10 +17,9 @@
        		, GET_CODE_NAME(SM.PRODUCT_ASSETS_TYPE, 'AT', SM.COMPANY_CODE, 'KOR') AS PRODUCT_ASSETS_TYPE_NAME
        		, SM.COO_CERTIFY_NO
        FROM (
-			<!-- [원산지판정 상세 대응] 그룹(매출년월/고객사/플랜트/품번) 집계는 그대로 유지.
-			     그룹을 대표하는 SALES_NO/SALES_SEQ는 행 단위 상관 서브쿼리(LATERAL) 대신,
-			     그룹당 1건만 뽑는 DISTINCT ON 서브쿼리(REP)를 별도로 1회 계산해 그룹 키로 JOIN
-			     (LATERAL 방식은 GROUP BY 이전 매출 라인 전체에 대해 N번 반복 실행되어 조회가 느려짐) -->
+			<!-- 그룹을 대표하는 SALES_NO/SALES_SEQ는 행 단위 LATERAL 대신 그룹당 1건만 뽑는 DISTINCT ON
+			     서브쿼리(REP)를 별도 1회 계산해 그룹 키로 JOIN한다(LATERAL은 매출 라인 전체에 대해
+			     반복 실행되어 느려짐). -->
 			SELECT G.COMPANY_CODE
 				, G.INVOICE_MONTH
 				, G.DIVISION_CODE
@@ -128,10 +127,9 @@
 		ORDER BY SM.INVOICE_MONTH, C.CUSTOMER_CODE, D.DIVISION_CODE, SM.PRODUCT_CODE, SM.SALES_NO, SM.SALES_SEQ
     </select>
 
-    <!-- datas(체크된 판정 대상 라인)를 UNION ALL로 키 목록(KEYS)을 만들고 JOIN해서 조회.
-         division_code/sales_seq는 넘어오지 않을 수 있어(수출은 SALES_NO만으로 그 송장의 모든
-         라인을 조회), KEYS의 해당 컬럼이 NULL이면 그 조건은 없는 것으로 취급(OR IS NULL)한다.
-         하나의 실제 라인이 여러 KEYS 행과 동시에 매칭될 수 있어 DISTINCT로 중복을 제거한다 -->
+    <!-- datas(체크된 판정 대상 라인)를 UNION ALL로 키 목록(KEYS)을 만들고 JOIN해서 조회. KEYS 컬럼이
+         NULL이면 조건 없음으로 취급(OR IS NULL, 수출은 SALES_NO만으로 조회하는 경우 대응). 하나의 라인이
+         여러 KEYS 행과 매칭될 수 있어 DISTINCT로 중복을 제거한다. -->
     <select id="retrieveOriginDeterminationDetailList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto" resultType="HashMap">
        SELECT DISTINCT SM.SALES_NO
        		, SD.SALES_SEQ
