@@ -14,13 +14,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 
 /**
- * 레거시 COO_DECISION_FOR_RVC(부가가치기준 원산지 판정) 이관.
- *
- * CTC_ONLY(PKG99_COO_CTC_DECISION) 모드는 원본에서 이 프로시저의 실제 계산 로직 전체가
- * 비활성화되어 있고 FTA_RVC_YN/COMPANY_RVC_YN을 무조건 'N'으로 설정하는 스텁만 남아있다
- * (CTC 전용 판정에서는 부가가치기준을 사용하지 않기 때문). 그대로 이관했다.
- *
- * 이 프로시저도 FCR_INFO_TEMP(=OriginDeterminationContext.materialOriginRows)만 읽으므로 DB 접근이 필요 없다.
+ * 부가가치기준(RVC) 원산지 판정 (레거시 COO_DECISION_FOR_RVC).
+ * CTC_ONLY 모드는 부가가치기준을 쓰지 않아 FTA_RVC_YN/COMPANY_RVC_YN을 무조건 'N'으로 설정한다.
  */
 @Service
 public class RvcCriteriaDecisionService {

@@ -36,12 +36,7 @@ public interface CreateFcrDao {
 			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
 			@Param("productCodes") List<String> productCodes);
 
-	/**
-	 * "해당 사업장 BOM 존재 확인"(own) / "타 플랜트 BOM 체크"(any) 를 (사업장,제품) 조합별로 한 번에
-	 * 배치 조회한다 — 원본은 이 두 조회(+updateSalesDtlBomStatus)를 C_SALES_DTL 커서 행마다(제품 수만큼)
-	 * 반복했으나, LATERAL 조인으로 대상 조합 전체를 한 번의 왕복으로 처리한다. own/any 각각 원본과 동일
-	 * 하게 ROWNUM=1(정렬기준 없음)을 FETCH FIRST 1 ROW ONLY 로 이관.
-	 */
+	/** 같은 사업장(own)/전체 사업장(any) BOM 존재 여부를 (사업장,제품) 조합별로 배치 조회 */
 	List<BomAvailabilityBatchResult> selectBomAvailabilityBatch(@Param("companyCode") String companyCode,
 			@Param("bomType") String bomType, @Param("bomPreviousYyyymm") String bomPreviousYyyymm,
 			@Param("yyyymm") String yyyymm, @Param("requests") List<BomAvailabilityRequest> requests);
@@ -89,12 +84,7 @@ public interface CreateFcrDao {
 	/** 계산이 끝난 FCR_DTL 행을 청크 단위로 일괄 INSERT (3-3, 3-4 공용) */
 	void insertFcrDtlRows(@Param("rows") List<FcrDtlInsertRow> rows);
 
-	/**
-	 * "3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE". 상품(M,R,B) 원산지 판정(과거 3-5/3-6 단계)은
-	 * {@link com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao} 로 옮겨
-	 * {@link com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationExecutionService#determineOrigin} 에서 수행한다
-	 * — CREATE_FCR 은 FCR_MST/FCR_DTL 데이터 생성까지만 담당한다.
-	 */
+	/** FCR_MST의 역내산/역외산 재료비금액을 FCR_DTL 집계로 갱신 */
 	void mergeFcrMstMaterialAmountTotals(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode, @Param("productCodes") List<String> productCodes);
 }

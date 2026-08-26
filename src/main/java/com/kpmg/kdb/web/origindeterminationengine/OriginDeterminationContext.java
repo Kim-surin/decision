@@ -9,16 +9,9 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 
 /**
- * 레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION 패키지 전역변수(VG_*)를 대체하는 판정 작업 컨텍스트.
- *
- * Oracle PL/SQL 패키지 전역변수는 세션(커넥션) 단위로 존재해 COO_DECISION 이 처리하는 매출 1건마다
- * 값을 새로 채우는 방식으로 동작했다. Java 로 옮기면서 이를 Spring 싱글톤 서비스의 필드로 두면
- * 배치를 여러 스레드로 동시 처리할 때 서로 값을 덮어써 데이터가 섞이는 문제가 생긴다.
- * 따라서 이 클래스는 스프링 빈이 아닌 일반 POJO 로, 매출 1건(=FM_LIST 한 행)을 판정할 때마다
- * 새로 생성해서 사용한다(스레드 안전).
- *
- * FCR_INFO_TEMP(임시테이블)도 더 이상 DB 테이블로 두지 않고, 매출 1건당 한 번만 조회한 뒤
- * materialOriginRows 리스트로 메모리에 올려 이후의 모든 판정 로직이 스트림으로 처리하도록 했다.
+ * 원산지 판정(COO_DECISION) 1건(FTA 후보 1행) 처리 중 쓰는 작업 컨텍스트. 스프링 빈이 아닌 일반
+ * POJO로, 판정할 때마다 새로 생성해서 스레드 안전하게 쓴다. FCR_INFO_TEMP(자재원산지 정보)도
+ * materialOriginRows에 한 번만 조회해 메모리에 올려두고 이후 판정 로직은 스트림으로 처리한다.
  */
 public class OriginDeterminationContext {
 
@@ -31,12 +24,7 @@ public class OriginDeterminationContext {
 	/** 현재 판정 룰 1건 처리 중 누적되는 판정결과 레코드 (원본 VG_FRD_REC) */
 	private OriginDeterminationResult frdRec = new OriginDeterminationResult();
 
-	/**
-	 * FM_LIST 1건(=이 컨텍스트) 처리 중 룰별로 확정된 판정결과의 스냅샷을 즉시 INSERT 하지 않고
-	 * 모아뒀다가 한 번에 배치 저장하기 위한 버퍼(OriginDeterminationSupportService#insertFrdAndReset).
-	 * UPDATE_FRM_PROCEDURE(updateFrm)가 방금 저장한 FCR_RESULT 를 다시 조회해 사용하므로, salesNo
-	 * 전체가 아니라 FM_LIST 1건 단위로 flush 해야 한다 — updateFrm 직전에 flush 한다.
-	 */
+	/** 룰별로 확정된 판정결과를 즉시 저장하지 않고 모아뒀다가 배치로 저장하기 위한 버퍼 */
 	private final List<OriginDeterminationResult> pendingResults = new ArrayList<>();
 
 	/** GET_BUFFER 결과: 버퍼 산정기준(COM/DIV/PRD/FTA) (원본 VG_OPTION_VALUE) */
@@ -65,11 +53,7 @@ public class OriginDeterminationContext {
 	/** RCEP 원산지 재료비 최대 기여국 (원본 VG_RCEP_COO_NATION) */
 	private String rcepCooNation;
 
-	/**
-	 * GET_MP_ITEM(최소공정 제외 품목 여부) 결과 캐시. 이 값의 조회 키(companyCode/divisionCode/salesNo/
-	 * salesSeq)는 FM_LIST 1건(=이 컨텍스트) 안의 모든 룰에서 항상 동일해, 룰마다 다시 조회할 필요가
-	 * 없다(OriginDeterminationSupportService#getMinimalProcessItemYn 참고).
-	 */
+	/** 최소공정 제외 품목 여부 캐시(이 컨텍스트 안의 모든 룰에서 조회 키가 동일해 룰마다 재조회할 필요 없음) */
 	private String minimalProcessItemYn;
 	private boolean minimalProcessItemYnLoaded;
 

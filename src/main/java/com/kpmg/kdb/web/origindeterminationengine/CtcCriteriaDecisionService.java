@@ -13,14 +13,10 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 
 /**
- * 레거시 COO_DECISION_FOR_CTC(세번변경기준 + 미소기준 판정) 이관.
+ * 세번변경기준 + 미소기준 판정 (레거시 COO_DECISION_FOR_CTC).
  *
- * RVC_CTC(PKG99_COO_DECISION)와 CTC_ONLY(PKG99_COO_CTC_DECISION)의 실제 계산 로직이
- * 상당히 달라(미소기준/버퍼 계산 인프라가 CTC_ONLY 에는 아예 없음) 하나의 메서드로 억지로
- * 통합하지 않고 모드별로 분리했다. HS코드 누락 체크만 두 모드에 완전히 동일하게 존재한다.
- *
- * 이 프로시저는 FCR_INFO_TEMP(=OriginDeterminationContext.materialOriginRows, 매출 1건당 1회 조회한 값)만
- * 읽으므로 DB 접근이 전혀 필요 없다 — 전량 Java 스트림 연산으로 처리한다.
+ * RVC_CTC 모드와 CTC_ONLY 모드는 계산 로직이 상당히 달라(미소기준/버퍼 계산이 CTC_ONLY엔 없음)
+ * 모드별로 분리했다. HS코드 누락 체크만 두 모드에 동일하게 있다.
  */
 @Service
 public class CtcCriteriaDecisionService {

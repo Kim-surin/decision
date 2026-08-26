@@ -12,13 +12,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchRequest
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 
-/**
- * {@link OriginDeterminationExecutionService#determineOrigin} 1회 호출 범위에서만 유효한 FTA_RULE 조회
- * 사전조회 결과. 전역 캐시(@Cacheable)가 아니라, FM_LIST 행 전체(제품 × FTA_CODE 후보)에 필요한
- * (hsCode,ftaCode,hsCodeSubCategory) 조합을 이 호출 시작 시점에 한 번의 배치 쿼리로 모두 가져온 뒤
- * 호출이 끝나면 버려지는 일회성 프리페치다 — FTA_RULE 데이터량이 커서 오래 유지되는 캐시에 담기엔
- * 부적합하다는 판단에 따른 절충이다.
- */
+/** determineOrigin() 1회 호출 범위에서만 유효한 FTA_RULE(적용 룰) 조회 캐시. */
 class OriginCriteriaCache {
 
 	private final OriginDeterminationCursorDao dao;
