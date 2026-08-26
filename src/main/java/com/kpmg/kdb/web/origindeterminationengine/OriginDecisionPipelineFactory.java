@@ -21,12 +21,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 @Service
 public class OriginDecisionPipelineFactory extends GeneralService {
 
-	// AggregatedVirtualSalesGenerator/IndividualVirtualSalesGenerator 둘 다 VirtualSalesGenerator 구현체라
-	// 인터페이스 타입 주입은 빈이 모호해져 구체 타입으로 각각 주입받는다.
 	@Autowired
 	private AggregatedVirtualSalesGenerator aggregatedVirtualSalesGenerator;
-	@Autowired
-	private IndividualVirtualSalesGenerator individualVirtualSalesGenerator;
 	@Autowired
 	private FcrCreator fcrCreator;
 	@Autowired
@@ -40,16 +36,6 @@ public class OriginDecisionPipelineFactory extends GeneralService {
 	public OriginDecisionPipeline forDomestic(String companyCode, List<String> productCodes) {
 		OriginDeterminationMode mode = resolveMode(companyCode);
 		return new OriginDecisionPipeline(Collections.emptyList(), mode, productCodes, aggregatedVirtualSalesGenerator,
-				fcrCreator, originDecider, statusUpdater);
-	}
-
-	/**
-	 * 개별 판정 파이프라인. forDomestic 과 동일하게 generateVirtualSales 를 첫 단계로 호출해야 하며,
-	 * params 에 companyCode/divisionCode/customerCode/yyyymmdd/sourceSalesNo/productCodes 를 모두 채워야 한다.
-	 */
-	public OriginDecisionPipeline forIndividual(String companyCode, List<String> productCodes) {
-		OriginDeterminationMode mode = resolveMode(companyCode);
-		return new OriginDecisionPipeline(Collections.emptyList(), mode, productCodes, individualVirtualSalesGenerator,
 				fcrCreator, originDecider, statusUpdater);
 	}
 
