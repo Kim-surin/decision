@@ -78,6 +78,9 @@
 	.origin-result-row {
 		cursor: pointer;
 	}
+	.origin-detail-line-row {
+		cursor: pointer;
+	}
 	.origin-result-detail-row > td {
 		padding: 0;
 	}
@@ -172,11 +175,17 @@
 		// this.lineItems(라인 단위로 펼친 목록)를 쓰고, this.datas는 일괄/개별 판정 실행(executeOriginDetermination)
 		// 대상 식별에만 쓴다.
 		this.datas = [];
-		// 좌측 사이드바/선택에 실제로 쓰는 라인(SALES_NO+SALES_SEQ) 단위 목록 - retrieveDetailList 응답으로 채워짐
+		// lineItems를 (품번, 품명) 기준으로 묶은 좌측 사이드바 표시 단위 목록 - retrieveDetailList 응답으로 채워짐.
+		// 동일 품번/품명이 여러 라인(SALES_SEQ)에 걸쳐 있어도 좌측엔 하나만 노출하고, 그 그룹에 속한
+		// 라인들을 우측 "판정 품목" 표에 모두 나열한다.
 		this.lineItems = [];
+		this.groupedItems = [];
 		// sales_no + '_' + sales_seq 를 key 로 하는 라인별 상세정보 맵
 		this.detailMap = {};
-		this.selectedKey = null;
+		// 좌측에서 선택된 그룹(품번/품명)의 key
+		this.selectedGroupKey = null;
+		// 우측 "판정 품목" 표에서 선택된 라인(SALES_NO+SALES_SEQ) 단위 key - 판정결과 조회/개별 원산지 판정 대상
+		this.selectedLineKey = null;
 		// 현재 선택된 판정 품목의 판정 상세내용(기준별) 전체 목록 - fta_code로 필터링해서 사용
 		this.currentDetailList = [];
 		// 팝업을 연 화면(내수/수출) - 값이 없으면(구버전 호출부 등) 내수로 취급.
@@ -186,6 +195,49 @@
 
 		this.buildKey = function(salesNo, salesSeq) {
 			return salesNo + "_" + salesSeq;
+		};
+
+		this.buildGroupKey = function(productCode, productName) {
+			return productCode + "_" + productName;
+		};
+
+		// this.lineItems를 (품번, 품명) 기준으로 묶어 this.groupedItems를 구성.
+		// 그룹의 판정상태 배지는 그 그룹에 속한 첫 번째 라인의 값을 대표로 사용한다
+		// (같은 품번이 여러 라인에 걸쳐 있어도 보통 같은 송장/그룹에 속해 판정상태를 공유함)
+		this.buildGroupedItems = function() {
+			var self = this;
+			var groupMap = {};
+			var order = [];
+
+			this.lineItems.forEach(function(row) {
+				var groupKey = self.buildGroupKey(row.product_code, row.product_name);
+
+				if (!groupMap[groupKey]) {
+					groupMap[groupKey] = {
+						key: groupKey,
+						product_code: row.product_code,
+						product_name: row.product_name,
+						invoice_month: row.invoice_month,
+						status: row.status,
+						status_name: row.status_name,
+						lines: []
+					};
+					order.push(groupKey);
+				}
+
+				groupMap[groupKey].lines.push(row);
+			});
+
+			this.groupedItems = order.map(function(groupKey) {
+				return groupMap[groupKey];
+			});
+		};
+
+		// 좌측 목록(groupedItems)에서 key에 해당하는 그룹을 찾음
+		this.findGroupByKey = function(key) {
+			return this.groupedItems.filter(function(group) {
+				return group.key === key;
+			})[0];
 		};
 
 		// KpackageOBJ.ajax.doSubmit는 통신 실패 시 항상 네이티브 alert()를 호출하는데,
@@ -257,32 +309,32 @@
 			}
 		};
 
-		// 좌측 사이드바 렌더링 (매출년월/품번/품명) - this.lineItems(라인 단위) 기준
+		// 좌측 사이드바 렌더링 (매출년월/품번/품명) - this.groupedItems(품번+품명 단위) 기준.
+		// 동일 품번/품명은 여러 라인에 걸쳐 있어도 하나만 노출한다
 		this.renderSidebar = function() {
 			var $sidebar = $('#originDetermination_popup_sidebar');
 			$sidebar.empty();
 
-			if (this.lineItems.length === 0) {
+			if (this.groupedItems.length === 0) {
 				$sidebar.append('<div class="origin-detail-empty">선택된 항목이 없습니다.</div>');
 				return;
 			}
 
 			var self = this;
-			this.lineItems.forEach(function(row) {
-				var key = self.buildKey(row.sales_no, row.sales_seq);
-				var statusClass = self.getStatusBadgeClass(row.status);
+			this.groupedItems.forEach(function(group) {
+				var statusClass = self.getStatusBadgeClass(group.status);
 
 				var $item = $(
-					'<a href="javascript:void(0)" class="list-group-item list-group-item-action" data-key="' + key + '">' +
-						(row.invoice_month ? '<span class="badge bg-secondary">' + row.invoice_month + '</span> ' : '') +
-						'<span class="badge ' + statusClass + '">' + (row.status_name || '') + '</span>' +
-						'<span class="item-product-code">' + (row.product_code || '') + '</span>' +
-						'<span class="item-product-name">' + (row.product_name || '') + '</span>' +
+					'<a href="javascript:void(0)" class="list-group-item list-group-item-action" data-key="' + group.key + '">' +
+						(group.invoice_month ? '<span class="badge bg-secondary">' + group.invoice_month + '</span> ' : '') +
+						'<span class="badge ' + statusClass + '">' + (group.status_name || '') + '</span>' +
+						'<span class="item-product-code">' + (group.product_code || '') + '</span>' +
+						'<span class="item-product-name">' + (group.product_name || '') + '</span>' +
 					'</a>'
 				);
 
 				$item.on('click', function() {
-					self.selectItem(key);
+					self.selectItem(group.key);
 				});
 
 				$sidebar.append($item);
@@ -306,14 +358,15 @@
 				request,
 				function(response) {
 					var list = (response && response.value) ? response.value : [];
-					var previousKey = self.selectedKey;
+					var previousGroupKey = self.selectedGroupKey;
 
 					self.buildDetailMapAndLineItems(list);
+					self.buildGroupedItems();
 					self.renderSidebar();
 
-					var keyToSelect = (previousKey && self.findRowByKey(previousKey)) ? previousKey : null;
-					if (!keyToSelect && self.lineItems.length > 0) {
-						keyToSelect = self.buildKey(self.lineItems[0].sales_no, self.lineItems[0].sales_seq);
+					var keyToSelect = (previousGroupKey && self.findGroupByKey(previousGroupKey)) ? previousGroupKey : null;
+					if (!keyToSelect && self.groupedItems.length > 0) {
+						keyToSelect = self.groupedItems[0].key;
 					}
 
 					if (keyToSelect) {
@@ -363,19 +416,54 @@
 			});
 		};
 
-		// 좌측 항목 선택 시, 우측 상세 렌더링
+		// 좌측 그룹(품번/품명) 선택 시, 그 그룹에 속한 라인 전체를 우측 "판정 품목"에 나열하고,
+		// 그 중 하나(이전에 선택돼 있던 라인 우선, 없으면 판정완료 라인, 그마저 없으면 첫 라인)를
+		// 자동으로 선택해 판정결과를 보여준다
 		this.selectItem = function(key) {
-			this.selectedKey = key;
+			this.selectedGroupKey = key;
 
 			$('#originDetermination_popup_sidebar .list-group-item').removeClass('active');
 			$('#originDetermination_popup_sidebar .list-group-item[data-key="' + key + '"]').addClass('active');
 
-			this.renderDetail(this.detailMap[key]);
+			var self = this;
+			var group = this.findGroupByKey(key);
+			var lines = group ? group.lines : [];
 
-			// 판정완료(status=4) 건만 판정결과/판정 상세내용 섹션을 보여줌
-			var row = this.findRowByKey(key);
-			if (row && this.isDetermined(row.status)) {
-				this.retrieveResultList(row);
+			this.renderDetailList(lines);
+
+			if (lines.length === 0) {
+				this.selectedLineKey = null;
+				this.hideResultSections();
+				return;
+			}
+
+			var lineKeyToSelect = null;
+			if (this.selectedLineKey && lines.some(function(line) {
+				return self.buildKey(line.sales_no, line.sales_seq) === self.selectedLineKey;
+			})) {
+				lineKeyToSelect = this.selectedLineKey;
+			} else {
+				var determinedLine = lines.filter(function(line) {
+					return self.isDetermined(line.status);
+				})[0];
+				var targetLine = determinedLine || lines[0];
+				lineKeyToSelect = this.buildKey(targetLine.sales_no, targetLine.sales_seq);
+			}
+
+			this.selectDetailLine(lineKeyToSelect);
+		};
+
+		// 우측 "판정 품목" 표에서 라인 1건을 선택 - 판정완료(status=4) 건만 판정결과/판정 상세내용
+		// 섹션을 보여줌. 개별 원산지 판정(도메스틱 전용) 대상도 이 선택된 라인을 기준으로 한다
+		this.selectDetailLine = function(lineKey) {
+			this.selectedLineKey = lineKey;
+
+			$('#originDetermination_popup_detailBody tr.origin-detail-line-row').removeClass('table-active');
+			$('#originDetermination_popup_detailBody tr.origin-detail-line-row[data-line-key="' + lineKey + '"]').addClass('table-active');
+
+			var line = this.findRowByKey(lineKey);
+			if (line && this.isDetermined(line.status)) {
+				this.retrieveResultList(line);
 			} else {
 				this.hideResultSections();
 			}
@@ -398,29 +486,40 @@
 			$('#originDetermination_popup_resultSection').hide();
 		};
 
-		// 좌측에서 선택한 라인 1건의 상세를 보여줌
-		this.renderDetail = function(detail) {
+		// 좌측에서 선택한 그룹(품번/품명)에 속한 라인 전체를 나열. 각 행을 클릭하면
+		// selectDetailLine으로 그 라인의 판정결과를 볼 수 있음
+		this.renderDetailList = function(lines) {
+			var self = this;
 			var $body = $('#originDetermination_popup_detailBody');
 			$body.empty();
 
-			if (!detail) {
+			if (!lines || lines.length === 0) {
 				$body.append('<tr><td colspan="7" class="origin-detail-empty">상세 정보가 없습니다.</td></tr>');
 				return;
 			}
 
-			var $row = $(
-				'<tr>' +
-					'<td>' + (detail.product_code || '') + '</td>' +
-					'<td>' + (detail.product_name || '') + '</td>' +
-					'<td>' + (detail.hs_code || '') + '</td>' +
-					'<td class="text-end">' + (detail.quantity || '') + '</td>' +
-					'<td>' + (detail.unit || '') + '</td>' +
-					'<td class="text-end">' + (detail.unit_price || '') + '</td>' +
-					'<td class="text-end">' + (detail.amount || '') + '</td>' +
-				'</tr>'
-			);
+			lines.forEach(function(line) {
+				var lineKey = self.buildKey(line.sales_no, line.sales_seq);
+				var detail = self.detailMap[lineKey] || {};
 
-			$body.append($row);
+				var $row = $(
+					'<tr class="origin-detail-line-row" data-line-key="' + lineKey + '">' +
+						'<td>' + (detail.product_code || '') + '</td>' +
+						'<td>' + (detail.product_name || '') + '</td>' +
+						'<td>' + (detail.hs_code || '') + '</td>' +
+						'<td class="text-end">' + (detail.quantity || '') + '</td>' +
+						'<td>' + (detail.unit || '') + '</td>' +
+						'<td class="text-end">' + (detail.unit_price || '') + '</td>' +
+						'<td class="text-end">' + (detail.amount || '') + '</td>' +
+					'</tr>'
+				);
+
+				$row.on('click', function() {
+					self.selectDetailLine(lineKey);
+				});
+
+				$body.append($row);
+			});
 		};
 
 		// 판정완료 건의 판정결과(협정별)와 판정 상세내용(기준별)을 한 번에 조회.
@@ -626,9 +725,9 @@
 			this.executeOriginDetermination(this.datas);
 		};
 
-		// 좌측에서 선택한 품목 1건만 대상으로 원산지 판정 진행
+		// 우측 "판정 품목"에서 선택한 라인 1건만 대상으로 원산지 판정 진행
 		this.individualOriginDetermination = function() {
-			if (!this.selectedKey) {
+			if (!this.selectedLineKey) {
 				KpackageOBJ.object.alert("판정할 품목을 선택하세요.");
 				return;
 			}
@@ -641,9 +740,9 @@
 			this.executeOriginDetermination([selectedRow]);
 		};
 
-		// 좌측 목록(lineItems)에서 현재 선택된(selectedKey) 라인을 찾음
+		// 좌측 목록(lineItems)에서 현재 선택된(selectedLineKey) 라인을 찾음
 		this.findSelectedRow = function() {
-			return this.findRowByKey(this.selectedKey);
+			return this.findRowByKey(this.selectedLineKey);
 		};
 	};
 
