@@ -180,11 +180,14 @@
 						KpackageOBJ.auiGrid.retrieve(DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION_RESULT, "/origin/compliance/origindetermination/originDeterminationResultList", params);
 					}
 					
-					this.retrive_DetailData = function (data) {	
+					// 이 화면은 내수(EXPORT_FLAG='D')/수출(EXPORT_FLAG='E') 데이터가 함께 조회되므로,
+					// 클릭한 행의 판매구분에 맞춰 팝업이 내수/수출 판정 API를 호출하도록 mode를 함께 넘긴다
+					this.retrive_DetailData = function (data) {
 						var request = {
-							datas: JSON.stringify([data])
+							datas: JSON.stringify([data]),
+							mode: data.export_flag === 'E' ? 'export' : 'domestic'
 						}
-																				
+
 						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', request);
 					}
 

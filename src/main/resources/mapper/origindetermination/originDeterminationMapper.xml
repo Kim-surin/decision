@@ -265,7 +265,8 @@
     </select>
     
     <select id="retrieveOriginDeterminationResult" parameterType="HashMap" resultType="HashMap">
-    	SELECT SM.INVOICE_DATE 
+    	SELECT SM.INVOICE_DATE
+    		, SM.DIVISION_CODE
     		, D.DIVISION_NAME
     		, SM.EXPORT_FLAG
 			, GET_CODE_NAME(SM.EXPORT_FLAG, 'EF', SM.COMPANY_CODE, 'KOR') AS EXPORT_FLAG_NAME
