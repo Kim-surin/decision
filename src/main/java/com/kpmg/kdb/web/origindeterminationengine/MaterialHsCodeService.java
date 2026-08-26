@@ -14,9 +14,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCandidateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCriteria;
 
-/**
- * 레거시 FS03_GET_HS_CODE(company, division, customer, item, nation, fta, yyyymmdd) 이관.
- */
+/** 자재 HS코드 조회 (레거시 FS03_GET_HS_CODE). */
 @Service
 public class MaterialHsCodeService extends GeneralService {
 
@@ -39,12 +37,7 @@ public class MaterialHsCodeService extends GeneralService {
 		}
 	}
 
-	/**
-	 * {@link MaterialHsCodeDao#selectHsCodeCandidates} 가 (제품×FTA_CODE 후보) 조합마다 반복 호출되던 것을 배치
-	 * 조회 1회로 대체하기 위한 사전조회. 반환된 맵은 {@link #hsCodeKey} 로 만든 키에 최종 우선순위
-	 * HS코드(빈 문자열이면 "결과 없음", {@link #resolveHsCode} 와 동일 규칙)를 담는다 — 호출자가 만든
-	 * hsCodeCache(Map)에 그대로 채워 넣으면 그 이후의 조회는 추가 DB 호출 없이 캐시만으로 처리된다.
-	 */
+	/** HS코드를 (제품×FTA_CODE 후보) 조합 전체에 대해 배치로 미리 조회한다. */
 	public Map<String, String> prefetchHsCode(List<HsCodeCriteria> criteriaList) {
 		if (criteriaList == null || criteriaList.isEmpty()) {
 			return Map.of();
@@ -76,8 +69,6 @@ public class MaterialHsCodeService extends GeneralService {
 			}
 			return cache;
 		} catch (Exception e) {
-			// 배치 사전조회는 최적화일 뿐이라 실패해도 전체 흐름을 막지 않는다 — 빈 캐시를 돌려주면
-			// resolveHsCode 가 그 자리에서 단건 조회로 대체한다.
 			logger.error("HS코드 배치조회 실패. requestCount={}", distinctRequests.size(), e);
 			return Map.of();
 		}
