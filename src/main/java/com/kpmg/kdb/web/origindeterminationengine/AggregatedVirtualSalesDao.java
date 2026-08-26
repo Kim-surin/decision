@@ -26,10 +26,8 @@ public interface AggregatedVirtualSalesDao {
 			@Param("p") VirtualSalesGenerationParams params);
 
 	/**
-	 * "2. 포괄 SALES_DTL 생성": 가상 SALES_MST 에 대응하는 집계 SALES_DTL 을 MERGE 로 생성.
-	 * 원본의 ROWNUM 기반 SALES_SEQ 채번(스캔 순서에 의존, DB 이식성 없음)을 ROW_NUMBER() OVER(...)
-	 * 기반의 그룹별(CUSTOMER_CODE, DIVISION_CODE) 결정적 채번으로 교체했다(동작 개선 + 이식성 확보,
-	 * 사용자 요청에 따라 이 부분은 원본을 그대로 재현하지 않고 의도적으로 고쳤다 — 업무팀 확인 권장).
+	 * 가상 SALES_MST에 대응하는 집계 SALES_DTL을 MERGE로 생성. SALES_SEQ 채번을 원본(ROWNUM 기반, 이식성
+	 * 없음) 대신 (CUSTOMER_CODE,DIVISION_CODE) 그룹별 ROW_NUMBER()로 의도적으로 변경했다(업무팀 확인 권장).
 	 */
 	int mergeAggregatedSalesDtl(@Param("virtualSalesNo") String virtualSalesNo,
 			@Param("p") VirtualSalesGenerationParams params);

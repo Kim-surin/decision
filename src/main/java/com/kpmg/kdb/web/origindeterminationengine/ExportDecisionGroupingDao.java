@@ -13,11 +13,6 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  */
 public interface ExportDecisionGroupingDao {
 
-	/**
-	 * 판정대상 커서(C_SALES_MST, {@link AggregatedVirtualSalesDao#selectDecisionTargets})의 EXPORT_FLAG='E'
-	 * 분기만 떼어 미리 조회한다 — 수출은 가상매출 생성이 필요 없어(이미 실제 SALES_NO 에 TARGET_FTA_CODE 가
-	 * 세팅돼 있음) {@link DomesticDecisionGroupingDao#selectPendingDomesticGroups} 처럼 고객사/사업부 그룹
-	 * 발견을 거칠 필요가 없다.
-	 */
+	/** 이미 TARGET_FTA_CODE가 세팅된 실제 수출 매출을 대상으로 직접 조회한다(가상매출/그룹핑 불필요). */
 	List<SalesTarget> selectPendingExportTargets(@Param("p") VirtualSalesGenerationParams params);
 }

@@ -13,11 +13,6 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  */
 public interface DomesticDecisionGroupingDao {
 
-	/**
-	 * {@link AggregatedVirtualSalesDao#mergeAggregatedSalesMst} 가 MERGE 문의 USING 서브쿼리(WHERE + GROUP BY)로
-	 * 감춰서 처리하던 대상 그룹을, 그와 동일한 WHERE 조건으로 먼저 SELECT DISTINCT 조회한다 —
-	 * mergeAggregatedSalesMst 의 WHERE 절과 반드시 같이 맞춰야 한다(둘 중 하나만 고치면 그룹 발견 결과와
-	 * 실제 집계 대상이 어긋난다).
-	 */
+	/** 판정 대상 (회사,사업부,고객사) 그룹을 조회한다. mergeAggregatedSalesMst의 WHERE 조건과 반드시 일치해야 한다. */
 	List<PendingDomesticGroup> selectPendingDomesticGroups(@Param("p") VirtualSalesGenerationParams params);
 }
