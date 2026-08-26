@@ -5,6 +5,8 @@
 			<html>
 
 			<head>
+				<script src="/rcs/js/chartjs_v451/chart.js"></script>
+				<script src="/rcs/js/package.chartjs.utils.js"></script>
 				<style>
 				        .origin-determination-fail {
 							background-color: #ffe6e6 !important; /* 연한 빨간색 배경 */
@@ -70,6 +72,11 @@
 							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
 								<label class="origin-stat-label origin-stat-non-label mb-0">미판정</label>
 								<h4 class="origin-stat-value origin-stat-non mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_non">0</h4>
+							</div>
+							<div class="col-4 d-flex align-items-center justify-content-center">
+								<div style="width:100%;height:90px;">
+									<canvas id="DOMESTIC_ORIGIN_DETERMINATION_stat_chart"></canvas>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -159,6 +166,29 @@
 						this.Initialize_viewObject = function () {
 							DOMESTIC_ORIGIN_DETERMINATIONVIEW.createAUIGrid();
 							AUIGrid.setGridData(DOMESTIC_ORIGIN_DETERMINATIONVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION, DOMESTIC_ORIGIN_DETERMINATIONVIEW.data);
+							DOMESTIC_ORIGIN_DETERMINATIONVIEW.createStatChart();
+						}
+
+						// 판정완료/판정실패/미판정 배지와 동일한 색상을 쓰는 도넛 차트 색상
+						this.STAT_CHART_COLORS = ['#1e7e34', '#d9534f', '#b78103'];
+
+						// 검색조건 위 통계 배지 옆에 판정완료/판정실패/미판정 비율을 보여주는 도넛 차트 생성(초기값 0)
+						this.createStatChart = function () {
+							var data = {
+								labels: ['판정완료', '판정실패', '미판정'],
+								datasets: [{
+									data: [0, 0, 0],
+									backgroundColor: DOMESTIC_ORIGIN_DETERMINATIONVIEW.STAT_CHART_COLORS,
+									borderWidth: 0
+								}]
+							};
+
+							ChartUtil.createDoughnut('DOMESTIC_ORIGIN_DETERMINATION_stat_chart', data, {
+								cutout: '65%',
+								plugins: {
+									legend: { display: false }
+								}
+							});
 						}
 
 						this.data = [];
@@ -272,6 +302,15 @@
 							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_done').text(doneCount);
 							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_fail').text(failCount);
 							$('#DOMESTIC_ORIGIN_DETERMINATION_stat_non').text(nonCount);
+
+							ChartUtil.updateData('DOMESTIC_ORIGIN_DETERMINATION_stat_chart', {
+								labels: ['판정완료', '판정실패', '미판정'],
+								datasets: [{
+									data: [doneCount, failCount, nonCount],
+									backgroundColor: DOMESTIC_ORIGIN_DETERMINATIONVIEW.STAT_CHART_COLORS,
+									borderWidth: 0
+								}]
+							});
 						}
 						
 						this.individual_domestic_origin_determination = function () {
