@@ -92,6 +92,14 @@
 		원본은 룰 1건 판정이 끝날 때마다 단건 INSERT 였지만, FM_LIST 1건(FTA 후보)에 걸린 룰 전체의
 		결과를 애플리케이션에서 모았다가 한 번의 배치 INSERT 로 저장한다 — INSERT 순서에 의미가 없어
 		최종 저장 결과는 동일하다(OriginDeterminationSupportService#insertFrdAndReset/#flushPendingResults 참고).
+
+		[버그 수정 이력] records 가 2건 이상이라 실제 UNION ALL 이 발생할 때만(1건이면 UNION ALL 없이 단일
+		SELECT 라 문제가 없었다) "UNION types text and numeric cannot be matched" 오류가 났다. 원인은
+		DE_MINIMIS_RATE/RVC_RATE/CTC_*_RATE/RVC_*_RATE(BigDecimal, NUMERIC 컬럼)가 룰 종류에 따라 어떤
+		행에서는 NULL, 다른 행에서는 실제 값이라는 것 — #{} 에 jdbcType 힌트가 없어 NULL 인 쪽은 MyBatis 가
+		타입을 못 정하고 바인딩해(로그에도 "null"만 찍히고 "(BigDecimal)" 표시가 없었음), PostgreSQL 이 그
+		컬럼을 text 로, 값이 있는 다른 행은 numeric 으로 추론해 UNION 컬럼 타입 통일에 실패했다. 이 8개
+		NUMERIC 컬럼에 ::NUMERIC 캐스트를 명시해 NULL 이어도 항상 같은 타입으로 고정한다.
 	-->
 	<insert id="insertFcrResults">
 		INSERT INTO FCR_RESULT
@@ -109,17 +117,21 @@
 		       #{rec.divisionCode} AS DIVISION_CODE, #{rec.companyCode} AS COMPANY_CODE, #{rec.hsCode} AS HS_CODE,
 		       #{rec.productCode} AS PRODUCT_CODE, #{rec.standard} AS STANDARD, #{rec.ruleSeq} AS RULE_SEQ,
 		       #{rec.ruleCode} AS RULE_CODE, #{rec.ftaCooYn} AS FTA_COO_YN, #{rec.companyCooYn} AS COMPANY_COO_YN,
-		       #{rec.bufferOption} AS BUFFER_OPTION, #{rec.deMinimisRate} AS DE_MINIMIS_RATE, #{rec.rvcRate} AS RVC_RATE,
+		       #{rec.bufferOption} AS BUFFER_OPTION, #{rec.deMinimisRate}::NUMERIC AS DE_MINIMIS_RATE,
+		       #{rec.rvcRate}::NUMERIC AS RVC_RATE,
 		       #{rec.status} AS STATUS, #{rec.errorCode} AS ERROR_CODE, #{rec.errorMsg} AS ERROR_MSG,
 		       #{rec.deleteYn} AS DELETE_YN, CURRENT_TIMESTAMP AS CREATE_DATE, #{rec.createBy} AS CREATE_BY,
 		       CURRENT_TIMESTAMP AS UPDATE_DATE, #{rec.updateBy} AS UPDATE_BY, #{rec.spCooYn} AS SP_COO_YN,
 		       #{rec.woCooYn} AS WO_COO_YN, #{rec.ctcYn} AS CTC_YN, #{rec.ftaDeMinimisYn} AS FTA_DE_MINIMIS_YN,
 		       #{rec.companyDeMinimisYn} AS COMPANY_DE_MINIMIS_YN, #{rec.ftaRvcYn} AS FTA_RVC_YN,
 		       #{rec.companyRvcYn} AS COMPANY_RVC_YN, #{rec.exclusionYn} AS EXCLUSION_YN,
-		       #{rec.exclusionCondition} AS EXCLUSION_CONDITION, #{rec.ctcResultRate} AS CTC_RESULT_RATE,
-		       #{rec.ctcFtaResultRate} AS CTC_FTA_RESULT_RATE, #{rec.ctcCompanyResultRate} AS CTC_COMPANY_RESULT_RATE,
-		       #{rec.rvcResultRate} AS RVC_RESULT_RATE, #{rec.rvcFtaResultRate} AS RVC_FTA_RESULT_RATE,
-		       #{rec.rvcCompanyResultRate} AS RVC_COMPANY_RESULT_RATE, #{rec.rcepCooNation} AS RCEP_COO_NATION
+		       #{rec.exclusionCondition} AS EXCLUSION_CONDITION, #{rec.ctcResultRate}::NUMERIC AS CTC_RESULT_RATE,
+		       #{rec.ctcFtaResultRate}::NUMERIC AS CTC_FTA_RESULT_RATE,
+		       #{rec.ctcCompanyResultRate}::NUMERIC AS CTC_COMPANY_RESULT_RATE,
+		       #{rec.rvcResultRate}::NUMERIC AS RVC_RESULT_RATE,
+		       #{rec.rvcFtaResultRate}::NUMERIC AS RVC_FTA_RESULT_RATE,
+		       #{rec.rvcCompanyResultRate}::NUMERIC AS RVC_COMPANY_RESULT_RATE,
+		       #{rec.rcepCooNation} AS RCEP_COO_NATION
 		</foreach>
 		       ) V
 		CROSS  JOIN (SELECT COALESCE(MAX(SEQ), 0) AS BASE_SEQ FROM FCR_RESULT) NS
