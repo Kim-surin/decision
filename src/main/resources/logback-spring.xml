@@ -30,6 +30,26 @@
         </encoder>
     </appender>
 
+    <!-- 월판정 전용 파일 Appender: 위 FILE(logs/decision.log)과 별개로, 월판정 실행 중(MDC key
+         decisionRun=monthly)에 발생하는 로그만 logs/monthly_decision.log 에 추가로 남긴다. 기존
+         FILE 라우팅은 그대로 유지되고(순수 추가), MdcValueFilter 가 MDC에 decisionRun=monthly 가 없는
+         이벤트는 걸러낸다(org.apache.ibatis 의 SQL 디버그 로그도 월판정 중이면 여기 같이 남는다 -
+         느린 쿼리 진단용). MonthlyBulkDecisionService.run() 진입/종료 시점에 MDC.put/remove 한다. -->
+    <appender name="MONTHLY_DECISION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="com.kpmg.kdb.core.logging.MdcValueFilter">
+            <mdcKey>decisionRun</mdcKey>
+            <mdcValue>monthly</mdcValue>
+        </filter>
+        <file>logs/monthly_decision.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/monthly_decision_%d{yyyyMMdd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <logger level="OFF" appender-ref="CONSOLE" name="jdbc.sqltiming"/>
     <logger level="OFF" appender-ref="CONSOLE" name="jdbc.audit"/>
     <logger level="OFF" appender-ref="CONSOLE" name="jdbc.resultset"/>
@@ -74,6 +94,7 @@
     <logger name="org.apache.ibatis" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
+        <appender-ref ref="MONTHLY_DECISION_FILE"/>
     </logger>
 
     <!-- 판정(원산지판정) 흐름 패키지만 FILE 에도 남긴다 - additivity="false" 로 root(CONSOLE 전용)로
@@ -91,5 +112,6 @@
     <logger name="com.kpmg.kdb.web.origindeterminationengine" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
+        <appender-ref ref="MONTHLY_DECISION_FILE"/>
     </logger>
 </configuration>

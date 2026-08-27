@@ -3,6 +3,7 @@ package com.kpmg.kdb.web.origindeterminationengine;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,23 +27,33 @@ public class MonthlyBulkDecisionService extends GeneralService
 	@Autowired
 	private ExportBulkDecisionService exportBulkDecisionService;
 
+	/** 이 값이 MDC에 설정된 동안의 로그(같은 스레드에서 호출되는 하위 서비스/SQL 로그 포함)는
+	 * logback-spring.xml의 MONTHLY_DECISION_FILE 로 별도로도 남는다. */
+	private static final String MDC_KEY_DECISION_RUN = "decisionRun";
+	private static final String MDC_VALUE_MONTHLY = "monthly";
+
 	@Override
 	public BulkDecisionResult run(VirtualSalesGenerationParams filter) {
-		BulkDecisionResult domesticResult = domesticBulkDecisionService.run(filter);
+		MDC.put(MDC_KEY_DECISION_RUN, MDC_VALUE_MONTHLY);
+		try {
+			BulkDecisionResult domesticResult = domesticBulkDecisionService.run(filter);
 
-		List<ExportDecisionTarget> exportTargets = exportGroupingService.prepare(filter);
-		BulkDecisionResult exportResult = exportBulkDecisionService.run(exportTargets);
+			List<ExportDecisionTarget> exportTargets = exportGroupingService.prepare(filter);
+			BulkDecisionResult exportResult = exportBulkDecisionService.run(exportTargets);
 
-		List<SalesTarget> allTargets = new ArrayList<>(domesticResult.getTargets());
-		allTargets.addAll(exportResult.getTargets());
-		List<SalesTarget> allFailedTargets = new ArrayList<>(domesticResult.getFailedTargets());
-		allFailedTargets.addAll(exportResult.getFailedTargets());
+			List<SalesTarget> allTargets = new ArrayList<>(domesticResult.getTargets());
+			allTargets.addAll(exportResult.getTargets());
+			List<SalesTarget> allFailedTargets = new ArrayList<>(domesticResult.getFailedTargets());
+			allFailedTargets.addAll(exportResult.getFailedTargets());
 
-		logger.info("월판정(내수+수출) 배치 완료. 내수 그룹수={}, 수출 대상건수={}, 총대상건수={}, 실패건수={}",
-				domesticResult.getGroupCount(), exportResult.getGroupCount(), allTargets.size(),
-				allFailedTargets.size());
+			logger.info("월판정(내수+수출) 배치 완료. 내수 그룹수={}, 수출 대상건수={}, 총대상건수={}, 실패건수={}",
+					domesticResult.getGroupCount(), exportResult.getGroupCount(), allTargets.size(),
+					allFailedTargets.size());
 
-		return new BulkDecisionResult(domesticResult.getGroupCount() + exportResult.getGroupCount(), allTargets,
-				allFailedTargets);
+			return new BulkDecisionResult(domesticResult.getGroupCount() + exportResult.getGroupCount(), allTargets,
+					allFailedTargets);
+		} finally {
+			MDC.remove(MDC_KEY_DECISION_RUN);
+		}
 	}
 }
