@@ -1,0 +1,97 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.MaterialHsCodeDao">
+	<!--
+		레거시 FS03_GET_HS_CODE 이관.
+		- 우선순위 CASE WHEN 은 제거하고 각 소스별 HS코드를 그대로 반환한다 (우선순위 판정은 Java).
+		- Oracle 전용 ROWNUM = 1 대신 ANSI 표준 FETCH FIRST 1 ROW ONLY 를 사용한다.
+		  DB에서 실제로 1건만 잘라 전송하므로 ROWNUM과 동일한 네트워크/메모리 효율을 내면서도
+		  Oracle 12c+/PostgreSQL/SQL Server 2012+/MySQL 8.0.19+ 에서 동일하게 동작해 이식성도 유지된다.
+	-->
+	<select id="selectHsCodeCandidates" parameterType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCriteria"
+		resultType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCandidateRow">
+		SELECT CM.CUSTOMER_HS_CODE  AS customerHsCode
+		      ,FAHC.FTA_AGM_HS_CODE AS ftaAgmHsCode
+		      ,FHC.FTA_HS_CODE      AS ftaHsCode
+		      ,HIS.HS_CODE          AS historyHsCode
+		      ,IM.HS_CODE           AS itemHsCode
+		FROM   ITEM_MST IM
+		LEFT   OUTER JOIN CUSTOMER_MODEL CM
+		ON     CM.COMPANY_CODE = IM.COMPANY_CODE
+		AND    CM.ITEM_CODE = IM.ITEM_CODE
+		AND    CM.DIVISION_CODE = #{divisionCode}
+		AND    CM.CUSTOMER_CODE = #{customerCode}
+		LEFT   OUTER JOIN FTA_AGM_HS_CODE FAHC
+		ON     FAHC.COMPANY_CODE = IM.COMPANY_CODE
+		AND    FAHC.ITEM_CODE = IM.ITEM_CODE
+		AND    FAHC.FTA_CODE = #{ftaCode}
+		LEFT   OUTER JOIN FTA_HS_CODE FHC
+		ON     FHC.COMPANY_CODE = IM.COMPANY_CODE
+		AND    IM.ITEM_CODE = FHC.ITEM_CODE
+		AND    FHC.NATION_CODE = #{nationCode}
+		LEFT   OUTER JOIN HISTORY_ITEM_HS_CODE HIS
+		ON     HIS.ITEM_CODE = #{itemCode}
+		AND    HIS.COMPANY_CODE = #{companyCode}
+		AND    #{resolvedBaseDate} BETWEEN HIS.FROM_DATE AND COALESCE(HIS.TO_DATE, '99991231')
+		WHERE  IM.ITEM_CODE = #{itemCode}
+		AND    IM.COMPANY_CODE = #{companyCode}
+		FETCH FIRST 1 ROW ONLY
+	</select>
+
+	<!--
+		selectHsCodeCandidates 의 배치 버전. FTA_CODE 후보 수만큼 반복 조회되던 것을 요청 조합 전체를
+		UNION ALL 파생 테이블(V)로 던진다. LATERAL 서브쿼리 본문은 단건 쿼리와 동일한 조인 구조를 유지해,
+		동점 시 FETCH FIRST 1 ROW ONLY 로만 끊어내는 동작(DB 실행계획 의존)까지 그대로 보존한다.
+
+		REQ_BASE_DATE(원본 baseDate, null 가능)와 BASE_DATE(치환된 값)를 별도 컬럼으로 나눠 받는다 —
+		BETWEEN 비교엔 치환된 BASE_DATE 가 필요하지만 요청 재매칭 키는 원본 baseDate 그대로여야 한다.
+	-->
+	<select id="selectHsCodeCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeBatchResult">
+		SELECT V.COMPANY_CODE   AS reqCompanyCode
+		      ,V.DIVISION_CODE  AS reqDivisionCode
+		      ,V.CUSTOMER_CODE  AS reqCustomerCode
+		      ,V.ITEM_CODE      AS reqItemCode
+		      ,V.NATION_CODE    AS reqNationCode
+		      ,V.FTA_CODE       AS reqFtaCode
+		      ,V.REQ_BASE_DATE  AS reqBaseDate
+		      ,R.customerHsCode
+		      ,R.ftaAgmHsCode
+		      ,R.ftaHsCode
+		      ,R.historyHsCode
+		      ,R.itemHsCode
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.companyCode} AS COMPANY_CODE, #{r.divisionCode} AS DIVISION_CODE,
+		              #{r.customerCode} AS CUSTOMER_CODE, #{r.itemCode} AS ITEM_CODE,
+		              #{r.nationCode} AS NATION_CODE, #{r.ftaCode} AS FTA_CODE,
+		              #{r.resolvedBaseDate} AS BASE_DATE, #{r.baseDate} AS REQ_BASE_DATE
+		       </foreach>
+		       ) V
+		LEFT   JOIN LATERAL (SELECT CM.CUSTOMER_HS_CODE  AS customerHsCode
+		                            ,FAHC.FTA_AGM_HS_CODE AS ftaAgmHsCode
+		                            ,FHC.FTA_HS_CODE       AS ftaHsCode
+		                            ,HIS.HS_CODE           AS historyHsCode
+		                            ,IM.HS_CODE            AS itemHsCode
+		                      FROM   ITEM_MST IM
+		                      LEFT   OUTER JOIN CUSTOMER_MODEL CM
+		                      ON     CM.COMPANY_CODE = IM.COMPANY_CODE
+		                      AND    CM.ITEM_CODE = IM.ITEM_CODE
+		                      AND    CM.DIVISION_CODE = V.DIVISION_CODE
+		                      AND    CM.CUSTOMER_CODE = V.CUSTOMER_CODE
+		                      LEFT   OUTER JOIN FTA_AGM_HS_CODE FAHC
+		                      ON     FAHC.COMPANY_CODE = IM.COMPANY_CODE
+		                      AND    FAHC.ITEM_CODE = IM.ITEM_CODE
+		                      AND    FAHC.FTA_CODE = V.FTA_CODE
+		                      LEFT   OUTER JOIN FTA_HS_CODE FHC
+		                      ON     FHC.COMPANY_CODE = IM.COMPANY_CODE
+		                      AND    IM.ITEM_CODE = FHC.ITEM_CODE
+		                      AND    FHC.NATION_CODE = V.NATION_CODE
+		                      LEFT   OUTER JOIN HISTORY_ITEM_HS_CODE HIS
+		                      ON     HIS.ITEM_CODE = V.ITEM_CODE
+		                      AND    HIS.COMPANY_CODE = V.COMPANY_CODE
+		                      AND    V.BASE_DATE BETWEEN HIS.FROM_DATE AND COALESCE(HIS.TO_DATE, '99991231')
+		                      WHERE  IM.ITEM_CODE = V.ITEM_CODE
+		                      AND    IM.COMPANY_CODE = V.COMPANY_CODE
+		                      FETCH FIRST 1 ROW ONLY) R ON TRUE
+	</select>
+</mapper>
