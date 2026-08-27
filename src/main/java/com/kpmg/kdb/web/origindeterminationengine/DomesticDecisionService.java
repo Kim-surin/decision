@@ -15,7 +15,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  * 인터페이스를 구현한다.
  */
 @Service
-public class DomesticBulkDecisionService extends GeneralService
+public class DomesticDecisionService extends GeneralService
 		implements BulkDecisionService<VirtualSalesGenerationParams> {
 
 	@Autowired

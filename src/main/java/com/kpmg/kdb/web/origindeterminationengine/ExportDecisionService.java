@@ -14,7 +14,7 @@ import com.kpmg.kdb.core.generic.GeneralService;
  * COO_DECISION-&gt;STATUS 업데이트 3단계를 수행한다. {@link BulkDecisionService} 를 구현한다.
  */
 @Service
-public class ExportBulkDecisionService extends GeneralService implements BulkDecisionService<List<ExportDecisionTarget>> {
+public class ExportDecisionService extends GeneralService implements BulkDecisionService<List<ExportDecisionTarget>> {
 
 	@Autowired
 	private OriginDecisionPipelineFactory pipelineFactory;

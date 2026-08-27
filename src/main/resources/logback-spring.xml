@@ -34,7 +34,7 @@
          decisionRun=monthly)에 발생하는 로그만 logs/monthly_decision.log 에 추가로 남긴다. 기존
          FILE 라우팅은 그대로 유지되고(순수 추가), MdcValueFilter 가 MDC에 decisionRun=monthly 가 없는
          이벤트는 걸러낸다(org.apache.ibatis 의 SQL 디버그 로그도 월판정 중이면 여기 같이 남는다 -
-         느린 쿼리 진단용). MonthlyBulkDecisionService.run() 진입/종료 시점에 MDC.put/remove 한다. -->
+         느린 쿼리 진단용). MonthlyDecisionService.run() 진입/종료 시점에 MDC.put/remove 한다. -->
     <appender name="MONTHLY_DECISION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <filter class="com.kpmg.kdb.core.logging.MdcValueFilter">
             <mdcKey>decisionRun</mdcKey>
