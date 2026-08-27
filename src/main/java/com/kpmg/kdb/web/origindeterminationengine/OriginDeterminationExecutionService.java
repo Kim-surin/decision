@@ -80,16 +80,25 @@ public class OriginDeterminationExecutionService extends GeneralService implemen
 						sqlSession.getMapper(ExclusionRuleDao.class));
 				OriginCriteriaCache originCriteriaCache = OriginCriteriaCache.prefetch(dao, fmListRows, newAptaPsrFlag);
 				Map<String, BufferRates> productLineBufferCache = new HashMap<>();
-				Map<String, List<MaterialOriginRow>> materialOriginRowsCache = prefetchMaterialOriginRows(dao,
-						companyCode, salesNo, fmListRows);
-				RcepCooNationCache rcepCache = prepareRcepCooNationCache(fmListRows, materialOriginRowsCache, invoiceDate);
 
-				DeterminationRunContext runContext = new DeterminationRunContext(invoiceDate, newAptaPsrFlag, mode,
-						exclusionRuleCache, originCriteriaCache, productLineBufferCache, materialOriginRowsCache,
-						rcepCache);
+				// FM_LIST 전체분의 자재 원산지 목록(materialOriginRowsCache)을 한 번에 메모리에 올리면
+				// BOM이 복잡한 매출은 한 그룹에서 수만 건까지도 쌓여(예: 15,104건 확인) GC 부담이 커진다.
+				// fmListRows를 BATCH_CHUNK_SIZE 단위로 나눠, 자재 원산지 캐시/RCEP 캐시는 그 청크분만
+				// 만들었다가 처리 후 버리도록 해서 한 번에 메모리에 남는 양을 제한한다.
 				PendingBatch pending = new PendingBatch();
-				for (OriginDeterminationTarget fmData : fmListRows) {
-					decideOneFtaLine(dao, fmData, runContext, pending);
+				for (int from = 0; from < fmListRows.size(); from += BATCH_CHUNK_SIZE) {
+					List<OriginDeterminationTarget> chunk = fmListRows.subList(from,
+							Math.min(from + BATCH_CHUNK_SIZE, fmListRows.size()));
+					Map<String, List<MaterialOriginRow>> materialOriginRowsCache = prefetchMaterialOriginRows(dao,
+							companyCode, salesNo, chunk);
+					RcepCooNationCache rcepCache = prepareRcepCooNationCache(chunk, materialOriginRowsCache, invoiceDate);
+
+					DeterminationRunContext runContext = new DeterminationRunContext(invoiceDate, newAptaPsrFlag, mode,
+							exclusionRuleCache, originCriteriaCache, productLineBufferCache, materialOriginRowsCache,
+							rcepCache);
+					for (OriginDeterminationTarget fmData : chunk) {
+						decideOneFtaLine(dao, fmData, runContext, pending);
+					}
 				}
 				supportService.flushPendingResultsBatch(pending.results);
 				supportService.resolveDeferredUpdateFrm(pending.deferredUpdateFrmTargets, pending.fcrMstUpdateBatch);
