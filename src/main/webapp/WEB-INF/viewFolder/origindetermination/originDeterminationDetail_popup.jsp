@@ -91,6 +91,9 @@
 				<div id="originDetermination_popup_resultSection">
 					<h6 class="mt-4 mb-3">판정결과</h6>
 					<div id="oAuiGrid_originDetermination_popup_result" style="width:100%;height:200px;"></div>
+
+					<h6 class="mt-4 mb-3">판정 상세내용</h6>
+					<div id="oAuiGrid_originDetermination_popup_resultDetail" style="width:100%;height:180px;"></div>
 				</div>
 			</div>
 		</div>
@@ -114,15 +117,17 @@
 		this.selectedGroupKey = null;
 		// 우측 "판정 품목" 표에서 선택된 라인(SALES_NO+SALES_SEQ) 단위 key - 판정결과 조회/개별 원산지 판정 대상
 		this.selectedLineKey = null;
+		// 현재 선택된 판정 품목의 판정 상세내용(기준별) 전체 목록 - fta_code로 필터링해서 사용
+		this.currentDetailList = [];
 		// 팝업을 연 화면(내수/수출) - 값이 없으면(구버전 호출부 등) 내수로 취급.
 		// 내수는 "개별/일괄 원산지 판정" 버튼이 둘 다 있고 executeDomesticOriginDetermination을,
 		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
 		this.mode = 'domestic';
 
-		// 판정 품목 -> 판정결과 그리드 2개. 판정 상세내용은 판정결과의 detailTemplate(행 확장)으로
-		// 그 행 바로 아래에 표시되므로 별도 그리드 핸들을 두지 않는다(createAUIGrid 참고)
+		// 판정 품목 -> 판정결과 -> 판정 상세내용으로 이어지는 마스터-디테일 그리드 3개
 		this.grid_Detail = null;
 		this.grid_Result = null;
+		this.grid_ResultDetail = null;
 
 		this.buildKey = function(salesNo, salesSeq) {
 			return salesNo + "_" + salesSeq;
@@ -215,8 +220,9 @@
 			}
 		};
 
-		// 판정 품목/판정결과 그리드 생성 및 행 클릭 연결(마스터-디테일 구조).
-		// 판정 품목 행 클릭 -> selectDetailLine(판정결과 조회).
+		// 판정 품목/판정결과/판정 상세내용 3개 그리드 생성 및 행 클릭 연결(마스터-디테일 구조).
+		// 판정 품목 행 클릭 -> selectDetailLine(판정결과 조회), 판정결과 행 클릭 -> selectResultRow
+		// (그 협정의 판정 상세내용을 이미 받아둔 currentDetailList에서 필터링해 표시)
 		//
 		// 팝업을 열 때마다(모달 DOM이 매번 새로 생성/제거됨) 같은 컨테이너 id로 그리드를 다시 만든다.
 		// 원본 AUIGrid.create를 직접 쓰면 예전 인스턴스가 남아있는 채로 재생성돼 두 번째로 열 때부터
@@ -257,41 +263,25 @@
 				{dataField: "bom_trace", headerText: "BOM 추적", width: 130},
 				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 130}
 			];
-			var gridPropsResult = {
-				usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true,
-				// 판정결과 행을 펼치면 그 협정(fta_code)의 판정 상세내용(기준별)을 바로 아래에 그리드로
-				// 보여준다. item.detailList는 renderResultList에서 미리 채워둔 값(별도 API 호출 없음).
-				//
-				// [검증 필요] useDetailTemplate/detailTemplateRowHeight/detailTemplateFunction 이름은
-				// 이 프로젝트에 번들된 AUIGrid 버전(v3.0.16.0)의 공식 문서로 직접 확인하지 못했다
-				// (문서 사이트가 이 작업 환경에서 접근 차단됨). 실제 속성명이 다르면 이 옵션들은 그냥
-				// 무시되어 확장 화살표가 안 보일 뿐 에러는 나지 않는다 - 화면에서 확인 후 문서와 다르면
-				// 알려줄 것.
-				useDetailTemplate: true,
-				detailTemplateRowHeight: 220,
-				detailTemplateFunction: function(rowIndex, columnIndex, item, parentDivID) {
-					var subGridDivId = "originDetermination_popup_resultDetail_" + rowIndex;
-					var html = '<div id="' + subGridDivId + '" style="width:98%;height:200px;margin:5px auto;"></div>';
-
-					setTimeout(function() {
-						var columnLayoutResultDetail = [
-							{dataField: "rule_code", headerText: "결정기준", width: 120},
-							{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 150, dataType: "numeric", style: ""},
-							{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
-							{dataField: "sales_amount", headerText: "판매금액", width: 130, dataType: "numeric", style: ""},
-							{dataField: "unknown_material_cost", headerText: "미상 재료비(원)", width: 150, dataType: "numeric", style: ""},
-							{dataField: "value_added_rate", headerText: "부가가치 비율", width: 130, dataType: "numeric", style: ""},
-							{dataField: "rule_description", headerText: "결정기준 해설", width: 250}
-						];
-						var subGrid = KpackageOBJ.auiGrid.create(subGridDivId, columnLayoutResultDetail,
-								{ showRowCheckColumn: false, enableFilter: false }, "");
-						AUIGrid.setGridData(subGrid, item.detailList || []);
-					}, 50);
-
-					return html;
-				}
-			};
+			var gridPropsResult = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
 			this.grid_Result = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult, "");
+
+			AUIGrid.bind(this.grid_Result, "cellClick", function(event) {
+				self.selectResultRow(event.item.fta_code);
+			});
+
+			// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은 API가 아직 제공하지 않아 빈 칸으로 남는다
+			var columnLayoutResultDetail = [
+				{dataField: "rule_code", headerText: "결정기준", width: 120},
+				{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 150, dataType: "numeric", style: ""},
+				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
+				{dataField: "sales_amount", headerText: "판매금액", width: 130, dataType: "numeric", style: ""},
+				{dataField: "unknown_material_cost", headerText: "미상 재료비(원)", width: 150, dataType: "numeric", style: ""},
+				{dataField: "value_added_rate", headerText: "부가가치 비율", width: 130, dataType: "numeric", style: ""},
+				{dataField: "rule_description", headerText: "결정기준 해설", width: 250}
+			];
+			var gridPropsResultDetail = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
+			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
 		};
 
 		// 시작점
@@ -346,6 +336,7 @@
 		this.resizeGridsToFitModal = function() {
 			AUIGrid.resize(this.grid_Detail);
 			AUIGrid.resize(this.grid_Result);
+			AUIGrid.resize(this.grid_ResultDetail);
 		};
 
 		// 수출은 "일괄 원산지 판정"만 제공하고, 특정 매출번호 1건만 다시 판정하는 "개별 원산지 판정"은
@@ -526,7 +517,9 @@
 		};
 
 		this.hideResultSections = function() {
+			this.currentDetailList = [];
 			AUIGrid.setGridData(this.grid_Result, []);
+			AUIGrid.setGridData(this.grid_ResultDetail, []);
 		};
 
 		// 좌측에서 선택한 그룹(품번/품명)에 속한 라인 전체를 판정 품목 그리드에 나열.
@@ -551,10 +544,9 @@
 			AUIGrid.setGridData(this.grid_Detail, data);
 		};
 
-		// 판정완료 건의 판정결과(협정별)와 판정 상세내용(기준별)을 한 번에 조회한다. 판정 상세내용은
-		// 협정(FTA_CODE)마다 별도 호출하지 않고, 여기서 받은 detailList 를 fta_code 로 묶어 각 판정결과
-		// 행에 detailList 로 심어둔다 - 행을 펼치면 createAUIGrid의 detailTemplateFunction 이 그 값을
-		// 그대로 그리드에 뿌린다
+		// 판정완료 건의 판정결과(협정별)와 판정 상세내용(기준별)을 한 번에 조회.
+		// 판정 상세내용은 협정(FTA_CODE)마다 별도 호출하지 않고, 여기서 받은 detailList 를
+		// fta_code 로 매핑해 화면에서 바로 보여준다(selectResultRow 참고)
 		this.retrieveResultList = function(row) {
 			var self = this;
 			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
@@ -564,7 +556,8 @@
 				request,
 				function(response) {
 					var value = (response && response.value) ? response.value : {};
-					self.renderResultList(value.resultList || [], value.detailList || []);
+					self.currentDetailList = value.detailList || [];
+					self.renderResultList(value.resultList || []);
 				},
 				function() {
 					KpackageOBJ.object.alert('판정결과 조회 중 오류가 발생했습니다.');
@@ -572,16 +565,25 @@
 			);
 		};
 
-		// 판정결과 그리드 렌더링. 각 행에 그 fta_code에 해당하는 판정 상세내용을 detailList 로 심어둔다
-		this.renderResultList = function(resultList, detailList) {
-			var data = (resultList || []).map(function(r) {
-				var filtered = detailList.filter(function(d) {
-					return d.fta_code === r.fta_code;
-				});
-				return Object.assign({}, r, { detailList: filtered });
-			});
+		// 판정결과 그리드 렌더링. 행 클릭은 createAUIGrid에서 selectResultRow로 한 번만 바인딩해뒀다
+		this.renderResultList = function(list) {
+			AUIGrid.setGridData(this.grid_Result, list || []);
+			AUIGrid.setGridData(this.grid_ResultDetail, []);
+		};
 
-			AUIGrid.setGridData(this.grid_Result, data);
+		// 판정결과 그리드에서 협정(FTA_CODE) 행을 클릭하면, 별도 API 호출 없이
+		// retrieveResultList에서 이미 받아둔 currentDetailList를 그 fta_code로 필터링해
+		// 판정 상세내용 그리드에 보여준다
+		this.selectResultRow = function(ftaCode) {
+			var filtered = this.currentDetailList.filter(function(d) {
+				return d.fta_code === ftaCode;
+			});
+			this.renderResultDetailList(filtered);
+		};
+
+		// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은 API가 아직 제공하지 않아 빈 칸으로 남는다
+		this.renderResultDetailList = function(list) {
+			AUIGrid.setGridData(this.grid_ResultDetail, list || []);
 		};
 
 		// 내수는 (invoice_month, customer_code, division_code, product_code) 라인 목록으로
