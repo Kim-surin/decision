@@ -223,6 +223,11 @@
 		// 판정 품목/판정결과/판정 상세내용 3개 그리드 생성 및 행 클릭 연결(마스터-디테일 구조).
 		// 판정 품목 행 클릭 -> selectDetailLine(판정결과 조회), 판정결과 행 클릭 -> selectResultRow
 		// (그 협정의 판정 상세내용을 이미 받아둔 currentDetailList에서 필터링해 표시)
+		//
+		// 팝업을 열 때마다(모달 DOM이 매번 새로 생성/제거됨) 같은 컨테이너 id로 그리드를 다시 만든다.
+		// 원본 AUIGrid.create를 직접 쓰면 예전 인스턴스가 남아있는 채로 재생성돼 두 번째로 열 때부터
+		// 그리드가 비어 보이는 문제가 있어, 생성 전 AUIGrid.destroy로 정리해주는
+		// KpackageOBJ.auiGrid.create 래퍼를 쓴다.
 		this.createAUIGrid = function() {
 			var self = this;
 
@@ -238,7 +243,7 @@
 				{dataField: "amount", headerText: "금액(원)", width: 120, dataType: "numeric", style: ""}
 			];
 			var gridPropsDetail = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
-			this.grid_Detail = AUIGrid.create("#oAuiGrid_originDetermination_popup_detail", columnLayoutDetail, gridPropsDetail);
+			this.grid_Detail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_detail", columnLayoutDetail, gridPropsDetail, "");
 
 			AUIGrid.bind(this.grid_Detail, "cellClick", function(event) {
 				self.selectDetailLine(self.buildKey(event.item.sales_no, event.item.sales_seq));
@@ -259,7 +264,7 @@
 				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 130}
 			];
 			var gridPropsResult = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
-			this.grid_Result = AUIGrid.create("#oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult);
+			this.grid_Result = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult, "");
 
 			AUIGrid.bind(this.grid_Result, "cellClick", function(event) {
 				self.selectResultRow(event.item.fta_code);
@@ -276,7 +281,7 @@
 				{dataField: "rule_description", headerText: "결정기준 해설", width: 250}
 			];
 			var gridPropsResultDetail = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
-			this.grid_ResultDetail = AUIGrid.create("#oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail);
+			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
 		};
 
 		// 시작점
