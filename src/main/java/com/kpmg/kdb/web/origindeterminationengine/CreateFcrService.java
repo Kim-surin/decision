@@ -277,9 +277,10 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	/**
 	 * 수출: SALES × FTA_APPLY_NATION × FTA_MASTER(FTA_STATUS='4') 매칭 결과로 FCR_MST 생성.
 	 *
-	 * <p><b>원본 결함 의심(그대로 이관):</b> 수출 HS코드 조회 호출이 인자를 밀려서 넘겨(원본 위치기반
-	 * 바인딩 특성) 실제 FTA_CODE/매출일자가 아니라 다른 값으로 조회될 가능성이 있다. 운영 결과와
-	 * 동일하게 유지하기 위해 그대로 이관했다 — 업무팀 확인 후 필요 시 별도 수정.
+	 * <p><b>[버그 수정]</b> 수출 HS코드 조회 호출이 인자가 밀려 넘어가(원본 위치기반 바인딩 결함),
+	 * FTA_CODE 자리에 매출일자가, 기준일자 자리에 null이 들어가고 있었다(HISTORY_ITEM_HS_CODE에 해당
+	 * 데이터가 없어 조회가 항상 비어서 발견되지 않았음). FM.FTA_CODE(sales.getFtaCode())와
+	 * 매출일자(sales.getInvoiceDate())를 각각 올바른 자리에 넘기도록 수정했다.
 	 */
 	private void createExportFcrMst(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
 			String bomType, String invoiceDate, List<String> productCodes, Map<String, String> hsCodeCache,
@@ -292,7 +293,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 		for (ExportSalesLine sales : salesLines) {
 			hsCodeLookups.add(new HsCodeCriteria(sales.getCompanyCode(), sales.getProdDivisionCode(),
 					sales.getDeliveryCustomerCode(), sales.getProductCode(), sales.getArrivalNation(),
-					sales.getInvoiceDate(), null));
+					sales.getFtaCode(), sales.getInvoiceDate()));
 		}
 		hsCodeCache.putAll(hsCodeService.prefetchHsCode(hsCodeLookups));
 
@@ -308,7 +309,7 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 
 			String hsCode = resolveHsCodeCached(hsCodeCache, sales.getCompanyCode(), sales.getProdDivisionCode(),
 					sales.getDeliveryCustomerCode(), sales.getProductCode(), sales.getArrivalNation(),
-					sales.getInvoiceDate(), null);
+					sales.getFtaCode(), sales.getInvoiceDate());
 			row.setHsCode(substr(hsCode, 6));
 			row.setStandard(sales.getStandard());
 			row.setAmount(sales.getAmount());

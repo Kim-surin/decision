@@ -6,6 +6,10 @@
 		Java IncotermsCode 에서 수행). "STD_YYYY 이하 최댓값" 상관 서브쿼리는 바깥 WHERE 절로 이미 좁혀져
 		있어 ORDER BY DESC + FETCH FIRST 1 ROW ONLY 로 대체했다.
 		  (연차가 쌓일수록 STD_YYYY 이력이 늘어나는 테이블이라 LIMIT 없이는 매번 더 많은 행을 읽게 된다).
+
+		[버그 수정] FTA_INCOTERMS_INFO는 COMPANY_CODE가 키의 일부인데(INSERT/UPDATE/DELETE 전부
+		COMPANY_CODE로 필터링) WHERE절에 COMPANY_CODE 조건이 빠져 있었다. 회사가 여러 개면 다른 회사의
+		요율이 섞여 조회될 수 있어 COMPANY_CODE = #{companyCode} 를 추가했다.
 	-->
 	<select id="selectIncotermsInfo" parameterType="com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsChangeRateCriteria"
 		resultType="com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsRateRow">
@@ -22,7 +26,8 @@
 		      ,FII.DPU_RATE  AS dpuRate
 		      ,FII.DDP_RATE  AS ddpRate
 		FROM   FTA_INCOTERMS_INFO FII
-		WHERE  FII.DIVISION_CODE = #{divisionCode}
+		WHERE  FII.COMPANY_CODE = #{companyCode}
+		AND    FII.DIVISION_CODE = #{divisionCode}
 		AND    FII.INCOTERMS_TYPE = #{exportFlag}
 		AND    FII.NATION_CODE = #{nationCode}
 		AND    FII.STD_YYYY &lt;= #{stdYyyy}

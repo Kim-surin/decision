@@ -104,7 +104,7 @@
 									        <button type="button" class="btn btn-sm btn-primary waves-effect waves-themed" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.executeMonthlyOriginDetermination();">
 									            월 판정
 									        </button>
-									        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.sidepanel.open('aaaa','/DOMESTIC_ORIGIN_DETERMINATION_RESULT_pop01', '1200px');">
+									        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.executeOriginDetermination();">
 									            원산지 판정
 									        </button>
 									    </div>
@@ -123,6 +123,8 @@
 
 					var DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW = new function () {
 						this.grid_DOMESTIC_ORIGIN_DETERMINATION_RESULT = null;
+						// 원산지판정 팝업으로 넘길 수 있는 최대 체크 건수
+						this.MAX_CHECK_COUNT = 50;
 
 						this.Initialize_viewObject = function () {
 							DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.createAUIGrid();
@@ -152,7 +154,8 @@
 									}}
 							];
 
-							const gridProps = {							
+							const gridProps = {
+								showRowCheckColumn: true,     	// 최좌측에 행 선택 체크박스 컬럼 생성(원산지 판정 버튼용)
 								rowNumColumnWidth: 50,			// 행번호 너비
 								usePaging: true,
 								pageRowCount: 20,
@@ -164,8 +167,12 @@
 							//DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION_RESULT = KpackageOBJ.auiGrid.create("oAuiGrid_DOMESTIC_ORIGIN_DETERMINATION_RESULT", columnLayout, gridProps, "");
 							const DOMESTIC_ORIGIN_DETERMINATION_GRID = DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION_RESULT = AUIGrid.create("#oAuiGrid_DOMESTIC_ORIGIN_DETERMINATION_RESULT", columnLayout, gridProps);			
 						
-							// 셀클릭 이벤트 바인딩
+							// 셀클릭 이벤트 바인딩. 체크박스 컬럼(columnIndex < 0) 클릭은 선택만 토글하고,
+							// 그 외 데이터 셀 클릭은 기존처럼 바로 해당 행의 상세 팝업을 연다.
 							AUIGrid.bind(DOMESTIC_ORIGIN_DETERMINATION_GRID, "cellClick", function (event) {
+								if (event.columnIndex < 0) {
+									return;
+								}
 								DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.retrive_DetailData(event.item);
 							});
 						}
@@ -230,6 +237,44 @@
 						var request = {
 							datas: JSON.stringify([data]),
 							mode: data.export_flag === 'E' ? 'export' : 'domestic'
+						}
+
+						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', request);
+					}
+
+					// 상단 "원산지 판정" 버튼: 그리드에서 체크한 행들을 모아 상세 팝업을 연다.
+					// 이 화면은 내수(D)/수출(E)이 함께 조회되는데, 팝업은 mode 하나로 동작하므로
+					// 체크한 행들의 판매구분이 섞여 있으면 진행하지 않는다.
+					this.executeOriginDetermination = function () {
+						var checkItems = AUIGrid.getCheckedRowItems(DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION_RESULT);
+
+						if (checkItems.length === 0) {
+							KpackageOBJ.object.alert("선택된 항목이 없습니다.");
+							return;
+						}
+
+						if (checkItems.length > DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.MAX_CHECK_COUNT) {
+							KpackageOBJ.object.alert("한 번에 최대 " + DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.MAX_CHECK_COUNT + "건까지 선택할 수 있습니다.");
+							return;
+						}
+
+						var datas = checkItems.map(function (row) {
+							return row.item;
+						});
+
+						var exportFlags = datas.reduce(function (set, row) {
+							set[row.export_flag] = true;
+							return set;
+						}, {});
+
+						if (Object.keys(exportFlags).length > 1) {
+							KpackageOBJ.object.alert("내수/수출 건을 함께 선택할 수 없습니다. 판매구분을 통일해서 선택하세요.");
+							return;
+						}
+
+						var request = {
+							datas: JSON.stringify(datas),
+							mode: datas[0].export_flag === 'E' ? 'export' : 'domestic'
 						}
 
 						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', request);

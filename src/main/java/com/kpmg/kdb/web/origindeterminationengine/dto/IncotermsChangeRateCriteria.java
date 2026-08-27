@@ -3,9 +3,10 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 /**
  * 레거시 GET_INCOTERMS_CHANGE_RATE 파라미터 대체 객체.
  *
- * 참고: 원본 함수는 P_COMPNAY_CODE(회사코드) 파라미터를 선언만 하고 실제 조회 조건(WHERE 절)에는
- * 전혀 사용하지 않는다. 이관 시 동작을 바꾸지 않기 위해 회사코드 필드는 유지하되 SQL 바인딩에는
- * 사용하지 않는다(호출부 호환성 유지 목적). 실제로 회사별 구분이 필요한지는 업무팀 확인이 필요하다.
+ * [버그 수정] 원본 함수는 P_COMPNAY_CODE(회사코드) 파라미터를 선언만 하고 실제 조회 조건(WHERE 절)에는
+ * 전혀 사용하지 않았다(원본 결함). FTA_INCOTERMS_INFO는 COMPANY_CODE가 키의 일부라 회사가 여러 개면
+ * 다른 회사의 요율이 섞여 조회될 수 있어, 이관하면서 companyCode를 SQL 바인딩(WHERE COMPANY_CODE)에
+ * 실제로 사용하도록 고쳤다.
  */
 public class IncotermsChangeRateCriteria {
 
