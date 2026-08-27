@@ -84,4 +84,12 @@
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
+
+    <!-- origindeterminationengine 은 이름만 비슷할 뿐 origindetermination 의 하위 패키지가 아니라
+         위 로거를 상속받지 못한다(로그 계층은 '.' 경계로 구분됨). 월판정 등 이 패키지의 로직도
+         파일로 남기려면 별도로 붙여야 한다. -->
+    <logger name="com.kpmg.kdb.web.origindeterminationengine" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
 </configuration>

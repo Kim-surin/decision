@@ -101,9 +101,6 @@
 						    	<div class="col-12">
 									<div class="frame-wrap">
 									    <div class="demo" style="text-align: right;">
-									        <button type="button" class="btn btn-sm btn-primary waves-effect waves-themed" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.executeMonthlyOriginDetermination();">
-									            월 판정
-									        </button>
 									        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATION_RESULTVIEW.executeOriginDetermination();">
 									            원산지 판정
 									        </button>
