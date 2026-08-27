@@ -293,8 +293,34 @@
 			this.mode = rawMode || 'domestic';
 			this.applyModeVisibility();
 			this.createAUIGrid();
+			this.bindModalShownResize();
 
 			this.retrieveDetailList();
+		};
+
+		// AUIGrid는 생성 시점에 부모 Div가 화면에 보이는 상태여야 실제 크기를 계산한다(보이지 않으면
+		// 기본 크기로 축소됨 - package.common-v2.3.js auiGrid.resize 주석 참고). 이 팝업은
+		// KpackageOBJ.sidepanel.open이 부트스트랩 모달을 아직 show() 하기 전에 콘텐츠를 주입하고
+		// 그 안에서 그리드를 생성하므로(createAUIGrid), 생성 시점엔 모달이 아직 안 보인 상태다.
+		// 모달이 실제로 보여진 뒤(shown.bs.modal) 그리드 크기를 다시 계산하도록 강제한다.
+		this.bindModalShownResize = function() {
+			var self = this;
+			var $modal = $('.origin-detail-split').closest('.modal');
+
+			if ($modal.hasClass('show')) {
+				self.resizeGridsToFitModal();
+				return;
+			}
+
+			$modal.one('shown.bs.modal', function() {
+				self.resizeGridsToFitModal();
+			});
+		};
+
+		this.resizeGridsToFitModal = function() {
+			AUIGrid.resize(this.grid_Detail);
+			AUIGrid.resize(this.grid_Result);
+			AUIGrid.resize(this.grid_ResultDetail);
 		};
 
 		// 수출은 "일괄 원산지 판정"만 제공하고, 특정 매출번호 1건만 다시 판정하는 "개별 원산지 판정"은
