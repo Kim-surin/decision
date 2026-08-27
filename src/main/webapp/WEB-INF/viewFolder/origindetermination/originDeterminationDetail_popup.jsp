@@ -58,48 +58,10 @@
 		padding: 16px 20px;
 		overflow-y: auto;
 	}
-	.origin-detail-main table {
-		width: 100%;
-		/* 셀 내용 길이에 따라 컬럼 너비가 항목마다 달라지지 않도록 고정.
-		   실제 너비는 각 표의 thead th에 지정한 width(%) 값을 따름 */
-		table-layout: fixed;
-	}
-	.origin-detail-main th,
-	.origin-detail-main td {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.origin-detail-empty {
 		color: #6c757d;
 		text-align: center;
 		padding: 40px 0;
-	}
-	.origin-result-row {
-		cursor: pointer;
-	}
-	.origin-detail-line-row {
-		cursor: pointer;
-	}
-	.origin-result-detail-row > td {
-		padding: 0;
-	}
-	.origin-result-detail-inline {
-		padding: 20px 24px;
-		background-color: #f8f9fa;
-		border-top: 2px solid #4a6cf7;
-	}
-	.origin-result-detail-inline table {
-		background-color: #fff;
-		table-layout: auto;
-	}
-	.origin-result-detail-inline table th,
-	.origin-result-detail-inline table td {
-		white-space: normal;
-		overflow: visible;
-		text-overflow: clip;
-		padding: 10px 12px;
-		vertical-align: middle;
 	}
 </style>
 </head>
@@ -124,45 +86,14 @@
 					<h6 class="mb-0">판정 품목</h6>
 					<button type="button" id="originDetermination_popup_individualBtn" class="btn btn-sm btn-primary" onclick="javascript:ORIGIN_DETERMINATION_DETAIL_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
 				</div>
-				<table class="table table-bordered table-sm">
-					<thead class="table-light">
-						<tr>
-							<th style="width:15%">품번</th>
-							<th style="width:25%">품명</th>
-							<th style="width:12%">HS CODE</th>
-							<th style="width:10%">수량</th>
-							<th style="width:8%">단위</th>
-							<th style="width:15%">단가(원)</th>
-							<th style="width:15%">금액(원)</th>
-						</tr>
-					</thead>
-					<tbody id="originDetermination_popup_detailBody">
-						<tr>
-							<td colspan="7" class="origin-detail-empty">좌측에서 조회할 항목을 선택하세요.</td>
-						</tr>
-					</tbody>
-				</table>
+				<div id="oAuiGrid_originDetermination_popup_detail" style="width:100%;height:220px;"></div>
 
-				<div id="originDetermination_popup_resultSection" style="display:none;">
+				<div id="originDetermination_popup_resultSection">
 					<h6 class="mt-4 mb-3">판정결과</h6>
-					<table class="table table-bordered table-sm">
-						<thead class="table-light">
-							<tr>
-								<th style="width:9%">HS CODE</th>
-								<th style="width:11%">협정명</th>
-								<th style="width:8%">단가</th>
-								<th style="width:8%">단가기준</th>
-								<th style="width:10%">결정기준</th>
-								<th style="width:8%">충족여부</th>
-								<th style="width:12%">판정 부가가치 비율</th>
-								<th style="width:12%">미소기준 적용 비율</th>
-								<th style="width:11%">BOM 추적</th>
-								<th style="width:11%">역내전환전략</th>
-							</tr>
-						</thead>
-						<tbody id="originDetermination_popup_resultBody">
-						</tbody>
-					</table>
+					<div id="oAuiGrid_originDetermination_popup_result" style="width:100%;height:200px;"></div>
+
+					<h6 class="mt-4 mb-3">판정 상세내용</h6>
+					<div id="oAuiGrid_originDetermination_popup_resultDetail" style="width:100%;height:180px;"></div>
 				</div>
 			</div>
 		</div>
@@ -192,6 +123,11 @@
 		// 내수는 "개별/일괄 원산지 판정" 버튼이 둘 다 있고 executeDomesticOriginDetermination을,
 		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
 		this.mode = 'domestic';
+
+		// 판정 품목 -> 판정결과 -> 판정 상세내용으로 이어지는 마스터-디테일 그리드 3개
+		this.grid_Detail = null;
+		this.grid_Result = null;
+		this.grid_ResultDetail = null;
 
 		this.buildKey = function(salesNo, salesSeq) {
 			return salesNo + "_" + salesSeq;
@@ -284,6 +220,65 @@
 			}
 		};
 
+		// 판정 품목/판정결과/판정 상세내용 3개 그리드 생성 및 행 클릭 연결(마스터-디테일 구조).
+		// 판정 품목 행 클릭 -> selectDetailLine(판정결과 조회), 판정결과 행 클릭 -> selectResultRow
+		// (그 협정의 판정 상세내용을 이미 받아둔 currentDetailList에서 필터링해 표시)
+		this.createAUIGrid = function() {
+			var self = this;
+
+			var columnLayoutDetail = [
+				{dataField: "sales_no", headerText: "SALES_NO", width: 0, visible: false},
+				{dataField: "sales_seq", headerText: "SALES_SEQ", width: 0, visible: false},
+				{dataField: "product_code", headerText: "품번", width: 150},
+				{dataField: "product_name", headerText: "품명", width: 220},
+				{dataField: "hs_code", headerText: "HS CODE", width: 120},
+				{dataField: "quantity", headerText: "수량", width: 100, dataType: "numeric", style: ""},
+				{dataField: "unit", headerText: "단위", width: 80},
+				{dataField: "unit_price", headerText: "단가(원)", width: 120, dataType: "numeric", style: ""},
+				{dataField: "amount", headerText: "금액(원)", width: 120, dataType: "numeric", style: ""}
+			];
+			var gridPropsDetail = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
+			this.grid_Detail = AUIGrid.create("#oAuiGrid_originDetermination_popup_detail", columnLayoutDetail, gridPropsDetail);
+
+			AUIGrid.bind(this.grid_Detail, "cellClick", function(event) {
+				self.selectDetailLine(self.buildKey(event.item.sales_no, event.item.sales_seq));
+			});
+
+			// 단가기준/BOM 추적/역내전환전략은 API가 아직 제공하지 않아 빈 칸으로 남는다
+			var columnLayoutResult = [
+				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
+				{dataField: "hs_code", headerText: "HS CODE", width: 110},
+				{dataField: "fta_name", headerText: "협정명", width: 140},
+				{dataField: "amount", headerText: "단가", width: 100, dataType: "numeric", style: ""},
+				{dataField: "price_basis", headerText: "단가기준", width: 100},
+				{dataField: "rule_contents", headerText: "결정기준", width: 130},
+				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
+				{dataField: "rvc_rate", headerText: "판정 부가가치 비율", width: 150, dataType: "numeric", style: ""},
+				{dataField: "de_minimis_rate", headerText: "미소기준 적용 비율", width: 150, dataType: "numeric", style: ""},
+				{dataField: "bom_trace", headerText: "BOM 추적", width: 130},
+				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 130}
+			];
+			var gridPropsResult = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
+			this.grid_Result = AUIGrid.create("#oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult);
+
+			AUIGrid.bind(this.grid_Result, "cellClick", function(event) {
+				self.selectResultRow(event.item.fta_code);
+			});
+
+			// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은 API가 아직 제공하지 않아 빈 칸으로 남는다
+			var columnLayoutResultDetail = [
+				{dataField: "rule_code", headerText: "결정기준", width: 120},
+				{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 150, dataType: "numeric", style: ""},
+				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
+				{dataField: "sales_amount", headerText: "판매금액", width: 130, dataType: "numeric", style: ""},
+				{dataField: "unknown_material_cost", headerText: "미상 재료비(원)", width: 150, dataType: "numeric", style: ""},
+				{dataField: "value_added_rate", headerText: "부가가치 비율", width: 130, dataType: "numeric", style: ""},
+				{dataField: "rule_description", headerText: "결정기준 해설", width: 250}
+			];
+			var gridPropsResultDetail = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
+			this.grid_ResultDetail = AUIGrid.create("#oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail);
+		};
+
 		// 시작점
 		this.Initialize_viewObject = function() {
 			var rawDatas = '${datas}';
@@ -297,6 +292,7 @@
 
 			this.mode = rawMode || 'domestic';
 			this.applyModeVisibility();
+			this.createAUIGrid();
 
 			this.retrieveDetailList();
 		};
@@ -458,9 +454,6 @@
 		this.selectDetailLine = function(lineKey) {
 			this.selectedLineKey = lineKey;
 
-			$('#originDetermination_popup_detailBody tr.origin-detail-line-row').removeClass('table-active');
-			$('#originDetermination_popup_detailBody tr.origin-detail-line-row[data-line-key="' + lineKey + '"]').addClass('table-active');
-
 			var line = this.findRowByKey(lineKey);
 			if (line && this.isDetermined(line.status)) {
 				this.retrieveResultList(line);
@@ -483,48 +476,35 @@
 
 		this.hideResultSections = function() {
 			this.currentDetailList = [];
-			$('#originDetermination_popup_resultSection').hide();
+			AUIGrid.setGridData(this.grid_Result, []);
+			AUIGrid.setGridData(this.grid_ResultDetail, []);
 		};
 
-		// 좌측에서 선택한 그룹(품번/품명)에 속한 라인 전체를 나열. 각 행을 클릭하면
-		// selectDetailLine으로 그 라인의 판정결과를 볼 수 있음
+		// 좌측에서 선택한 그룹(품번/품명)에 속한 라인 전체를 판정 품목 그리드에 나열.
+		// 행 클릭은 createAUIGrid에서 selectDetailLine으로 한 번만 바인딩해뒀다
 		this.renderDetailList = function(lines) {
 			var self = this;
-			var $body = $('#originDetermination_popup_detailBody');
-			$body.empty();
-
-			if (!lines || lines.length === 0) {
-				$body.append('<tr><td colspan="7" class="origin-detail-empty">상세 정보가 없습니다.</td></tr>');
-				return;
-			}
-
-			lines.forEach(function(line) {
-				var lineKey = self.buildKey(line.sales_no, line.sales_seq);
-				var detail = self.detailMap[lineKey] || {};
-
-				var $row = $(
-					'<tr class="origin-detail-line-row" data-line-key="' + lineKey + '">' +
-						'<td>' + (detail.product_code || '') + '</td>' +
-						'<td>' + (detail.product_name || '') + '</td>' +
-						'<td>' + (detail.hs_code || '') + '</td>' +
-						'<td class="text-end">' + (detail.quantity || '') + '</td>' +
-						'<td>' + (detail.unit || '') + '</td>' +
-						'<td class="text-end">' + (detail.unit_price || '') + '</td>' +
-						'<td class="text-end">' + (detail.amount || '') + '</td>' +
-					'</tr>'
-				);
-
-				$row.on('click', function() {
-					self.selectDetailLine(lineKey);
-				});
-
-				$body.append($row);
+			var data = (lines || []).map(function(line) {
+				var detail = self.detailMap[self.buildKey(line.sales_no, line.sales_seq)] || {};
+				return {
+					sales_no: line.sales_no,
+					sales_seq: line.sales_seq,
+					product_code: detail.product_code,
+					product_name: detail.product_name,
+					hs_code: detail.hs_code,
+					quantity: detail.quantity,
+					unit: detail.unit,
+					unit_price: detail.unit_price,
+					amount: detail.amount
+				};
 			});
+
+			AUIGrid.setGridData(this.grid_Detail, data);
 		};
 
 		// 판정완료 건의 판정결과(협정별)와 판정 상세내용(기준별)을 한 번에 조회.
 		// 판정 상세내용은 협정(FTA_CODE)마다 별도 호출하지 않고, 여기서 받은 detailList 를
-		// fta_code 로 매핑해 화면에서 바로 보여준다(toggleResultDetailRow 참고)
+		// fta_code 로 매핑해 화면에서 바로 보여준다(selectResultRow 참고)
 		this.retrieveResultList = function(row) {
 			var self = this;
 			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
@@ -535,7 +515,7 @@
 				function(response) {
 					var value = (response && response.value) ? response.value : {};
 					self.currentDetailList = value.detailList || [];
-					self.renderResultList(value.resultList || [], row);
+					self.renderResultList(value.resultList || []);
 				},
 				function() {
 					KpackageOBJ.object.alert('판정결과 조회 중 오류가 발생했습니다.');
@@ -543,116 +523,25 @@
 			);
 		};
 
-		// 판정결과 렌더링 (협정 행 클릭 시 그 행 바로 아래에 판정 상세내용을 펼침)
-		this.renderResultList = function(list, row) {
-			var self = this;
-			var $body = $('#originDetermination_popup_resultBody');
-			$body.empty();
-			$('#originDetermination_popup_resultSection').show();
-
-			if (list.length === 0) {
-				$body.append('<tr><td colspan="10" class="origin-detail-empty">판정결과가 없습니다.</td></tr>');
-				return;
-			}
-
-			list.forEach(function(r) {
-				// 단가기준/BOM 추적/역내전환전략은 현재 제공되는 값이 없어 빈 칸으로 출력
-				var $tr = $(
-					'<tr class="origin-result-row">' +
-						'<td>' + (r.hs_code || '') + '</td>' +
-						'<td>' + (r.fta_name || '') + '</td>' +
-						'<td class="text-end">' + (r.amount || '') + '</td>' +
-						'<td></td>' +
-						'<td>' + (r.rule_contents || '') + '</td>' +
-						'<td>' + (r.company_coo_yn || '') + '</td>' +
-						'<td class="text-end">' + (r.rvc_rate || '') + '</td>' +
-						'<td class="text-end">' + (r.de_minimis_rate || '') + '</td>' +
-						'<td></td>' +
-						'<td></td>' +
-					'</tr>'
-				);
-
-				$tr.on('click', function() {
-					self.toggleResultDetailRow($tr, row, r.fta_code);
-				});
-
-				$body.append($tr);
-			});
+		// 판정결과 그리드 렌더링. 행 클릭은 createAUIGrid에서 selectResultRow로 한 번만 바인딩해뒀다
+		this.renderResultList = function(list) {
+			AUIGrid.setGridData(this.grid_Result, list || []);
+			AUIGrid.setGridData(this.grid_ResultDetail, []);
 		};
 
-		// 판정결과 행 클릭 시 그 행 바로 아래에 판정 상세내용 행을 펼치거나(없으면 추가), 이미 펼쳐진
-		// 같은 행을 다시 클릭하면 접는다(토글). 다른 행을 클릭하면 기존에 펼쳐진 행은 접고 새로 펼친다.
-		this.toggleResultDetailRow = function($tr, row, ftaCode) {
-			var self = this;
-			var alreadyExpanded = $tr.hasClass('table-active');
-
-			$('#originDetermination_popup_resultBody tr.origin-result-row').removeClass('table-active');
-			$('#originDetermination_popup_resultBody tr.origin-result-detail-row').remove();
-
-			if (alreadyExpanded) {
-				return;
-			}
-
-			$tr.addClass('table-active');
-
-			var $detailRow = $(
-				'<tr class="origin-result-detail-row">' +
-					'<td colspan="10">' +
-						'<div class="origin-result-detail-inline">' +
-							'<h6 class="mb-2">판정 상세내용</h6>' +
-							'<table class="table table-bordered table-sm mb-0">' +
-								'<thead class="table-light">' +
-									'<tr>' +
-										'<th style="width:12%">결정기준</th>' +
-										'<th style="width:14%">미소기준 적용금액</th>' +
-										'<th style="width:10%">충족여부</th>' +
-										'<th style="width:12%">판매금액</th>' +
-										'<th style="width:14%">미상 재료비(원)</th>' +
-										'<th style="width:12%">부가가치 비율</th>' +
-										'<th style="width:26%">결정기준 해설</th>' +
-									'</tr>' +
-								'</thead>' +
-								'<tbody>' +
-									'<tr><td colspan="7" class="origin-detail-empty">조회 중...</td></tr>' +
-								'</tbody>' +
-							'</table>' +
-						'</div>' +
-					'</td>' +
-				'</tr>'
-			);
-			$tr.after($detailRow);
-
-			// 별도 API 호출 없이, retrieveResultList에서 이미 받아둔 currentDetailList를
-			// 선택한 행의 fta_code로 필터링해서 그대로 보여준다
+		// 판정결과 그리드에서 협정(FTA_CODE) 행을 클릭하면, 별도 API 호출 없이
+		// retrieveResultList에서 이미 받아둔 currentDetailList를 그 fta_code로 필터링해
+		// 판정 상세내용 그리드에 보여준다
+		this.selectResultRow = function(ftaCode) {
 			var filtered = this.currentDetailList.filter(function(d) {
 				return d.fta_code === ftaCode;
 			});
-			this.renderResultDetailList(filtered, $detailRow.find('tbody'));
+			this.renderResultDetailList(filtered);
 		};
 
-		this.renderResultDetailList = function(list, $body) {
-			$body.empty();
-
-			if (list.length === 0) {
-				$body.append('<tr><td colspan="7" class="origin-detail-empty">판정 상세내용이 없습니다.</td></tr>');
-				return;
-			}
-
-			// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은
-			// 현재 제공되는 값이 없어 빈 칸으로 출력
-			list.forEach(function(r) {
-				$body.append(
-					'<tr>' +
-						'<td>' + (r.rule_code || '') + '</td>' +
-						'<td></td>' +
-						'<td>' + (r.company_coo_yn || '') + '</td>' +
-						'<td></td>' +
-						'<td></td>' +
-						'<td></td>' +
-						'<td></td>' +
-					'</tr>'
-				);
-			});
+		// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은 API가 아직 제공하지 않아 빈 칸으로 남는다
+		this.renderResultDetailList = function(list) {
+			AUIGrid.setGridData(this.grid_ResultDetail, list || []);
 		};
 
 		// 내수는 (invoice_month, customer_code, division_code, product_code) 라인 목록으로
