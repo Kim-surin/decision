@@ -297,40 +297,40 @@
 
 			this.mode = rawMode || 'domestic';
 			this.applyModeVisibility();
+			this.disableModalFadeTransition();
 			this.createAUIGrid();
 			this.bindModalShownResize();
 
 			this.retrieveDetailList();
 		};
 
+		// 이 팝업이 열리는 modal-dialog-end 는 슬라이드인 트랜지션(.modal.fade .modal-dialog-end 의
+		// transform)이 걸려 있어 열릴 때마다 화면이 접혔다 펴지는 것처럼 보인다. 부트스트랩은 show()
+		// 호출 시점에 대상 엘리먼트의 fade 클래스 유무를 그때그때 확인하므로(Modal.prototype._isAnimated),
+		// KpackageOBJ.sidepanel.open이 modalObject.show()를 호출하기 전인 지금(스크립트가 콘텐츠 주입과
+		// 함께 동기 실행되는 시점) fade 클래스를 미리 떼어내면 트랜지션 없이 즉시 나타난다.
+		this.disableModalFadeTransition = function() {
+			$('.origin-detail-split').closest('.modal').removeClass('fade');
+		};
+
 		// AUIGrid는 생성 시점에 부모 Div가 화면에 보이는 상태여야 실제 크기를 계산한다(보이지 않으면
 		// 기본 크기로 축소됨 - package.common-v2.3.js auiGrid.resize 주석 참고). 이 팝업은
 		// KpackageOBJ.sidepanel.open이 부트스트랩 모달을 아직 show() 하기 전에 콘텐츠를 주입하고
 		// 그 안에서 그리드를 생성하므로(createAUIGrid), 생성 시점엔 모달이 아직 안 보인 상태다.
-		//
-		// shown.bs.modal은 부트스트랩의 fade 트랜지션(opacity/transform)이 끝난 뒤에야 발생해 그만큼
-		// 그리드가 늦게 제 크기로 맞춰지는 게 눈에 띈다. 하지만 실제 레이아웃 크기는 트랜지션 시작
-		// 전에 display:block 이 걸리는 시점에 이미 확정된다(옵시티만 바뀌는 애니메이션이라 크기에는
-		// 영향이 없음) - 그 시점을 알려주는 이벤트가 따로 없어, requestAnimationFrame으로 모달이
-		// 측정 가능해지는(offsetWidth>0, 즉 :visible) 첫 프레임을 잡아 그때 바로 리사이즈한다.
+		// disableModalFadeTransition으로 트랜지션을 없앴으므로 shown.bs.modal은 show() 호출과 거의
+		// 동시에(대기 없이) 발생한다 - 그 시점에 그리드 크기를 다시 계산한다.
 		this.bindModalShownResize = function() {
 			var self = this;
 			var $modal = $('.origin-detail-split').closest('.modal');
-			var attempts = 0;
-			var maxAttempts = 120; // 약 2초(rAF 기준)까지만 시도
 
-			var tryResize = function() {
-				if ($modal.is(':visible')) {
-					self.resizeGridsToFitModal();
-					return;
-				}
-				attempts++;
-				if (attempts < maxAttempts) {
-					requestAnimationFrame(tryResize);
-				}
-			};
+			if ($modal.hasClass('show')) {
+				self.resizeGridsToFitModal();
+				return;
+			}
 
-			requestAnimationFrame(tryResize);
+			$modal.one('shown.bs.modal', function() {
+				self.resizeGridsToFitModal();
+			});
 		};
 
 		this.resizeGridsToFitModal = function() {
