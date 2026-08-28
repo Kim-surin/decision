@@ -3,7 +3,6 @@ package com.kpmg.kdb.web.origindeterminationengine;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,24 +27,21 @@ public class MonthlyDecisionService extends GeneralService
 
 	@Override
 	public BulkDecisionResult run(VirtualSalesGenerationParams filter) {
-		try {
-			BulkDecisionResult domesticResult = domesticDecisionService.run(filter);
+		BulkDecisionResult domesticResult = domesticDecisionService.run(filter);
 
-			List<ExportDecisionTarget> exportTargets = exportDecisionTargetService.prepare(filter);
-			BulkDecisionResult exportResult = exportDecisionService.run(exportTargets);
+		List<ExportDecisionTarget> exportTargets = exportDecisionTargetService.prepare(filter);
+		BulkDecisionResult exportResult = exportDecisionService.run(exportTargets);
 
-			List<SalesTarget> allTargets = new ArrayList<>(domesticResult.getTargets());
-			allTargets.addAll(exportResult.getTargets());
-			List<SalesTarget> allFailedTargets = new ArrayList<>(domesticResult.getFailedTargets());
-			allFailedTargets.addAll(exportResult.getFailedTargets());
+		List<SalesTarget> allTargets = new ArrayList<>(domesticResult.getTargets());
+		allTargets.addAll(exportResult.getTargets());
+		List<SalesTarget> allFailedTargets = new ArrayList<>(domesticResult.getFailedTargets());
+		allFailedTargets.addAll(exportResult.getFailedTargets());
 
-			logger.info("월판정(내수+수출) 배치 완료. 내수 그룹수={}, 수출 대상건수={}, 총대상건수={}, 실패건수={}",
-					domesticResult.getGroupCount(), exportResult.getGroupCount(), allTargets.size(),
-					allFailedTargets.size());
+		logger.info("월판정(내수+수출) 배치 완료. 내수 그룹수={}, 수출 대상건수={}, 총대상건수={}, 실패건수={}",
+				domesticResult.getGroupCount(), exportResult.getGroupCount(), allTargets.size(),
+				allFailedTargets.size());
 
-			return new BulkDecisionResult(domesticResult.getGroupCount() + exportResult.getGroupCount(), allTargets,
-					allFailedTargets);
-		} finally {
-		}
+		return new BulkDecisionResult(domesticResult.getGroupCount() + exportResult.getGroupCount(), allTargets,
+				allFailedTargets);
 	}
 }
