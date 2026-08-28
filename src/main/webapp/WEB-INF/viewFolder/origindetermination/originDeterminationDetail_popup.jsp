@@ -206,7 +206,7 @@
 				{dataField: "unit_price", headerText: "단가(원)", width: 120, dataType: "numeric", style: ""},
 				{dataField: "amount", headerText: "금액(원)", width: 120, dataType: "numeric", style: ""}
 			];
-			var gridPropsDetail = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
+			var gridPropsDetail = { };
 			this.grid_Detail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_detail", columnLayoutDetail, gridPropsDetail, "");
 
 			AUIGrid.bind(this.grid_Detail, "cellClick", function(event) {
@@ -216,17 +216,17 @@
 			var columnLayoutResult = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
 				{dataField: "hs_code", headerText: "HS CODE", width: 110},
-				{dataField: "fta_name", headerText: "협정명", width: 140},
+				{dataField: "fta_name", headerText: "협정명", width: 140, filter: {showIcon: true}},
 				{dataField: "amount", headerText: "단가", width: 100, dataType: "numeric", style: ""},
-				{dataField: "inkoterms_type", headerText: "단가기준", width: 100},
+				{dataField: "inkoterms_type", headerText: "단가기준", width: 100, filter: {showIcon: true}},
 				{dataField: "rule_contents", headerText: "결정기준", width: 130},
-				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
+				{dataField: "company_coo_yn", headerText: "충족여부", width: 100, filter: {showIcon: true}},
 				{dataField: "rvc_rate", headerText: "판정 부가가치 비율", width: 150, dataType: "numeric", style: ""},
 				{dataField: "de_minimis_rate", headerText: "미소기준 적용 비율", width: 150, dataType: "numeric", style: ""},
 				{dataField: "bom_trace", headerText: "BOM 추적", width: 130},
 				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 130}
 			];
-			var gridPropsResult = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
+			var gridPropsResult = { enableFilter: true };
 			this.grid_Result = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult, "");
 
 			AUIGrid.bind(this.grid_Result, "cellClick", function(event) {
@@ -234,15 +234,15 @@
 			});
 
 			var columnLayoutResultDetail = [
-				{dataField: "rule_code", headerText: "결정기준", width: 120},
+				{dataField: "rule_code", headerText: "결정기준", width: 120, filter: {showIcon: true}},
 				{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 150, dataType: "numeric", style: ""},
-				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
+				{dataField: "company_coo_yn", headerText: "충족여부", width: 100, filter: {showIcon: true}},
 				{dataField: "amount", headerText: "단가", width: 130, dataType: "numeric", style: ""},
 				{dataField: "outarea_amount", headerText: "미상 재료비(원)", width: 150, dataType: "numeric", style: ""},
 				{dataField: "rvc_rate", headerText: "부가가치 비율", width: 130, dataType: "numeric", style: ""},
 				{dataField: "rule_description", headerText: "결정기준 해설", width: 250}
 			];
-			var gridPropsResultDetail = { usePaging: true, pageRowCount: 50, showPageRowSelect: true, enableFilter: true };
+			var gridPropsResultDetail = { enableFilter: true };
 			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
 		};
 

@@ -271,7 +271,7 @@
 								mode: 'export'
 							}
 
-							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', request);
+							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request);
 						}
 
 					}

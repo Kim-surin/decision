@@ -262,7 +262,7 @@
 							mode: data.export_flag === 'E' ? 'export' : 'domestic'
 						}
 
-						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', request);
+						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request);
 					}
 
 					// 상단 "원산지 판정" 버튼: 그리드에서 체크한 행들을 모아 상세 팝업을 연다.
