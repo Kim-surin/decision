@@ -8,7 +8,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.PendingDomesticGroup;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
 /**
- * 내수판정 대상 (companyCode,divisionCode,customerCode) 그룹 발견. {@link DomesticDecisionGroupingService}
+ * 내수판정 대상 (companyCode,divisionCode,customerCode) 그룹 발견. {@link DomesticDecisionTargetService}
  * 가 사용한다.
  */
 public interface DomesticDecisionGroupingDao {

@@ -22,7 +22,7 @@ public class MonthlyDecisionService extends GeneralService
 	@Autowired
 	private DomesticDecisionService domesticDecisionService;
 	@Autowired
-	private ExportDecisionGroupingService exportGroupingService;
+	private ExportDecisionTargetService exportDecisionTargetService;
 	@Autowired
 	private ExportDecisionService exportDecisionService;
 
@@ -31,7 +31,7 @@ public class MonthlyDecisionService extends GeneralService
 		try {
 			BulkDecisionResult domesticResult = domesticDecisionService.run(filter);
 
-			List<ExportDecisionTarget> exportTargets = exportGroupingService.prepare(filter);
+			List<ExportDecisionTarget> exportTargets = exportDecisionTargetService.prepare(filter);
 			BulkDecisionResult exportResult = exportDecisionService.run(exportTargets);
 
 			List<SalesTarget> allTargets = new ArrayList<>(domesticResult.getTargets());

@@ -18,7 +18,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  * productCodes 는 선택값이다 — 지정하면 그룹 조회 범위를 좁히고 그룹별 params 에도 그대로 이어붙인다.
  */
 @Service
-public class DomesticDecisionGroupingService extends GeneralService {
+public class DomesticDecisionTargetService extends GeneralService {
 
 	public List<VirtualSalesGenerationParams> prepare(VirtualSalesGenerationParams filter) {
 		DomesticDecisionGroupingDao dao = sqlSession.getMapper(DomesticDecisionGroupingDao.class);

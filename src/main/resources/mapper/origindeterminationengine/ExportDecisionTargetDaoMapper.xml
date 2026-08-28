@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ExportDecisionGroupingDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ExportDecisionTargetDao">
 
 	<!--
 		판정대상 커서의 EXPORT_FLAG='E' 분기만 떼어 미리 조회한다. 수출은 가상매출 생성이 필요 없어(이미
