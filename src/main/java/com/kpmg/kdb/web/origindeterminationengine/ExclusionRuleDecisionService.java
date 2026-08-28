@@ -43,52 +43,70 @@ public class ExclusionRuleDecisionService extends GeneralService {
 					frData.getHsCodeSubCategory(), frData.getRuleSeq());
 
 			String exclusionYn = "Y"; // 원본 V_EXCLUSION_YN 초기값, 루프 내에서 재설정되지 않으면 이전 값을 유지
-			String andHold = null; // 원본 V_AND_HOLD_EXCLUSION_YN (NULL == NVL(...,'NO')='NO')
-			String orHold = null; // 원본 V_OR_HOLD_EXCLUSION_YN
+			JoinConditionAccumulator accumulator = new JoinConditionAccumulator();
 
 			for (ExclusionRuleHeader header : headers) {
 				exclusionYn = evaluateType(ctx, frData, header, mode, cache, exclusionYn);
-
-				if ("16".equals(header.getExclusionType()) && !"N16".equals(ctx.getFrdRec().getExclusionCondition())) {
-					ctx.getFrdRec().setExclusionCondition("E16");
-				}
-
-				if (header.getJoinCondition() == JoinCondition.AND || header.getJoinCondition() == JoinCondition.IF) {
-					if (andHold == null) {
-						andHold = exclusionYn;
-					} else if ("Y".equals(andHold)) {
-						andHold = exclusionYn;
-					}
-				} else {
-					if (orHold == null) {
-						orHold = exclusionYn;
-					}
-					orHold = ("Y".equals(orHold) || "Y".equals(exclusionYn)) ? "Y" : "N";
-				}
-
-				if (!"16".equals(header.getExclusionType())) {
-					ctx.getFrdRec().setExclusionCondition("N16");
-				}
+				updateExclusionCondition(ctx, header);
+				accumulator.accept(header.getJoinCondition(), exclusionYn);
 			}
 
 			if (!"E16".equals(ctx.getFrdRec().getExclusionCondition())) {
 				ctx.getFrdRec().setExclusionCondition("AND");
 			}
 
-			String finalExclusionYn;
-			if (andHold == null) {
-				finalExclusionYn = "N".equals(orHold) ? "N" : "Y";
-			} else if ("N".equals(andHold)) {
-				finalExclusionYn = "N";
-			} else {
-				finalExclusionYn = (orHold == null || "Y".equals(orHold)) ? "Y" : "N";
-			}
-			ctx.getFrdRec().setExclusionYn(finalExclusionYn);
+			ctx.getFrdRec().setExclusionYn(accumulator.resolve());
 		} catch (Exception e) {
 			ctx.setErrorCode("EXCLUSION99");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			ctx.setReturnCode(-1);
 			logger.error("EXCLUTION_RULE_DECISION 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
+		}
+	}
+
+	/**
+	 * EXCLUSION_CONDITION 상태 전이만 담당(TYPE16 헤더를 만나면 "E16", 그 외 타입 헤더를 만나면 "N16") —
+	 * 헤더를 순회하는 동안 마지막으로 만난 헤더 종류에 따라 최종 상태가 결정된다. TYPE 판정값(Y/N) 자체와는
+	 * 무관한 별개의 상태라 루프 본문에서 분리했다.
+	 */
+	private void updateExclusionCondition(OriginDeterminationContext ctx, ExclusionRuleHeader header) {
+		boolean isType16 = "16".equals(header.getExclusionType());
+		if (isType16 && !"N16".equals(ctx.getFrdRec().getExclusionCondition())) {
+			ctx.getFrdRec().setExclusionCondition("E16");
+		}
+		if (!isType16) {
+			ctx.getFrdRec().setExclusionCondition("N16");
+		}
+	}
+
+	/**
+	 * 예외타입별 판정결과('Y'/'N')를 header.getJoinCondition()(AND/IF vs OR)에 따라 누적해 최종
+	 * EXCLUSION_YN을 계산한다. 원본 V_AND_HOLD_EXCLUSION_YN/V_OR_HOLD_EXCLUSION_YN 두 변수의 역할을
+	 * 캡슐화한다 — AND/IF 조건은 한 번이라도 'N'이 나오면 그 뒤로도 계속 'N'으로 고정되고(sticky-AND),
+	 * OR 조건은 하나라도 'Y'면 전체가 'Y'가 되는 일반적인 단락(短絡) 누적이다.
+	 */
+	private static final class JoinConditionAccumulator {
+		private String andHold; // null == NVL(...,'NO')='NO'
+		private String orHold;
+
+		void accept(JoinCondition joinCondition, String exclusionYn) {
+			if (joinCondition == JoinCondition.AND || joinCondition == JoinCondition.IF) {
+				if (andHold == null || "Y".equals(andHold)) {
+					andHold = exclusionYn;
+				}
+			} else {
+				orHold = ("Y".equals(orHold) || "Y".equals(exclusionYn)) ? "Y" : "N";
+			}
+		}
+
+		String resolve() {
+			if (andHold == null) {
+				return "N".equals(orHold) ? "N" : "Y";
+			}
+			if ("N".equals(andHold)) {
+				return "N";
+			}
+			return (orHold == null || "Y".equals(orHold)) ? "Y" : "N";
 		}
 	}
 
