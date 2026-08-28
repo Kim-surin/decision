@@ -67,8 +67,12 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 	}
 
-	/** 최소공정 제외 품목 해당 여부('Y'/'N'). FM_LIST 1건의 모든 룰에서 조회 키가 같아 ctx에 캐싱한다. */
-	public String getMinimalProcessItemYn(OriginDeterminationContext ctx, String companyCode, String divisionCode,
+	/**
+	 * 최소공정 제외 품목 해당 여부('Y'/'N')를 조회해 ctx에 캐싱한 뒤 반환한다. FM_LIST 1건의 모든 룰에서
+	 * 조회 키가 같아 ctx에 캐싱한다. "resolve"인 이유: 단순 getter처럼 보이지만 첫 호출 시 DB 조회 +
+	 * ctx 상태 변경(캐싱)이라는 부수효과가 있다 — 다른 resolve* 메서드들과 동일한 명명 규칙을 따른다.
+	 */
+	public String resolveMinimalProcessItemYn(OriginDeterminationContext ctx, String companyCode, String divisionCode,
 			String salesNo, int salesSeq) {
 		if (!ctx.isMinimalProcessItemYnLoaded()) {
 			long count = sqlSession.getMapper(OriginDeterminationSupportDao.class)
@@ -197,11 +201,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 		try {
 			OriginDeterminationSupportDao dao = sqlSession.getMapper(OriginDeterminationSupportDao.class);
-			for (int from = 0; from < allPendingResults.size(); from += BATCH_CHUNK_SIZE) {
-				List<OriginDeterminationResult> chunk = allPendingResults.subList(from,
-						Math.min(from + BATCH_CHUNK_SIZE, allPendingResults.size()));
-				dao.insertFcrResults(chunk);
-			}
+			BatchChunker.forEachChunk(allPendingResults, BATCH_CHUNK_SIZE, dao::insertFcrResults);
 		} catch (Exception e) {
 			logger.error("INSERT_FRD_PROCESS(배치) 실패. count={}", allPendingResults.size(), e);
 			throw e;
@@ -256,14 +256,12 @@ public class OriginDeterminationSupportService extends GeneralService {
 			for (OriginDeterminationTarget fm : deferredTargets) {
 				requests.add(new UpdateFrmLookupRequest(fm.getSalesSeq(), fm.getFtaCode(), fm.getDivisionCode()));
 			}
-			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
-				List<UpdateFrmLookupRequest> chunk = requests.subList(from,
-						Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+			BatchChunker.forEachChunk(requests, BATCH_CHUNK_SIZE, chunk -> {
 				List<UpdateFrmBatchResult> results = dao.selectOwnOrNonCooFcrResultBatch(companyCode, salesNo, chunk);
 				for (UpdateFrmBatchResult r : results) {
 					resultsByKey.put(updateFrmKey(r.getReqSalesSeq(), r.getReqFtaCode(), r.getReqDivisionCode()), r);
 				}
-			}
+			});
 		} catch (Exception e) {
 			logger.error("UPDATE_FRM_PROCEDURE(배치 재조회) 실패. count={}", deferredTargets.size(), e);
 		}

@@ -56,9 +56,7 @@ public class MaterialHsCodeService extends GeneralService {
 		try {
 			MaterialHsCodeDao dao = sqlSession.getMapper(MaterialHsCodeDao.class);
 			Map<String, String> cache = new HashMap<>();
-			for (int from = 0; from < distinctRequests.size(); from += BATCH_CHUNK_SIZE) {
-				List<HsCodeCriteria> chunk = distinctRequests.subList(from,
-						Math.min(from + BATCH_CHUNK_SIZE, distinctRequests.size()));
+			BatchChunker.forEachChunk(distinctRequests, BATCH_CHUNK_SIZE, chunk -> {
 				List<HsCodeBatchResult> results = dao.selectHsCodeCandidatesBatch(chunk);
 				for (HsCodeBatchResult r : results) {
 					String key = hsCodeKey(r.getReqCompanyCode(), r.getReqDivisionCode(), r.getReqCustomerCode(),
@@ -66,7 +64,7 @@ public class MaterialHsCodeService extends GeneralService {
 					String hsCode = r.toCandidateRow().resolvePriorityHsCode();
 					cache.put(key, hsCode == null ? "" : hsCode);
 				}
-			}
+			});
 			return cache;
 		} catch (Exception e) {
 			logger.error("HS코드 배치조회 실패. requestCount={}", distinctRequests.size(), e);

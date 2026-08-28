@@ -339,7 +339,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 				supportService.resolveRcepRvcNation(ctx, fmData.getAmount());
 				rec.setRcepCooNation("Y".equals(ctx.getRcepKrYn()) ? "KR" : ctx.getRcepCooNation());
 			} else {
-				String mpItemYn = supportService.getMinimalProcessItemYn(ctx, fmData.getCompanyCode(),
+				String mpItemYn = supportService.resolveMinimalProcessItemYn(ctx, fmData.getCompanyCode(),
 						fmData.getDivisionCode(), fmData.getSalesNo(), fmData.getSalesSeq());
 				if ("N".equals(mpItemYn)) {
 					rec.setRcepCooNation("KR");
@@ -416,9 +416,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 
 		try {
 			Map<String, List<MaterialOriginRow>> cache = new HashMap<>();
-			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
-				List<MaterialOriginRowsRequest> chunk = requests.subList(from,
-						Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+			BatchChunker.forEachChunk(requests, BATCH_CHUNK_SIZE, chunk -> {
 				List<MaterialOriginRowBatchResult> results = dao.selectMaterialOriginRowsBatch(companyCode, salesNo, chunk);
 				for (MaterialOriginRowBatchResult r : results) {
 					String key = materialOriginRowsKey(r.getReqFtaCode(), r.getReqDivisionCode(), r.getReqSalesSeq());
@@ -429,7 +427,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 							requested.getSalesSeq());
 					cache.putIfAbsent(key, List.of());
 				}
-			}
+			});
 			return cache;
 		} catch (Exception e) {
 			logger.error("FCR_INFO_TEMP(자재) 배치조회 실패. companyCode={}, salesNo={}, count={}", companyCode, salesNo,

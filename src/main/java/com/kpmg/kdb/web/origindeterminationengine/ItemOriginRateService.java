@@ -263,16 +263,14 @@ public class ItemOriginRateService extends GeneralService {
 		try {
 			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
 			Map<String, PurchaseLedgerSummary> summaryCache = new HashMap<>();
-			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
-				List<NonCertifiedOriginSummaryRequest> chunk = requests.subList(from,
-						Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+			BatchChunker.forEachChunk(requests, BATCH_CHUNK_SIZE, chunk -> {
 				List<NonCertifiedOriginSummaryResult> results = dao.selectNonCertifiedOriginSummaryBatch(companyCode,
 						chunk);
 				for (NonCertifiedOriginSummaryResult r : results) {
 					summaryCache.put(summaryKey(r.getItemCode(), r.getFtaCode(), r.getFromDate(), r.getToDate()),
 							r.toSummary());
 				}
-			}
+			});
 			return summaryCache;
 		} catch (Exception e) {
 			logger.error("비인증 원산지 구매 집계 배치조회 실패. requestCount={}", requests.size(), e);
@@ -302,8 +300,7 @@ public class ItemOriginRateService extends GeneralService {
 		try {
 			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
 			Map<String, String> cache = new HashMap<>();
-			for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
-				List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+			BatchChunker.forEachChunk(items, BATCH_CHUNK_SIZE, chunk -> {
 				List<LastInputYyyyMmResult> results = dao.selectLastInputYyyyMmBatch(companyCode, uptoYyyyMm, chunk);
 				for (LastInputYyyyMmResult r : results) {
 					cache.put(lastInputYyyyMmKey(companyCode, r.getDivisionCode(), r.getItemCode(), uptoYyyyMm),
@@ -314,7 +311,7 @@ public class ItemOriginRateService extends GeneralService {
 					cache.putIfAbsent(lastInputYyyyMmKey(companyCode, requested.getDivisionCode(), requested.getItemCode(),
 							uptoYyyyMm), null);
 				}
-			}
+			});
 			return cache;
 		} catch (Exception e) {
 			logger.error("최근 입고월 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
@@ -347,9 +344,7 @@ public class ItemOriginRateService extends GeneralService {
 		try {
 			ItemOriginRateDao dao = sqlSession.getMapper(ItemOriginRateDao.class);
 			Map<String, List<MaterialBalanceRow>> cache = new HashMap<>();
-			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
-				List<MaterialCandidatesRequest> chunk = requests.subList(from,
-						Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+			BatchChunker.forEachChunk(requests, BATCH_CHUNK_SIZE, chunk -> {
 				List<MaterialCandidatesBatchResult> results = dao.selectMaterialCandidatesBatch(companyCode, chunk);
 				for (MaterialCandidatesBatchResult r : results) {
 					String key = precheckKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(), r.getReqBaseDate());
@@ -361,7 +356,7 @@ public class ItemOriginRateService extends GeneralService {
 							requested.getBaseDate());
 					cache.putIfAbsent(key, List.of());
 				}
-			}
+			});
 			return cache;
 		} catch (Exception e) {
 			logger.error("BOM/대체자재 후보 배치조회 실패. companyCode={}, itemCount={}", companyCode, requests.size(), e);
@@ -429,16 +424,14 @@ public class ItemOriginRateService extends GeneralService {
 		Map<String, PurchaseLedgerSummary> poSummaryCache = new HashMap<>();
 		if (!requests.isEmpty()) {
 			try {
-				for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
-					List<PurchaseLedgerSummaryRequest> chunk = requests.subList(from,
-							Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+				BatchChunker.forEachChunk(requests, BATCH_CHUNK_SIZE, chunk -> {
 					List<PurchaseLedgerSummaryBatchResult> results = dao.selectPurchaseLedgerSummaryBatch(companyCode,
 							chunk);
 					for (PurchaseLedgerSummaryBatchResult r : results) {
 						poSummaryCache.put(poSummaryKey(companyCode, r.getItemCode(), r.getFromDate(), r.getToDate()),
 								r.toSummary());
 					}
-				}
+				});
 			} catch (Exception e) {
 				logger.error("구매원장 집계 배치조회 실패. requestCount={}", requests.size(), e);
 			}

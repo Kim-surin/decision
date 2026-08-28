@@ -151,15 +151,14 @@ public class ItemPriceService extends GeneralService {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			Map<String, MaterialBalanceTierRow> cache = new HashMap<>();
-			for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
-				List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+			BatchChunker.forEachChunk(items, BATCH_CHUNK_SIZE, chunk -> {
 				List<MaterialBalanceTierBatchResult> results = dao.selectDivisionBalanceForPriceBatch(companyCode,
 						window.fromYyyyMm, window.toYyyyMm, chunk);
 				for (MaterialBalanceTierBatchResult r : results) {
 					cache.put(divisionBalanceKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(),
 							window.fromYyyyMm, window.toYyyyMm), r.toRowOrNull());
 				}
-			}
+			});
 			return cache;
 		} catch (Exception e) {
 			logger.error("수불부 단가(1단계) 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
@@ -190,15 +189,14 @@ public class ItemPriceService extends GeneralService {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			Map<String, PoLedgerPriceRow> cache = new HashMap<>();
-			for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
-				List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+			BatchChunker.forEachChunk(items, BATCH_CHUNK_SIZE, chunk -> {
 				List<PoLedgerPriceBatchResult> results = dao.selectRecentPurchasePriceBatch(companyCode,
 						window.fromYyyyMmdd, window.toYyyyMmdd, chunk);
 				for (PoLedgerPriceBatchResult r : results) {
 					cache.put(purchasePriceKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(),
 							window.fromYyyyMmdd, window.toYyyyMmdd), r.toRowOrNull());
 				}
-			}
+			});
 			return cache;
 		} catch (Exception e) {
 			logger.error("최근 구매단가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);
@@ -228,15 +226,14 @@ public class ItemPriceService extends GeneralService {
 		try {
 			ItemPriceDao dao = sqlSession.getMapper(ItemPriceDao.class);
 			Map<String, StandardCostRow> cache = new HashMap<>();
-			for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
-				List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+			BatchChunker.forEachChunk(items, BATCH_CHUNK_SIZE, chunk -> {
 				List<StandardCostBatchResult> results = dao.selectStandardCostByDivisionBatch(companyCode, baseDate,
 						chunk);
 				for (StandardCostBatchResult r : results) {
 					cache.put(standardCostKey(companyCode, r.getReqDivisionCode(), r.getReqItemCode(), baseDate),
 							r.toRowOrNull());
 				}
-			}
+			});
 			return cache;
 		} catch (Exception e) {
 			logger.error("표준원가 배치조회 실패. companyCode={}, itemCount={}", companyCode, items.size(), e);

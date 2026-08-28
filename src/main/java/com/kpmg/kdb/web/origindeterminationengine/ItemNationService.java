@@ -140,13 +140,12 @@ public class ItemNationService extends GeneralService {
 			}
 
 			ItemNationDao nationDao = sqlSession.getMapper(ItemNationDao.class);
-			for (int from = 0; from < requests.size(); from += BATCH_CHUNK_SIZE) {
-				List<CooNationLookupRequest> chunk = requests.subList(from, Math.min(from + BATCH_CHUNK_SIZE, requests.size()));
+			BatchChunker.forEachChunk(requests, BATCH_CHUNK_SIZE, chunk -> {
 				List<CooNationBatchResult> results = nationDao.selectCooNationBatch(chunk);
 				for (CooNationBatchResult r : results) {
 					resolved.put(r.getReqKey(), r.getCooNation());
 				}
-			}
+			});
 			return resolved;
 		} catch (Exception e) {
 			logger.error("RCEP 원산지국(COO_NATION) 배치조회 실패. itemCount={}", criteriaList.size(), e);
@@ -289,8 +288,7 @@ public class ItemNationService extends GeneralService {
 			for (Map.Entry<String, List<DivisionItemKey>> entry : itemsByUptoYyyyMm.entrySet()) {
 				String uptoYyyyMm = entry.getKey();
 				List<DivisionItemKey> items = entry.getValue();
-				for (int from = 0; from < items.size(); from += BATCH_CHUNK_SIZE) {
-					List<DivisionItemKey> chunk = items.subList(from, Math.min(from + BATCH_CHUNK_SIZE, items.size()));
+				BatchChunker.forEachChunk(items, BATCH_CHUNK_SIZE, chunk -> {
 					List<LastInputYyyyMmResult> results = dao.selectLastInputYyyyMmBatch(companyCode, uptoYyyyMm, chunk);
 					for (LastInputYyyyMmResult r : results) {
 						cache.put(lastInputYyyyMmKey(companyCode, r.getDivisionCode(), r.getItemCode(), uptoYyyyMm),
@@ -301,7 +299,7 @@ public class ItemNationService extends GeneralService {
 						cache.putIfAbsent(lastInputYyyyMmKey(companyCode, requested.getDivisionCode(),
 								requested.getItemCode(), uptoYyyyMm), null);
 					}
-				}
+				});
 			}
 			return cache;
 		} catch (Exception e) {
