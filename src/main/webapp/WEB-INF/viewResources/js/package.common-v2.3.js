@@ -3424,7 +3424,18 @@ var KpackageOBJ = {
 			  modalObject.show();
 			});
 			
-		}
+		},
+		close : function(modalId) {
+	        var modalEl = $("#" + modalId);
+
+	        if (modalEl.length > 0) {
+	            var modalInstance = bootstrap.Modal.getInstance(modalEl[0]);
+
+	            if (modalInstance) {
+	                modalInstance.hide();
+	            }
+	        }
+	    }
 		
 	},
     dialog : {
