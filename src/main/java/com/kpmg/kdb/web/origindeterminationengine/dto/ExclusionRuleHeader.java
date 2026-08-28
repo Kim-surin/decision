@@ -6,8 +6,7 @@ import java.math.BigDecimal;
 public class ExclusionRuleHeader {
 
 	private String exclusionType;
-	/** 'AND' / 'OR' / 'IF' */
-	private String joinCondition;
+	private JoinCondition joinCondition;
 	private BigDecimal exclusionRate;
 
 	public String getExclusionType() {
@@ -18,11 +17,11 @@ public class ExclusionRuleHeader {
 		this.exclusionType = exclusionType;
 	}
 
-	public String getJoinCondition() {
+	public JoinCondition getJoinCondition() {
 		return joinCondition;
 	}
 
-	public void setJoinCondition(String joinCondition) {
+	public void setJoinCondition(JoinCondition joinCondition) {
 		this.joinCondition = joinCondition;
 	}
 

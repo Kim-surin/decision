@@ -74,7 +74,7 @@
 	<!--
 		CREATE_FCR "3-6. FCR RESULT UPDATE(상품 원산지 판정)" 이관. 
 	-->
-	<insert id="insertFcrResultForProducts">
+	<insert id="insertFcrResultForCommodities">
 		INSERT INTO FCR_RESULT
 			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
 			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,

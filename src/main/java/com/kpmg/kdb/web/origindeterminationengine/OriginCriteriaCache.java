@@ -15,15 +15,15 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 /** determineOrigin() 1회 호출 범위에서만 유효한 FTA_RULE(적용 룰) 조회 캐시. */
 class OriginCriteriaCache {
 
-	private final OriginDeterminationCursorDao dao;
+	private final ProductOriginDeterminationDao dao;
 	private final Map<String, List<OriginCriteria>> byKey;
 
-	private OriginCriteriaCache(OriginDeterminationCursorDao dao, Map<String, List<OriginCriteria>> byKey) {
+	private OriginCriteriaCache(ProductOriginDeterminationDao dao, Map<String, List<OriginCriteria>> byKey) {
 		this.dao = dao;
 		this.byKey = byKey;
 	}
 
-	static OriginCriteriaCache prefetch(OriginDeterminationCursorDao dao, List<OriginDeterminationTarget> fmListRows,
+	static OriginCriteriaCache prefetch(ProductOriginDeterminationDao dao, List<OriginDeterminationTarget> fmListRows,
 			String newAptaPsrFlag) {
 		List<OriginCriteriaBatchRequest> requests = new ArrayList<>();
 		Set<String> seenKeys = new HashSet<>();

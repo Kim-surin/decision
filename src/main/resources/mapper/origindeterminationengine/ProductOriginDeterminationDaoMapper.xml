@@ -1,33 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationCursorDao">
-
-	<!-- ===================== COO_DECISION 초기화 ===================== -->
-
-	<select id="selectInvoiceDate" resultType="string">
-		SELECT SM.INVOICE_DATE
-		FROM   SALES_MST SM
-		WHERE  SM.SALES_NO = #{salesNo}
-		AND    SM.COMPANY_CODE = #{companyCode}
-	</select>
-
-	<!--
-		제품(P,H)/상품(M,R,B) 판정 분기 여부 확인용. 이 값이 비어있지 않은 asset type 만 해당 판정을
-		실행해, 대상이 없는 쪽의 불필요한 조회/쓰기 쿼리를 건너뛴다(OriginDeterminationService 참고).
-	-->
-	<select id="selectDistinctProductAssetsTypes" resultType="string">
-		SELECT DISTINCT PRODUCT_ASSETS_TYPE
-		FROM   FCR_MST
-		WHERE  SALES_NO = #{salesNo}
-		AND    DIVISION_CODE = #{divisionCode}
-		AND    COMPANY_CODE = #{companyCode}
-		<if test="productCodes != null and !productCodes.isEmpty()">
-		AND    PRODUCT_CODE IN
-		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
-		           #{productCode}
-		       </foreach>
-		</if>
-	</select>
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ProductOriginDeterminationDao">
 
 	<!-- ===================== CURSOR C_FCR_MST ===================== -->
 

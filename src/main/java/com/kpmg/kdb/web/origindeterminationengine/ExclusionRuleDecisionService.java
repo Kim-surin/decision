@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleDetail;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ExclusionRuleHeader;
+import com.kpmg.kdb.web.origindeterminationengine.dto.JoinCondition;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
@@ -52,7 +53,7 @@ public class ExclusionRuleDecisionService extends GeneralService {
 					ctx.getFrdRec().setExclusionCondition("E16");
 				}
 
-				if ("AND".equals(header.getJoinCondition()) || "IF".equals(header.getJoinCondition())) {
+				if (header.getJoinCondition() == JoinCondition.AND || header.getJoinCondition() == JoinCondition.IF) {
 					if (andHold == null) {
 						andHold = exclusionYn;
 					} else if ("Y".equals(andHold)) {

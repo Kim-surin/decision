@@ -59,14 +59,14 @@ public class OriginDeterminationExecutionService extends GeneralService implemen
 	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
 		try {
-			OriginDeterminationCursorDao dao = sqlSession.getMapper(OriginDeterminationCursorDao.class);
+			OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
 
-			List<String> assetTypes = dao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
+			List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
 					productCodes);
 			boolean hasCommodity = containsAny(assetTypes, "M", "R", "B");
 			boolean hasProduct = containsAny(assetTypes, "P", "H");
 
-			String invoiceDate = dao.selectInvoiceDate(companyCode, salesNo);
+			String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
 
 			if (hasCommodity) {
 				decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
@@ -94,13 +94,13 @@ public class OriginDeterminationExecutionService extends GeneralService implemen
 			List<String> productCodes, OriginDeterminationMode mode) {
 		CommodityOriginDeterminationDao dao = sqlSession.getMapper(CommodityOriginDeterminationDao.class);
 		dao.mergeFcrMstOriginDetermination(salesNo, divisionCode, companyCode, invoiceDate, productCodes);
-		dao.insertFcrResultForProducts(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
+		dao.insertFcrResultForCommodities(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
 	}
 	
 	/** 제품(P,H) 원산지 판정 */
 	private void decideProductOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
 			List<String> productCodes, OriginDeterminationMode mode) {
-		OriginDeterminationCursorDao dao = sqlSession.getMapper(OriginDeterminationCursorDao.class);
+		ProductOriginDeterminationDao dao = sqlSession.getMapper(ProductOriginDeterminationDao.class);
 
 		String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
 		List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo,
@@ -135,7 +135,7 @@ public class OriginDeterminationExecutionService extends GeneralService implemen
 	}
 
 	/** 제품(P,H) 1건의 FTA_CODE 후보 1건에 대해, 적용 가능한 룰을 모두 순회하며 판정한다. */
-	private void decideOneFtaLine(OriginDeterminationCursorDao dao, OriginDeterminationTarget fmData,
+	private void decideOneFtaLine(ProductOriginDeterminationDao dao, OriginDeterminationTarget fmData,
 			DeterminationRunContext runContext, PendingBatch pending) {
 		OriginDeterminationContext ctx = new OriginDeterminationContext();
 		ctx.setFmData(fmData);
@@ -407,7 +407,7 @@ public class OriginDeterminationExecutionService extends GeneralService implemen
 	}
 
 	/** FM_LIST 행별 자재 원산지 목록(FCR_INFO_TEMP 대체)을 배치로 미리 조회한다. */
-	private Map<String, List<MaterialOriginRow>> prefetchMaterialOriginRows(OriginDeterminationCursorDao dao,
+	private Map<String, List<MaterialOriginRow>> prefetchMaterialOriginRows(ProductOriginDeterminationDao dao,
 			String companyCode, String salesNo, List<OriginDeterminationTarget> fmListRows) {
 		if (fmListRows.isEmpty()) {
 			return Map.of();

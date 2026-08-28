@@ -176,35 +176,6 @@
 			})[0];
 		};
 
-		// KpackageOBJ.ajax.doSubmit는 통신 실패 시 항상 네이티브 alert()를 호출하는데,
-		// 이 팝업은 Bootstrap 모달(sidepanel.open) 위에서 열려 있어 네이티브 alert()가
-		// 모달 트랜지션을 끊어 백드롭이 안 사라지는 문제로 이어짐.
-		// 그래서 이 팝업 내부 통신은 자체 헬퍼로 처리하고, 에러는 KpackageOBJ.object.alert로만 표시
-		this.postJson = function(url, data, successHandler, errorHandler) {
-			var token = $("meta[name='_csrf']").attr("content");
-			var header = $("meta[name='_csrf_header']").attr("content");
-
-			$.ajax({
-				url: url,
-				type: "POST",
-				cache: false,
-				data: JSON.stringify(data),
-				contentType: "application/json; charset=utf-8",
-				dataType: "json",
-				beforeSend: function(xhr) {
-					if (token && header) {
-						xhr.setRequestHeader(header, token);
-					}
-				},
-				success: successHandler,
-				error: function() {
-					if (typeof errorHandler === "function") {
-						errorHandler();
-					}
-				}
-			});
-		};
-
 		// 판정상태(status)에 따른 배지 색상 클래스
 		this.getStatusBadgeClass = function(status) {
 			switch (String(status)) {
@@ -391,7 +362,7 @@
 				})
 			};
 
-			this.postJson(
+			KpackageOBJ.ajax.doSubmit(
 				'/origin/compliance/origindetermination/originDeterminationDetailList',
 				request,
 				function(response) {
@@ -410,9 +381,6 @@
 					if (keyToSelect) {
 						self.selectItem(keyToSelect);
 					}
-				},
-				function() {
-					KpackageOBJ.object.alert('판정 품목 상세 조회 중 오류가 발생했습니다.');
 				}
 			);
 		};
@@ -551,16 +519,13 @@
 			var self = this;
 			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
 
-			this.postJson(
+			KpackageOBJ.ajax.doSubmit(
 				'/origin/compliance/origindetermination/originDeterminationDetailResultList',
 				request,
 				function(response) {
 					var value = (response && response.value) ? response.value : {};
 					self.currentDetailList = value.detailList || [];
 					self.renderResultList(value.resultList || []);
-				},
-				function() {
-					KpackageOBJ.object.alert('판정결과 조회 중 오류가 발생했습니다.');
 				}
 			);
 		};
@@ -618,14 +583,11 @@
 				};
 			}
 
-			this.postJson(
+			KpackageOBJ.ajax.doSubmit(
 				url,
 				request,
 				function(response) {
 					self.handleExecuteResponse(response);
-				},
-				function() {
-					KpackageOBJ.object.alert('원산지 판정 실행 중 오류가 발생했습니다.');
 				}
 			);
 		};
