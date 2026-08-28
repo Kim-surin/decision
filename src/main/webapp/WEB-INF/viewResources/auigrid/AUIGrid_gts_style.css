@@ -2219,3 +2219,23 @@
 .grid-search-btn {
 	border: 1px solid #dddddd !important;
 }
+
+/*aui-center 컬럼 가운데 정렬*/
+td.aui-center div.aui-grid-renderer-base {
+	text-align: center !important;
+}
+
+/*aui-right 컬럼 오른쪽 정렬*/
+td.aui-right div.aui-grid-renderer-base {
+	text-align: right !important;
+}
+
+/*aui-left 컬럼 왼쪽 정렬*/
+td.aui-left div.aui-grid-renderer-base {
+	text-align: left !important;
+}
+
+/*aui-justify 컬럼 양쪽 정렬 */
+td.aui-justify div.aui-grid-renderer-base {
+	text-align: left !important;
+}
