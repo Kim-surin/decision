@@ -11,7 +11,9 @@ import org.springframework.context.annotation.Configuration;
 public class CacheConfig {
 	@Bean
 	public CacheManager cacheManager() {
-		CaffeineCacheManager cacheManager = new CaffeineCacheManager("division");
+		CaffeineCacheManager cacheManager = new CaffeineCacheManager("division", "companySetting",
+				"bufferOptionValue", "companyBuffer", "divisionBuffer", "ftaBuffer", "ftaApplyNations",
+				"companyDecisionFlags", "activeFtaMasters", "incotermsInfo");
 		return cacheManager;
 	}
 }

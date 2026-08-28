@@ -1,0 +1,79 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.SalesDecisionStatusDao">
+
+	<!-- ===================== 5. 원산지판정 (판정대상 1건 처리) ===================== -->
+
+	<update id="updateSalesMstDecisionComplete">
+		UPDATE SALES_MST MST
+		SET    STATUS = CASE
+		                    WHEN COALESCE(VIRTUAL_YN, 'N') = 'Y' THEN '4'
+		                    WHEN (SELECT COALESCE(SUM(CASE WHEN FR.STATUS = 'E' THEN 1 ELSE 0 END
+		                                           + CASE WHEN FM.RULE_CONTENTS IS NOT NULL THEN 0 ELSE 1 END), 1)
+		                          FROM   FCR_MST FM
+		                          LEFT OUTER JOIN FCR_RESULT FR
+		                          ON     FR.FTA_CODE = FM.FTA_CODE
+		                          AND    FR.SALES_NO = FM.SALES_NO
+		                          AND    FR.SALES_SEQ = FM.SALES_SEQ
+		                          AND    FR.DIVISION_CODE = FM.DIVISION_CODE
+		                          AND    FR.COMPANY_CODE = FM.COMPANY_CODE
+		                          WHERE  FM.SALES_NO = MST.SALES_NO
+		                          AND    FM.DIVISION_CODE = MST.DIVISION_CODE
+		                          AND    FM.COMPANY_CODE = MST.COMPANY_CODE
+		                          <if test="productCodes != null and !productCodes.isEmpty()">
+		                          AND    FM.PRODUCT_CODE IN
+		                                 <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                                     #{productCode}
+		                                 </foreach>
+		                          </if>
+		                          ) > 0 THEN '5'
+		                    ELSE '4'
+		                END
+		      ,COO_DATE = CURRENT_TIMESTAMP
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    SALES_NO = #{salesNo}
+	</update>
+
+	<update id="updateSalesDtlDecisionComplete">
+		UPDATE SALES_DTL DTL
+		SET    STATUS = CASE
+		                    WHEN (SELECT COALESCE(SUM(CASE WHEN FR.STATUS = 'E' THEN 1 ELSE 0 END
+		                                           + CASE WHEN FM.RULE_CONTENTS IS NOT NULL THEN 0 ELSE 1 END), 1)
+		                          FROM   FCR_MST FM
+		                          LEFT OUTER JOIN FCR_RESULT FR
+		                          ON     FR.FTA_CODE = FM.FTA_CODE
+		                          AND    FR.SALES_NO = FM.SALES_NO
+		                          AND    FR.SALES_SEQ = FM.SALES_SEQ
+		                          AND    FR.DIVISION_CODE = FM.DIVISION_CODE
+		                          AND    FR.COMPANY_CODE = FM.COMPANY_CODE
+		                          WHERE  FM.SALES_NO = DTL.SALES_NO
+		                          AND    FM.DIVISION_CODE = DTL.DIVISION_CODE
+		                          AND    FM.COMPANY_CODE = DTL.COMPANY_CODE
+		                          AND    FM.SALES_SEQ = DTL.SALES_SEQ) > 0 THEN '5'
+		                    ELSE '4'
+		                END
+		      ,UPDATE_DATE = CURRENT_TIMESTAMP
+		      ,UPDATE_BY   = 'MONTHLY_DECISION_PROC'
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    SALES_NO = #{salesNo}
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</update>
+
+	<update id="updateFcrMstDecisionComplete">
+		UPDATE FCR_MST
+		SET    COO_DATE = CURRENT_TIMESTAMP
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    SALES_NO = #{salesNo}
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</update>
+</mapper>

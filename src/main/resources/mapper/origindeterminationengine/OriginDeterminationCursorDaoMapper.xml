@@ -1,0 +1,284 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationCursorDao">
+
+	<!-- ===================== COO_DECISION 초기화 ===================== -->
+
+	<select id="selectInvoiceDate" resultType="string">
+		SELECT SM.INVOICE_DATE
+		FROM   SALES_MST SM
+		WHERE  SM.SALES_NO = #{salesNo}
+		AND    SM.COMPANY_CODE = #{companyCode}
+	</select>
+
+	<!--
+		제품(P,H)/상품(M,R,B) 판정 분기 여부 확인용. 이 값이 비어있지 않은 asset type 만 해당 판정을
+		실행해, 대상이 없는 쪽의 불필요한 조회/쓰기 쿼리를 건너뛴다(OriginDeterminationService 참고).
+	-->
+	<select id="selectDistinctProductAssetsTypes" resultType="string">
+		SELECT DISTINCT PRODUCT_ASSETS_TYPE
+		FROM   FCR_MST
+		WHERE  SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
+		AND    COMPANY_CODE = #{companyCode}
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</select>
+
+	<!-- ===================== CURSOR C_FCR_MST ===================== -->
+
+	<select id="selectOriginDeterminationTargets" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget">
+		SELECT FTAFM.FTA_CODE                                                    AS ftaCode
+		      ,FTAFM.SALES_NO                                                    AS salesNo
+		      ,FTAFM.SALES_SEQ                                                   AS salesSeq
+		      ,FTAFM.DIVISION_CODE                                               AS divisionCode
+		      ,FTAFM.COMPANY_CODE                                                AS companyCode
+		      ,FTAFM.PRODUCT_CODE                                                AS productCode
+		      ,FTAFM.BIZ_PROJECT_CODE                                            AS bizProjectCode
+		      ,FTAFM.INKOTERMS_TYPE                                              AS inkotermsType
+		      ,FTAFM.DE_MINIMIS_INKOTERMS_TYPE                                   AS deMinimisInkotermsType
+		      ,FTAFM.PRODUCT_UNIT                                                AS productUnit
+		      ,FTAFM.PRODUCT_ASSETS_TYPE                                         AS productAssetsType
+		      ,FTAFM.HS_CODE                                                     AS hsCode
+		      ,FTAFM.STANDARD                                                    AS standard
+		      ,FTAFM.WEIGHT                                                      AS weight
+		      ,FTAFM.AMOUNT                                                      AS amount
+		      ,FTAFM.NET_COST_AMOUNT                                             AS netCostAmount
+		      ,FTAFM.EXWORK_AMOUNT                                               AS exworkAmount
+		      ,FTAFM.FOB_AMOUNT                                                  AS fobAmount
+		      ,FTAFM.INAREA_AMOUNT                                               AS originatingAmount
+		      ,FTAFM.OUTAREA_AMOUNT                                              AS nonOriginatingAmount
+		      ,FTAFM.SP_COO_YN                                                   AS spCooYn
+		      ,FTAFM.WO_COO_YN                                                   AS woCooYn
+		      ,COALESCE(IHSC.HS_CODE_SUB_CATEGORY, '1')                          AS hsCodeSubCategory
+		      ,FTAFM.TARIFF_YN                                                   AS tariffYn
+		FROM   (SELECT FCRM.FTA_CODE            AS FTA_CODE
+		              ,FCRM.SALES_NO            AS SALES_NO
+		              ,FCRM.SALES_SEQ           AS SALES_SEQ
+		              ,FCRM.DIVISION_CODE       AS DIVISION_CODE
+		              ,FCRM.COMPANY_CODE        AS COMPANY_CODE
+		              ,FCRM.PRODUCT_CODE        AS PRODUCT_CODE
+		              ,FCRM.BIZ_PROJECT_CODE    AS BIZ_PROJECT_CODE
+		              ,FM.INKOTERMS_TYPE        AS INKOTERMS_TYPE
+		              ,FM.DE_MINIMIS_INKOTERMS_TYPE AS DE_MINIMIS_INKOTERMS_TYPE
+		              ,FCRM.PRODUCT_UNIT        AS PRODUCT_UNIT
+		              ,FCRM.PRODUCT_ASSETS_TYPE AS PRODUCT_ASSETS_TYPE
+		              ,FCRM.HS_CODE             AS HS_CODE
+		              ,FCRM.STANDARD            AS STANDARD
+		              ,FCRM.WEIGHT              AS WEIGHT
+		              ,FCRM.AMOUNT              AS AMOUNT
+		              ,FCRM.NET_COST_AMOUNT     AS NET_COST_AMOUNT
+		              ,FCRM.EXWORK_AMOUNT       AS EXWORK_AMOUNT
+		              ,FCRM.FOB_AMOUNT          AS FOB_AMOUNT
+		              ,FCRM.INAREA_AMOUNT       AS INAREA_AMOUNT
+		              ,FCRM.OUTAREA_AMOUNT      AS OUTAREA_AMOUNT
+		              ,FCRM.SP_COO_YN           AS SP_COO_YN
+		              ,FCRM.WO_COO_YN           AS WO_COO_YN
+		              ,CASE WHEN EXISTS
+		                   (SELECT 1
+		                    FROM   TARIFF_DIFFERENTIALS TD
+		                    WHERE  TD.FTA_CODE = FCRM.FTA_CODE
+		                    AND    TD.HS_CODE = FCRM.HS_CODE
+		                    AND    TD.NATION_CODE = CASE WHEN FCRM.EXPORT_FLAG = 'E' THEN FCRM.ARRIVAL_NATION ELSE TD.NATION_CODE END
+		                    AND    FCRM.INVOICE_DATE BETWEEN TD.APPLY_DATE AND TD.END_DATE)
+		                   THEN 'Y' ELSE 'N' END  AS TARIFF_YN
+		        FROM   (SELECT FM.FTA_CODE            AS FTA_CODE
+		                      ,FM.SALES_NO            AS SALES_NO
+		                      ,FM.SALES_SEQ           AS SALES_SEQ
+		                      ,FM.DIVISION_CODE       AS DIVISION_CODE
+		                      ,FM.COMPANY_CODE        AS COMPANY_CODE
+		                      ,FM.PRODUCT_CODE        AS PRODUCT_CODE
+		                      ,FM.BIZ_PROJECT_CODE    AS BIZ_PROJECT_CODE
+		                      ,FM.PRODUCT_UNIT        AS PRODUCT_UNIT
+		                      ,FM.PRODUCT_ASSETS_TYPE AS PRODUCT_ASSETS_TYPE
+		                      ,FM.HS_CODE             AS HS_CODE
+		                      ,FM.STANDARD            AS STANDARD
+		                      ,FM.WEIGHT              AS WEIGHT
+		                      ,FM.AMOUNT              AS AMOUNT
+		                      ,FM.NET_COST_AMOUNT     AS NET_COST_AMOUNT
+		                      ,FM.EXWORK_AMOUNT       AS EXWORK_AMOUNT
+		                      ,FM.FOB_AMOUNT          AS FOB_AMOUNT
+		                      ,FM.INAREA_AMOUNT       AS INAREA_AMOUNT
+		                      ,FM.OUTAREA_AMOUNT      AS OUTAREA_AMOUNT
+		                      ,FM.SP_COO_YN           AS SP_COO_YN
+		                      ,FM.WO_COO_YN           AS WO_COO_YN
+		                      ,SM.EXPORT_FLAG         AS EXPORT_FLAG
+		                      ,SM.INVOICE_DATE        AS INVOICE_DATE
+		                      ,SM.ARRIVAL_NATION      AS ARRIVAL_NATION
+		                FROM   FCR_MST FM
+		                INNER  JOIN SALES_MST SM
+		                ON     SM.SALES_NO = FM.SALES_NO
+		                AND    SM.DIVISION_CODE = FM.DIVISION_CODE
+		                AND    SM.COMPANY_CODE = FM.COMPANY_CODE
+		                WHERE  FM.SALES_NO = #{salesNo}
+		                AND    FM.COMPANY_CODE = #{companyCode}
+		                AND    FM.PRODUCT_ASSETS_TYPE IN ('P', 'H')
+		                <if test="productCodes != null and !productCodes.isEmpty()">
+		                AND    FM.PRODUCT_CODE IN
+		                       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                           #{productCode}
+		                       </foreach>
+		                </if>
+		                ) FCRM
+		        INNER  JOIN FTA_MASTER FM
+		        ON     FM.FTA_CODE = FCRM.FTA_CODE
+		        AND    FM.COMPANY_CODE = FCRM.COMPANY_CODE
+		        AND    FM.DELETE_YN &lt;&gt; 'Y'
+		       ) FTAFM
+		LEFT OUTER JOIN ITEM_HS_SUB_CATEGORY IHSC
+		ON     IHSC.ITEM_CODE = FTAFM.PRODUCT_CODE
+		AND    IHSC.DIVISION_CODE = FTAFM.DIVISION_CODE
+		AND    IHSC.COMPANY_CODE = FTAFM.COMPANY_CODE
+		AND    IHSC.FTA_CODE = FTAFM.FTA_CODE
+	</select>
+
+	<!-- ===================== FCR_INFO_TEMP 대체 (FCR_DTL 조회) ===================== -->
+
+	<select id="selectMaterialOriginRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow">
+		SELECT FI.FTA_CODE       AS ftaCode
+		      ,FI.DIVISION_CODE  AS divisionCode
+		      ,FI.COMPANY_CODE   AS companyCode
+		      ,FI.PRODUCT_CODE   AS productCode
+		      ,FI.ITEM_CODE      AS itemCode
+		      ,#{parentHsCode}   AS parentHsCode
+		      ,FI.HS_CODE        AS hsCode
+		      ,FI.STANDARD       AS standard
+		      ,FI.WEIGHT         AS weight
+		      ,FI.REQUIREMENT_QTY AS requirementQty
+		      ,FI.INPUT_AMOUNT   AS inputAmount
+		      ,FI.INAREA_QTY     AS originatingQty
+		      ,FI.INAREA_AMOUNT  AS originatingAmount
+		      ,FI.OUTAREA_QTY    AS nonOriginatingQty
+		      ,FI.OUTAREA_AMOUNT AS nonOriginatingAmount
+		FROM   FCR_DTL FI
+		WHERE  FI.FTA_CODE = #{ftaCode}
+		AND    FI.DIVISION_CODE = #{divisionCode}
+		AND    FI.COMPANY_CODE = #{companyCode}
+		AND    FI.SALES_NO = #{salesNo}
+		AND    FI.SALES_SEQ = #{salesSeq}
+	</select>
+
+	<!--
+		selectMaterialOriginRows 의 배치 버전. 요청받은 (ftaCode,divisionCode,salesSeq) 조합 전체를
+		UNION ALL 파생 테이블(V)로 던진다. 요청 1건당 0~N 행(BOM 자재 수만큼)이 나오는 다중행 조회라
+		LATERAL top-1이 아니라 V를 드라이빙하는 일반 JOIN을 쓴다.
+	-->
+	<select id="selectMaterialOriginRowsBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowBatchResult">
+		SELECT V.FTA_CODE         AS reqFtaCode
+		      ,V.DIVISION_CODE    AS reqDivisionCode
+		      ,V.SALES_SEQ        AS reqSalesSeq
+		      ,FI.FTA_CODE        AS ftaCode
+		      ,FI.DIVISION_CODE   AS divisionCode
+		      ,FI.COMPANY_CODE    AS companyCode
+		      ,FI.PRODUCT_CODE    AS productCode
+		      ,FI.ITEM_CODE       AS itemCode
+		      ,V.PARENT_HS_CODE   AS parentHsCode
+		      ,FI.HS_CODE         AS hsCode
+		      ,FI.STANDARD        AS standard
+		      ,FI.WEIGHT          AS weight
+		      ,FI.REQUIREMENT_QTY AS requirementQty
+		      ,FI.INPUT_AMOUNT    AS inputAmount
+		      ,FI.INAREA_QTY      AS originatingQty
+		      ,FI.INAREA_AMOUNT   AS originatingAmount
+		      ,FI.OUTAREA_QTY     AS nonOriginatingQty
+		      ,FI.OUTAREA_AMOUNT  AS nonOriginatingAmount
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.ftaCode} AS FTA_CODE, #{r.divisionCode} AS DIVISION_CODE, #{r.salesSeq} AS SALES_SEQ,
+		              #{r.parentHsCode} AS PARENT_HS_CODE
+		       </foreach>
+		       ) V
+		JOIN   FCR_DTL FI
+		ON     FI.FTA_CODE = V.FTA_CODE
+		AND    FI.DIVISION_CODE = V.DIVISION_CODE
+		AND    FI.COMPANY_CODE = #{companyCode}
+		AND    FI.SALES_NO = #{salesNo}
+		AND    FI.SALES_SEQ = V.SALES_SEQ
+	</select>
+
+	<!-- ===================== CURSOR C_FTA_RULE ===================== -->
+
+	<select id="selectApplicableOriginCriteria" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria">
+		SELECT RULE_ID                                            AS ruleId
+		      ,FTA_CODE                                           AS ftaCode
+		      ,HS_CODE                                            AS hsCode
+		      ,HS_CODE_SUB_CATEGORY                                AS hsCodeSubCategory
+		      ,RULE_SEQ                                           AS ruleSeq
+		      ,HS_CODE_DESCRIPTION                                AS hsCodeDescription
+		      ,RULE_DESCRIPTION                                   AS ruleDescription
+		      ,RULE_CONTENTS                                      AS ruleContents
+		      ,CASE WHEN POSITION('SP' IN RULE_CONTENTS) = 0 THEN '*' ELSE 'SP' END AS spRule
+		      ,COALESCE(WO_RULE, '*')                              AS woRule
+		      ,COALESCE(CTH_RULE, '*')                             AS cthRule
+		      ,COALESCE(BD_RULE, 0)                                AS bdRule
+		      ,COALESCE(BU_RULE, 0)                                AS buRule
+		      ,COALESCE(NC_RULE, 0)                                AS ncRule
+		      ,COALESCE(MC_RULE, 0)                                AS mcRule
+		      ,DE_MINIMIS_UNIT                                    AS deMinimisUnit
+		      ,DE_MINIMIS_RATE                                    AS deMinimisRate
+		      ,EXCLUSION_RULE_YN                                  AS exclusionRuleYn
+		FROM   FTA_RULE
+		      ,(-- CTSH &gt; CTH &gt; CC 순으로 룰을 찾기 위해 적용가능한 HS_CODE 의 최대 길이를 구한다
+		        SELECT MAX(LENGTH(HS_CODE)) AS HS_CODE_LENGTH
+		        FROM   FTA_RULE
+		        WHERE  HS_CODE = SUBSTRING(#{hsCode} FROM 1 FOR LENGTH(HS_CODE))
+		        AND    FTA_CODE = #{ftaCode}
+		        AND    HS_CODE_SUB_CATEGORY = #{hsCodeSubCategory}) FRL
+		WHERE  HS_CODE = SUBSTRING(#{hsCode} FROM 1 FOR FRL.HS_CODE_LENGTH)
+		AND    FTA_CODE = #{ftaCode}
+		AND    HS_CODE_SUB_CATEGORY = #{hsCodeSubCategory}
+		AND    RULE_SEQ IS NOT NULL
+		AND    (FTA_CODE &lt;&gt; 'PKRAP' OR #{newAptaPsrFlag} &lt;&gt; '0' OR RULE_SEQ = '1')
+		ORDER  BY RULE_SEQ
+	</select>
+
+	<!--
+		selectApplicableOriginCriteria 의 배치 버전. FTA_CODE 후보(~25개)마다 반복되던 조회를 요청 조합
+		전체를 UNION ALL 파생 테이블(V)로 던져 한 번에 처리한다.
+	-->
+	<select id="selectApplicableOriginCriteriaBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchResult">
+		SELECT V.HS_CODE                                            AS reqHsCode
+		      ,V.FTA_CODE                                           AS reqFtaCode
+		      ,V.HS_CODE_SUB_CATEGORY                                AS reqHsCodeSubCategory
+		      ,FR.RULE_ID                                            AS ruleId
+		      ,FR.FTA_CODE                                           AS ftaCode
+		      ,FR.HS_CODE                                            AS hsCode
+		      ,FR.HS_CODE_SUB_CATEGORY                                AS hsCodeSubCategory
+		      ,FR.RULE_SEQ                                           AS ruleSeq
+		      ,FR.HS_CODE_DESCRIPTION                                AS hsCodeDescription
+		      ,FR.RULE_DESCRIPTION                                   AS ruleDescription
+		      ,FR.RULE_CONTENTS                                      AS ruleContents
+		      ,CASE WHEN POSITION('SP' IN FR.RULE_CONTENTS) = 0 THEN '*' ELSE 'SP' END AS spRule
+		      ,COALESCE(FR.WO_RULE, '*')                              AS woRule
+		      ,COALESCE(FR.CTH_RULE, '*')                             AS cthRule
+		      ,COALESCE(FR.BD_RULE, 0)                                AS bdRule
+		      ,COALESCE(FR.BU_RULE, 0)                                AS buRule
+		      ,COALESCE(FR.NC_RULE, 0)                                AS ncRule
+		      ,COALESCE(FR.MC_RULE, 0)                                AS mcRule
+		      ,FR.DE_MINIMIS_UNIT                                    AS deMinimisUnit
+		      ,FR.DE_MINIMIS_RATE                                    AS deMinimisRate
+		      ,FR.EXCLUSION_RULE_YN                                  AS exclusionRuleYn
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.hsCode} AS HS_CODE, #{r.ftaCode} AS FTA_CODE, #{r.hsCodeSubCategory} AS HS_CODE_SUB_CATEGORY,
+		              #{r.newAptaPsrFlag} AS NEW_APTA_PSR_FLAG
+		       </foreach>
+		       ) V
+		INNER  JOIN LATERAL (SELECT MAX(LENGTH(HS_CODE)) AS HS_CODE_LENGTH
+		                      FROM   FTA_RULE
+		                      WHERE  HS_CODE = SUBSTRING(V.HS_CODE FROM 1 FOR LENGTH(HS_CODE))
+		                      AND    FTA_CODE = V.FTA_CODE
+		                      AND    HS_CODE_SUB_CATEGORY = V.HS_CODE_SUB_CATEGORY) FRL ON TRUE
+		INNER  JOIN FTA_RULE FR
+		ON     FR.HS_CODE = SUBSTRING(V.HS_CODE FROM 1 FOR FRL.HS_CODE_LENGTH)
+		AND    FR.FTA_CODE = V.FTA_CODE
+		AND    FR.HS_CODE_SUB_CATEGORY = V.HS_CODE_SUB_CATEGORY
+		AND    FR.RULE_SEQ IS NOT NULL
+		AND    (FR.FTA_CODE &lt;&gt; 'PKRAP' OR V.NEW_APTA_PSR_FLAG &lt;&gt; '0' OR FR.RULE_SEQ = '1')
+		ORDER  BY V.HS_CODE, V.FTA_CODE, V.HS_CODE_SUB_CATEGORY, FR.RULE_SEQ
+	</select>
+</mapper>

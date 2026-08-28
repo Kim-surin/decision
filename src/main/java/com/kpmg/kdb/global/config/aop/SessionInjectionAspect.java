@@ -44,30 +44,24 @@ public class SessionInjectionAspect {
 			if (arg instanceof BaseRequestDto) {
 				BaseRequestDto dto = (BaseRequestDto) arg;
 
-				String companyCode = dto.getCompanyCode();
+				String companyCode = dto.getCompany_code();
 				if (companyCode == null || companyCode.isBlank()) {
-					dto.setCompanyCode((String) userSession.get("company_code"));
+					dto.setCompany_code(companyCode);
 				}
 
-				String createBy = dto.getCreateBy();
+				String createBy = dto.getCreate_by();
 				if (createBy == null || createBy.isBlank()) {
-					dto.setCreateBy((String) userSession.get("user_id"));
+					dto.setCreate_by((String) userSession.get("user_id"));
 				}
 
-				String updateBy = dto.getUpdateBy();
+				String updateBy = dto.getUpdate_by();
 				if (updateBy == null || updateBy.isBlank()) {
-					dto.setUpdateBy((String) userSession.get("user_id"));
+					dto.setUpdate_by((String) userSession.get("user_id"));
 				}
-
-				/*
-				 * String divisionCode = dto.getDivisionCode(); if (divisionCode == null ||
-				 * divisionCode.isBlank()) { dto.setDivisionCode((String)
-				 * userSession.get("division_code")); }
-				 */
 				
-				String defaultLanguage = dto.getDefaultLanguage();
+				String defaultLanguage = dto.getDefault_language();
 				if (defaultLanguage == null || defaultLanguage.isBlank()) {
-					dto.setDefaultLanguage((String) userSession.get("default_language"));
+					dto.setDefault_language((String) userSession.get("default_language"));
 				}
 			}
 		}

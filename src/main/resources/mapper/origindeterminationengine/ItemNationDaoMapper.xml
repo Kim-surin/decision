@@ -1,0 +1,91 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ItemNationDao">
+	<!--
+		FC01_GET_ITEM_NATION 의 PO_LEDGER/EXT_COO_CERTIFY_MST/EXT_COO_CERTIFY_DTL 조회 이관
+		(ItemOriginRateDaoMapper.xml selectNonCertifiedOriginSummary 와 조인 구조 동일). 이 함수의 유일한
+		호출부(COO_DECISION, FTA_CODE='PKRRC')는 P_ASSETS_TYPE 을 넘기지 않아 원본의 'P'/'H' 분기는
+		도달 불가능해 이관하지 않았다. FTA_CODE 는 원본처럼 'PKRRC' 로 하드코딩한다.
+	-->
+	<select id="selectCooNation" resultType="string">
+		SELECT CASE WHEN COUNT(*) > 1 THEN 'TT' ELSE MAX(COO_NATION) END
+		FROM   (SELECT DISTINCT PL.VENDOR_CODE
+		                       ,PL.ITEM_CODE
+		                       ,ECD.COO_NATION
+		        FROM   PO_LEDGER PL
+		        LEFT   OUTER JOIN COO_DIVISION_V D
+		        ON     D.DIVISION_CODE = PL.DIVISION_CODE
+		        AND    D.COMPANY_CODE = PL.COMPANY_CODE
+		        INNER  JOIN EXT_COO_CERTIFY_MST ECM
+		        ON     ECM.COMPANY_CODE = PL.COMPANY_CODE
+		        INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		        ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		        AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		        AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		        AND    ECD.VENDOR_CODE = PL.VENDOR_CODE
+		        AND    ECD.FTA_CODE = 'PKRRC'
+		        AND    ECD.HS_CODE = #{hsCode}
+		        AND    ECD.COO_YN = 'Y'
+		        WHERE  ECM.SUBMIT_STATUS = '4'
+		        AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		        AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		        AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		               OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		               OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                   AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
+		        AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		               OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
+		                   AND PL.SEQ = ECD.WAREHOUSING_SEQ))
+		        AND    ECD.ITEM_CODE = PL.ITEM_CODE
+		        AND    PL.ITEM_CODE = #{itemCode}
+		        AND    PL.COMPANY_CODE = #{companyCode}
+		        AND    PL.WAREHOUSING_DATE BETWEEN #{fromDate} AND #{toDate}) X
+	</select>
+	<!--
+		selectCooNation 의 배치 버전. distinct (companyCode,itemCode,hsCode) 조합마다 조회구간이 다를 수
+		있어 요청 1건씩 통째로 받는다. COUNT/MAX 집계(GROUP BY 없음, 항상 정확히 1행)라 LATERAL 안에
+		ORDER BY CASE 가 필요 없어 플래너 회귀 위험이 없는 안전한 배치화다.
+	-->
+	<select id="selectCooNationBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.CooNationBatchResult">
+		SELECT V.REQ_KEY AS reqKey
+		      ,R.cooNation AS cooNation
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.reqKey} AS REQ_KEY, #{r.companyCode} AS COMPANY_CODE, #{r.itemCode} AS ITEM_CODE,
+		              #{r.hsCode} AS HS_CODE, #{r.fromDate} AS FROM_DATE, #{r.toDate} AS TO_DATE
+		       </foreach>
+		       ) V
+		LEFT   JOIN LATERAL (SELECT CASE WHEN COUNT(*) > 1 THEN 'TT' ELSE MAX(COO_NATION) END AS cooNation
+		                      FROM   (SELECT DISTINCT PL.VENDOR_CODE
+		                                             ,PL.ITEM_CODE
+		                                             ,ECD.COO_NATION
+		                              FROM   PO_LEDGER PL
+		                              LEFT   OUTER JOIN COO_DIVISION_V D
+		                              ON     D.DIVISION_CODE = PL.DIVISION_CODE
+		                              AND    D.COMPANY_CODE = PL.COMPANY_CODE
+		                              INNER  JOIN EXT_COO_CERTIFY_MST ECM
+		                              ON     ECM.COMPANY_CODE = PL.COMPANY_CODE
+		                              INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		                              ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		                              AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		                              AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		                              AND    ECD.VENDOR_CODE = PL.VENDOR_CODE
+		                              AND    ECD.FTA_CODE = 'PKRRC'
+		                              AND    ECD.HS_CODE = V.HS_CODE
+		                              AND    ECD.COO_YN = 'Y'
+		                              WHERE  ECM.SUBMIT_STATUS = '4'
+		                              AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		                              AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		                              AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		                                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		                                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                                         AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
+		                              AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		                                     OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
+		                                         AND PL.SEQ = ECD.WAREHOUSING_SEQ))
+		                              AND    ECD.ITEM_CODE = PL.ITEM_CODE
+		                              AND    PL.ITEM_CODE = V.ITEM_CODE
+		                              AND    PL.COMPANY_CODE = V.COMPANY_CODE
+		                              AND    PL.WAREHOUSING_DATE BETWEEN V.FROM_DATE AND V.TO_DATE) X) R ON TRUE
+	</select>
+</mapper>

@@ -13,46 +13,38 @@ public class BaseRequestDto {
 	private String company_code;
 	private String create_by;
 	private String update_by;
-	//private String division_code;
 	private String default_language;
 
 
-	public String getCompanyCode() {
+	public String getCompany_code() {
 		return company_code;
 	}
 
-	public void setCompanyCode(String companyCode) {
+	public void setCompany_code(String companyCode) {
 		this.company_code = companyCode;
 	}
 
-	public void setCreateBy(String createBy) {
+	public void setCreate_by(String createBy) {
 		this.create_by = createBy;
 	}
 
-	public String getCreateBy() {
+	public String getCreate_by() {
 		return create_by;
 	}
 
-	public void setUpdateBy(String updateBy) {
+	public void setUpdate_by(String updateBy) {
 		this.update_by = updateBy;
 	}
 
-	public String getUpdateBy() {
+	public String getUpdate_by() {
 		return update_by;
 	}
-
-	/*
-	 * public void setDivisionCode(String divisionCode) { this.division_code =
-	 * divisionCode; }
-	 * 
-	 * public String getDivisionCode() { return division_code; }
-	 */
 	
-	public void setDefaultLanguage(String defaultLanguage) {
+	public void setDefault_language(String defaultLanguage) {
 		this.default_language = defaultLanguage;
 	}
 
-	public String getDefaultLanguage() {
+	public String getDefault_language() {
 		return default_language;
 	}
 }
