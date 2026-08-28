@@ -101,9 +101,7 @@ public class OriginDeterminationExecutionService extends GeneralService implemen
 	private void decideProductOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
 			List<String> productCodes, OriginDeterminationMode mode) {
 		OriginDeterminationCursorDao dao = sqlSession.getMapper(OriginDeterminationCursorDao.class);
-		
-		decideProductOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
-		
+
 		String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
 		List<OriginDeterminationTarget> fmListRows = dao.selectOriginDeterminationTargets(companyCode, salesNo,
 				productCodes);
