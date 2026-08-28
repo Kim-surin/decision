@@ -81,7 +81,7 @@ public class OriginDecisionPipeline {
 	/** "5. SALES_DTL STATUS 업데이트". 현재 판정 대상 각각의 상태값을 판정완료로 갱신한다. */
 	public OriginDecisionPipeline updateStatus() {
 		return forEachTarget("STATUS 업데이트",
-				t -> statusUpdater.updateStatus(t.getCompanyCode(), t.getSalesNo(), productCodes));
+				t -> statusUpdater.updateStatus(t.getCompanyCode(), t.getDivisionCode(), t.getSalesNo(), productCodes));
 	}
 
 	/** 이번 파이프라인이 다루는 판정 대상 목록(가장 최근 단계 기준). */
@@ -106,7 +106,8 @@ public class OriginDecisionPipeline {
 				logger.error("{} 실패. companyCode={}, salesNo={}", stepName, target.getCompanyCode(),
 						target.getSalesNo(), e);
 				try {
-					statusUpdater.markDecisionFailed(target.getCompanyCode(), target.getSalesNo(), productCodes);
+					statusUpdater.markDecisionFailed(target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(),
+							productCodes);
 				} catch (Exception markFailedException) {
 					logger.error("판정실패 표시 실패. companyCode={}, salesNo={}", target.getCompanyCode(),
 							target.getSalesNo(), markFailedException);

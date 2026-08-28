@@ -14,19 +14,19 @@ import com.kpmg.kdb.core.generic.GeneralService;
 @Service
 public class SalesDecisionStatusUpdater extends GeneralService {
 
-	public void updateStatus(String companyCode, String salesNo, List<String> productCodes) {
+	public void updateStatus(String companyCode, String divisionCode, String salesNo, List<String> productCodes) {
 		SalesDecisionStatusDao dao = sqlSession.getMapper(SalesDecisionStatusDao.class);
 
-		dao.updateSalesMstDecisionComplete(companyCode, salesNo, productCodes);
-		dao.updateSalesDtlDecisionComplete(companyCode, salesNo, productCodes);
-		dao.updateFcrMstDecisionComplete(companyCode, salesNo, productCodes);
+		dao.updateSalesMstDecisionComplete(companyCode, salesNo, divisionCode, productCodes);
+		dao.updateSalesDtlDecisionComplete(companyCode, salesNo, divisionCode, productCodes);
+		dao.updateFcrMstDecisionComplete(companyCode, salesNo, divisionCode, productCodes);
 	}
 
 	/** 판정 파이프라인 단계 중 예외가 발생한 대상을 SALES_MST/SALES_DTL 판정실패('5')로 표시한다. */
-	public void markDecisionFailed(String companyCode, String salesNo, List<String> productCodes) {
+	public void markDecisionFailed(String companyCode, String divisionCode, String salesNo, List<String> productCodes) {
 		SalesDecisionStatusDao dao = sqlSession.getMapper(SalesDecisionStatusDao.class);
 
-		dao.markSalesMstDecisionFailed(companyCode, salesNo);
-		dao.markSalesDtlDecisionFailed(companyCode, salesNo, productCodes);
+		dao.markSalesMstDecisionFailed(companyCode, salesNo, divisionCode);
+		dao.markSalesDtlDecisionFailed(companyCode, salesNo, divisionCode, productCodes);
 	}
 }

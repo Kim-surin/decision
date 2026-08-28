@@ -32,6 +32,7 @@
 		      ,COO_DATE = CURRENT_TIMESTAMP
 		WHERE  COMPANY_CODE = #{companyCode}
 		AND    SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
 	</update>
 
 	<update id="updateSalesDtlDecisionComplete">
@@ -56,6 +57,13 @@
 		      ,UPDATE_BY   = 'MONTHLY_DECISION_PROC'
 		WHERE  COMPANY_CODE = #{companyCode}
 		AND    SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
+		AND    EXISTS (SELECT 1
+		               FROM   FCR_MST FM
+		               WHERE  FM.SALES_NO = DTL.SALES_NO
+		               AND    FM.DIVISION_CODE = DTL.DIVISION_CODE
+		               AND    FM.COMPANY_CODE = DTL.COMPANY_CODE
+		               AND    FM.SALES_SEQ = DTL.SALES_SEQ)
 		<if test="productCodes != null and !productCodes.isEmpty()">
 		AND    PRODUCT_CODE IN
 		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
@@ -69,6 +77,7 @@
 		SET    COO_DATE = CURRENT_TIMESTAMP
 		WHERE  COMPANY_CODE = #{companyCode}
 		AND    SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
 		<if test="productCodes != null and !productCodes.isEmpty()">
 		AND    PRODUCT_CODE IN
 		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
@@ -83,6 +92,7 @@
 		      ,COO_DATE = CURRENT_TIMESTAMP
 		WHERE  COMPANY_CODE = #{companyCode}
 		AND    SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
 	</update>
 
 	<update id="markSalesDtlDecisionFailed">
@@ -92,6 +102,7 @@
 		      ,UPDATE_BY   = 'MONTHLY_DECISION_PROC'
 		WHERE  COMPANY_CODE = #{companyCode}
 		AND    SALES_NO = #{salesNo}
+		AND    DIVISION_CODE = #{divisionCode}
 		<if test="productCodes != null and !productCodes.isEmpty()">
 		AND    PRODUCT_CODE IN
 		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
