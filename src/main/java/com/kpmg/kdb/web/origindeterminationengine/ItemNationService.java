@@ -155,8 +155,18 @@ public class ItemNationService extends GeneralService {
 	}
 
 	public static String resolveItemNationResultKey(ItemNationCriteria criteria) {
-		return String.join("|", nz(criteria.getCompanyCode()), nz(criteria.getDivisionCode()), nz(criteria.getItemCode()),
-				nz(criteria.getHsCode()));
+		return resolveItemNationResultKey(criteria.getCompanyCode(), criteria.getDivisionCode(), criteria.getItemCode(),
+				criteria.getHsCode());
+	}
+
+	/**
+	 * {@link #resolveItemNationResultKey(ItemNationCriteria)}와 동일한 키를, {@link ItemNationCriteria}를
+	 * 아직 만들기 전(원본이 MaterialOriginRow 등 다른 형태일 때)에도 만들 수 있도록 한 오버로드. 이 키는
+	 * {@link #prefetchCooNations}가 채운 캐시를 조회하는 쪽과 반드시 같은 필드/순서를 써야 하므로 별도로
+	 * 복제하지 말고 이 메서드를 그대로 호출한다.
+	 */
+	public static String resolveItemNationResultKey(String companyCode, String divisionCode, String itemCode, String hsCode) {
+		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(hsCode));
 	}
 
 	/** 자재 목록(BOM+대체자재)을 순회하며 조회구간(fromDate/toDate)을 계산한다. */

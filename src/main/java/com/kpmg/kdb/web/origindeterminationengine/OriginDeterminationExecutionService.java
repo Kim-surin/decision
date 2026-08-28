@@ -349,13 +349,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 				}
 			}
 		} else if ("Y".equals(fmData.getTariffYn()) && "Y".equals(rec.getCompanyCooYn()) && "ZZ".equals(rcepNation)) {
-			// 원본 그대로 이관: 바깥 조건에 이미 포함돼 안쪽 else는 도달 불가능하지만 보존
-			if ("Y".equals(fmData.getTariffYn())) {
-				supportService.resolveRcepRvcNation(ctx, fmData.getAmount());
-				rec.setRcepCooNation("Y".equals(ctx.getRcepKrYn()) ? "KR" : ctx.getRcepCooNation());
-			} else {
-				rec.setRcepCooNation("KR");
-			}
+			supportService.resolveRcepRvcNation(ctx, fmData.getAmount());
+			rec.setRcepCooNation("Y".equals(ctx.getRcepKrYn()) ? "KR" : ctx.getRcepCooNation());
 		}
 	}
 
@@ -363,7 +358,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	private void resolveItemCooNationForRcep(OriginDeterminationContext ctx, String invoiceDate, RcepCooNationCache rcepCache) {
 		for (MaterialOriginRow row : ctx.getMaterialOriginRows()) {
 			if (row.getOriginatingAmount() != null && row.getOriginatingAmount().signum() > 0) {
-				String key = itemNationKey(row.getCompanyCode(), row.getDivisionCode(), row.getItemCode(), row.getHsCode());
+				String key = ItemNationService.resolveItemNationResultKey(row.getCompanyCode(), row.getDivisionCode(), row.getItemCode(),
+						row.getHsCode());
 				ItemNationCriteria criteria = rcepCache.distinctCriteria.computeIfAbsent(key,
 						k -> new ItemNationCriteria(row.getCompanyCode(), row.getDivisionCode(), row.getItemCode(),
 								row.getFtaCode(), row.getHsCode(), invoiceDate));
@@ -390,7 +386,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 			String materialKey = materialOriginRowsKey(fmData.getFtaCode(), fmData.getDivisionCode(), fmData.getSalesSeq());
 			for (MaterialOriginRow row : materialOriginRowsCache.getOrDefault(materialKey, List.of())) {
 				if (row.getOriginatingAmount() != null && row.getOriginatingAmount().signum() > 0) {
-					String key = itemNationKey(row.getCompanyCode(), row.getDivisionCode(), row.getItemCode(), row.getHsCode());
+					String key = ItemNationService.resolveItemNationResultKey(row.getCompanyCode(), row.getDivisionCode(), row.getItemCode(),
+						row.getHsCode());
 					distinctCriteria.putIfAbsent(key, new ItemNationCriteria(row.getCompanyCode(), row.getDivisionCode(),
 							row.getItemCode(), row.getFtaCode(), row.getHsCode(), invoiceDate));
 				}

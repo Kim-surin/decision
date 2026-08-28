@@ -414,7 +414,14 @@ public class OriginDeterminationResult {
 		this.ruleSeq = null;
 		this.divisionCode = null;
 		this.companyCode = null;
+		this.hsCode = null;
+		this.productCode = null;
+		this.standard = null;
 		this.ruleCode = null;
+		this.bufferOption = null;
+		this.deMinimisRate = null;
+		this.rvcRate = null;
+		this.deleteYn = "N";
 		this.spCooYn = null;
 		this.woCooYn = null;
 		this.ctcYn = null;
