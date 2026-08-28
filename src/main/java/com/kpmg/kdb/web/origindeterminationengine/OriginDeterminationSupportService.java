@@ -62,7 +62,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 		} catch (Exception e) {
 			ctx.setErrorCode("GET_BUFFER");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
-			ctx.setReturnCode(-1);
 			logger.error("GET_BUFFER 실패. companyCode={}", companyCode, e);
 		}
 	}
@@ -161,7 +160,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 		rec.setErrorCode(ctx.getErrorCode());
 		rec.setErrorMsg(ctx.getErrorMsg());
 
-		ctx.setReturnCode(0);
 		ctx.setErrorCode("");
 	}
 
@@ -180,11 +178,9 @@ public class OriginDeterminationSupportService extends GeneralService {
 		} catch (Exception e) {
 			ctx.setErrorCode("DECISION01");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
-			ctx.setReturnCode(-1);
 			logger.error("INSERT_FRD_PROCESS 실패. rec={}", rec, e);
 		}
 
-		ctx.setReturnCode(0);
 		rec.resetForNextRule();
 	}
 

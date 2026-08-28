@@ -23,21 +23,23 @@ public class RvcCriteriaDecisionService {
 	private static final Logger logger = LoggerFactory.getLogger(RvcCriteriaDecisionService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
-	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
+	/** @return 판정 성공 여부. 실패(예외 발생) 시 false — 호출자가 이 대상을 판정오류로 처리해야 한다. */
+	public boolean decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
 		try {
 			if (mode == OriginDeterminationMode.CTC_ONLY) {
 				// CTC 전용 모드는 RVC 판정을 사용하지 않는다(원본 스텁과 동일)
 				OriginDeterminationResult rec = ctx.getFrdRec();
 				rec.setFtaRvcYn("N");
 				rec.setCompanyRvcYn("N");
-				return;
+				return true;
 			}
 			decideRvc(ctx, frData);
+			return true;
 		} catch (Exception e) {
 			ctx.setErrorCode("RVC ERROR");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
-			ctx.setReturnCode(-1);
 			logger.error("COO_DECISION_FOR_RVC 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
+			return false;
 		}
 	}
 

@@ -230,8 +230,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		boolean stop = false;
 
 		if ("Y".equals(frData.getExclusionRuleYn())) {
-			exclusionRuleDecisionService.decide(ctx, frData, mode, exclusionRuleCache);
-			if (ctx.getReturnCode() < 0) {
+			if (!exclusionRuleDecisionService.decide(ctx, frData, mode, exclusionRuleCache)) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);
 				stop = true;
@@ -239,8 +238,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		}
 
 		if (!stop && !"*".equals(frData.getCthRule())) {
-			ctcService.decide(ctx, frData, mode);
-			if (ctx.getReturnCode() < 0) {
+			if (!ctcService.decide(ctx, frData, mode)) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);
 				stop = true;
@@ -249,8 +247,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 
 		if (!stop && (positive(frData.getBdRule()) || positive(frData.getBuRule()) || positive(frData.getNcRule())
 				|| positive(frData.getMcRule()))) {
-			rvcService.decide(ctx, frData, mode);
-			if (ctx.getReturnCode() < 0) {
+			if (!rvcService.decide(ctx, frData, mode)) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);
 				stop = true;

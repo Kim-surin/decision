@@ -43,8 +43,6 @@ public class OriginDeterminationContext {
 
 	/** 해당 HS코드에 적용 가능한 룰 존재 여부 카운트 (원본 VG_RULE_COUNT) */
 	private int ruleCount;
-	/** 판정 처리결과 코드 (원본 VG_RETURN_CODE) */
-	private int returnCode;
 	private String errorCode;
 	private String errorMsg;
 
@@ -143,14 +141,6 @@ public class OriginDeterminationContext {
 
 	public void setRuleCount(int ruleCount) {
 		this.ruleCount = ruleCount;
-	}
-
-	public int getReturnCode() {
-		return returnCode;
-	}
-
-	public void setReturnCode(int returnCode) {
-		this.returnCode = returnCode;
 	}
 
 	public String getErrorCode() {

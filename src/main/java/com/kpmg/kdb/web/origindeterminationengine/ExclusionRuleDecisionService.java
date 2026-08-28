@@ -29,14 +29,14 @@ public class ExclusionRuleDecisionService extends GeneralService {
 	private static final Set<String> CTC_ONLY_FORCED_N_TYPES = Set.of("4", "6", "13", "15", "16", "17");
 
 	/** 단발성 호출용 편의 오버로드 — 캐시를 새로 만들어 위임한다. */
-	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
-		decide(ctx, frData, mode, new ExclusionRuleCache(sqlSession.getMapper(ExclusionRuleDao.class)));
+	public boolean decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
+		return decide(ctx, frData, mode, new ExclusionRuleCache(sqlSession.getMapper(ExclusionRuleDao.class)));
 	}
 
-	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode,
+	/** @return 판정 성공 여부. 실패(예외 발생) 시 false — 호출자가 이 대상을 판정오류로 처리해야 한다. */
+	public boolean decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode,
 			ExclusionRuleCache cache) {
 		try {
-			ctx.setReturnCode(0);
 			ctx.getFrdRec().setExclusionCondition("000");
 
 			List<ExclusionRuleHeader> headers = cache.headers(frData.getFtaCode(), frData.getHsCode(),
@@ -56,11 +56,12 @@ public class ExclusionRuleDecisionService extends GeneralService {
 			}
 
 			ctx.getFrdRec().setExclusionYn(accumulator.resolve());
+			return true;
 		} catch (Exception e) {
 			ctx.setErrorCode("EXCLUSION99");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
-			ctx.setReturnCode(-1);
 			logger.error("EXCLUTION_RULE_DECISION 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
+			return false;
 		}
 	}
 

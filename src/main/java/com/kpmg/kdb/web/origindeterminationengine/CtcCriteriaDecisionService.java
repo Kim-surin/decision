@@ -24,14 +24,15 @@ public class CtcCriteriaDecisionService {
 	private static final Logger logger = LoggerFactory.getLogger(CtcCriteriaDecisionService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
-	public void decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
+	/** @return 판정 성공 여부. 실패(예외 발생) 시 false — 호출자가 이 대상을 판정오류로 처리해야 한다. */
+	public boolean decide(OriginDeterminationContext ctx, OriginCriteria frData, OriginDeterminationMode mode) {
 		try {
 			if (hasMissingHsCode(ctx.getMaterialOriginRows())) {
 				OriginDeterminationResult rec = ctx.getFrdRec();
 				rec.setStatus("E");
 				rec.setErrorCode("TXT_HSCODE_INCLUDE_MISSING");
 				rec.setErrorMsg("HS 코드 누락 포함");
-				return;
+				return true;
 			}
 
 			if (mode == OriginDeterminationMode.CTC_ONLY) {
@@ -39,11 +40,12 @@ public class CtcCriteriaDecisionService {
 			} else {
 				decideRvcCtc(ctx, frData);
 			}
+			return true;
 		} catch (Exception e) {
 			ctx.setErrorCode("CTC ERROR");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
-			ctx.setReturnCode(-1);
 			logger.error("COO_DECISION_FOR_CTC 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
+			return false;
 		}
 	}
 
