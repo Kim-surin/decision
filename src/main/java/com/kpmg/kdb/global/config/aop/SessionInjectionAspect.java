@@ -46,7 +46,7 @@ public class SessionInjectionAspect {
 
 				String companyCode = dto.getCompany_code();
 				if (companyCode == null || companyCode.isBlank()) {
-					dto.setCompany_code(companyCode);
+					dto.setCompany_code((String) userSession.get("company_code"));
 				}
 
 				String createBy = dto.getCreate_by();
