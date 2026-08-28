@@ -41,20 +41,18 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginRatePrecheck;
 import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary;
 import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow;
-import com.kpmg.kdb.web.origindeterminationengine.FcrCreator;
 
 /**
- * FCR_MST/FCR_DTL 생성 (레거시 CREATE_FCR 프로시저).
+ * "CREATE_FCR" 단계 (레거시 CREATE_FCR 프로시저). {@link OriginDecisionPipeline} 이 사용한다.
  *
  * 매출(SALES_NO) 1건에 대해 BOM/표준 BOM 존재를 확인하고, FCR_MST(제품×FTA 후보)를 생성한 뒤
- * BOM 최말단 자재와 상품/부산물을 집계해 FCR_DTL(원산지 판정용 원재료 명세)을 생성한다. 
- * 에서 처리한다.
+ * BOM 최말단 자재와 상품/부산물을 집계해 FCR_DTL(원산지 판정용 원재료 명세)을 생성한다.
  *
  * <p>원본과 동일하게 이 메서드는 예외를 흡수하지 않는다 — 매출 1건 처리 실패를 배치 전체 중단
  * 없이 넘기는 책임은 호출자({@link BulkPipelineRunner})에 있다.
  */
 @Service
-public class CreateFcrService extends GeneralService implements FcrCreator {
+public class CreateFcrService extends GeneralService {
 
 	private static final int INSERT_CHUNK_SIZE = 500;
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
@@ -75,7 +73,6 @@ public class CreateFcrService extends GeneralService implements FcrCreator {
 	 *                      그 제품들만(개별 판정) 대상으로 한다.
 	 * @return "successed" / "semisuccess" / "failed"
 	 */
-	@Override
 	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam,
 			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);
