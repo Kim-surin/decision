@@ -86,11 +86,11 @@
 					<h6 class="mb-0">판정 품목</h6>
 					<button type="button" id="originDetermination_popup_individualBtn" class="btn btn-sm btn-primary" onclick="javascript:ORIGIN_DETERMINATION_DETAIL_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
 				</div>
-				<div id="oAuiGrid_originDetermination_popup_detail" style="width:100%;height:220px;"></div>
+				<div id="oAuiGrid_originDetermination_popup_detail" style="width:100%;height:180px;"></div>
 
 				<div id="originDetermination_popup_resultSection">
 					<h6 class="mt-4 mb-3">판정결과</h6>
-					<div id="oAuiGrid_originDetermination_popup_result" style="width:100%;height:200px;"></div>
+					<div id="oAuiGrid_originDetermination_popup_result" style="width:100%;height:280px;"></div>
 
 					<h6 class="mt-4 mb-3">판정 상세내용</h6>
 					<div id="oAuiGrid_originDetermination_popup_resultDetail" style="width:100%;height:180px;"></div>
@@ -191,61 +191,75 @@
 			}
 		};
 
-		
 		this.createAUIGrid = function() {
 			var self = this;
 
 			var columnLayoutDetail = [
 				{dataField: "sales_no", headerText: "SALES_NO", width: 0, visible: false},
 				{dataField: "sales_seq", headerText: "SALES_SEQ", width: 0, visible: false},
-				{dataField: "product_code", headerText: "품번", width: 150},
-				{dataField: "product_name", headerText: "품명", width: 220},
-				{dataField: "hs_code", headerText: "HS CODE", width: 120},
+				{dataField: "product_code", headerText: "품번", width: 200},
+				{dataField: "product_name", headerText: "품명", width: 250},
+				{dataField: "hs_code", headerText: "HS CODE", width: 150},
 				{dataField: "quantity", headerText: "수량", width: 100, dataType: "numeric", style: ""},
-				{dataField: "unit", headerText: "단위", width: 80},
-				{dataField: "unit_price", headerText: "단가(원)", width: 120, dataType: "numeric", style: ""},
-				{dataField: "amount", headerText: "금액(원)", width: 120, dataType: "numeric", style: ""}
+				{dataField: "unit", headerText: "단위", width: 100},
+				{dataField: "unit_price", headerText: "단가(원)", width: 200, dataType: "numeric", style: "", formatString: "#,##0"},
+				{dataField: "amount", headerText: "금액(원)", width: 200, dataType: "numeric", style: "", formatString: "#,##0"}
 			];
-			var gridPropsDetail = { };
+			var gridPropsDetail = {};
 			this.grid_Detail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_detail", columnLayoutDetail, gridPropsDetail, "");
 
 			AUIGrid.bind(this.grid_Detail, "cellClick", function(event) {
 				self.selectDetailLine(self.buildKey(event.item.sales_no, event.item.sales_seq));
 			});
 
+			// 단가기준/BOM 추적/역내전환전략은 API가 아직 제공하지 않아 빈 칸으로 남는다 
 			var columnLayoutResult = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
 				{dataField: "hs_code", headerText: "HS CODE", width: 110},
-				{dataField: "fta_name", headerText: "협정명", width: 140, filter: {showIcon: true}},
-				{dataField: "amount", headerText: "단가", width: 100, dataType: "numeric", style: ""},
-				{dataField: "inkoterms_type", headerText: "단가기준", width: 100, filter: {showIcon: true}},
-				{dataField: "rule_contents", headerText: "결정기준", width: 130},
-				{dataField: "company_coo_yn", headerText: "충족여부", width: 100, filter: {showIcon: true}},
-				{dataField: "rvc_rate", headerText: "판정 부가가치 비율", width: 150, dataType: "numeric", style: ""},
-				{dataField: "de_minimis_rate", headerText: "미소기준 적용 비율", width: 150, dataType: "numeric", style: ""},
-				{dataField: "bom_trace", headerText: "BOM 추적", width: 130},
-				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 130}
+				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
+				{dataField: "amount", headerText: "단가", width: 120, dataType: "numeric", style: "", formatString: "#,##0"},
+				{dataField: "inkoterms_type", headerText: "단가기준", width: 100},
+				{dataField: "rule_contents", headerText: "결정기준", width: 130, filter: {showIcon: true}},
+				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
+				{dataField: "rvc_rate", headerText: "판정 부가가치 비율", width: 130, dataType: "numeric", style: "",  				
+					labelFunction: function(rowIndex, columnIndex, value, dataField, gridObject) {
+				        if (value === null || value === undefined || value === "") return "";
+				        return Number(value).toFixed(0) + "%"; 
+				    }},
+				{dataField: "de_minimis_rate", headerText: "미소기준 적용 비율", width: 130, dataType: "numeric", style: "",
+					labelFunction: function(rowIndex, columnIndex, value, dataField, gridObject) {
+					    if (value === null || value === undefined || value === "") return "";
+					    return Number(value).toFixed(0) + "%"; 
+					}},
+				{dataField: "bom_trace", headerText: "BOM 추적", width: 100},
+				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 100}
 			];
-			var gridPropsResult = { enableFilter: true };
+			var gridPropsResult = {enableFilter: true };
 			this.grid_Result = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult, "");
 
 			AUIGrid.bind(this.grid_Result, "cellClick", function(event) {
 				self.selectResultRow(event.item.fta_code);
 			});
 
+			// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은 API가 아직 제공하지 않아 빈 칸으로 남는다
 			var columnLayoutResultDetail = [
 				{dataField: "rule_code", headerText: "결정기준", width: 120, filter: {showIcon: true}},
-				{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 150, dataType: "numeric", style: ""},
-				{dataField: "company_coo_yn", headerText: "충족여부", width: 100, filter: {showIcon: true}},
-				{dataField: "amount", headerText: "단가", width: 130, dataType: "numeric", style: ""},
-				{dataField: "outarea_amount", headerText: "미상 재료비(원)", width: 150, dataType: "numeric", style: ""},
-				{dataField: "rvc_rate", headerText: "부가가치 비율", width: 130, dataType: "numeric", style: ""},
-				{dataField: "rule_description", headerText: "결정기준 해설", width: 250}
+				{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 100, dataType: "numeric", style: ""},
+				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
+				{dataField: "amount", headerText: "단가", width: 120, dataType: "numeric", style: "", formatString: "#,##0"},
+				{dataField: "outarea_amount", headerText: "미상 재료비(원)", width: 120, dataType: "numeric", style: "", formatString: "#,##0"},
+				{dataField: "rvc_rate", headerText: "부가가치 비율", width: 130, dataType: "numeric", style: "",
+					labelFunction: function(rowIndex, columnIndex, value, dataField, gridObject) {
+					    if (value === null || value === undefined || value === "") return "";
+					    return Number(value).toFixed(0) + "%"; 
+					}},
+				{dataField: "rule_description", headerText: "결정기준 해설", width: 500}
 			];
 			var gridPropsResultDetail = { enableFilter: true };
 			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
 		};
 
+		// 시작점
 		this.Initialize_viewObject = function() {
 			var rawDatas = '${datas}';
 			var rawMode = '${mode}';
@@ -300,7 +314,7 @@
 			AUIGrid.resize(this.grid_ResultDetail);
 		};
 
-		// 개별 원산지 판정 임시 숨김 처리
+		 // 개별 원산지 판정 임시 숨김 처리
 		this.applyModeVisibility = function() {
 			$('#originDetermination_popup_individualBtn').hide();
 		};
