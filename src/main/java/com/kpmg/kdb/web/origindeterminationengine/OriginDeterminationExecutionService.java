@@ -50,32 +50,31 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	private ItemNationService itemNationService;
 
 	/**
-	 * 원산지 판정 1건 실행. 매출 처리 실패가 배치 전체를 중단시키지 않도록 예외를 흡수하고 로그만 남긴다.
+	 * 원산지 판정 1건 실행.
+	 *
+	 * <p>예외를 흡수하지 않고 그대로 던진다 — 매출 1건 처리 실패를 배치 전체 중단 없이 넘기면서도
+	 * 그 대상을 판정실패로 표시하는 책임은 호출자({@link OriginDecisionPipeline})에 있다.
 	 *
 	 * @param productCodes 판정 대상 제품 코드. null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면
 	 *                      그 제품들만(개별 판정) 대상으로 한다.
 	 */
 	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
-		try {
-			OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
+		OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
 
-			List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
-					productCodes);
-			boolean hasCommodity = containsAny(assetTypes, "M", "R", "B");
-			boolean hasProduct = containsAny(assetTypes, "P", "H");
+		List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
+				productCodes);
+		boolean hasCommodity = containsAny(assetTypes, "M", "R", "B");
+		boolean hasProduct = containsAny(assetTypes, "P", "H");
 
-			String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
+		String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
 
-			if (hasCommodity) {
-				decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
-			}
+		if (hasCommodity) {
+			decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+		}
 
-			if (hasProduct) {
-				decideProductOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
-			}
-		} catch (Exception e) {
-			logger.error("COO_DECISION 실패. companyCode={}, salesNo={}", companyCode, salesNo, e);
+		if (hasProduct) {
+			decideProductOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
 		}
 	}
 

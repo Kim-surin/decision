@@ -28,4 +28,16 @@ public interface SalesDecisionStatusDao {
 	/** 판정완료 FCR_MST 상태값 갱신(COO_DATE=NOW) */
 	void updateFcrMstDecisionComplete(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo,
 			@Param("productCodes") List<String> productCodes);
+
+	/**
+	 * 판정 처리 중 예외가 발생한 대상을 판정실패('5')로 표시한다. updateSalesMstDecisionComplete/
+	 * updateSalesDtlDecisionComplete 처럼 FCR_MST/FCR_RESULT 내용을 보고 '4'/'5'를 가리지 않고
+	 * 무조건 '5' — 예외가 난 시점엔 FCR_RESULT/FCR_MST 데이터가 없거나 불완전할 수 있어 그 내용을
+	 * 신뢰할 수 없기 때문이다.
+	 */
+	void markSalesMstDecisionFailed(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo);
+
+	/** {@link #markSalesMstDecisionFailed} 의 SALES_DTL 버전. */
+	void markSalesDtlDecisionFailed(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo,
+			@Param("productCodes") List<String> productCodes);
 }

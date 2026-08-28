@@ -76,4 +76,27 @@
 		       </foreach>
 		</if>
 	</update>
+
+	<update id="markSalesMstDecisionFailed">
+		UPDATE SALES_MST
+		SET    STATUS = '5'
+		      ,COO_DATE = CURRENT_TIMESTAMP
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    SALES_NO = #{salesNo}
+	</update>
+
+	<update id="markSalesDtlDecisionFailed">
+		UPDATE SALES_DTL
+		SET    STATUS = '5'
+		      ,UPDATE_DATE = CURRENT_TIMESTAMP
+		      ,UPDATE_BY   = 'MONTHLY_DECISION_PROC'
+		WHERE  COMPANY_CODE = #{companyCode}
+		AND    SALES_NO = #{salesNo}
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</update>
 </mapper>

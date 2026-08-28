@@ -187,6 +187,9 @@ public class OriginDeterminationSupportService extends GeneralService {
 	/**
 	 * 대기열에 쌓인 판정결과를 배치 INSERT로 저장한다. FM_LIST 루프가 끝난 뒤,
 	 * resolveDeferredUpdateFrm보다 먼저 호출해야 한다(그쪽이 방금 저장한 결과를 재조회하므로).
+	 *
+	 * <p>실패 시 예외를 그대로 던진다 — 호출자({@link OriginDecisionPipeline})가 이 대상을
+	 * 판정실패로 표시할 수 있어야 하기 때문이다.
 	 */
 	public void flushPendingResultsBatch(List<OriginDeterminationResult> allPendingResults) {
 		if (allPendingResults.isEmpty()) {
@@ -201,6 +204,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 			}
 		} catch (Exception e) {
 			logger.error("INSERT_FRD_PROCESS(배치) 실패. count={}", allPendingResults.size(), e);
+			throw e;
 		} finally {
 			allPendingResults.clear();
 		}
@@ -320,7 +324,12 @@ public class OriginDeterminationSupportService extends GeneralService {
 		return value == null ? "" : value;
 	}
 
-	/** 대기 중인 FCR_MST 갱신을 배치 UPDATE로 반영한다. */
+	/**
+	 * 대기 중인 FCR_MST 갱신을 배치 UPDATE로 반영한다.
+	 *
+	 * <p>실패 시 예외를 그대로 던진다 — 호출자({@link OriginDecisionPipeline})가 이 대상을
+	 * 판정실패로 표시할 수 있어야 하기 때문이다.
+	 */
 	public void flushFcrMstUpdates(List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates) {
 		if (pendingFcrMstUpdates.isEmpty()) {
 			return;
@@ -329,6 +338,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 			sqlSession.getMapper(OriginDeterminationSupportDao.class).updateFcrMstDecisionResults(pendingFcrMstUpdates);
 		} catch (Exception e) {
 			logger.error("UPDATE_FRM_PROCEDURE(배치) 실패. count={}", pendingFcrMstUpdates.size(), e);
+			throw e;
 		} finally {
 			pendingFcrMstUpdates.clear();
 		}

@@ -21,4 +21,12 @@ public class SalesDecisionStatusUpdater extends GeneralService {
 		dao.updateSalesDtlDecisionComplete(companyCode, salesNo, productCodes);
 		dao.updateFcrMstDecisionComplete(companyCode, salesNo, productCodes);
 	}
+
+	/** 판정 파이프라인 단계 중 예외가 발생한 대상을 SALES_MST/SALES_DTL 판정실패('5')로 표시한다. */
+	public void markDecisionFailed(String companyCode, String salesNo, List<String> productCodes) {
+		SalesDecisionStatusDao dao = sqlSession.getMapper(SalesDecisionStatusDao.class);
+
+		dao.markSalesMstDecisionFailed(companyCode, salesNo);
+		dao.markSalesDtlDecisionFailed(companyCode, salesNo, productCodes);
+	}
 }

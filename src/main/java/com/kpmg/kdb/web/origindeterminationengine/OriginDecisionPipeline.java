@@ -22,8 +22,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
  *
  * 각 단계는 {@link AggregatedVirtualSalesGenerator}/{@link CreateFcrService}/
  * {@link OriginDeterminationExecutionService}/{@link SalesDecisionStatusUpdater} 가 담당하며,
- * {@link OriginDecisionPipelineFactory} 가 채워준다. 판정 대상 1건에서 예외가 발생하면 그 대상만
- * 이후 단계에서 제외하고 나머지는 계속 진행한다.
+ * {@link OriginDecisionPipelineFactory} 가 채워준다. 판정 대상 1건에서 예외가 발생하면 그 대상은
+ * SALES_MST/SALES_DTL 판정실패('5')로 표시하고 이후 단계에서 제외한 뒤 나머지는 계속 진행한다.
  */
 public class OriginDecisionPipeline {
 
@@ -105,6 +105,12 @@ public class OriginDecisionPipeline {
 				failedTargets.add(target);
 				logger.error("{} 실패. companyCode={}, salesNo={}", stepName, target.getCompanyCode(),
 						target.getSalesNo(), e);
+				try {
+					statusUpdater.markDecisionFailed(target.getCompanyCode(), target.getSalesNo(), productCodes);
+				} catch (Exception markFailedException) {
+					logger.error("판정실패 표시 실패. companyCode={}, salesNo={}", target.getCompanyCode(),
+							target.getSalesNo(), markFailedException);
+				}
 			}
 		}
 		return this;
