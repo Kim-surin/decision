@@ -3366,77 +3366,95 @@ var KpackageOBJ = {
     }, // Date End
 	
 	sidepanel : {
-		open : function(modalId, url, pWidth){
-			
-			if ($("#"+ modalId).length > 0) {
-				return;
-			}
-			$('#' + modalId).remove();
-			
-			var opener = document.activeElement;
+	    open : function(modalId, url, pWidth, isStatic) {
 
-			var modalHtml = `
-			  <div class="modal fade default-example-modal-end-xl" id="${modalId}" tabindex="-1" role="dialog" aria-labelledby="${modalId}_label">
-			    <div class="modal-dialog modal-dialog-end modal-xl" style="width: ${pWidth}; max-width: ${pWidth};">
-			      <div class="modal-content">
-			        <div class="modal-body p-3">
-			          로딩 중...
-			        </div>
-			      </div>
-			    </div>
-			  </div>
-			`;
+	        if ($("#" + modalId).length > 0) {
+	            return;
+	        }
 
-			$('#backdropDiv_Area').append(modalHtml);
+	        $('#' + modalId).remove();
 
-			var $modalElement = $('#' + modalId);
-			var $modalBody = $modalElement.find('.modal-body');
+	        var opener = document.activeElement;
 
-			$modalBody.load(url, function(response, status, xhr) {
-			  if (status === 'error') {
-			    $modalBody.html(`
-			      <div class="text-danger">
-			        화면을 불러오는 중 오류가 발생했습니다.
-			      </div>
-			    `);
-			  }
+	        var modalHtml = `
+	            <div class="modal fade default-example-modal-end-xl" id="${modalId}" tabindex="-1" role="dialog" aria-labelledby="${modalId}_label">
+	                <div class="modal-dialog modal-dialog-end modal-xl" style="width: ${pWidth}; max-width: ${pWidth};">
+	                    <div class="modal-content">
+	                        <div class="modal-body p-3">
+	                            로딩 중...
+	                        </div>
+	                    </div>
+	                </div>
+	            </div>
+	        `;
 
-			  var modalObject = new bootstrap.Modal($modalElement[0]);
-			  
-			  
-			  // 닫히기 직전에 포커스 제거
-		      $modalElement.on('hide.bs.modal', function () {
-		        if (document.activeElement) {
-		          document.activeElement.blur();
-		        }
-		      });
+	        $('#backdropDiv_Area').append(modalHtml);
 
-			  // 모달이 완전히 닫힌 뒤 DOM 제거
-			  $modalElement.on('hidden.bs.modal', function () {
-			    modalObject.dispose();   // Bootstrap 인스턴스 정리
-			    $modalElement.remove();  // DOM 제거
-				
-				if (opener && typeof opener.focus === 'function') {
-					opener.focus();
-				}
-			  });
+	        var $modalElement = $('#' + modalId);
+	        var $modalBody = $modalElement.find('.modal-body');
 
-			  modalObject.show();
-			});
-			
-		},
-		close : function(modalId) {
+	        $modalBody.load(url, function(response, status, xhr) {
+				if (status === 'error') {
+	                $modalBody.html(`
+	                    <div class="d-flex flex-column gap-3">
+	                        <div class="text-danger">
+	                            화면을 불러오는 중 오류가 발생했습니다.
+	                        </div>
+	                        <div class="d-flex justify-content-end">
+	                            <button type="button"
+	                                    class="btn btn-sm btn-system p-1"
+	                                    data-bs-dismiss="modal"
+	                                    aria-label="Close">
+	                                <svg class="sa-icon" style="width: 1rem; height: 1rem;">
+	                                    <use href="/rcs/ui5x/img/sprite.svg#x"></use>
+	                                </svg>
+	                            </button>
+	                        </div>
+	                    </div>
+	                `);
+	            }
+
+	            var modalOptions = {
+	                backdrop: true,
+	                keyboard: true
+	            };
+
+	            if (isStatic === true) {
+	                modalOptions.backdrop = 'static';
+	                modalOptions.keyboard = false;
+	            }
+
+	            var modalObject = new bootstrap.Modal($modalElement[0], modalOptions);
+
+	            $modalElement.on('hide.bs.modal', function() {
+	                if (document.activeElement) {
+	                    document.activeElement.blur();
+	                }
+	            });
+
+	            $modalElement.on('hidden.bs.modal', function() {
+	                modalObject.dispose();
+	                $modalElement.remove();
+
+	                if (opener && typeof opener.focus === 'function') {
+	                    opener.focus();
+	                }
+	            });
+
+	            modalObject.show();
+	        });
+	    },
+
+	    close : function(modalId) {
 	        var modalEl = $("#" + modalId);
 
 	        if (modalEl.length > 0) {
 	            var modalInstance = bootstrap.Modal.getInstance(modalEl[0]);
-
 	            if (modalInstance) {
 	                modalInstance.hide();
 	            }
 	        }
 	    }
-		
 	},
     dialog : {
 		open : function(panelId, panelTitle, url, pWidth, pHeight, closeOnBackdrop, postData){
