@@ -1,0 +1,341 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateDao">
+	<!--
+		FC10_GET_ITEM_ORIGIN_RATE 이관. 조회 기간 계산은 ItemOriginRateService 가 java.time 으로 수행해
+		문자열로 바인딩하고, 비활성 상태였던 MTM(공정간대체) 로직은 이관하지 않았다.
+	-->
+
+	<select id="selectMaterialCandidates" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceRow">
+		SELECT ML.ITEM_CODE                          AS itemCode
+		      ,ML.YYYYMM                             AS matYyyyMm
+		      ,ML.INITIAL_QTY                        AS matInitialQty
+		      ,(ML.INPUT_QTY + ML.EXTRA_INPUT_QTY)    AS matInputQty
+		      ,ML.AGING_PERIOD                        AS matAgingPeriod
+		      ,'BOM'                                  AS matItemType
+		FROM   MATERIAL_INV_BAL ML
+		WHERE  ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+		AND    ML.ITEM_CODE = #{c.itemCode}
+		AND    ML.DIVISION_CODE = #{c.divisionCode}
+		AND    ML.COMPANY_CODE = #{c.companyCode}
+		UNION ALL
+		(SELECT DISTINCT ML.ITEM_CODE                AS itemCode
+		      ,ML.YYYYMM                             AS matYyyyMm
+		      ,ML.INITIAL_QTY                        AS matInitialQty
+		      ,(ML.INPUT_QTY + ML.EXTRA_INPUT_QTY)    AS matInputQty
+		      ,ML.AGING_PERIOD                        AS matAgingPeriod
+		      ,'FUNGIBLE'                             AS matItemType
+		FROM   FUNGIBLE_MATERIALS FM
+		INNER  JOIN MATERIAL_INV_BAL ML
+		ON     ML.ITEM_CODE = FM.FUNGIBLE_ITEM_CODE
+		AND    ML.DIVISION_CODE = FM.DIVISION_CODE
+		AND    ML.COMPANY_CODE = FM.COMPANY_CODE
+		AND    ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+		WHERE  FM.ITEM_CODE = #{c.itemCode}
+		AND    FM.DIVISION_CODE = #{c.divisionCode}
+		AND    FM.COMPANY_CODE = #{c.companyCode}
+		AND    FM.DELETE_YN = 'N'
+		UNION
+		SELECT DISTINCT ML.ITEM_CODE                 AS itemCode
+		      ,ML.YYYYMM                             AS matYyyyMm
+		      ,ML.INITIAL_QTY                        AS matInitialQty
+		      ,(ML.INPUT_QTY + ML.EXTRA_INPUT_QTY)    AS matInputQty
+		      ,ML.AGING_PERIOD                        AS matAgingPeriod
+		      ,'FUNGIBLE'                             AS matItemType
+		FROM   FUNGIBLE_MATERIALS FM
+		INNER  JOIN MATERIAL_INV_BAL ML
+		ON     ML.ITEM_CODE = FM.ITEM_CODE
+		AND    ML.DIVISION_CODE = FM.DIVISION_CODE
+		AND    ML.COMPANY_CODE = FM.COMPANY_CODE
+		AND    ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN #{fromYyyyMm} AND #{toYyyyMm}
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+		WHERE  FM.FUNGIBLE_ITEM_CODE = #{c.itemCode}
+		AND    FM.DIVISION_CODE = #{c.divisionCode}
+		AND    FM.COMPANY_CODE = #{c.companyCode}
+		AND    FM.DELETE_YN = 'N')
+	</select>
+
+	
+	<!-- 재고 수불의 기초재고(INITIAL_QTY), 입고량(INPUT_QTY), 재고 경과기간(AGING_PERIOD) 조회
+		- BOM: 요청한 그 품목(itemCode) 자체의 재고 이력
+		- FUNGIBLE: 그 품목의 대체 가능 자재(FUNGIBLE_MATERIALS에 등록된, 서로 바꿔 쓸 수 있는 자재)들의 재고 이력
+		
+		[버그 수정 이력] FUNGIBLE(대체자재) 조인의 CASE/OR 조건이 PostgreSQL 플래너 회귀를 유발해(특정 파라미터 조합에서 약 10초) 상호 배타적인 두 케이스로 분리한 뒤 UNION(중복 제거)으로 합쳤다.
+	-->
+	<select id="selectMaterialCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialCandidatesBatchResult">
+		<!-- (BOM) 요청한 품목 자체의 재고 -->
+		SELECT V.REQ_DIVISION_CODE                   AS reqDivisionCode
+		      ,V.REQ_ITEM_CODE                       AS reqItemCode
+		      ,V.REQ_BASE_DATE                       AS reqBaseDate
+		      ,ML.ITEM_CODE                          AS itemCode
+		      ,ML.YYYYMM                             AS matYyyyMm
+		      ,ML.INITIAL_QTY                        AS matInitialQty
+		      ,(ML.INPUT_QTY + ML.EXTRA_INPUT_QTY)    AS matInputQty
+		      ,ML.AGING_PERIOD                        AS matAgingPeriod
+		      ,'BOM'                                  AS matItemType
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.divisionCode} AS DIVISION_CODE, #{r.itemCode} AS ITEM_CODE,
+		              #{r.fromYyyyMm} AS FROM_YYYYMM, #{r.toYyyyMm} AS TO_YYYYMM,
+		              #{r.divisionCode} AS REQ_DIVISION_CODE, #{r.itemCode} AS REQ_ITEM_CODE,
+		              #{r.baseDate} AS REQ_BASE_DATE
+		       </foreach>
+		       ) V
+		JOIN   MATERIAL_INV_BAL ML 
+		ON     ML.ITEM_CODE = V.ITEM_CODE
+		AND    ML.DIVISION_CODE = V.DIVISION_CODE
+		AND    ML.COMPANY_CODE = #{companyCode}
+		AND    ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN V.FROM_YYYYMM AND V.TO_YYYYMM
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+		UNION ALL
+		<!-- (FUNGIBLE) 정방향)-->
+		(SELECT DISTINCT V.REQ_DIVISION_CODE           AS reqDivisionCode
+		      ,V.REQ_ITEM_CODE                         AS reqItemCode
+		      ,V.REQ_BASE_DATE                         AS reqBaseDate
+		      ,ML.ITEM_CODE                            AS itemCode
+		      ,ML.YYYYMM                               AS matYyyyMm
+		      ,ML.INITIAL_QTY                          AS matInitialQty
+		      ,(ML.INPUT_QTY + ML.EXTRA_INPUT_QTY)      AS matInputQty
+		      ,ML.AGING_PERIOD                          AS matAgingPeriod
+		      ,'FUNGIBLE'                               AS matItemType
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.divisionCode} AS DIVISION_CODE, #{r.itemCode} AS ITEM_CODE,
+		              #{r.fromYyyyMm} AS FROM_YYYYMM, #{r.toYyyyMm} AS TO_YYYYMM,
+		              #{r.divisionCode} AS REQ_DIVISION_CODE, #{r.itemCode} AS REQ_ITEM_CODE,
+		              #{r.baseDate} AS REQ_BASE_DATE
+		       </foreach>
+		       ) V
+		INNER  JOIN FUNGIBLE_MATERIALS FM
+		ON     FM.ITEM_CODE = V.ITEM_CODE
+		AND    FM.DIVISION_CODE = V.DIVISION_CODE
+		AND    FM.COMPANY_CODE = #{companyCode}
+		AND    FM.DELETE_YN = 'N'
+		INNER  JOIN MATERIAL_INV_BAL ML
+		ON     ML.ITEM_CODE = FM.FUNGIBLE_ITEM_CODE
+		AND    ML.DIVISION_CODE = FM.DIVISION_CODE
+		AND    ML.COMPANY_CODE = FM.COMPANY_CODE
+		AND    ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN V.FROM_YYYYMM AND V.TO_YYYYMM
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0)
+		UNION
+		<!-- (FUNGIBLE) 역방향)-->
+		SELECT DISTINCT V.REQ_DIVISION_CODE             AS reqDivisionCode
+		      ,V.REQ_ITEM_CODE                         AS reqItemCode
+		      ,V.REQ_BASE_DATE                         AS reqBaseDate
+		      ,ML.ITEM_CODE                            AS itemCode
+		      ,ML.YYYYMM                               AS matYyyyMm
+		      ,ML.INITIAL_QTY                          AS matInitialQty
+		      ,(ML.INPUT_QTY + ML.EXTRA_INPUT_QTY)      AS matInputQty
+		      ,ML.AGING_PERIOD                          AS matAgingPeriod
+		      ,'FUNGIBLE'                               AS matItemType
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.divisionCode} AS DIVISION_CODE, #{r.itemCode} AS ITEM_CODE,
+		              #{r.fromYyyyMm} AS FROM_YYYYMM, #{r.toYyyyMm} AS TO_YYYYMM,
+		              #{r.divisionCode} AS REQ_DIVISION_CODE, #{r.itemCode} AS REQ_ITEM_CODE,
+		              #{r.baseDate} AS REQ_BASE_DATE
+		       </foreach>
+		       ) V
+		INNER  JOIN FUNGIBLE_MATERIALS FM
+		ON     FM.FUNGIBLE_ITEM_CODE = V.ITEM_CODE
+		AND    FM.DIVISION_CODE = V.DIVISION_CODE
+		AND    FM.COMPANY_CODE = #{companyCode}
+		AND    FM.DELETE_YN = 'N'
+		INNER  JOIN MATERIAL_INV_BAL ML
+		ON     ML.ITEM_CODE = FM.ITEM_CODE
+		AND    ML.DIVISION_CODE = FM.DIVISION_CODE
+		AND    ML.COMPANY_CODE = FM.COMPANY_CODE
+		AND    ML.YYYYMM = (SELECT MAX(ML2.YYYYMM)
+		                    FROM   MATERIAL_INV_BAL ML2
+		                    WHERE  ML2.YYYYMM BETWEEN V.FROM_YYYYMM AND V.TO_YYYYMM
+		                    AND    ML2.ITEM_CODE = ML.ITEM_CODE
+		                    AND    ML2.DIVISION_CODE = ML.DIVISION_CODE
+		                    AND    ML2.COMPANY_CODE = ML.COMPANY_CODE
+		                    AND    (ML2.ISSUE_QTY + ML2.EXTRA_ISSUE_QTY) > 0))
+	</select>
+
+	<select id="selectLastInputYyyyMm" resultType="string">
+		SELECT MAX(ML.YYYYMM)
+		FROM   MATERIAL_INV_BAL ML
+		WHERE  ML.YYYYMM &lt;= #{uptoYyyyMm}
+		AND    ML.ITEM_CODE = #{itemCode}
+		AND    ML.DIVISION_CODE = #{divisionCode}
+		AND    ML.COMPANY_CODE = #{companyCode}
+		AND    ML.INPUT_QTY > 0
+	</select>
+
+	<!-- selectLastInputYyyyMm 의 배치 버전. 매칭 자재 원장이 없는 조합은 GROUP BY 특성상 결과에 나타나지 않으므로, 호출자는 Map에 키가 없으면 NULL로 취급한다. -->
+	<select id="selectLastInputYyyyMmBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.LastInputYyyyMmResult">
+		SELECT ML.DIVISION_CODE               AS divisionCode
+		      ,ML.ITEM_CODE                   AS itemCode
+		      ,MAX(ML.YYYYMM)                 AS lastInputYyyyMm
+		FROM   MATERIAL_INV_BAL ML
+		WHERE  ML.COMPANY_CODE = #{companyCode}
+		AND    ML.YYYYMM &lt;= #{uptoYyyyMm}
+		AND    ML.INPUT_QTY > 0
+		AND    (ML.DIVISION_CODE, ML.ITEM_CODE) IN
+		       <foreach collection="items" item="i" open="(" separator="," close=")">
+		           (#{i.divisionCode}, #{i.itemCode})
+		       </foreach>
+		GROUP  BY ML.DIVISION_CODE, ML.ITEM_CODE
+	</select>
+
+	<select id="selectPurchaseLedgerSummary" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary">
+		SELECT COUNT(*)                          AS poCount
+		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0) AS warehousingAmountSum
+		FROM   PO_LEDGER PL
+		WHERE  PL.ITEM_CODE = #{itemCode}
+		AND    PL.COMPANY_CODE = #{companyCode}
+		AND    PL.WAREHOUSING_DATE BETWEEN #{fromDate} AND #{toDate}
+	</select>
+
+	<!--
+		selectPurchaseLedgerSummary 의 배치 버전. 여러 품목의 조회구간 조합 전체를 UNION ALL 파생 테이블(V)
+		로 던지고 GROUP BY 로 집계한다. NOT EXISTS 없는 단순 COUNT/SUM 집계라 V를 드라이빙하는 LEFT JOIN
+		만으로 충분하다 — 매칭 없는 조합도 COUNT=0,SUM=0 인 1행으로 집계된다.
+	-->
+	<select id="selectPurchaseLedgerSummaryBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryBatchResult">
+		SELECT V.ITEM_CODE                                    AS itemCode
+		      ,V.FROM_DATE                                    AS fromDate
+		      ,V.TO_DATE                                      AS toDate
+		      ,COUNT(PL.WAREHOUSING_AMOUNT)                    AS poCount
+		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0)         AS warehousingAmountSum
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.itemCode} AS ITEM_CODE, #{r.fromDate} AS FROM_DATE, #{r.toDate} AS TO_DATE
+		       </foreach>
+		       ) V
+		LEFT   OUTER JOIN PO_LEDGER PL
+		ON     PL.ITEM_CODE = V.ITEM_CODE
+		AND    PL.COMPANY_CODE = #{companyCode}
+		AND    PL.WAREHOUSING_DATE BETWEEN V.FROM_DATE AND V.TO_DATE
+		GROUP  BY V.ITEM_CODE, V.FROM_DATE, V.TO_DATE
+	</select>
+
+	<!-- 역내산 확인서(원산지확인서/증명서) 미수취 또는 요건 불충족 구매 건 집계. -->
+	<select id="selectNonCertifiedOriginSummary" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary">
+		SELECT COUNT(*)                          AS poCount
+		      ,COALESCE(SUM(PL.WAREHOUSING_AMOUNT), 0) AS warehousingAmountSum
+		FROM   PO_LEDGER PL
+		LEFT   OUTER JOIN COO_DIVISION_V D
+		ON     D.DIVISION_CODE = PL.DIVISION_CODE
+		AND    D.COMPANY_CODE = PL.COMPANY_CODE
+		WHERE  NOT EXISTS
+		       (SELECT 1
+		        FROM   EXT_COO_CERTIFY_MST ECM
+		        INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		        ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		        AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		        AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		        AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		        AND    ECD.FTA_CODE = #{ftaCode}
+		        AND    ECD.COO_YN = 'Y'
+		        WHERE  ECM.SUBMIT_STATUS = '4'
+		        AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		        AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		        AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		               OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		               OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                   AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
+		        AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		               OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
+		                   AND PL.SEQ = ECD.WAREHOUSING_SEQ))
+		        AND    ECD.ITEM_CODE = PL.ITEM_CODE)
+		AND    PL.ITEM_CODE = #{itemCode}
+		AND    PL.COMPANY_CODE = #{companyCode}
+		AND    PL.WAREHOUSING_DATE BETWEEN #{fromDate} AND #{toDate}
+	</select>
+
+	<!--
+		selectNonCertifiedOriginSummary 의 배치 버전. (itemCode,ftaCode,fromDate,toDate) 조합 전체를
+		UNION ALL 파생 테이블(V)로 던지고 GROUP BY 로 집계한다.
+	-->
+	<select id="selectNonCertifiedOriginSummaryBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.NonCertifiedOriginSummaryResult">
+		SELECT V.ITEM_CODE                                    AS itemCode
+		      ,V.FTA_CODE                                     AS ftaCode
+		      ,V.FROM_DATE                                    AS fromDate
+		      ,V.TO_DATE                                      AS toDate
+		      ,COUNT(CASE WHEN PL.ITEM_CODE IS NOT NULL AND NOT EXISTS
+		             (SELECT 1
+		              FROM   EXT_COO_CERTIFY_MST ECM
+		              INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		              ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		              AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		              AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		              AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		              AND    ECD.FTA_CODE = V.FTA_CODE
+		              AND    ECD.COO_YN = 'Y'
+		              WHERE  ECM.SUBMIT_STATUS = '4'
+		              AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		              AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		              AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                         AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
+		              AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		                     OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
+		                         AND PL.SEQ = ECD.WAREHOUSING_SEQ))
+		              AND    ECD.ITEM_CODE = PL.ITEM_CODE) THEN 1 END) AS poCount
+		      ,COALESCE(SUM(CASE WHEN PL.ITEM_CODE IS NOT NULL AND NOT EXISTS
+		             (SELECT 1
+		              FROM   EXT_COO_CERTIFY_MST ECM
+		              INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		              ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		              AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		              AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		              AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		              AND    ECD.FTA_CODE = V.FTA_CODE
+		              AND    ECD.COO_YN = 'Y'
+		              WHERE  ECM.SUBMIT_STATUS = '4'
+		              AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		              AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		              AND    ((ECM.DOCUMENT_TYPE = 'F' AND ECM.DIVISION_CODE = PL.DIVISION_CODE)
+		                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'A')
+		                     OR (ECM.DOCUMENT_TYPE = 'D' AND ECM.APPLY_TYPE = 'M'
+		                         AND ECM.DIVISION_CODE = D.COO_RECEIPT_DIVISION_CODE))
+		              AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		                     OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO
+		                         AND PL.SEQ = ECD.WAREHOUSING_SEQ))
+		              AND    ECD.ITEM_CODE = PL.ITEM_CODE) THEN PL.WAREHOUSING_AMOUNT END), 0) AS warehousingAmountSum
+		FROM   (
+		       <foreach collection="requests" item="r" separator="UNION ALL">
+		       SELECT #{r.itemCode} AS ITEM_CODE, #{r.ftaCode} AS FTA_CODE, #{r.fromDate} AS FROM_DATE, #{r.toDate} AS TO_DATE
+		       </foreach>
+		       ) V
+		LEFT   OUTER JOIN PO_LEDGER PL
+		ON     PL.ITEM_CODE = V.ITEM_CODE
+		AND    PL.COMPANY_CODE = #{companyCode}
+		AND    PL.WAREHOUSING_DATE BETWEEN V.FROM_DATE AND V.TO_DATE
+		LEFT   OUTER JOIN COO_DIVISION_V D
+		ON     D.DIVISION_CODE = PL.DIVISION_CODE
+		AND    D.COMPANY_CODE = PL.COMPANY_CODE
+		GROUP  BY V.ITEM_CODE, V.FTA_CODE, V.FROM_DATE, V.TO_DATE
+	</select>
+</mapper>
