@@ -21,10 +21,10 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 import com.kpmg.kdb.web.origindeterminationengine.ItemNationService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ItemNationCriteria;
-import com.kpmg.kdb.web.origindeterminationengine.OriginDecider;
 
 /**
- * 원산지 판정 메인 로직 (레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION).
+ * "PKG99_COO_DECISION.COO_DECISION" 단계 (레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION).
+ * {@link OriginDecisionPipeline} 이 사용한다.
  *
  * 매출(SALES_NO) 1건에 대해 판정대상 FTA_CODE 후보를 순회하고, 각 후보마다 적용 가능한 룰을
  * 순회하며 예외판정/세번변경기준/부가가치기준을 검사해 원산지 판정결과를 산출한다. 상품
@@ -32,7 +32,7 @@ import com.kpmg.kdb.web.origindeterminationengine.OriginDecider;
  * RCEP(PKRRC)는 최대기여국 산정이 추가로 필요해 별도 처리한다.
  */
 @Service
-public class OriginDeterminationExecutionService extends GeneralService implements OriginDecider {
+public class OriginDeterminationExecutionService extends GeneralService {
 
 	/** APTA 신규 PSR 시행 기준일 */
 	private static final String APTA_STANDARD_DATE = "20180701";
@@ -55,7 +55,6 @@ public class OriginDeterminationExecutionService extends GeneralService implemen
 	 * @param productCodes 판정 대상 제품 코드. null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면
 	 *                      그 제품들만(개별 판정) 대상으로 한다.
 	 */
-	@Override
 	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
 		try {

@@ -24,11 +24,11 @@ public class OriginDecisionPipelineFactory extends GeneralService {
 	@Autowired
 	private AggregatedVirtualSalesGenerator aggregatedVirtualSalesGenerator;
 	@Autowired
-	private FcrCreator fcrCreator;
+	private CreateFcrService fcrCreator;
 	@Autowired
-	private OriginDecider originDecider;
+	private OriginDeterminationExecutionService originDecider;
 	@Autowired
-	private DecisionStatusUpdater statusUpdater;
+	private SalesDecisionStatusUpdater statusUpdater;
 	@Autowired
 	private CompanyDecisionFlagsService companyDecisionFlagsService;
 
