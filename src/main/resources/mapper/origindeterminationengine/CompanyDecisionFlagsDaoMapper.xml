@@ -1,0 +1,11 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.CompanyDecisionFlagsDao">
+
+	<select id="selectCompanyDecisionFlags" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.CompanyDecisionFlags">
+		SELECT COALESCE(MATERIAL_USE_YN, 'N')      AS materialUseYn
+		      ,COALESCE(CTC_DECISION_ONLY_YN, 'N') AS ctcDecisionOnlyYn
+		FROM   COMPANY
+		WHERE  COMPANY_CODE = #{companyCode}
+	</select>
+</mapper>

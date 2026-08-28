@@ -1,0 +1,135 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao">
+
+	<!--
+		CREATE_FCR "3-5. FCR MST UPDATE(상품 원산지 판정)" 이관.
+	-->
+	<update id="mergeFcrMstOriginDetermination">
+		MERGE INTO FCR_MST FM
+		USING (SELECT FM.FTA_CODE
+		             ,FM.SALES_NO
+		             ,FM.SALES_SEQ
+		             ,FM.DIVISION_CODE
+		             ,FM.COMPANY_CODE
+		             ,VRC.RULE_CODE AS VENDOR_RULE_CONTENTS
+		             ,FRU.RULE_CONTENTS AS RULE_CONTENTS
+		             ,CASE WHEN FD.OUTAREA_QTY = 0 THEN 'Y' ELSE 'N' END AS COO_YN
+		       FROM   FCR_MST FM
+		       INNER  JOIN FCR_DTL FD
+		       ON     FD.FTA_CODE = FM.FTA_CODE
+		       AND    FD.SALES_NO = FM.SALES_NO
+		       AND    FD.SALES_SEQ = FM.SALES_SEQ
+		       AND    FD.DIVISION_CODE = FM.DIVISION_CODE
+		       AND    FD.COMPANY_CODE = FM.COMPANY_CODE
+		       INNER  JOIN ITEM_MST IM
+		       ON     IM.ITEM_CODE = FM.PRODUCT_CODE
+		       AND    IM.COMPANY_CODE = FM.COMPANY_CODE
+		       LEFT   JOIN LATERAL (SELECT ECD.RULE_CODE
+		                            FROM   PO_LEDGER PL
+		                            INNER  JOIN EXT_COO_CERTIFY_MST ECM
+		                            ON     ECM.COMPANY_CODE = PL.COMPANY_CODE
+		                            AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		                            AND    ECM.SUBMIT_STATUS = '4'
+		                            AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND
+		                                     PL.WAREHOUSING_DATE BETWEEN ECM.APPLY_DATE AND ECM.END_DATE) OR
+		                                    (ECM.COO_CERTIFY_TYPE = 'N' AND PL.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO))
+		                            LEFT OUTER JOIN EXT_COO_CERTIFY_DTL ECD
+		                            ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		                            AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		                            AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		                            AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		                            AND    ECD.ITEM_CODE = PL.ITEM_CODE
+		                            AND    #{invoiceDate} BETWEEN ECD.APPLY_DATE AND ECD.END_DATE
+		                            WHERE  PL.COMPANY_CODE = #{companyCode}
+		                            AND    PL.ITEM_CODE = COALESCE(IM.ITEM_CODE_ANOTHER, FM.PRODUCT_CODE)
+		                            AND    ECD.FTA_CODE = FM.FTA_CODE
+		                            ORDER  BY PL.WAREHOUSING_DATE DESC, PL.DIVISION_CODE DESC
+		                            FETCH FIRST 1 ROW ONLY) VRC ON TRUE
+		       LEFT   JOIN LATERAL (SELECT RULE_CONTENTS
+		                            FROM   FTA_RULE FR
+		                            WHERE  FR.HS_CODE = SUBSTRING(FM.HS_CODE FROM 1 FOR LENGTH(FR.HS_CODE))
+		                            AND    FR.FTA_CODE = FM.FTA_CODE
+		                            AND    HS_CODE_SUB_CATEGORY = '1'
+		                            FETCH FIRST 1 ROW ONLY) FRU ON TRUE
+		       WHERE  FM.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
+		       AND    FM.SALES_NO = #{salesNo}
+		       AND    FM.DIVISION_CODE = #{divisionCode}
+		       AND    FM.COMPANY_CODE = #{companyCode}
+		       <if test="productCodes != null and !productCodes.isEmpty()">
+		       AND    FM.PRODUCT_CODE IN
+		              <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		                  #{productCode}
+		              </foreach>
+		       </if>) SUB
+		ON (FM.FTA_CODE = SUB.FTA_CODE AND FM.SALES_NO = SUB.SALES_NO AND FM.SALES_SEQ = SUB.SALES_SEQ
+		    AND FM.DIVISION_CODE = SUB.DIVISION_CODE AND FM.COMPANY_CODE = SUB.COMPANY_CODE)
+		WHEN MATCHED THEN
+			UPDATE
+			SET    FTA_COO_YN     = SUB.COO_YN
+			      ,COMPANY_COO_YN = SUB.COO_YN
+			      ,RULE_CONTENTS  = COALESCE(SUB.VENDOR_RULE_CONTENTS, SUB.RULE_CONTENTS)
+	</update>
+
+	<!--
+		CREATE_FCR "3-6. FCR RESULT UPDATE(상품 원산지 판정)" 이관. 
+	-->
+	<insert id="insertFcrResultForCommodities">
+		INSERT INTO FCR_RESULT
+			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,
+			 RVC_RATE, CTC_YN, COMPANY_RVC_YN, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE,
+			 CREATE_BY, UPDATE_DATE, UPDATE_BY)
+		SELECT NS.BASE_SEQ + ROW_NUMBER() OVER ()
+		      ,FM.SALES_NO
+		      ,FM.SALES_SEQ
+		      ,FM.FTA_CODE
+		      ,FM.DIVISION_CODE
+		      ,FM.COMPANY_CODE
+		      ,FM.HS_CODE
+		      ,FM.PRODUCT_CODE
+		      ,FM.STANDARD
+		      ,-1                AS RULE_SEQ
+		      ,FM.RULE_CONTENTS AS RULE_CODE
+		      ,FM.FTA_COO_YN
+		      ,FM.COMPANY_COO_YN
+		      ,NULL              AS BUFFER_OPTION
+		      ,NULL              AS DE_MINIMIS_RATE
+		      ,NULL              AS RVC_RATE
+		      ,CASE WHEN (SELECT COUNT(1) FROM FTA_RULE X
+		                  WHERE X.HS_CODE IN (SUBSTRING(FM.HS_CODE FROM 1 FOR 2), SUBSTRING(FM.HS_CODE FROM 1 FOR 4), FM.HS_CODE)
+		                  AND X.FTA_CODE = FM.FTA_CODE AND X.CTH_RULE IS NOT NULL) > 0
+		                 AND FM.COMPANY_COO_YN = 'Y' THEN 'Y' ELSE 'N' END AS CTC_YN
+		      ,CASE WHEN (SELECT COUNT(1) FROM FTA_RULE X
+		                  WHERE X.HS_CODE IN (SUBSTRING(FM.HS_CODE FROM 1 FOR 2), SUBSTRING(FM.HS_CODE FROM 1 FOR 4), FM.HS_CODE)
+		                  AND X.FTA_CODE = FM.FTA_CODE
+		                  AND (X.BD_RULE IS NOT NULL OR X.BU_RULE IS NOT NULL OR X.NC_RULE IS NOT NULL OR X.MC_RULE IS NOT NULL)) > 0
+		                 AND FM.COMPANY_COO_YN = 'Y'
+		                 AND POSITION('+' IN FM.RULE_CONTENTS) > 0 THEN 'Y' ELSE 'N' END AS COMPANY_RVC_YN
+		      ,'N'               AS STATUS
+		      ,NULL              AS ERROR_CODE
+		      ,NULL              AS ERROR_MSG
+		      ,'N'               AS DELETE_YN
+		      ,CURRENT_TIMESTAMP AS CREATE_DATE
+		      ,#{createBy}       AS CREATE_BY
+		      ,CURRENT_TIMESTAMP AS UPDATE_DATE
+		      ,#{createBy}       AS UPDATE_BY
+		FROM   FCR_MST FM
+		INNER  JOIN SALES_DTL SD
+		ON     SD.SALES_NO = FM.SALES_NO
+		AND    SD.SALES_SEQ = FM.SALES_SEQ
+		AND    SD.DIVISION_CODE = FM.DIVISION_CODE
+		AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		CROSS  JOIN (SELECT COALESCE(MAX(SEQ), 0) AS BASE_SEQ FROM FCR_RESULT) NS
+		WHERE  SD.SALES_NO = #{salesNo}
+		AND    SD.DIVISION_CODE = #{divisionCode}
+		AND    SD.COMPANY_CODE = #{companyCode}
+		AND    SD.PRODUCT_ASSETS_TYPE IN ('M', 'R', 'B')
+		<if test="productCodes != null and !productCodes.isEmpty()">
+		AND    SD.PRODUCT_CODE IN
+		       <foreach collection="productCodes" item="productCode" open="(" separator="," close=")">
+		           #{productCode}
+		       </foreach>
+		</if>
+	</insert>
+</mapper>
