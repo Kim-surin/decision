@@ -1,11 +1,20 @@
 package com.kpmg.kdb.web.origindeterminationengine;
 
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.YYYYMM;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.YYYYMMDD;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.earliest;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.firstDay;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.firstDayMinusMonths;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.firstDayMinusOneDay;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.lastDay;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.lastInputYyyyMmKey;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.nz;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.plusDay01;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,8 +53,6 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryReque
 @Service
 public class ItemOriginRateService extends GeneralService {
 
-	private static final DateTimeFormatter YYYYMM = DateTimeFormatter.ofPattern("yyyyMM");
-	private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.BASIC_ISO_DATE;
 	/** 조회 대상 기간(개월 수). 원본 V_MAX_MONTHS 고정값 */
 	private static final int MAX_MONTHS = 6;
 	private static final int BATCH_CHUNK_SIZE = 500;
@@ -459,44 +466,6 @@ public class ItemOriginRateService extends GeneralService {
 
 	private static String poSummaryKey(String companyCode, String itemCode, String fromDate, String toDate) {
 		return String.join("|", nz(companyCode), nz(itemCode), nz(fromDate), nz(toDate));
-	}
-
-	private static String lastInputYyyyMmKey(String companyCode, String divisionCode, String itemCode, String uptoYyyyMm) {
-		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(uptoYyyyMm));
-	}
-
-	private static String nz(String value) {
-		return value == null ? "" : value;
-	}
-
-	private static String firstDay(String yyyyMm) {
-		return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).format(YYYYMMDD);
-	}
-
-	/** 자재 재고회전 기간이 비정상적으로 크면 연산 결과가 표현 범위를 벗어날 수 있어 최소값으로 클램프한다. */
-	private static String firstDayMinusMonths(String yyyyMm, int months) {
-		try {
-			return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).minusMonths(months).format(YYYYMMDD);
-		} catch (DateTimeException e) {
-			return "00010101";
-		}
-	}
-
-	private static String firstDayMinusOneDay(String yyyyMm) {
-		return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).minusDays(1).format(YYYYMMDD);
-	}
-
-	private static String lastDay(String yyyyMm) {
-		return YearMonth.parse(yyyyMm, YYYYMM).atEndOfMonth().format(YYYYMMDD);
-	}
-
-	/** 최근 입고월이 없으면(NULL) '01'만 남는 원본(Oracle NULL||문자열) 동작을 그대로 보존한다. */
-	private static String plusDay01(String yyyyMm) {
-		return (yyyyMm == null ? "" : yyyyMm) + "01";
-	}
-
-	private static String earliest(String a, String b) {
-		return a.compareTo(b) < 0 ? a : b;
 	}
 
 	/** buildLookupPlan 결과: 역외(0)로 확정됐는지, 아니면 구매원장 조회가 필요한 자재별 후보 목록인지. */

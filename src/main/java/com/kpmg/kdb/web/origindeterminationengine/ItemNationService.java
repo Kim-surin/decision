@@ -1,8 +1,18 @@
 package com.kpmg.kdb.web.origindeterminationengine;
 
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.YYYYMM;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.YYYYMMDD;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.earliest;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.firstDay;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.firstDayMinusMonths;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.firstDayMinusOneDay;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.lastDay;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.lastInputYyyyMmKey;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.nz;
+import static com.kpmg.kdb.web.origindeterminationengine.MaterialLookupPeriodSupport.plusDay01;
+
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,8 +43,6 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceRow;
 @Service
 public class ItemNationService extends GeneralService {
 
-	private static final DateTimeFormatter YYYYMM = DateTimeFormatter.ofPattern("yyyyMM");
-	private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.BASIC_ISO_DATE;
 	private static final int MAX_MONTHS = 6;
 	private static final int BATCH_CHUNK_SIZE = 500;
 
@@ -292,36 +300,4 @@ public class ItemNationService extends GeneralService {
 		}
 	}
 
-	private static String lastInputYyyyMmKey(String companyCode, String divisionCode, String itemCode, String uptoYyyyMm) {
-		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(uptoYyyyMm));
-	}
-
-	private static String nz(String value) {
-		return value == null ? "" : value;
-	}
-
-	private static String firstDay(String yyyyMm) {
-		return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).format(YYYYMMDD);
-	}
-
-	private static String firstDayMinusMonths(String yyyyMm, int months) {
-		return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).minusMonths(months).format(YYYYMMDD);
-	}
-
-	private static String firstDayMinusOneDay(String yyyyMm) {
-		return YearMonth.parse(yyyyMm, YYYYMM).atDay(1).minusDays(1).format(YYYYMMDD);
-	}
-
-	private static String lastDay(String yyyyMm) {
-		return YearMonth.parse(yyyyMm, YYYYMM).atEndOfMonth().format(YYYYMMDD);
-	}
-
-	/** 최근 입고월이 없으면(NULL) '01'만 남는 원본(Oracle NULL||문자열) 동작을 그대로 보존한다. */
-	private static String plusDay01(String yyyyMm) {
-		return (yyyyMm == null ? "" : yyyyMm) + "01";
-	}
-
-	private static String earliest(String a, String b) {
-		return a.compareTo(b) < 0 ? a : b;
-	}
 }
