@@ -62,24 +62,59 @@ public class IssueCoverController extends GenericController {
 	 * @return View Path String
 	 */
 	@RequestMapping(value = "/issuecover/CooIssueCover")
-	public String issuecover000_view(Model model, HttpSession session) {
+	public String issueCover_view(Model model, HttpSession session) {
 		return "issuecover/cooIssueCover";
 	}
 	
+	
 	/**
-	 * FTA C/O 발급 > 확인서 발급 현황
+	 * FTA C/O 발급 > 확인서 발급 > 확인서 발급버튼 클릭 팝업
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/issuecover/cooIssueCoverForm")
+	public String cooIssueCoverForm_view(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);
+		return "issuecover/cooIssueCoverForm";
+	}
+	
+	
+	/**
+	 * FTA C/O 발급 > 확인서 발급 > 확인서 상세
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping(value = "/issuecover/cooIssueCoverDetail")
+	public String cooIssueCoverDetail_view(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);
+		return "issuecover/cooIssueCoverDetail";
+	}
+	
+	
+	/**
+	 * FTA C/O 발급 > 확인서 발급 > 확인서 상세 > 확인서 수정 발급 (대상 데이터 조회 포함)
 	 * @param model
 	 * @param session
 	 * @return
 	 */
-	@RequestMapping(value = "/issuecover/CooIssueStatus")
-	public String issuecover001_view(Model model, HttpSession session) {
-		return "issuecover/cooIssueStatus";
+	@RequestMapping(value = "/issuecover/cooIssueCoverModifyForm")
+	public String cooIssueCoverModifyForm_view(@RequestParam Map param, Model model, HttpSession session) {
+		model.addAllAttributes(param);
+		Map targetMap = service.selectCooFcrMstOne(super.extendsMap(param));
+		
+		model.addAttribute("sales_no", targetMap.get("sales_no"));
+		model.addAttribute("sales_seq", targetMap.get("sales_seq"));
+		model.addAttribute("customer_code", targetMap.get("customer_code"));
+		model.addAttribute("invoice_date", targetMap.get("invoice_date"));
+		
+		return "issuecover/cooIssueCoverModifyForm";
 	}
 	
 	
 	/**
-	 * 회사관리 - 왼쪽 트리 목록 조회
+	 * FTA C/O 발급 > 확인서 발급 > 검색버튼
 	 * 
 	 * @param param
 	 * @return
@@ -100,6 +135,162 @@ public class IssueCoverController extends GenericController {
 		}
 
 		logger.debug("##### Request Type result Class : " + "retrieveCooIssueCoverList END");
+		
+		return result;
+	}
+	
+	/**
+	 * FTA C/O 발급 > 확인서 발급 > 확인서발급 팝업 > 고객사 정보 조회
+	 * 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/issuecover/retrieveCooIssueTargetCustomerInfo")
+	@ResponseBody
+	public Result retrieveCooIssueTargetCustomerInfo(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveCooIssueTargetCustomerInfo ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveCooIssueTargetCustomerInfo(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveCooIssueTargetCustomerInfo END");
+		
+		return result;
+	}
+	
+	/**
+	 * FTA C/O 발급 > 확인서 발급 > 확인서발급 팝업 > 발급대상 그리드 데이터 조회
+	 * 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/issuecover/retrieveCooIssueTargetList")
+	@ResponseBody
+	public Result retrieveCooIssueTargetList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveCooIssueTargetList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveCooIssueTargetList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveCooIssueTargetList END");
+		
+		return result;
+	}
+	
+	
+	/**
+	 * 포괄 확인서 발급 > 중복체크
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/issuecover/checkDuplicateCertifyNo")
+	@ResponseBody
+	public Result checkDuplicateCertifyNo(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "checkDuplicateCertifyNo ");
+		Result result = new Result();
+		try {
+			
+			result = service.checkDuplicateCertifyNo(super.extendsMap(param));
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "checkDuplicateCertifyNo END");
+		
+		return result;
+	}
+	
+	/**
+	 * 포괄 확인서 발급 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/issuecover/confirmIssue")
+	@ResponseBody
+	public Result retrieveCooIssㅇueTargetList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "confirmIssue ");
+		Result result = new Result();
+		try {
+			
+			String cooCertifyNo = service.confirmIssue(super.extendsMap(param));
+			result.setValue(cooCertifyNo);
+			result.setSuccess(true);
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+		
+		logger.debug("##### Request Type result Class : " + "confirmIssue END");
+		
+		return result;
+	}
+
+	
+	/**
+	 * FTA C/O 발급 > 확인서 발급 > 확인서상세 팝업 > 그리드 데이터 조회
+	 * 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/issuecover/retrieveIssuedCoverList")
+	@ResponseBody
+	public Result retrieveIssuedCoverList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveIssuedCoverList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveIssuedCoverList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveIssuedCoverList END");
+		
+		return result;
+	}
+	
+	/**
+	 * 수정발급 대상 데이터 조회 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/issuecover/retrieveCooModifyCoverList")
+	@ResponseBody
+	public Result retrieveCooModifyCoverList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveCooModifyCoverList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveCooModifyCoverList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveCooModifyCoverList END");
 		
 		return result;
 	}
