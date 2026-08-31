@@ -214,19 +214,17 @@
 	
 	
 	        this.setDefaultValue = function() {
-	            /* 부모창 체크된 아이템 ArrayList*/
-	            var checkedArray = KpackageOBJ.auiGrid.getSelectedItems(ISSUE_TARGET.grid_ISSUE_TARGET_01);
-	            if (!checkedArray || checkedArray.length === 0) {
-	                $("#customer_name").text("N/A");
-	                $("#officer_name").text("N/A");
-	                $("#tel_no").text("N/A");
-	                $("#email").text("N/A");
-	                $("#address").text("N/A");
-	                return;
-	            }
+	        	
+	            /* init */
+	        	$("#customer_name").text("N/A");
+                $("#officer_name").text("N/A");
+                $("#tel_no").text("N/A");
+                $("#email").text("N/A");
+                $("#address").text("N/A");
 	
 	            /* 상단 고객사 정보 조회 */
-	            var params = checkedArray[0]["item"];
+	            //var params = checkedArray[0]["item"];
+	            var params = KpackageOBJ.data.makePostData("COO_ISSUE_DETAIL_POPUP-form");    
 	
 	            KpackageOBJ.ajax.doSubmit("/issuecover/retrieveCooIssueTargetCustomerInfo", params, (result) => {
 	                var value = result.value || {};
@@ -240,11 +238,6 @@
 	            });
 	
 	            /* 확인서 발급 데이터 목록 */
-	            
-	            var params = {
-	            			coo_certify_no : KpackageOBJ.object.getFormValue("COO_ISSUE_DETAIL_POPUP-form", "coo_certify_no")
-	            };
-	
 	            KpackageOBJ.auiGrid.retrieve(
 	                COO_ISSUE_DETAIL_POPUP.grid_COO_ISSUE_DETAIL_POPUP_01,
 	                "/issuecover/retrieveIssuedCoverList",
