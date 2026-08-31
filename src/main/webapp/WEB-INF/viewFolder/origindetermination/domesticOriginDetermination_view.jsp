@@ -232,6 +232,13 @@
 						
 							// 셀클릭 이벤트 바인딩
 							AUIGrid.bind(DOMESTIC_ORIGIN_DETERMINATION_GRID, "cellClick", function (event) {
+								// 원산지확인서 발급번호 셀 클릭 시 확인서 상세 화면으로 이동(행 체크 토글 없이)
+								if (event.dataField === "coo_certify_no" && event.value) {
+									var getParam = "?coo_certify_no=" + encodeURIComponent(event.item.coo_certify_no) + "&customer_code=" + encodeURIComponent(event.item.customer_code);
+									KpackageOBJ.sidepanel.open('cooIssueDetailPopup', '/issuecover/cooIssueCoverDetail' + getParam, '1300px', true);
+									return;
+								}
+
 								const rowIndex = event.rowIndex;
 
 								// 이미 체크 선택되었는지 검사
