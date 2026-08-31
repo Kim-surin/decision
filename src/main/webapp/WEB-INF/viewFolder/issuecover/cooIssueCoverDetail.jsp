@@ -203,7 +203,7 @@
     </div>
 
 	<script>
-	    var COO_ISSUE_DETAIL_POPUP = new function() {
+	    var COO_ISSUE_DETAIL_POPUP = new function() { 
 	
 	        this.grid_COO_ISSUE_DETAIL_POPUP_01 = null;
 	
