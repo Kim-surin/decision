@@ -224,7 +224,6 @@
 				self.selectDetailLine(self.buildKey(event.item.sales_no, event.item.sales_seq));
 			});
 
-			// 단가기준/BOM 추적/역내전환전략은 API가 아직 제공하지 않아 빈 칸으로 남는다 
 			var columnLayoutResult = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
 				{dataField: "hs_code", headerText: "HS CODE", width: 110},
@@ -243,8 +242,32 @@
 					    if (value === null || value === undefined || value === "") return "";
 					    return Number(value).toFixed(0) + "%"; 
 					}},
-				{dataField: "bom_trace", headerText: "BOM 추적", width: 100},
-				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 100}
+				{dataField: "bom_trace", headerText: "BOM 추적", width: 100, 
+					renderer: {
+						type: 'IconRenderer',
+						iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
+						iconHeight: 16,
+						iconFunction: function (rowIndex, columnIndex, value, item) {
+						 	return "/rcs/auigrid/images/icon-search.png";
+						},
+						 onClick: (e) => {
+							ORIGIN_DETERMINATION_DETAIL_POPUP.getBomTraceList();
+						},
+					}
+				},
+				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 100, 				
+					renderer: {
+					    type: 'IconRenderer',
+					    iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
+					    iconHeight: 16,
+					    iconFunction: function (rowIndex, columnIndex, value, item) {
+					    	return "/rcs/auigrid/images/icon-search.png";
+					    },
+					    onClick: (e) => {
+					    	ORIGIN_DETERMINATION_DETAIL_POPUP.getConversionStrategy();
+					    },
+					}
+				}
 			];
 			var gridPropsResult = {enableFilter: true };
 			this.grid_Result = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult, "");
@@ -750,6 +773,14 @@
 		// 좌측 목록(lineItems)에서 현재 선택된(selectedLineKey) 라인을 찾음
 		this.findSelectedRow = function() {
 			return this.findRowByKey(this.selectedLineKey);
+		};
+		
+		this.getBomTraceList = function () {
+		
+		};
+		
+		this.getConversionStrategy = function () {
+				
 		};
 	};
 
