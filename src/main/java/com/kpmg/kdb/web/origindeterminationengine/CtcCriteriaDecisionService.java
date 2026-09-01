@@ -124,7 +124,7 @@ public class CtcCriteriaDecisionService {
 				rec.setFtaDeMinimisYn("N");
 				rec.setCompanyDeMinimisYn("N");
 				rec.setStatus("E");
-				rec.setErrorCode("DE_MINIMIS01");
+				rec.setErrorCode("MSG_PRODUCT_WEIGHT_NOT_FOUND");
 				rec.setErrorMsg("Product Weight Not found!!");
 			} else {
 				applyDeMinimisResult(ctx, rec, weightRate, frData);

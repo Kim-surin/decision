@@ -191,7 +191,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
-	/** loadBuffer 실패 시 이 FTA_CODE 후보를 판정오류로 명시 처리. ctx.errorCode/errorMsg는 loadBuffer가 이미 채워뒀다(GET_BUFFER). */
+	/** loadBuffer 실패 시 이 FTA_CODE 후보를 판정오류로 명시 처리. ctx.errorCode/errorMsg는 loadBuffer가 이미 채워뒀다(MSG_FAILED_LOAD_BUFFER_RATE). */
 	private void insertBufferFailureResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		rec.setSalesNo(fmData.getSalesNo());
