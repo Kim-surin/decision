@@ -22,6 +22,7 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultD
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailDetailResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailMaterialResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailReasonResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResponseDto;
@@ -137,9 +138,10 @@ public class OriginDeterminationService extends GeneralService {
 		return result;
 	}
 
-	// 판정실패(status=5) 건의 실패 사유(협정/룰별)와, 그 사유(FTA_CODE)별 상세내용(룰 전체 처리결과)을 한 번에 조회.
-	// retrieveOriginDeterminationDetailResultList와 동일한 패턴 - 상세내용은 fta_code마다 별도 호출하지
-	// 않고 화면에서 매핑해 바로 보여준다.
+	// 판정실패(status=5) 건의 실패 사유(협정/룰별)와, 그 사유(FTA_CODE)별 상세내용(룰 전체 처리결과)/원재료
+	// 목록(HS코드 누락·금액 0 사유일 때 화면에서 보여줌)을 한 번에 조회.
+	// retrieveOriginDeterminationDetailResultList와 동일한 패턴 - 상세내용/원재료 목록은 fta_code마다
+	// 별도 호출하지 않고 화면에서 매핑해 바로 보여준다.
 	public Result retrieveOriginDeterminationFailList(OriginDeterminationDetailResultRequestDto param) throws Exception {
 		Result result = new Result();
 
@@ -147,10 +149,12 @@ public class OriginDeterminationService extends GeneralService {
 			OriginDeterminationDao dao = sqlSession.getMapper(OriginDeterminationDao.class);
 			List<OriginDeterminationFailReasonResponseDto> reasonList = dao.retrieveOriginDeterminationFailReasonList(param);
 			List<OriginDeterminationFailDetailResponseDto> detailList = dao.retrieveOriginDeterminationFailDetailList(param);
+			List<OriginDeterminationFailMaterialResponseDto> materialList = dao.retrieveOriginDeterminationFailMaterialList(param);
 
 			Map<String, Object> value = new LinkedHashMap<>();
 			value.put("reasonList", reasonList);
 			value.put("detailList", detailList);
+			value.put("materialList", materialList);
 
 			result.setValue(value);
 			result.setSuccess(true);

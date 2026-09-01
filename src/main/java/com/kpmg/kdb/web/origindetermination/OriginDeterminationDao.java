@@ -9,6 +9,7 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultD
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailDetailResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailMaterialResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailReasonResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResponseDto;
@@ -27,4 +28,7 @@ public interface OriginDeterminationDao {
 	public List<OriginDeterminationFailReasonResponseDto> retrieveOriginDeterminationFailReasonList(OriginDeterminationDetailResultRequestDto param);
 	// 실패 사유(FTA_CODE)별로 그 협정에 걸린 룰 전체의 처리결과 - 프론트에서 fta_code로 매핑해 사용
 	public List<OriginDeterminationFailDetailResponseDto> retrieveOriginDeterminationFailDetailList(OriginDeterminationDetailResultRequestDto param);
+	// TXT_HSCODE_INCLUDE_MISSING/MSG_FAILED_DECISION_QTY_AMOUNT 사유일 때 보여줄 원재료(FCR_DTL) 목록 -
+	// 프론트에서 fta_code로 매핑해 사용
+	public List<OriginDeterminationFailMaterialResponseDto> retrieveOriginDeterminationFailMaterialList(OriginDeterminationDetailResultRequestDto param);
 }

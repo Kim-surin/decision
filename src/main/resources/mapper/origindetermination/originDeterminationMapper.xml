@@ -233,6 +233,30 @@
        ORDER BY FR.FTA_CODE, FR.RULE_SEQ
     </select>
 
+    <!-- 실패 사유가 TXT_HSCODE_INCLUDE_MISSING(HS코드 누락)/MSG_FAILED_DECISION_QTY_AMOUNT(금액 0)일 때
+         원인이 된 원재료(FCR_DTL)를 보여주기 위한 목록 - originDeterminationFailList 응답에 함께 내려주고,
+         화면에서 실패 사유의 FTA_CODE로 이 목록을 매핑해 보여준다 -->
+    <select id="retrieveOriginDeterminationFailMaterialList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+       SELECT FD.FTA_CODE
+       		, FD.ITEM_CODE
+       		, IM.ITEM_NAME
+       		, FD.HS_CODE
+       		, FD.REQUIREMENT_QTY
+       		, FD.INPUT_AMOUNT
+       		, FD.INAREA_QTY
+       		, FD.INAREA_AMOUNT
+       		, FD.OUTAREA_QTY
+       		, FD.OUTAREA_AMOUNT
+       FROM FCR_DTL FD
+       LEFT JOIN ITEM_MST IM
+       		ON IM.COMPANY_CODE = FD.COMPANY_CODE
+       		AND IM.ITEM_CODE = FD.ITEM_CODE
+       WHERE FD.COMPANY_CODE = #{company_code}
+       AND FD.SALES_NO = #{sales_no}
+       AND FD.SALES_SEQ = #{sales_seq}
+       ORDER BY FD.FTA_CODE, FD.ITEM_CODE
+    </select>
+
     <select id="retrieveExportOriginDetermination" parameterType="HashMap" resultType="HashMap">
        SELECT SM.SALES_NO
        		, SM.INVOICE_DATE

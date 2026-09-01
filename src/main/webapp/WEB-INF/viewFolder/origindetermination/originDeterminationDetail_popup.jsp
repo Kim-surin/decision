@@ -102,6 +102,9 @@
 
 					<h6 class="mt-4 mb-3">판정 실패 상세내용</h6>
 					<div id="oAuiGrid_originDetermination_popup_failDetail" style="width:100%;height:180px;"></div>
+					<!-- TXT_HSCODE_INCLUDE_MISSING/MSG_FAILED_DECISION_QTY_AMOUNT 사유일 때는 위 대신 이 원재료
+					     목록을 보여준다(selectFailReasonRow 참고) -->
+					<div id="oAuiGrid_originDetermination_popup_failMaterial" style="width:100%;height:180px;"></div>
 				</div>
 			</div>
 		</div>
@@ -129,6 +132,11 @@
 		this.currentDetailList = [];
 		// 현재 선택된 판정 품목의 판정 실패 상세내용(협정 내 룰 전체) 목록 - fta_code로 필터링해서 사용
 		this.currentFailDetailList = [];
+		// 현재 선택된 판정 품목의 원재료(FCR_DTL) 전체 목록 - HS코드 누락/금액 0 사유일 때 fta_code로
+		// 필터링해서 판정 실패 상세내용 자리에 대신 보여준다
+		this.currentFailMaterialList = [];
+		// 판정 실패 상세내용 대신 원재료 목록을 보여줘야 하는 실패 사유(ERROR_CODE)
+		this.MATERIAL_DETAIL_ERROR_CODES = ["TXT_HSCODE_INCLUDE_MISSING", "MSG_FAILED_DECISION_QTY_AMOUNT"];
 		// 팝업을 연 화면(내수/수출) - 값이 없으면(구버전 호출부 등) 내수로 취급.
 		// 내수는 "개별/일괄 원산지 판정" 버튼이 둘 다 있고 executeDomesticOriginDetermination을,
 		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
@@ -140,6 +148,7 @@
 		this.grid_ResultDetail = null;
 		this.grid_FailReason = null;
 		this.grid_FailDetail = null;
+		this.grid_FailMaterial = null;
 
 		this.buildKey = function(salesNo, salesSeq) {
 			return salesNo + "_" + salesSeq;
@@ -304,11 +313,13 @@
 			this.grid_FailReason = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failReason", columnLayoutFailReason, gridPropsFailReason, "");
 
 			AUIGrid.bind(this.grid_FailReason, "cellClick", function(event) {
-				self.selectFailReasonRow(event.item.fta_code);
+				self.selectFailReasonRow(event.item);
 			});
 
 			// 판정 실패 상세내용: 실패 사유 그리드에서 협정(FTA_CODE) 행을 클릭하면, 그 협정에 걸린
-			// 룰 전체(오류 여부 무관)의 처리결과를 보여준다 - 어떤 룰은 통과하고 어떤 룰만 실패했는지 함께 확인 가능
+			// 룰 전체(오류 여부 무관)의 처리결과를 보여준다 - 어떤 룰은 통과하고 어떤 룰만 실패했는지 함께 확인 가능.
+			// 단 실패 사유가 MATERIAL_DETAIL_ERROR_CODES에 해당하면 이 그리드 대신 원재료 목록을 보여준다
+			// (selectFailReasonRow 참고)
 			var columnLayoutFailDetail = [
 				{dataField: "rule_seq", headerText: "룰순번", width: 90},
 				{dataField: "rule_code", headerText: "결정기준", width: 150, filter: {showIcon: true}},
@@ -322,6 +333,23 @@
 			];
 			var gridPropsFailDetail = { enableFilter: true };
 			this.grid_FailDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failDetail", columnLayoutFailDetail, gridPropsFailDetail, "");
+
+			// 원재료(FCR_DTL) 목록: HS코드 누락(TXT_HSCODE_INCLUDE_MISSING)/금액 0(MSG_FAILED_DECISION_QTY_AMOUNT)
+			// 사유일 때 어떤 원재료가 원인인지 바로 확인할 수 있도록 보여준다
+			var columnLayoutFailMaterial = [
+				{dataField: "item_code", headerText: "품목코드", width: 150},
+				{dataField: "item_name", headerText: "품명", width: 200},
+				{dataField: "hs_code", headerText: "HS CODE", width: 110},
+				{dataField: "requirement_qty", headerText: "소요량", width: 100, dataType: "numeric", style: ""},
+				{dataField: "input_amount", headerText: "투입금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"},
+				{dataField: "inarea_qty", headerText: "역내수량", width: 100, dataType: "numeric", style: ""},
+				{dataField: "inarea_amount", headerText: "역내금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"},
+				{dataField: "outarea_qty", headerText: "역외수량", width: 100, dataType: "numeric", style: ""},
+				{dataField: "outarea_amount", headerText: "역외금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"}
+			];
+			var gridPropsFailMaterial = { enableFilter: true };
+			this.grid_FailMaterial = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failMaterial", columnLayoutFailMaterial, gridPropsFailMaterial, "");
+			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
 
 			// 판정 품목 조회가 끝나 selectDetailLine이 상태에 맞게 다시 켤 때까지, 두 섹션 모두 기본적으로
 			// 숨겨둔다(비동기 조회 응답이 오기 전 빈 그리드가 잠깐 노출되는 걸 방지)
@@ -577,8 +605,12 @@
 
 		this.hideFailSections = function() {
 			this.currentFailDetailList = [];
+			this.currentFailMaterialList = [];
 			AUIGrid.setGridData(this.grid_FailReason, []);
 			AUIGrid.setGridData(this.grid_FailDetail, []);
+			AUIGrid.setGridData(this.grid_FailMaterial, []);
+			$('#oAuiGrid_originDetermination_popup_failDetail').show();
+			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
 			$('#originDetermination_popup_failSection').hide();
 		};
 
@@ -648,9 +680,9 @@
 			AUIGrid.setGridData(this.grid_ResultDetail, list || []);
 		};
 
-		// 판정실패(status=5) 건의 실패 사유(협정/룰별)와, 그 사유(FTA_CODE)별 상세내용(룰 전체 처리결과)을
-		// 한 번에 조회. retrieveResultList와 동일한 패턴 - 상세내용은 fta_code마다 별도 호출하지 않고
-		// 여기서 받은 detailList를 fta_code로 매핑해 화면에서 바로 보여준다(selectFailReasonRow 참고)
+		// 판정실패(status=5) 건의 실패 사유(협정/룰별)와, 그 사유(FTA_CODE)별 상세내용(룰 전체 처리결과)/
+		// 원재료 목록을 한 번에 조회. retrieveResultList와 동일한 패턴 - 상세내용/원재료 목록은 fta_code마다
+		// 별도 호출하지 않고 여기서 받은 목록을 fta_code로 매핑해 화면에서 바로 보여준다(selectFailReasonRow 참고)
 		this.retrieveFailList = function(row) {
 			var self = this;
 			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
@@ -661,6 +693,7 @@
 				function(response) {
 					var value = (response && response.value) ? response.value : {};
 					self.currentFailDetailList = value.detailList || [];
+					self.currentFailMaterialList = value.materialList || [];
 					self.renderFailReasonList(value.reasonList || []);
 				}
 			);
@@ -671,13 +704,28 @@
 			$('#originDetermination_popup_failSection').show();
 			AUIGrid.resize(this.grid_FailReason);
 			AUIGrid.resize(this.grid_FailDetail);
+			AUIGrid.resize(this.grid_FailMaterial);
 			AUIGrid.setGridData(this.grid_FailReason, list || []);
 			AUIGrid.setGridData(this.grid_FailDetail, []);
+			AUIGrid.setGridData(this.grid_FailMaterial, []);
+			$('#oAuiGrid_originDetermination_popup_failDetail').show();
+			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
 		};
 
-		// 실패 사유 그리드에서 협정(FTA_CODE) 행을 클릭하면, 별도 API 호출 없이 retrieveFailList에서
-		// 이미 받아둔 currentFailDetailList를 그 fta_code로 필터링해 실패 상세내용 그리드에 보여준다
-		this.selectFailReasonRow = function(ftaCode) {
+		// 실패 사유 그리드에서 행을 클릭하면, 별도 API 호출 없이 retrieveFailList에서 이미 받아둔 목록을
+		// 그 fta_code로 필터링해 보여준다. error_code가 MATERIAL_DETAIL_ERROR_CODES(HS코드 누락/금액 0)에
+		// 해당하면 판정 상세내용 대신 원재료 목록을 보여준다
+		this.selectFailReasonRow = function(reasonRow) {
+			var ftaCode = reasonRow.fta_code;
+
+			if (this.MATERIAL_DETAIL_ERROR_CODES.indexOf(reasonRow.error_code) !== -1) {
+				var materials = this.currentFailMaterialList.filter(function(d) {
+					return d.fta_code === ftaCode;
+				});
+				this.renderFailMaterialList(materials);
+				return;
+			}
+
 			var filtered = this.currentFailDetailList.filter(function(d) {
 				return d.fta_code === ftaCode;
 			});
@@ -685,7 +733,16 @@
 		};
 
 		this.renderFailDetailList = function(list) {
+			$('#oAuiGrid_originDetermination_popup_failDetail').show();
+			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
 			AUIGrid.setGridData(this.grid_FailDetail, list || []);
+		};
+
+		this.renderFailMaterialList = function(list) {
+			$('#oAuiGrid_originDetermination_popup_failDetail').hide();
+			$('#oAuiGrid_originDetermination_popup_failMaterial').show();
+			AUIGrid.resize(this.grid_FailMaterial);
+			AUIGrid.setGridData(this.grid_FailMaterial, list || []);
 		};
 
 		// 내수는 (invoice_month, customer_code, division_code, product_code) 라인 목록으로
