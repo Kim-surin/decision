@@ -134,9 +134,14 @@
        		AND IM.ITEM_CODE = SD.PRODUCT_CODE
     </select>
 
-    <!-- 판정완료(status=4) 건의 판정결과: 해당 품목에 적용되는 협정(FTA)별 결과 목록 -->
+    <!-- 판정완료(status=4) 건의 판정결과: 해당 품목에 적용되는 협정(FTA)별 결과 목록.
+         FM.RULE_CONTENTS = FR.RULE_CODE 조인은 텍스트 일치라 같은 협정 안에 RULE_CODE가 같은
+         RULE_SEQ가 여러 개 있으면(예: 동일 CTSH 기준이 예외조건만 다르게 RULE_SEQ별로 나뉜 경우)
+         FCR_RESULT 쪽에서 여러 행이 걸릴 수 있다. DISTINCT ON (FM.FTA_CODE)으로 협정당 정확히
+         1행만 남기고, 동률이면 RULE_SEQ가 가장 큰(가장 나중에 정의된) 행을 채택한다 -->
     <select id="retrieveOriginDeterminationDetailResultList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
-       SELECT FM.FTA_CODE
+       SELECT DISTINCT ON (FM.FTA_CODE)
+              FM.FTA_CODE
        		, FM.HS_CODE
        		, FTA.FTA_NAME
        		, FM.AMOUNT
@@ -159,6 +164,7 @@
        WHERE FM.COMPANY_CODE = #{company_code}
        AND FM.SALES_NO = #{sales_no}
        AND FM.SALES_SEQ = #{sales_seq}
+       ORDER BY FM.FTA_CODE, FR.RULE_SEQ DESC
     </select>
 
     <!-- 판정결과(FTA_CODE)별 기준별 판정 상세내용 전체 목록 - originDeterminationDetailResultList 응답에
