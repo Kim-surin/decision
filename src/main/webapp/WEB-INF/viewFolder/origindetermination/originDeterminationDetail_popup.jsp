@@ -235,6 +235,9 @@
 
 			var columnLayoutResult = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
+				{dataField: "product_code", headerText: "PRODUCT_CODE", width: 0, visible: false},
+				{dataField: "bom_division_code", headerText: "BOM_DIVISION_CODE", width: 0, visible: false},
+				{dataField: "bom_yyyymm", headerText: "BOM_YYYYMM", width: 0, visible: false},
 				{dataField: "hs_code", headerText: "HS CODE", width: 110},
 				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
 				{dataField: "amount", headerText: "단가", width: 120, dataType: "numeric", style: "", formatString: "#,##0"},
@@ -251,6 +254,9 @@
 					    if (value === null || value === undefined || value === "") return "";
 					    return Number(value).toFixed(0) + "%"; 
 					}},
+				// BOM 추적 아이콘 클릭은 아래 grid_Result의 cellClick 바인딩(dataField === "bom_trace")에서
+				// 처리한다 - IconRenderer의 onClick은 클릭된 행(item)을 넘겨주지 않아 어느 협정의 BOM인지
+				// 알 수 없다
 				{dataField: "bom_trace", headerText: "BOM 추적", width: 100, style: "grid-center-text",
 					renderer: {
 						type: 'IconRenderer',
@@ -258,9 +264,6 @@
 						iconHeight: 16,
 						iconFunction: function (rowIndex, columnIndex, value, item) {
 						 	return "/rcs/auigrid/images/icon-search.png";
-						},
-						 onClick: (e) => {
-							ORIGIN_DETERMINATION_DETAIL_POPUP.getBomTraceList();
 						},
 					}
 				},
@@ -284,6 +287,10 @@
 			this.grid_Result = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult, "");
 
 			AUIGrid.bind(this.grid_Result, "cellClick", function(event) {
+				if (event.dataField === "bom_trace") {
+					self.getBomTraceList(event.item);
+					return;
+				}
 				self.selectResultRow(event.item.fta_code);
 			});
 
@@ -833,8 +840,19 @@
 			return this.findRowByKey(this.selectedLineKey);
 		};
 		
-		this.getBomTraceList = function () {
-		
+		// BOM 추적: 이 협정 판정에 실제로 쓰인 BOM(제품코드 + BOM_DIVISION_CODE + BOM_YYYYMM - CREATE_FCR가
+		// SALES_DTL에 남겨둔, 실제 채택된 실적/타 사업장 BOM 기준)을 팝업으로 보여준다.
+		// 조회 자체는 기존 FTA BOM 화면이 쓰는 API(/origin/compliance/ftaBom/ftaBomDetailList)를 그대로 재사용한다
+		this.getBomTraceList = function (row) {
+			if (!row.bom_division_code || !row.bom_yyyymm) {
+				KpackageOBJ.object.alert("조회된 BOM이 없습니다.");
+				return;
+			}
+
+			var getParam = "?product_code=" + encodeURIComponent(row.product_code)
+				+ "&division_code=" + encodeURIComponent(row.bom_division_code)
+				+ "&yyyymm=" + encodeURIComponent(row.bom_yyyymm);
+			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1000px', true);
 		};
 		
 		this.getConversionStrategy = function () {

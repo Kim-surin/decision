@@ -97,6 +97,22 @@ public class OriginDeterminationController extends GenericController {
 		return "origindetermination/originDeterminationDetail_popup";
 	}
 
+	/**
+	 * "BOM 추적" 아이콘 클릭 시 뜨는 팝업. 협정 판정에 실제로 쓰인 BOM(CREATE_FCR가 SALES_DTL에 남겨둔
+	 * 제품코드+BOM_DIVISION_CODE+BOM_YYYYMM)을 조회해 보여준다. 조회 자체는 기존 FTA BOM 화면과 동일한
+	 * API({@code /origin/compliance/ftaBom/ftaBomDetailList})를 그대로 재사용한다.
+	 */
+	@RequestMapping(value = "/origin/compliance/origindetermination/bomTraceList_popup")
+	public String bomTraceList_popup(@RequestParam(value = "product_code", required = false) String productCode,
+			@RequestParam(value = "division_code", required = false) String divisionCode,
+			@RequestParam(value = "yyyymm", required = false) String yyyymm, Model model, HttpSession session) {
+		model.addAttribute("product_code", productCode);
+		model.addAttribute("division_code", divisionCode);
+		model.addAttribute("yyyymm", yyyymm);
+
+		return "origindetermination/bomTraceList_popup";
+	}
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")
 	@ResponseBody
 	public Result originDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param)
