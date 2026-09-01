@@ -847,7 +847,8 @@
 
 			var getParam = "?sales_no=" + encodeURIComponent(line.sales_no)
 				+ "&sales_seq=" + encodeURIComponent(line.sales_seq)
-				+ "&fta_code=" + encodeURIComponent(row.fta_code);
+				+ "&fta_code=" + encodeURIComponent(row.fta_code)
+				+ "&fta_name=" + encodeURIComponent(row.fta_name || '');
 			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1400px', true);
 		};
 		

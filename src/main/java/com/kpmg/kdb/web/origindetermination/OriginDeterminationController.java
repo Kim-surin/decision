@@ -104,10 +104,12 @@ public class OriginDeterminationController extends GenericController {
 	@RequestMapping(value = "/origin/compliance/origindetermination/bomTraceList_popup")
 	public String bomTraceList_popup(@RequestParam(value = "sales_no", required = false) String salesNo,
 			@RequestParam(value = "sales_seq", required = false) String salesSeq,
-			@RequestParam(value = "fta_code", required = false) String ftaCode, Model model, HttpSession session) {
+			@RequestParam(value = "fta_code", required = false) String ftaCode,
+			@RequestParam(value = "fta_name", required = false) String ftaName, Model model, HttpSession session) {
 		model.addAttribute("sales_no", salesNo);
 		model.addAttribute("sales_seq", salesSeq);
 		model.addAttribute("fta_code", ftaCode);
+		model.addAttribute("fta_name", ftaName);
 
 		return "origindetermination/bomTraceList_popup";
 	}
