@@ -231,7 +231,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 			rec.setFtaCooYn("N");
 			rec.setStatus("E");
 			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("소요량 또는 금액이 0 인 것이 존재합니다.");
+			rec.setErrorMsg("금액이 0 인 것이 존재합니다.");
 			supportService.insertFrdAndReset(ctx, mode);
 			return;
 		}
