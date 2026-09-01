@@ -4,11 +4,6 @@
 <html>
 <head>
 <style>
-	.bom-trace-context {
-		color: #6c757d;
-		font-size: 13px;
-		margin-bottom: 12px;
-	}
 	/* 원산지 판정(내수) 화면 상단 통계(.origin-stat-*)와 동일한 스타일 */
 	.bom-trace-stat-box {
 		min-width: 90px;
@@ -37,9 +32,6 @@
 		</div>
 	</div>
 	<div class="modal-body">
-		<div class="bom-trace-context">
-			SALES_NO: ${sales_no} &nbsp;|&nbsp; SALES_SEQ: ${sales_seq}
-		</div>
 		<div class="row mb-3">
 			<div class="col-3 d-flex flex-column justify-content-center bom-trace-stat-box">
 				<label class="bom-trace-stat-label mb-0">대상 협정</label>
