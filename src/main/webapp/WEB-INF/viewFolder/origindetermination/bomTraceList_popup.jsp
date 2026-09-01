@@ -140,9 +140,9 @@
 				totalSum += Number(row.input_amount) || 0;
 			});
 
-			$('#bomTraceStat_inarea').text(KpackageOBJ.formatter.commas(inareaSum));
-			$('#bomTraceStat_outarea').text(KpackageOBJ.formatter.commas(outareaSum));
-			$('#bomTraceStat_total').text(KpackageOBJ.formatter.commas(totalSum));
+			$('#bomTraceStat_inarea').text(KpackageOBJ.formatter.commas(Math.round(inareaSum)));
+			$('#bomTraceStat_outarea').text(KpackageOBJ.formatter.commas(Math.round(outareaSum)));
+			$('#bomTraceStat_total').text(KpackageOBJ.formatter.commas(Math.round(totalSum)));
 		};
 	};
 
