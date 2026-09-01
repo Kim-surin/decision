@@ -852,7 +852,7 @@
 			var getParam = "?product_code=" + encodeURIComponent(row.product_code)
 				+ "&division_code=" + encodeURIComponent(row.bom_division_code)
 				+ "&yyyymm=" + encodeURIComponent(row.bom_yyyymm);
-			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1000px', true);
+			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1400px', true);
 		};
 		
 		this.getConversionStrategy = function () {

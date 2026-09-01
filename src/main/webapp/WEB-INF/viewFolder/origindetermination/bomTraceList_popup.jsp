@@ -35,11 +35,11 @@
 
 		this.createAUIGrid = function() {
 			var columnLayout = [
-				{dataField: "item_code", headerText: "자재코드", width: 200, filter: {showIcon: true}},
-				{dataField: "item_name", headerText: "자재명", width: 300, filter: {showIcon: true}},
-				{dataField: "unit", headerText: "단위", width: 100},
-				{dataField: "hs_code", headerText: "HS코드", width: 150, filter: {showIcon: true}},
-				{dataField: "req_qty", headerText: "사용수량", width: 120}
+				{dataField: "item_code", headerText: "자재코드", width: 250, filter: {showIcon: true}},
+				{dataField: "item_name", headerText: "자재명", width: 550, filter: {showIcon: true}},
+				{dataField: "unit", headerText: "단위", width: 120},
+				{dataField: "hs_code", headerText: "HS코드", width: 200, filter: {showIcon: true}},
+				{dataField: "req_qty", headerText: "사용수량", width: 150}
 			];
 			var gridProps = { enableFilter: true };
 			this.grid_BomTrace = KpackageOBJ.auiGrid.create("oAuiGrid_bomTraceList", columnLayout, gridProps, "");
