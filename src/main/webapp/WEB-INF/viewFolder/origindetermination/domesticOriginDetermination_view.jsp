@@ -234,13 +234,9 @@
 							AUIGrid.bind(DOMESTIC_ORIGIN_DETERMINATION_GRID, "cellClick", function (event) {
 								// 원산지확인서 발급번호 셀 클릭
 								if (event.dataField === "coo_certify_no" && event.value) {
-																		
-									var request = {
-										customer_code: event.item.customer_code,
-										coo_certify_no: event.item.coo_certify_no,
-									};
+									var param = "?coo_certify_no=" + encodeURIComponent(event.item.coo_certify_no) + "&customer_code=" + encodeURIComponent(event.item.customer_code);
 									
-									KpackageOBJ.sidepanel.open('cooIssueDetailPopup', '/issuecover/cooIssueCoverDetail', '1300px', true, request);
+									KpackageOBJ.sidepanel.open('cooIssueDetailPopup', '/issuecover/cooIssueCoverDetail' + param, '1300px', true);
 									return;
 								}
 
