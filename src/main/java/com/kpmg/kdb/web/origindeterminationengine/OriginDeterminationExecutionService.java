@@ -138,29 +138,33 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		OriginDeterminationContext ctx = new OriginDeterminationContext();
 		ctx.setFmData(fmData);
 
-		supportService.loadBuffer(ctx, fmData.getCompanyCode(), fmData.getDivisionCode(), fmData.getFtaCode(),
-				fmData.getProductCode(), runContext.productLineBufferCache);
-
-		String materialKey = materialOriginRowsKey(fmData.getFtaCode(), fmData.getDivisionCode(), fmData.getSalesSeq());
-		List<MaterialOriginRow> materialOriginRows = runContext.materialOriginRowsCache.containsKey(materialKey)
-				? runContext.materialOriginRowsCache.get(materialKey)
-				: dao.selectMaterialOriginRows(fmData.getFtaCode(), fmData.getDivisionCode(), fmData.getCompanyCode(),
-						fmData.getSalesNo(), fmData.getSalesSeq(), fmData.getHsCode());
-		ctx.setMaterialOriginRows(materialOriginRows);
-
-		if ("PKRRC".equals(fmData.getFtaCode())) {
-			resolveItemCooNationForRcep(ctx, runContext.invoiceDate, runContext.rcepCache);
-		}
-
-		List<OriginCriteria> rules = runContext.originCriteriaCache.get(fmData.getHsCode(), fmData.getFtaCode(),
-				fmData.getHsCodeSubCategory(), runContext.newAptaPsrFlag);
-
-		if (rules.isEmpty()) {
-			// 해당 HS코드에 적용 가능한 룰이 전혀 없는 경우
-			insertNoRuleFoundResult(ctx, fmData, runContext.mode);
+		if (!supportService.loadBuffer(ctx, fmData.getCompanyCode(), fmData.getDivisionCode(), fmData.getFtaCode(),
+				fmData.getProductCode(), runContext.productLineBufferCache)) {
+			// 버퍼율 조회 실패 - 회사 버퍼가 없는 셈 치고(0) 자사기준 판정을 계속 진행하지 않고,
+			// 이 FTA_CODE 후보 전체를 판정오류로 명시적으로 남긴다.
+			insertBufferFailureResult(ctx, fmData, runContext.mode);
 		} else {
-			for (OriginCriteria frData : rules) {
-				decideOneRule(ctx, fmData, frData, runContext.mode, runContext.exclusionRuleCache);
+			String materialKey = materialOriginRowsKey(fmData.getFtaCode(), fmData.getDivisionCode(), fmData.getSalesSeq());
+			List<MaterialOriginRow> materialOriginRows = runContext.materialOriginRowsCache.containsKey(materialKey)
+					? runContext.materialOriginRowsCache.get(materialKey)
+					: dao.selectMaterialOriginRows(fmData.getFtaCode(), fmData.getDivisionCode(), fmData.getCompanyCode(),
+							fmData.getSalesNo(), fmData.getSalesSeq(), fmData.getHsCode());
+			ctx.setMaterialOriginRows(materialOriginRows);
+
+			if ("PKRRC".equals(fmData.getFtaCode())) {
+				resolveItemCooNationForRcep(ctx, runContext.invoiceDate, runContext.rcepCache);
+			}
+
+			List<OriginCriteria> rules = runContext.originCriteriaCache.get(fmData.getHsCode(), fmData.getFtaCode(),
+					fmData.getHsCodeSubCategory(), runContext.newAptaPsrFlag);
+
+			if (rules.isEmpty()) {
+				// 해당 HS코드에 적용 가능한 룰이 전혀 없는 경우
+				insertNoRuleFoundResult(ctx, fmData, runContext.mode);
+			} else {
+				for (OriginCriteria frData : rules) {
+					decideOneRule(ctx, fmData, frData, runContext.mode, runContext.exclusionRuleCache);
+				}
 			}
 		}
 
@@ -184,6 +188,25 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		rec.setFtaCooYn("N");
 		rec.setErrorCode("MSG_DECISION_STANDARD_NOT_EXIST");
 		rec.setErrorMsg("판정기준이 미 존재 합니다.");
+		supportService.insertFrdAndReset(ctx, mode);
+	}
+
+	/** loadBuffer 실패 시 이 FTA_CODE 후보를 판정오류로 명시 처리. ctx.errorCode/errorMsg는 loadBuffer가 이미 채워뒀다(GET_BUFFER). */
+	private void insertBufferFailureResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode) {
+		OriginDeterminationResult rec = ctx.getFrdRec();
+		rec.setSalesNo(fmData.getSalesNo());
+		rec.setSalesSeq(fmData.getSalesSeq());
+		rec.setFtaCode(fmData.getFtaCode());
+		rec.setDivisionCode(fmData.getDivisionCode());
+		rec.setCompanyCode(fmData.getCompanyCode());
+		rec.setProductCode(fmData.getProductCode());
+		rec.setHsCode(fmData.getHsCode());
+		rec.setStandard(fmData.getStandard());
+		rec.setStatus("E");
+		rec.setCompanyCooYn("N");
+		rec.setFtaCooYn("N");
+		rec.setErrorCode(ctx.getErrorCode());
+		rec.setErrorMsg(ctx.getErrorMsg());
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
