@@ -251,7 +251,7 @@
 					    if (value === null || value === undefined || value === "") return "";
 					    return Number(value).toFixed(0) + "%"; 
 					}},
-				{dataField: "bom_trace", headerText: "BOM 추적", width: 100, 
+				{dataField: "bom_trace", headerText: "BOM 추적", width: 100, style: "grid-center-text",
 					renderer: {
 						type: 'IconRenderer',
 						iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
@@ -264,13 +264,15 @@
 						},
 					}
 				},
-				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 100, 				
+				// 역내전환전략은 충족여부(company_coo_yn)가 'N'(미충족)일 때만 아이콘을 보여준다 -
+				// 이미 충족된 건은 전환전략이 필요 없기 때문
+				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 100, style: "grid-center-text",
 					renderer: {
 					    type: 'IconRenderer',
 					    iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
 					    iconHeight: 16,
 					    iconFunction: function (rowIndex, columnIndex, value, item) {
-					    	return "/rcs/auigrid/images/icon-search.png";
+					    	return item.company_coo_yn === 'N' ? "/rcs/auigrid/images/icon-search.png" : null;
 					    },
 					    onClick: (e) => {
 					    	ORIGIN_DETERMINATION_DETAIL_POPUP.getConversionStrategy();
