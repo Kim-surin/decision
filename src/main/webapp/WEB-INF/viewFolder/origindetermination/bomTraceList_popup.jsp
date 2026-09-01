@@ -45,6 +45,24 @@
 			this.grid_BomTrace = KpackageOBJ.auiGrid.create("oAuiGrid_bomTraceList", columnLayout, gridProps, "");
 		};
 
+		// 이 팝업은 KpackageOBJ.sidepanel.open이 부트스트랩 모달을 아직 show() 하기 전에 콘텐츠를 주입하고
+		// 그 안에서 그리드를 생성하므로, 생성 시점엔 모달이 아직 안 보인 상태라 AUIGrid가 실제 너비를 못 잡고
+		// 좁게 축소되어 그려진다(originDeterminationDetail_popup.jsp의 동일 이슈 참고). show() 이후
+		// (shown.bs.modal) 시점에 다시 resize해준다
+		this.bindModalShownResize = function() {
+			var self = this;
+			var $modal = $('#oAuiGrid_bomTraceList').closest('.modal');
+
+			if ($modal.hasClass('show')) {
+				AUIGrid.resize(self.grid_BomTrace);
+				return;
+			}
+
+			$modal.one('shown.bs.modal', function() {
+				AUIGrid.resize(self.grid_BomTrace);
+			});
+		};
+
 		// 기존 FTA BOM 화면(/origin/compliance/ftaBom/ftaBom)이 쓰는 상세조회 API를 그대로 재사용한다
 		this.retrieveBomTraceList = function() {
 			var params = {
@@ -59,6 +77,7 @@
 
 	$(document).ready(function() {
 		BOM_TRACE_LIST_POPUP.createAUIGrid();
+		BOM_TRACE_LIST_POPUP.bindModalShownResize();
 		BOM_TRACE_LIST_POPUP.retrieveBomTraceList();
 	});
 </script>
