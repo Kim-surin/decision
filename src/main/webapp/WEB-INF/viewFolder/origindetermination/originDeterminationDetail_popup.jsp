@@ -270,12 +270,10 @@
 			var gridPropsResultDetail = { enableFilter: true };
 			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
 
-			// 판정 실패 사유: FCR_RESULT 중 STATUS='E'(오류)인 협정/룰별 목록
+			// 판정 실패 사유: FCR_RESULT 중 STATUS='E'(오류)인 협정별 사유 목록(협정+사유 단위로 중복 제거됨)
 			var columnLayoutFailReason = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
-				{dataField: "hs_code", headerText: "HS CODE", width: 110},
 				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
-				{dataField: "rule_seq", headerText: "룰순번", width: 90},
 				{dataField: "error_code", headerText: "오류코드", width: 180, filter: {showIcon: true}},
 				{dataField: "error_msg", headerText: "실패 사유", width: 400}
 			];

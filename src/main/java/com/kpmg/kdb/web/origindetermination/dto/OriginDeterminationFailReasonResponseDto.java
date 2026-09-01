@@ -3,8 +3,6 @@ package com.kpmg.kdb.web.origindetermination.dto;
 public class OriginDeterminationFailReasonResponseDto {
 	private String fta_code;
 	private String fta_name;
-	private String hs_code;
-	private Integer rule_seq;
 	private String error_code;
 	private String error_msg;
 
@@ -22,22 +20,6 @@ public class OriginDeterminationFailReasonResponseDto {
 
 	public void setFta_name(String fta_name) {
 		this.fta_name = fta_name;
-	}
-
-	public String getHs_code() {
-		return hs_code;
-	}
-
-	public void setHs_code(String hs_code) {
-		this.hs_code = hs_code;
-	}
-
-	public Integer getRule_seq() {
-		return rule_seq;
-	}
-
-	public void setRule_seq(Integer rule_seq) {
-		this.rule_seq = rule_seq;
 	}
 
 	public String getError_code() {

@@ -189,11 +189,14 @@
     </select>
 
     <!-- 판정실패(status=5) 건의 실패 사유: FCR_RESULT 중 STATUS='E'(오류)인 협정/룰별 목록 -->
+    <!-- 협정(FTA_CODE) + 사유(ERROR_CODE/ERROR_MSG) 단위로 묶어서 보여준다. 같은 협정 안에서도
+         RULE_SEQ별로 다른 사유가 나올 수 있어 ERROR_CODE/ERROR_MSG는 그룹핑 기준에 반드시 포함하고,
+         반대로 동일 협정·동일 사유가 여러 RULE_SEQ에 걸쳐 중복되는 경우는 한 행으로 합친다.
+         HS_CODE/RULE_SEQ는 화면에서 쓰지 않아 SELECT에서 뺐다(같은 SALES_SEQ+FTA_CODE면 HS_CODE는
+         항상 동일값이라 그룹핑에서 빠져도 정보 손실이 없다) -->
     <select id="retrieveOriginDeterminationFailReasonList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
        SELECT FR.FTA_CODE
        		, FTA.FTA_NAME
-       		, FR.HS_CODE
-       		, FR.RULE_SEQ
        		, FR.ERROR_CODE
        		, FR.ERROR_MSG
        FROM FCR_RESULT FR
@@ -204,7 +207,8 @@
        AND FR.SALES_NO = #{sales_no}
        AND FR.SALES_SEQ = #{sales_seq}
        AND FR.STATUS = 'E'
-       ORDER BY FR.FTA_CODE, FR.RULE_SEQ
+       GROUP BY FR.FTA_CODE, FTA.FTA_NAME, FR.ERROR_CODE, FR.ERROR_MSG
+       ORDER BY FR.FTA_CODE
     </select>
 
     <!-- 실패 사유(FTA_CODE)별 상세내용 전체 목록 - originDeterminationFailList 응답에 실패 사유와 함께
