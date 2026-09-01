@@ -67,9 +67,9 @@ public class OriginDeterminationSupportService extends GeneralService {
 			}
 			return true;
 		} catch (Exception e) {
-			ctx.setErrorCode("GET_BUFFER");
+			ctx.setErrorCode("MSG_FAILED_LOAD_BUFFER_RATE");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
-			logger.error("GET_BUFFER 실패. companyCode={}", companyCode, e);
+			logger.error("버퍼율 조회 실패. companyCode={}", companyCode, e);
 			return false;
 		}
 	}
