@@ -311,7 +311,7 @@
 			var columnLayoutFailReason = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
 				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
-				{dataField: "error_code", headerText: "오류코드", width: 180, filter: {showIcon: true}},
+				{dataField: "error_code", headerText: "오류코드", width: 180, visible: false},
 				{dataField: "error_msg", headerText: "실패 사유", width: 400}
 			];
 			var gridPropsFailReason = { enableFilter: true };
@@ -332,8 +332,8 @@
 					labelFunction: function(rowIndex, columnIndex, value) {
 						return value === "E" ? "오류" : (value === "N" ? "정상" : (value || ""));
 					}},
-				{dataField: "error_code", headerText: "오류코드", width: 180, filter: {showIcon: true}},
-				{dataField: "error_msg", headerText: "실패 사유", width: 300},
+				{dataField: "error_code", headerText: "오류코드", width: 180, visible: false},
+				{dataField: "error_msg", headerText: "실패 사유", width: 300, filter: {showIcon: true}},
 				{dataField: "rule_description", headerText: "결정기준 해설", width: 400}
 			];
 			var gridPropsFailDetail = { enableFilter: true };
