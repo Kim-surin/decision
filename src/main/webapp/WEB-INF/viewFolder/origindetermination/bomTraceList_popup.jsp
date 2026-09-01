@@ -24,7 +24,7 @@
 	</div>
 	<div class="modal-body">
 		<div class="bom-trace-context">
-			제품코드: ${product_code} &nbsp;|&nbsp; BOM 사업장: ${division_code} &nbsp;|&nbsp; 기준년월: ${yyyymm}
+			SALES_NO: ${sales_no} &nbsp;|&nbsp; SALES_SEQ: ${sales_seq} &nbsp;|&nbsp; FTA_CODE: ${fta_code}
 		</div>
 		<div id="oAuiGrid_bomTraceList" style="width:100%;height:400px;"></div>
 	</div>
@@ -33,13 +33,19 @@
 	var BOM_TRACE_LIST_POPUP = new function() {
 		this.grid_BomTrace = null;
 
+		// 이 협정(fta_code) 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL) 목록
 		this.createAUIGrid = function() {
 			var columnLayout = [
-				{dataField: "item_code", headerText: "자재코드", width: 250, filter: {showIcon: true}},
-				{dataField: "item_name", headerText: "자재명", width: 550, filter: {showIcon: true}},
-				{dataField: "unit", headerText: "단위", width: 120},
-				{dataField: "hs_code", headerText: "HS코드", width: 200, filter: {showIcon: true}},
-				{dataField: "req_qty", headerText: "사용수량", width: 150}
+				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
+				{dataField: "item_code", headerText: "품목코드", width: 220, filter: {showIcon: true}},
+				{dataField: "item_name", headerText: "품명", width: 320, filter: {showIcon: true}},
+				{dataField: "hs_code", headerText: "HS CODE", width: 130, filter: {showIcon: true}},
+				{dataField: "requirement_qty", headerText: "소요량", width: 110, dataType: "numeric"},
+				{dataField: "input_amount", headerText: "투입금액", width: 140, dataType: "numeric", formatString: "#,##0"},
+				{dataField: "inarea_qty", headerText: "역내수량", width: 110, dataType: "numeric"},
+				{dataField: "inarea_amount", headerText: "역내금액", width: 140, dataType: "numeric", formatString: "#,##0"},
+				{dataField: "outarea_qty", headerText: "역외수량", width: 110, dataType: "numeric"},
+				{dataField: "outarea_amount", headerText: "역외금액", width: 140, dataType: "numeric", formatString: "#,##0"}
 			];
 			var gridProps = { enableFilter: true };
 			this.grid_BomTrace = KpackageOBJ.auiGrid.create("oAuiGrid_bomTraceList", columnLayout, gridProps, "");
@@ -63,15 +69,14 @@
 			});
 		};
 
-		// 기존 FTA BOM 화면(/origin/compliance/ftaBom/ftaBom)이 쓰는 상세조회 API를 그대로 재사용한다
 		this.retrieveBomTraceList = function() {
 			var params = {
-				product_code: '${product_code}',
-				division_code: '${division_code}',
-				yyyymm: '${yyyymm}'
+				sales_no: '${sales_no}',
+				sales_seq: '${sales_seq}',
+				fta_code: '${fta_code}'
 			};
 
-			KpackageOBJ.auiGrid.retrieve(this.grid_BomTrace, '/origin/compliance/ftaBom/ftaBomDetailList', params);
+			KpackageOBJ.auiGrid.retrieve(this.grid_BomTrace, '/origin/compliance/origindetermination/originDeterminationMaterialList', params);
 		};
 	};
 

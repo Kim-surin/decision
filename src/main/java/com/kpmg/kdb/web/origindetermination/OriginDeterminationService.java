@@ -167,6 +167,27 @@ public class OriginDeterminationService extends GeneralService {
 		return result;
 	}
 
+	// BOM 추적 팝업 전용 - param.fta_code를 지정해 그 협정 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL)만 조회.
+	// retrieveOriginDeterminationFailList와 같은 DAO 메서드를 재사용하되, 여기선 reasonList/detailList가
+	// 필요 없어 materialList만 따로 내려준다.
+	public Result retrieveOriginDeterminationMaterialList(OriginDeterminationDetailResultRequestDto param) throws Exception {
+		Result result = new Result();
+
+		try {
+			List<OriginDeterminationFailMaterialResponseDto> materialList = sqlSession
+					.getMapper(OriginDeterminationDao.class).retrieveOriginDeterminationFailMaterialList(param);
+
+			result.setValue(materialList);
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
 	/**
 	 * 팝업(originDeterminationDetail_popup)에서 선택한 (매출년월/고객사/플랜트/품번) 라인들을 대상으로 내수
 	 * 원산지 판정을 실행한다. 같은 상품코드를 쓰는 다른 고객사/플랜트 조합까지 함께 처리되지 않도록,

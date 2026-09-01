@@ -235,9 +235,6 @@
 
 			var columnLayoutResult = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
-				{dataField: "product_code", headerText: "PRODUCT_CODE", width: 0, visible: false},
-				{dataField: "bom_division_code", headerText: "BOM_DIVISION_CODE", width: 0, visible: false},
-				{dataField: "bom_yyyymm", headerText: "BOM_YYYYMM", width: 0, visible: false},
 				{dataField: "hs_code", headerText: "HS CODE", width: 110},
 				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
 				{dataField: "amount", headerText: "단가", width: 120, dataType: "numeric", style: "", formatString: "#,##0"},
@@ -840,18 +837,17 @@
 			return this.findRowByKey(this.selectedLineKey);
 		};
 		
-		// BOM 추적: 이 협정 판정에 실제로 쓰인 BOM(제품코드 + BOM_DIVISION_CODE + BOM_YYYYMM - CREATE_FCR가
-		// SALES_DTL에 남겨둔, 실제 채택된 실적/타 사업장 BOM 기준)을 팝업으로 보여준다.
-		// 조회 자체는 기존 FTA BOM 화면이 쓰는 API(/origin/compliance/ftaBom/ftaBomDetailList)를 그대로 재사용한다
+		// BOM 추적: 이 협정(fta_code) 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL)를 팝업으로 보여준다.
+		// sales_no/sales_seq는 row(판정결과 1건)가 아니라 현재 선택된 판정 품목 라인에서 가져온다
 		this.getBomTraceList = function (row) {
-			if (!row.bom_division_code || !row.bom_yyyymm) {
-				KpackageOBJ.object.alert("조회된 BOM이 없습니다.");
+			var line = this.findSelectedRow();
+			if (!line) {
 				return;
 			}
 
-			var getParam = "?product_code=" + encodeURIComponent(row.product_code)
-				+ "&division_code=" + encodeURIComponent(row.bom_division_code)
-				+ "&yyyymm=" + encodeURIComponent(row.bom_yyyymm);
+			var getParam = "?sales_no=" + encodeURIComponent(line.sales_no)
+				+ "&sales_seq=" + encodeURIComponent(line.sales_seq)
+				+ "&fta_code=" + encodeURIComponent(row.fta_code);
 			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1400px', true);
 		};
 		

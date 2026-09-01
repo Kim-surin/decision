@@ -145,9 +145,6 @@
        		, FM.COMPANY_COO_YN
        		, FR.RVC_COMPANY_RESULT_RATE AS RVC_RATE
        		, FR.CTC_COMPANY_RESULT_RATE AS DE_MINIMIS_RATE
-       		, FM.PRODUCT_CODE
-       		, SD.BOM_DIVISION_CODE
-       		, SD.BOM_YYYYMM
        FROM FCR_MST FM
        INNER JOIN FTA_MASTER FTA
        		ON FM.COMPANY_CODE = FTA.COMPANY_CODE
@@ -159,11 +156,6 @@
        		AND FM.SALES_NO = FR.SALES_NO
        		AND FM.SALES_SEQ = FR.SALES_SEQ
        		AND FM.RULE_CONTENTS = FR.RULE_CODE
-       LEFT JOIN SALES_DTL SD
-       		ON SD.SALES_NO = FM.SALES_NO
-       		AND SD.SALES_SEQ = FM.SALES_SEQ
-       		AND SD.DIVISION_CODE = FM.DIVISION_CODE
-       		AND SD.COMPANY_CODE = FM.COMPANY_CODE
        WHERE FM.COMPANY_CODE = #{company_code}
        AND FM.SALES_NO = #{sales_no}
        AND FM.SALES_SEQ = #{sales_seq}
@@ -241,9 +233,10 @@
        ORDER BY FR.FTA_CODE, FR.RULE_SEQ
     </select>
 
-    <!-- 실패 사유가 TXT_HSCODE_INCLUDE_MISSING(HS코드 누락)/MSG_FAILED_DECISION_QTY_AMOUNT(금액 0)일 때
-         원인이 된 원재료(FCR_DTL)를 보여주기 위한 목록 - originDeterminationFailList 응답에 함께 내려주고,
-         화면에서 실패 사유의 FTA_CODE로 이 목록을 매핑해 보여준다 -->
+    <!-- FCR_DTL(협정 판정 계산에 실제로 쓰인 최종 원재료) 목록. 두 곳에서 재사용한다:
+         1) 실패 사유가 TXT_HSCODE_INCLUDE_MISSING(HS코드 누락)/MSG_FAILED_DECISION_QTY_AMOUNT(금액 0)일 때
+            - fta_code 없이 SALES_NO+SALES_SEQ 전체를 내려주고, 화면에서 실패 사유의 FTA_CODE로 매핑해 보여준다
+         2) BOM 추적 팝업 - fta_code까지 지정해 그 협정 1건의 원재료만 조회한다 -->
     <select id="retrieveOriginDeterminationFailMaterialList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
        SELECT FD.FTA_CODE
        		, FD.ITEM_CODE
@@ -262,6 +255,9 @@
        WHERE FD.COMPANY_CODE = #{company_code}
        AND FD.SALES_NO = #{sales_no}
        AND FD.SALES_SEQ = #{sales_seq}
+       <if test="fta_code != null and fta_code != ''">
+       AND FD.FTA_CODE = #{fta_code}
+       </if>
        ORDER BY FD.FTA_CODE, FD.ITEM_CODE
     </select>
 

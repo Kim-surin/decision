@@ -98,17 +98,16 @@ public class OriginDeterminationController extends GenericController {
 	}
 
 	/**
-	 * "BOM 추적" 아이콘 클릭 시 뜨는 팝업. 협정 판정에 실제로 쓰인 BOM(CREATE_FCR가 SALES_DTL에 남겨둔
-	 * 제품코드+BOM_DIVISION_CODE+BOM_YYYYMM)을 조회해 보여준다. 조회 자체는 기존 FTA BOM 화면과 동일한
-	 * API({@code /origin/compliance/ftaBom/ftaBomDetailList})를 그대로 재사용한다.
+	 * "BOM 추적" 아이콘 클릭 시 뜨는 팝업. 그 협정(FTA_CODE) 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL)를
+	 * 조회해 보여준다.
 	 */
 	@RequestMapping(value = "/origin/compliance/origindetermination/bomTraceList_popup")
-	public String bomTraceList_popup(@RequestParam(value = "product_code", required = false) String productCode,
-			@RequestParam(value = "division_code", required = false) String divisionCode,
-			@RequestParam(value = "yyyymm", required = false) String yyyymm, Model model, HttpSession session) {
-		model.addAttribute("product_code", productCode);
-		model.addAttribute("division_code", divisionCode);
-		model.addAttribute("yyyymm", yyyymm);
+	public String bomTraceList_popup(@RequestParam(value = "sales_no", required = false) String salesNo,
+			@RequestParam(value = "sales_seq", required = false) String salesSeq,
+			@RequestParam(value = "fta_code", required = false) String ftaCode, Model model, HttpSession session) {
+		model.addAttribute("sales_no", salesNo);
+		model.addAttribute("sales_seq", salesSeq);
+		model.addAttribute("fta_code", ftaCode);
 
 		return "origindetermination/bomTraceList_popup";
 	}
@@ -153,6 +152,23 @@ public class OriginDeterminationController extends GenericController {
 
 		try {
 			result = originDeterminationService.retrieveOriginDeterminationFailList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	// BOM 추적 팝업 전용. param.fta_code로 그 협정 1건의 원재료(FCR_DTL)만 조회한다.
+	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationMaterialList")
+	@ResponseBody
+	public Result originDeterminationMaterialList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveOriginDeterminationMaterialList(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
