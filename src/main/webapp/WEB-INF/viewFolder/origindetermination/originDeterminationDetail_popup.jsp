@@ -101,10 +101,10 @@
 					<div id="oAuiGrid_originDetermination_popup_failReason" style="width:100%;height:280px;"></div>
 
 					<h6 class="mt-4 mb-3">판정 실패 상세내용</h6>
-					<div id="oAuiGrid_originDetermination_popup_failDetail" style="width:100%;height:180px;"></div>
+					<div id="oAuiGrid_originDetermination_popup_failDetail" style="width:100%;height:320px;"></div>
 					<!-- TXT_HSCODE_INCLUDE_MISSING/MSG_FAILED_DECISION_QTY_AMOUNT 사유일 때는 위 대신 이 원재료
 					     목록을 보여준다(selectFailReasonRow 참고) -->
-					<div id="oAuiGrid_originDetermination_popup_failMaterial" style="width:100%;height:180px;"></div>
+					<div id="oAuiGrid_originDetermination_popup_failMaterial" style="width:100%;height:320px;"></div>
 				</div>
 			</div>
 		</div>
