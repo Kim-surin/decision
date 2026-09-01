@@ -129,6 +129,22 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 
+	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationFailList")
+	@ResponseBody
+	public Result originDeterminationFailList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveOriginDeterminationFailList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
 	/**
 	 * 판정 실행 자체는 오래 걸릴 수 있어 {@link Callable}을 반환해 Spring MVC 비동기 요청 처리로 넘긴다.
 	 * Tomcat 워커 스레드는 즉시 반납되고, 실제 판정은 {@code WebConfig}에 설정된 스레드풀에서 실행된 뒤

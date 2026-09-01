@@ -127,6 +127,8 @@
 		this.selectedLineKey = null;
 		// 현재 선택된 판정 품목의 판정 상세내용(기준별) 전체 목록 - fta_code로 필터링해서 사용
 		this.currentDetailList = [];
+		// 현재 선택된 판정 품목의 판정 실패 상세내용(협정 내 룰 전체) 목록 - fta_code로 필터링해서 사용
+		this.currentFailDetailList = [];
 		// 팝업을 연 화면(내수/수출) - 값이 없으면(구버전 호출부 등) 내수로 취급.
 		// 내수는 "개별/일괄 원산지 판정" 버튼이 둘 다 있고 executeDomesticOriginDetermination을,
 		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
@@ -268,20 +270,42 @@
 			var gridPropsResultDetail = { enableFilter: true };
 			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
 
-			// TODO: 판정 실패 사유/상세내용 데이터 소스가 확정되면 컬럼 구성을 그에 맞게 보완한다.
-			// error_code/error_msg는 판정 엔진(OriginDeterminationResult)의 필드명을 임시로 따른 자리표시자.
+			// 판정 실패 사유: FCR_RESULT 중 STATUS='E'(오류)인 협정/룰별 목록
 			var columnLayoutFailReason = [
-				{dataField: "error_code", headerText: "오류코드", width: 150},
+				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
+				{dataField: "hs_code", headerText: "HS CODE", width: 110},
+				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
+				{dataField: "rule_seq", headerText: "룰순번", width: 90},
+				{dataField: "error_code", headerText: "오류코드", width: 180, filter: {showIcon: true}},
 				{dataField: "error_msg", headerText: "실패 사유", width: 400}
 			];
 			var gridPropsFailReason = { enableFilter: true };
 			this.grid_FailReason = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failReason", columnLayoutFailReason, gridPropsFailReason, "");
 
+			AUIGrid.bind(this.grid_FailReason, "cellClick", function(event) {
+				self.selectFailReasonRow(event.item.fta_code);
+			});
+
+			// 판정 실패 상세내용: 실패 사유 그리드에서 협정(FTA_CODE) 행을 클릭하면, 그 협정에 걸린
+			// 룰 전체(오류 여부 무관)의 처리결과를 보여준다 - 어떤 룰은 통과하고 어떤 룰만 실패했는지 함께 확인 가능
 			var columnLayoutFailDetail = [
-				{dataField: "description", headerText: "상세내용", width: 500}
+				{dataField: "rule_seq", headerText: "룰순번", width: 90},
+				{dataField: "rule_code", headerText: "결정기준", width: 150, filter: {showIcon: true}},
+				{dataField: "status", headerText: "처리상태", width: 100,
+					labelFunction: function(rowIndex, columnIndex, value) {
+						return value === "E" ? "오류" : (value === "N" ? "정상" : (value || ""));
+					}},
+				{dataField: "error_code", headerText: "오류코드", width: 180, filter: {showIcon: true}},
+				{dataField: "error_msg", headerText: "실패 사유", width: 300},
+				{dataField: "rule_description", headerText: "결정기준 해설", width: 400}
 			];
 			var gridPropsFailDetail = { enableFilter: true };
 			this.grid_FailDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failDetail", columnLayoutFailDetail, gridPropsFailDetail, "");
+
+			// 판정 품목 조회가 끝나 selectDetailLine이 상태에 맞게 다시 켤 때까지, 두 섹션 모두 기본적으로
+			// 숨겨둔다(비동기 조회 응답이 오기 전 빈 그리드가 잠깐 노출되는 걸 방지)
+			$('#originDetermination_popup_resultSection').hide();
+			$('#originDetermination_popup_failSection').hide();
 		};
 
 		// 시작점
@@ -468,6 +492,7 @@
 			if (lines.length === 0) {
 				this.selectedLineKey = null;
 				this.hideResultSections();
+				this.hideFailSections();
 				return;
 			}
 
@@ -526,11 +551,14 @@
 			this.currentDetailList = [];
 			AUIGrid.setGridData(this.grid_Result, []);
 			AUIGrid.setGridData(this.grid_ResultDetail, []);
+			$('#originDetermination_popup_resultSection').hide();
 		};
 
 		this.hideFailSections = function() {
+			this.currentFailDetailList = [];
 			AUIGrid.setGridData(this.grid_FailReason, []);
 			AUIGrid.setGridData(this.grid_FailDetail, []);
+			$('#originDetermination_popup_failSection').hide();
 		};
 
 		// 좌측에서 선택한 그룹(품번/품명)에 속한 라인 전체를 판정 품목 그리드에 나열.
@@ -575,6 +603,11 @@
 
 		// 판정결과 그리드 렌더링. 행 클릭은 createAUIGrid에서 selectResultRow로 한 번만 바인딩해뒀다
 		this.renderResultList = function(list) {
+			$('#originDetermination_popup_resultSection').show();
+			// AUIGrid는 부모가 display:none인 상태로 생성/resize되면 크기를 제대로 못 잡는다(다른 주석 참고).
+			// 숨겨져 있다가 지금 막 보이게 된 경우를 대비해 다시 계산해준다.
+			AUIGrid.resize(this.grid_Result);
+			AUIGrid.resize(this.grid_ResultDetail);
 			AUIGrid.setGridData(this.grid_Result, list || []);
 			AUIGrid.setGridData(this.grid_ResultDetail, []);
 		};
@@ -594,14 +627,40 @@
 			AUIGrid.setGridData(this.grid_ResultDetail, list || []);
 		};
 
-		// 판정실패(status=5) 건의 실패 사유/상세내용 조회.
-		// TODO: 조회할 데이터 소스가 확정되면 실제 API 호출로 교체한다 - 지금은 그리드만 비워둔다.
+		// 판정실패(status=5) 건의 실패 사유(협정/룰별)와, 그 사유(FTA_CODE)별 상세내용(룰 전체 처리결과)을
+		// 한 번에 조회. retrieveResultList와 동일한 패턴 - 상세내용은 fta_code마다 별도 호출하지 않고
+		// 여기서 받은 detailList를 fta_code로 매핑해 화면에서 바로 보여준다(selectFailReasonRow 참고)
 		this.retrieveFailList = function(row) {
-			this.hideFailSections();
+			var self = this;
+			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
+
+			KpackageOBJ.ajax.doSubmit(
+				'/origin/compliance/origindetermination/originDeterminationFailList',
+				request,
+				function(response) {
+					var value = (response && response.value) ? response.value : {};
+					self.currentFailDetailList = value.detailList || [];
+					self.renderFailReasonList(value.reasonList || []);
+				}
+			);
 		};
 
+		// 실패 사유 그리드 렌더링. 행 클릭은 createAUIGrid에서 selectFailReasonRow로 한 번만 바인딩해뒀다
 		this.renderFailReasonList = function(list) {
+			$('#originDetermination_popup_failSection').show();
+			AUIGrid.resize(this.grid_FailReason);
+			AUIGrid.resize(this.grid_FailDetail);
 			AUIGrid.setGridData(this.grid_FailReason, list || []);
+			AUIGrid.setGridData(this.grid_FailDetail, []);
+		};
+
+		// 실패 사유 그리드에서 협정(FTA_CODE) 행을 클릭하면, 별도 API 호출 없이 retrieveFailList에서
+		// 이미 받아둔 currentFailDetailList를 그 fta_code로 필터링해 실패 상세내용 그리드에 보여준다
+		this.selectFailReasonRow = function(ftaCode) {
+			var filtered = this.currentFailDetailList.filter(function(d) {
+				return d.fta_code === ftaCode;
+			});
+			this.renderFailDetailList(filtered);
 		};
 
 		this.renderFailDetailList = function(list) {

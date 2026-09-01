@@ -21,6 +21,8 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRespons
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailDetailResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailReasonResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResponseDto;
 import com.kpmg.kdb.web.origindeterminationengine.BulkDecisionResult;
@@ -122,6 +124,32 @@ public class OriginDeterminationService extends GeneralService {
 
 			Map<String, Object> value = new LinkedHashMap<>();
 			value.put("resultList", resultList);
+			value.put("detailList", detailList);
+
+			result.setValue(value);
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	// 판정실패(status=5) 건의 실패 사유(협정/룰별)와, 그 사유(FTA_CODE)별 상세내용(룰 전체 처리결과)을 한 번에 조회.
+	// retrieveOriginDeterminationDetailResultList와 동일한 패턴 - 상세내용은 fta_code마다 별도 호출하지
+	// 않고 화면에서 매핑해 바로 보여준다.
+	public Result retrieveOriginDeterminationFailList(OriginDeterminationDetailResultRequestDto param) throws Exception {
+		Result result = new Result();
+
+		try {
+			OriginDeterminationDao dao = sqlSession.getMapper(OriginDeterminationDao.class);
+			List<OriginDeterminationFailReasonResponseDto> reasonList = dao.retrieveOriginDeterminationFailReasonList(param);
+			List<OriginDeterminationFailDetailResponseDto> detailList = dao.retrieveOriginDeterminationFailDetailList(param);
+
+			Map<String, Object> value = new LinkedHashMap<>();
+			value.put("reasonList", reasonList);
 			value.put("detailList", detailList);
 
 			result.setValue(value);

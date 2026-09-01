@@ -188,6 +188,47 @@
        AND FR.SALES_SEQ = #{sales_seq}
     </select>
 
+    <!-- 판정실패(status=5) 건의 실패 사유: FCR_RESULT 중 STATUS='E'(오류)인 협정/룰별 목록 -->
+    <select id="retrieveOriginDeterminationFailReasonList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+       SELECT FR.FTA_CODE
+       		, FTA.FTA_NAME
+       		, FR.HS_CODE
+       		, FR.RULE_SEQ
+       		, FR.ERROR_CODE
+       		, FR.ERROR_MSG
+       FROM FCR_RESULT FR
+       INNER JOIN FTA_MASTER FTA
+       		ON FR.COMPANY_CODE = FTA.COMPANY_CODE
+       		AND FR.FTA_CODE = FTA.FTA_CODE
+       WHERE FR.COMPANY_CODE = #{company_code}
+       AND FR.SALES_NO = #{sales_no}
+       AND FR.SALES_SEQ = #{sales_seq}
+       AND FR.STATUS = 'E'
+       ORDER BY FR.FTA_CODE, FR.RULE_SEQ
+    </select>
+
+    <!-- 실패 사유(FTA_CODE)별 상세내용 전체 목록 - originDeterminationFailList 응답에 실패 사유와 함께
+         내려주고, 화면에서 실패 사유의 FTA_CODE로 이 목록을 매핑해 그 협정에 걸린 룰 전체(오류 여부 무관)를
+         보여준다 -->
+    <select id="retrieveOriginDeterminationFailDetailList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+       SELECT FR.FTA_CODE
+       		, FR.RULE_SEQ
+       		, FR.RULE_CODE
+       		, FR.STATUS
+       		, FR.ERROR_CODE
+       		, FR.ERROR_MSG
+       		, FRU.RULE_DESCRIPTION
+       FROM FCR_RESULT FR
+       LEFT JOIN FTA_RULE FRU
+       		ON FRU.HS_CODE = SUBSTR(FR.HS_CODE, 1, LENGTH(FRU.HS_CODE))
+           	AND FRU.FTA_CODE = FR.FTA_CODE
+           	AND FRU.RULE_ID = FR.RULE_SEQ
+       WHERE FR.COMPANY_CODE = #{company_code}
+       AND FR.SALES_NO = #{sales_no}
+       AND FR.SALES_SEQ = #{sales_seq}
+       ORDER BY FR.FTA_CODE, FR.RULE_SEQ
+    </select>
+
     <select id="retrieveExportOriginDetermination" parameterType="HashMap" resultType="HashMap">
        SELECT SM.SALES_NO
        		, SM.INVOICE_DATE
