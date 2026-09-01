@@ -95,6 +95,14 @@
 					<h6 class="mt-4 mb-3">판정 상세내용</h6>
 					<div id="oAuiGrid_originDetermination_popup_resultDetail" style="width:100%;height:180px;"></div>
 				</div>
+
+				<div id="originDetermination_popup_failSection">
+					<h6 class="mt-4 mb-3">판정 실패 사유</h6>
+					<div id="oAuiGrid_originDetermination_popup_failReason" style="width:100%;height:280px;"></div>
+
+					<h6 class="mt-4 mb-3">판정 실패 상세내용</h6>
+					<div id="oAuiGrid_originDetermination_popup_failDetail" style="width:100%;height:180px;"></div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -128,6 +136,8 @@
 		this.grid_Detail = null;
 		this.grid_Result = null;
 		this.grid_ResultDetail = null;
+		this.grid_FailReason = null;
+		this.grid_FailDetail = null;
 
 		this.buildKey = function(salesNo, salesSeq) {
 			return salesNo + "_" + salesSeq;
@@ -257,6 +267,21 @@
 			];
 			var gridPropsResultDetail = { enableFilter: true };
 			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
+
+			// TODO: 판정 실패 사유/상세내용 데이터 소스가 확정되면 컬럼 구성을 그에 맞게 보완한다.
+			// error_code/error_msg는 판정 엔진(OriginDeterminationResult)의 필드명을 임시로 따른 자리표시자.
+			var columnLayoutFailReason = [
+				{dataField: "error_code", headerText: "오류코드", width: 150},
+				{dataField: "error_msg", headerText: "실패 사유", width: 400}
+			];
+			var gridPropsFailReason = { enableFilter: true };
+			this.grid_FailReason = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failReason", columnLayoutFailReason, gridPropsFailReason, "");
+
+			var columnLayoutFailDetail = [
+				{dataField: "description", headerText: "상세내용", width: 500}
+			];
+			var gridPropsFailDetail = { enableFilter: true };
+			this.grid_FailDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failDetail", columnLayoutFailDetail, gridPropsFailDetail, "");
 		};
 
 		// 시작점
@@ -312,6 +337,8 @@
 			AUIGrid.resize(this.grid_Detail);
 			AUIGrid.resize(this.grid_Result);
 			AUIGrid.resize(this.grid_ResultDetail);
+			AUIGrid.resize(this.grid_FailReason);
+			AUIGrid.resize(this.grid_FailDetail);
 		};
 
 		 // 개별 원산지 판정 임시 숨김 처리
@@ -460,16 +487,22 @@
 			this.selectDetailLine(lineKeyToSelect);
 		};
 
-		// 우측 "판정 품목" 표에서 라인 1건을 선택 - 판정완료(status=4) 건만 판정결과/판정 상세내용
-		// 섹션을 보여줌. 개별 원산지 판정(도메스틱 전용) 대상도 이 선택된 라인을 기준으로 한다
+		// 우측 "판정 품목" 표에서 라인 1건을 선택 - 판정완료(status=4)면 판정결과/판정 상세내용을,
+		// 판정실패(status=5)면 판정 실패 사유/판정 실패 상세내용을 보여줌. 그 외 상태는 둘 다 비움.
+		// 개별 원산지 판정(도메스틱 전용) 대상도 이 선택된 라인을 기준으로 한다
 		this.selectDetailLine = function(lineKey) {
 			this.selectedLineKey = lineKey;
 
 			var line = this.findRowByKey(lineKey);
 			if (line && this.isDetermined(line.status)) {
 				this.retrieveResultList(line);
+				this.hideFailSections();
+			} else if (line && this.isFailed(line.status)) {
+				this.retrieveFailList(line);
+				this.hideResultSections();
 			} else {
 				this.hideResultSections();
+				this.hideFailSections();
 			}
 		};
 
@@ -485,10 +518,19 @@
 			return String(status) === "4";
 		};
 
+		this.isFailed = function(status) {
+			return String(status) === "5";
+		};
+
 		this.hideResultSections = function() {
 			this.currentDetailList = [];
 			AUIGrid.setGridData(this.grid_Result, []);
 			AUIGrid.setGridData(this.grid_ResultDetail, []);
+		};
+
+		this.hideFailSections = function() {
+			AUIGrid.setGridData(this.grid_FailReason, []);
+			AUIGrid.setGridData(this.grid_FailDetail, []);
 		};
 
 		// 좌측에서 선택한 그룹(품번/품명)에 속한 라인 전체를 판정 품목 그리드에 나열.
@@ -550,6 +592,20 @@
 		// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은 API가 아직 제공하지 않아 빈 칸으로 남는다
 		this.renderResultDetailList = function(list) {
 			AUIGrid.setGridData(this.grid_ResultDetail, list || []);
+		};
+
+		// 판정실패(status=5) 건의 실패 사유/상세내용 조회.
+		// TODO: 조회할 데이터 소스가 확정되면 실제 API 호출로 교체한다 - 지금은 그리드만 비워둔다.
+		this.retrieveFailList = function(row) {
+			this.hideFailSections();
+		};
+
+		this.renderFailReasonList = function(list) {
+			AUIGrid.setGridData(this.grid_FailReason, list || []);
+		};
+
+		this.renderFailDetailList = function(list) {
+			AUIGrid.setGridData(this.grid_FailDetail, list || []);
 		};
 
 		// 내수는 (invoice_month, customer_code, division_code, product_code) 라인 목록으로
