@@ -761,6 +761,12 @@
 			var url;
 			var request;
 
+			// 서버가 내려주는 groupCount는 (매출년월+고객사+플랜트) 등으로 묶은 "그룹" 수라서,
+			// 같은 조합의 품목 여러 개가 한 그룹으로 처리되면 실제 품목 수보다 훨씬 작게 보여
+			// 혼란을 줬다. 그래서 안내 메시지는 groupCount 대신 여기서 실제로 요청한 품목(product_code)
+			// 수를 세서 보여준다(handleExecuteResponse 참고)
+			var productCount = new Set(rows.map(function(row) { return row.product_code; })).size;
+
 			if (this.mode === 'export') {
 				url = '/origin/compliance/origindetermination/executeExportOriginDetermination';
 				request = {
@@ -786,20 +792,20 @@
 				url,
 				request,
 				function(response) {
-					self.handleExecuteResponse(response);
+					self.handleExecuteResponse(response, productCount);
 				}
 			);
 		};
 
 		// executeOriginDetermination 응답(내수/수출 공용) 처리: 결과 메시지 표시 후 좌측 목록/상세
 		// 전체를 다시 조회해 최신화한다(선택 중이던 라인이 남아있으면 그 라인을 그대로 유지).
-		this.handleExecuteResponse = function(response) {
+		this.handleExecuteResponse = function(response, productCount) {
 			var value = (response && response.value) ? response.value : {};
 			var failedCount = value.failedTargets ? value.failedTargets.length : 0;
-			var message = (value.groupCount || 0) + "건 원산지 판정을 진행했습니다.";
+			var message = productCount + "건 원산지 판정을 요청했습니다.";
 
 			if (failedCount > 0) {
-				message += " (실패 " + failedCount + "건)";
+				message += " (처리 실패 " + failedCount + "건)";
 			}
 
 			KpackageOBJ.object.alert(message);
