@@ -87,6 +87,12 @@
 		                ON     SM.SALES_NO = FM.SALES_NO
 		                AND    SM.DIVISION_CODE = FM.DIVISION_CODE
 		                AND    SM.COMPANY_CODE = FM.COMPANY_CODE
+		                INNER  JOIN SALES_DTL SD
+		                ON     SD.SALES_NO = FM.SALES_NO
+		                AND    SD.SALES_SEQ = FM.SALES_SEQ
+		                AND    SD.DIVISION_CODE = FM.DIVISION_CODE
+		                AND    SD.COMPANY_CODE = FM.COMPANY_CODE
+		                AND    SD.BOM_STATUS &lt;&gt; '1'
 		                WHERE  FM.SALES_NO = #{salesNo}
 		                AND    FM.COMPANY_CODE = #{companyCode}
 		                AND    FM.PRODUCT_ASSETS_TYPE IN ('P', 'H')

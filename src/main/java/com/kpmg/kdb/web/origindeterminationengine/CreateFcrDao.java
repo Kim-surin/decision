@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityRequest;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomNotFoundResultRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrDtlInsertRow;
@@ -68,8 +69,25 @@ public interface CreateFcrDao {
 			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
 			@Param("productCodes") List<String> productCodes);
 
+	/**
+	 * BOM이 없어 정상 FCR_MST 대상에서 제외된(BOM_STATUS='1') SALES_SEQ 들의 내수 원시 데이터.
+	 * selectDomesticSalesLines와 달리 BOM_STATUS 조건을 두지 않고 salesSeqs로 직접 지정한다.
+	 */
+	List<DomesticSalesLine> selectDomesticSalesLinesBySalesSeqs(@Param("companyCode") String companyCode,
+			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
+			@Param("salesSeqs") List<Integer> salesSeqs);
+
+	/** selectExportSalesLines와 달리 BOM_STATUS 조건을 두지 않고 salesSeqs로 직접 지정한다. */
+	List<ExportSalesLine> selectExportSalesLinesBySalesSeqs(@Param("companyCode") String companyCode,
+			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
+			@Param("salesSeqs") List<Integer> salesSeqs);
+
 	/** HS코드/인코텀즈 환산이 끝난 FCR_MST 행을 청크 단위로 일괄 INSERT */
 	void insertFcrMstRows(@Param("rows") List<FcrMstInsertRow> rows);
+
+	/** BOM이 없는 FTA_CODE 후보들을 FCR_RESULT에 판정오류(STATUS='E')로 명시 INSERT */
+	void insertFcrResultsForBomNotFound(@Param("rows") List<BomNotFoundResultRow> rows,
+			@Param("errorCode") String errorCode, @Param("errorMsg") String errorMsg);
 
 	/** "3-3. 제품 BOM 소요량" 원시 leaf 자재 목록(단가/원산지비율 계산 전) */
 	List<BomLeafRow> selectBomLeafRows(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
