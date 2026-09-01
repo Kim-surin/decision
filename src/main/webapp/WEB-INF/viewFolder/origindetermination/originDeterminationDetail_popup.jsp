@@ -276,7 +276,6 @@
 				self.selectResultRow(event.item.fta_code);
 			});
 
-			// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은 API가 아직 제공하지 않아 빈 칸으로 남는다
 			var columnLayoutResultDetail = [
 				{dataField: "rule_code", headerText: "결정기준", width: 120, filter: {showIcon: true}},
 				{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 100, dataType: "numeric", style: ""},
