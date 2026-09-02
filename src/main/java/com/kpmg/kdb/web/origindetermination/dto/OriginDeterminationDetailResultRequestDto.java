@@ -10,6 +10,10 @@ public class OriginDeterminationDetailResultRequestDto extends BaseRequestDto {
 	@JsonProperty("sales_seq")
 	private Integer sales_seq;
 
+	// BOM 추적 팝업에서 특정 협정 1건의 원재료만 조회할 때 지정. 없으면(null) 전체 협정 대상.
+	@JsonProperty("fta_code")
+	private String fta_code;
+
 	public String getSales_no() {
 		return sales_no;
 	}
@@ -24,5 +28,13 @@ public class OriginDeterminationDetailResultRequestDto extends BaseRequestDto {
 
 	public void setSales_seq(Integer sales_seq) {
 		this.sales_seq = sales_seq;
+	}
+
+	public String getFta_code() {
+		return fta_code;
+	}
+
+	public void setFta_code(String fta_code) {
+		this.fta_code = fta_code;
 	}
 }

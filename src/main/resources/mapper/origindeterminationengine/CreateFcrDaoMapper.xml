@@ -298,6 +298,107 @@
 		AND    FM.FTA_STATUS = '4'
 	</select>
 
+	<!-- BOM이 없어 selectDomesticSalesLines/selectExportSalesLines(BOM_STATUS &lt;&gt; '1')에서 제외된 SALES_SEQ 대상 -->
+
+	<select id="selectDomesticSalesLinesBySalesSeqs" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine">
+		SELECT SM.SALES_NO                                  AS salesNo
+		      ,SD.SALES_SEQ                                 AS salesSeq
+		      ,SD.PRODUCT_CODE                               AS productCode
+		      ,SD.DIVISION_CODE                              AS divisionCode
+		      ,SM.COMPANY_CODE                               AS companyCode
+		      ,SD.STANDARD                                   AS standard
+		      ,(SD.AMOUNT / SD.QUANTITY)                     AS amount
+		      ,COALESCE(SD.SP_COO_YN, 'N')                   AS spCooYn
+		      ,CASE WHEN SD.PRODUCT_ASSETS_TYPE = 'B' THEN 'Y' ELSE 'N' END AS woCooYn
+		      ,SD.PRODUCT_UNIT                               AS productUnit
+		      ,SD.PRODUCT_ASSETS_TYPE                        AS productAssetsType
+		      ,SD.PROD_DIVISION_CODE                         AS prodDivisionCode
+		      ,SM.INVOICE_DATE                               AS invoiceDate
+		      ,SM.EXPORT_FLAG                                AS exportFlag
+		      ,SD.DELIVERY_CUSTOMER_CODE                     AS deliveryCustomerCode
+		      ,SM.ARRIVAL_NATION                             AS arrivalNation
+		FROM   SALES_MST SM
+		INNER  JOIN SALES_DTL SD
+		ON     SM.SALES_NO = SD.SALES_NO
+		AND    SM.COMPANY_CODE = SD.COMPANY_CODE
+		AND    SM.DIVISION_CODE = SD.DIVISION_CODE
+		WHERE  SM.SALES_NO = #{salesNo}
+		AND    SM.DIVISION_CODE = #{divisionCode}
+		AND    SM.COMPANY_CODE = #{companyCode}
+		AND    SD.QUANTITY > 0
+		AND    SD.SALES_SEQ IN
+		       <foreach collection="salesSeqs" item="salesSeq" open="(" separator="," close=")">
+		           #{salesSeq}
+		       </foreach>
+	</select>
+
+	<select id="selectExportSalesLinesBySalesSeqs" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine">
+		SELECT FM.FTA_CODE                                   AS ftaCode
+		      ,SALES.SALES_NO                                AS salesNo
+		      ,SALES.SALES_SEQ                                AS salesSeq
+		      ,SALES.PRODUCT_CODE                             AS productCode
+		      ,SALES.DIVISION_CODE                            AS divisionCode
+		      ,SALES.COMPANY_CODE                             AS companyCode
+		      ,SALES.STANDARD                                 AS standard
+		      ,SALES.QUANTITY                                 AS quantity
+		      ,SALES.AMOUNT                                   AS amount
+		      ,SALES.INKOTERMS                                AS inkoterms
+		      ,SALES.SP_COO_YN                                AS spCooYn
+		      ,SALES.WO_COO_YN                                AS woCooYn
+		      ,SALES.PRODUCT_UNIT                             AS productUnit
+		      ,SALES.PRODUCT_ASSETS_TYPE                      AS productAssetsType
+		      ,SALES.PROD_DIVISION_CODE                       AS prodDivisionCode
+		      ,SALES.EXPORT_FLAG                              AS exportFlag
+		      ,SALES.ARRIVAL_NATION                           AS arrivalNation
+		      ,SALES.INVOICE_DATE                             AS invoiceDate
+		      ,SALES.DELIVERY_CUSTOMER_CODE                   AS deliveryCustomerCode
+		      ,FM.INTERMEDIATE_YN                             AS intermediateYn
+		FROM   (SELECT SM.SALES_NO
+		              ,SD.SALES_SEQ
+		              ,SD.PRODUCT_CODE
+		              ,SD.DIVISION_CODE
+		              ,SD.COMPANY_CODE
+		              ,SD.STANDARD
+		              ,SD.QUANTITY
+		              ,(SD.AMOUNT / SD.QUANTITY) AS AMOUNT
+		              ,SM.INKOTERMS
+		              ,SM.TARGET_FTA_CODE AS TARGET_FTA_CODE
+		              ,COALESCE(SD.SP_COO_YN, 'N') AS SP_COO_YN
+		              ,CASE WHEN SD.PRODUCT_ASSETS_TYPE = 'B' THEN 'Y' ELSE 'N' END AS WO_COO_YN
+		              ,SD.PRODUCT_UNIT
+		              ,SD.PRODUCT_ASSETS_TYPE
+		              ,SD.PROD_DIVISION_CODE
+		              ,SM.EXPORT_FLAG
+		              ,COALESCE(SM.ARRIVAL_NATION, C.NATION_CODE) AS ARRIVAL_NATION
+		              ,SM.INVOICE_DATE
+		              ,SD.DELIVERY_CUSTOMER_CODE
+		        FROM   SALES_MST SM
+		        INNER  JOIN SALES_DTL SD
+		        ON     SM.SALES_NO = SD.SALES_NO
+		        AND    SM.DIVISION_CODE = SD.DIVISION_CODE
+		        AND    SM.COMPANY_CODE = SD.COMPANY_CODE
+		        INNER  JOIN CUSTOMER C
+		        ON     SM.CUSTOMER_CODE = C.CUSTOMER_CODE
+		        AND    SM.COMPANY_CODE = C.COMPANY_CODE
+		        WHERE  SM.SALES_NO = #{salesNo}
+		        AND    SM.DIVISION_CODE = #{divisionCode}
+		        AND    SM.COMPANY_CODE = #{companyCode}
+		        AND    SD.SALES_SEQ IN
+		               <foreach collection="salesSeqs" item="salesSeq" open="(" separator="," close=")">
+		                   #{salesSeq}
+		               </foreach>
+		        ) SALES
+		INNER  JOIN FTA_APPLY_NATION FAN
+		ON     FAN.NATION_CODE = SALES.ARRIVAL_NATION
+		AND    FAN.EFFECT_DATE &lt;= SALES.INVOICE_DATE
+		INNER  JOIN FTA_MASTER FM
+		ON     FM.DELETE_YN = 'N'
+		AND    FM.FTA_CODE = SALES.TARGET_FTA_CODE
+		AND    FM.COMPANY_CODE = SALES.COMPANY_CODE
+		AND    FM.FTA_CODE = FAN.FTA_CODE
+		AND    FM.FTA_STATUS = '4'
+	</select>
+
 	<insert id="insertFcrMstRows">
 		INSERT INTO FCR_MST
 			(FTA_CODE, SALES_NO, SALES_SEQ, PRODUCT_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, STANDARD,
@@ -430,6 +531,26 @@
 			 #{row.originatingQty}, #{row.originatingAmount}, #{row.nonOriginatingQty}, #{row.nonOriginatingAmount}, #{row.hsCodeYn},
 			 #{row.priceNote}, CURRENT_TIMESTAMP, 'CREATE_FCR', CURRENT_TIMESTAMP, 'CREATE_FCR')
 		</foreach>
+	</insert>
+
+	<!-- BOM이 없는 FTA_CODE 후보를 판정오류로 명시 INSERT. SEQ 채번은 insertFcrResults(OriginDeterminationSupportDaoMapper)와 동일한 방식 -->
+	<insert id="insertFcrResultsForBomNotFound">
+		INSERT INTO FCR_RESULT
+			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
+			 STANDARD, FTA_COO_YN, COMPANY_COO_YN, STATUS, ERROR_CODE, ERROR_MSG, DELETE_YN, CREATE_DATE,
+			 CREATE_BY, UPDATE_DATE, UPDATE_BY)
+		SELECT NS.BASE_SEQ + ROW_NUMBER() OVER (), V.*
+		FROM   (
+		<foreach collection="rows" item="row" separator="UNION ALL">
+		SELECT #{row.salesNo} AS SALES_NO, #{row.salesSeq} AS SALES_SEQ, #{row.ftaCode} AS FTA_CODE,
+		       #{row.divisionCode} AS DIVISION_CODE, #{row.companyCode} AS COMPANY_CODE, #{row.hsCode} AS HS_CODE,
+		       #{row.productCode} AS PRODUCT_CODE, #{row.standard} AS STANDARD, 'N' AS FTA_COO_YN,
+		       'N' AS COMPANY_COO_YN, 'E' AS STATUS, #{errorCode} AS ERROR_CODE, #{errorMsg} AS ERROR_MSG,
+		       'N' AS DELETE_YN, CURRENT_TIMESTAMP AS CREATE_DATE, 'CREATE_FCR' AS CREATE_BY,
+		       CURRENT_TIMESTAMP AS UPDATE_DATE, 'CREATE_FCR' AS UPDATE_BY
+		</foreach>
+		       ) V
+		CROSS  JOIN (SELECT COALESCE(MAX(SEQ), 0) AS BASE_SEQ FROM FCR_RESULT) NS
 	</insert>
 
 	<!-- ===================== 3-7. FCR_MST 의 역내산/역외산 재료비금액 UPDATE ===================== -->

@@ -134,9 +134,14 @@
        		AND IM.ITEM_CODE = SD.PRODUCT_CODE
     </select>
 
-    <!-- 판정완료(status=4) 건의 판정결과: 해당 품목에 적용되는 협정(FTA)별 결과 목록 -->
+    <!-- 판정완료(status=4) 건의 판정결과: 해당 품목에 적용되는 협정(FTA)별 결과 목록.
+         FM.RULE_CONTENTS = FR.RULE_CODE 조인은 텍스트 일치라 같은 협정 안에 RULE_CODE가 같은
+         RULE_SEQ가 여러 개 있으면(예: 동일 CTSH 기준이 예외조건만 다르게 RULE_SEQ별로 나뉜 경우)
+         FCR_RESULT 쪽에서 여러 행이 걸릴 수 있다. DISTINCT ON (FM.FTA_CODE)으로 협정당 정확히
+         1행만 남기고, 동률이면 RULE_SEQ가 가장 큰(가장 나중에 정의된) 행을 채택한다 -->
     <select id="retrieveOriginDeterminationDetailResultList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
-       SELECT FM.FTA_CODE
+       SELECT DISTINCT ON (FM.FTA_CODE)
+              FM.FTA_CODE
        		, FM.HS_CODE
        		, FTA.FTA_NAME
        		, FM.AMOUNT
@@ -159,6 +164,7 @@
        WHERE FM.COMPANY_CODE = #{company_code}
        AND FM.SALES_NO = #{sales_no}
        AND FM.SALES_SEQ = #{sales_seq}
+       ORDER BY FM.FTA_CODE, FR.RULE_SEQ DESC
     </select>
 
     <!-- 판정결과(FTA_CODE)별 기준별 판정 상세내용 전체 목록 - originDeterminationDetailResultList 응답에
@@ -186,6 +192,77 @@
        WHERE FR.COMPANY_CODE = #{company_code}
        AND FR.SALES_NO = #{sales_no}
        AND FR.SALES_SEQ = #{sales_seq}
+    </select>
+
+    <!-- 판정실패(status=5) 건의 실패 사유: FCR_RESULT 중 STATUS='E'(오류)인 협정/룰별 목록 -->
+    <!-- 협정(FTA_CODE) + 사유(ERROR_CODE/ERROR_MSG) 단위로 묶어서 보여준다. 같은 협정 안에서도
+         RULE_SEQ별로 다른 사유가 나올 수 있어 ERROR_CODE/ERROR_MSG는 그룹핑 기준에 반드시 포함하고,
+         반대로 동일 협정·동일 사유가 여러 RULE_SEQ에 걸쳐 중복되는 경우는 한 행으로 합친다. -->
+    <select id="retrieveOriginDeterminationFailReasonList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+       SELECT FR.FTA_CODE
+       		, FTA.FTA_NAME
+       		, FR.ERROR_CODE
+       		, COALESCE(NULLIF(GET_CODE_NAME(FR.ERROR_CODE, 'ODER', FR.COMPANY_CODE, 'KOR'), ''), FR.ERROR_MSG) AS ERROR_MSG
+       FROM FCR_RESULT FR
+       INNER JOIN FTA_MASTER FTA
+       		ON FR.COMPANY_CODE = FTA.COMPANY_CODE
+       		AND FR.FTA_CODE = FTA.FTA_CODE
+       WHERE FR.COMPANY_CODE = #{company_code}
+       AND FR.SALES_NO = #{sales_no}
+       AND FR.SALES_SEQ = #{sales_seq}
+       AND FR.STATUS = 'E'
+       GROUP BY FR.COMPANY_CODE, FR.FTA_CODE, FTA.FTA_NAME, FR.ERROR_CODE, FR.ERROR_MSG
+       ORDER BY FR.FTA_CODE
+    </select>
+
+    <!-- 실패 사유(FTA_CODE)별 상세내용 전체 목록 - originDeterminationFailList 응답에 실패 사유와 함께
+         내려주고, 화면에서 실패 사유의 FTA_CODE로 이 목록을 매핑해 그 협정에 걸린 룰 전체(오류 여부 무관)를
+         보여준다 -->
+    <select id="retrieveOriginDeterminationFailDetailList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+       SELECT FR.FTA_CODE
+       		, FR.RULE_SEQ
+       		, FR.RULE_CODE
+       		, FR.STATUS
+       		, FR.ERROR_CODE
+       		, FR.ERROR_MSG
+       		, FRU.RULE_DESCRIPTION
+       FROM FCR_RESULT FR
+       LEFT JOIN FTA_RULE FRU
+       		ON FRU.HS_CODE = SUBSTR(FR.HS_CODE, 1, LENGTH(FRU.HS_CODE))
+           	AND FRU.FTA_CODE = FR.FTA_CODE
+           	AND FRU.RULE_ID = FR.RULE_SEQ
+       WHERE FR.COMPANY_CODE = #{company_code}
+       AND FR.SALES_NO = #{sales_no}
+       AND FR.SALES_SEQ = #{sales_seq}
+       ORDER BY FR.FTA_CODE, FR.RULE_SEQ
+    </select>
+
+    <!-- FCR_DTL(협정 판정 계산에 실제로 쓰인 최종 원재료) 목록. 두 곳에서 재사용한다:
+         1) 실패 사유가 TXT_HSCODE_INCLUDE_MISSING(HS코드 누락)/MSG_FAILED_DECISION_QTY_AMOUNT(금액 0)일 때
+            - fta_code 없이 SALES_NO+SALES_SEQ 전체를 내려주고, 화면에서 실패 사유의 FTA_CODE로 매핑해 보여준다
+         2) BOM 추적 팝업 - fta_code까지 지정해 그 협정 1건의 원재료만 조회한다 -->
+    <select id="retrieveOriginDeterminationFailMaterialList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+       SELECT FD.FTA_CODE
+       		, FD.ITEM_CODE
+       		, IM.ITEM_NAME
+       		, FD.HS_CODE
+       		, FD.REQUIREMENT_QTY
+       		, FD.INPUT_AMOUNT
+       		, FD.INAREA_QTY
+       		, FD.INAREA_AMOUNT
+       		, FD.OUTAREA_QTY
+       		, FD.OUTAREA_AMOUNT
+       FROM FCR_DTL FD
+       LEFT JOIN ITEM_MST IM
+       		ON IM.COMPANY_CODE = FD.COMPANY_CODE
+       		AND IM.ITEM_CODE = FD.ITEM_CODE
+       WHERE FD.COMPANY_CODE = #{company_code}
+       AND FD.SALES_NO = #{sales_no}
+       AND FD.SALES_SEQ = #{sales_seq}
+       <if test="fta_code != null and fta_code != ''">
+       AND FD.FTA_CODE = #{fta_code}
+       </if>
+       ORDER BY FD.FTA_CODE, FD.ITEM_CODE
     </select>
 
     <select id="retrieveExportOriginDetermination" parameterType="HashMap" resultType="HashMap">

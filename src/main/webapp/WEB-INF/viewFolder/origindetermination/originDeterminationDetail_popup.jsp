@@ -95,6 +95,17 @@
 					<h6 class="mt-4 mb-3">판정 상세내용</h6>
 					<div id="oAuiGrid_originDetermination_popup_resultDetail" style="width:100%;height:180px;"></div>
 				</div>
+
+				<div id="originDetermination_popup_failSection">
+					<h6 class="mt-4 mb-3">판정 실패 사유</h6>
+					<div id="oAuiGrid_originDetermination_popup_failReason" style="width:100%;height:280px;"></div>
+
+					<h6 class="mt-4 mb-3">판정 실패 상세내용</h6>
+					<div id="oAuiGrid_originDetermination_popup_failDetail" style="width:100%;height:320px;"></div>
+					<!-- TXT_HSCODE_INCLUDE_MISSING/MSG_FAILED_DECISION_QTY_AMOUNT 사유일 때는 위 대신 이 원재료
+					     목록을 보여준다(selectFailReasonRow 참고) -->
+					<div id="oAuiGrid_originDetermination_popup_failMaterial" style="width:100%;height:320px;"></div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -119,6 +130,13 @@
 		this.selectedLineKey = null;
 		// 현재 선택된 판정 품목의 판정 상세내용(기준별) 전체 목록 - fta_code로 필터링해서 사용
 		this.currentDetailList = [];
+		// 현재 선택된 판정 품목의 판정 실패 상세내용(협정 내 룰 전체) 목록 - fta_code로 필터링해서 사용
+		this.currentFailDetailList = [];
+		// 현재 선택된 판정 품목의 원재료(FCR_DTL) 전체 목록 - HS코드 누락/금액 0 사유일 때 fta_code로
+		// 필터링해서 판정 실패 상세내용 자리에 대신 보여준다
+		this.currentFailMaterialList = [];
+		// 판정 실패 상세내용 대신 원재료 목록을 보여줘야 하는 실패 사유(ERROR_CODE)
+		this.MATERIAL_DETAIL_ERROR_CODES = ["TXT_HSCODE_INCLUDE_MISSING", "MSG_FAILED_DECISION_QTY_AMOUNT"];
 		// 팝업을 연 화면(내수/수출) - 값이 없으면(구버전 호출부 등) 내수로 취급.
 		// 내수는 "개별/일괄 원산지 판정" 버튼이 둘 다 있고 executeDomesticOriginDetermination을,
 		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
@@ -128,6 +146,9 @@
 		this.grid_Detail = null;
 		this.grid_Result = null;
 		this.grid_ResultDetail = null;
+		this.grid_FailReason = null;
+		this.grid_FailDetail = null;
+		this.grid_FailMaterial = null;
 
 		this.buildKey = function(salesNo, salesSeq) {
 			return salesNo + "_" + salesSeq;
@@ -212,7 +233,6 @@
 				self.selectDetailLine(self.buildKey(event.item.sales_no, event.item.sales_seq));
 			});
 
-			// 단가기준/BOM 추적/역내전환전략은 API가 아직 제공하지 않아 빈 칸으로 남는다 
 			var columnLayoutResult = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
 				{dataField: "hs_code", headerText: "HS CODE", width: 110},
@@ -231,17 +251,38 @@
 					    if (value === null || value === undefined || value === "") return "";
 					    return Number(value).toFixed(0) + "%"; 
 					}},
-				{dataField: "bom_trace", headerText: "BOM 추적", width: 100},
-				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 100}
+				{dataField: "bom_trace", headerText: "BOM 추적", width: 100, style: "grid-center-text",
+					renderer: {
+						type: 'IconRenderer',
+						iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
+						iconHeight: 16,
+						iconFunction: function (rowIndex, columnIndex, value, item) {
+						 	return "/rcs/auigrid/images/icon-search.png";
+						},
+					}
+				},
+				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 100, style: "grid-center-text",
+					renderer: {
+					    type: 'IconRenderer',
+					    iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
+					    iconHeight: 16,
+					    iconFunction: function (rowIndex, columnIndex, value, item) {
+					    	return item.company_coo_yn === 'N' ? "/rcs/auigrid/images/icon-search.png" : null;
+					    }
+					}
+				}
 			];
 			var gridPropsResult = {enableFilter: true };
 			this.grid_Result = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_result", columnLayoutResult, gridPropsResult, "");
 
 			AUIGrid.bind(this.grid_Result, "cellClick", function(event) {
+				if (event.dataField === "bom_trace") {
+					self.getBomTraceList(event.item);
+					return;
+				}
 				self.selectResultRow(event.item.fta_code);
 			});
 
-			// 미소기준 적용금액/판매금액/미상 재료비/부가가치 비율/결정기준 해설은 API가 아직 제공하지 않아 빈 칸으로 남는다
 			var columnLayoutResultDetail = [
 				{dataField: "rule_code", headerText: "결정기준", width: 120, filter: {showIcon: true}},
 				{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 100, dataType: "numeric", style: ""},
@@ -257,6 +298,60 @@
 			];
 			var gridPropsResultDetail = { enableFilter: true };
 			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
+
+			// 판정 실패 사유: FCR_RESULT 중 STATUS='E'(오류)인 협정별 사유 목록(협정+사유 단위로 중복 제거됨)
+			var columnLayoutFailReason = [
+				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
+				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
+				{dataField: "error_code", headerText: "오류코드", width: 180, visible: false},
+				{dataField: "error_msg", headerText: "실패 사유", width: 400}
+			];
+			var gridPropsFailReason = { enableFilter: true };
+			this.grid_FailReason = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failReason", columnLayoutFailReason, gridPropsFailReason, "");
+
+			AUIGrid.bind(this.grid_FailReason, "cellClick", function(event) {
+				self.selectFailReasonRow(event.item);
+			});
+
+			// 판정 실패 상세내용: 실패 사유 그리드에서 협정(FTA_CODE) 행을 클릭하면, 그 협정에 걸린
+			// 룰 전체(오류 여부 무관)의 처리결과를 보여준다 - 어떤 룰은 통과하고 어떤 룰만 실패했는지 함께 확인 가능.
+			// 단 실패 사유가 MATERIAL_DETAIL_ERROR_CODES에 해당하면 이 그리드 대신 원재료 목록을 보여준다
+			// (selectFailReasonRow 참고)
+			var columnLayoutFailDetail = [
+				{dataField: "rule_seq", headerText: "룰순번", width: 90},
+				{dataField: "rule_code", headerText: "결정기준", width: 150, filter: {showIcon: true}},
+				{dataField: "status", headerText: "처리상태", width: 100,
+					labelFunction: function(rowIndex, columnIndex, value) {
+						return value === "E" ? "오류" : (value === "N" ? "정상" : (value || ""));
+					}},
+				{dataField: "error_code", headerText: "오류코드", width: 180, visible: false},
+				{dataField: "error_msg", headerText: "실패 사유", width: 300, filter: {showIcon: true}},
+				{dataField: "rule_description", headerText: "결정기준 해설", width: 400}
+			];
+			var gridPropsFailDetail = { enableFilter: true };
+			this.grid_FailDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failDetail", columnLayoutFailDetail, gridPropsFailDetail, "");
+
+			// 원재료(FCR_DTL) 목록: HS코드 누락(TXT_HSCODE_INCLUDE_MISSING)/금액 0(MSG_FAILED_DECISION_QTY_AMOUNT)
+			// 사유일 때 어떤 원재료가 원인인지 바로 확인할 수 있도록 보여준다
+			var columnLayoutFailMaterial = [
+				{dataField: "item_code", headerText: "품목코드", width: 150},
+				{dataField: "item_name", headerText: "품명", width: 200},
+				{dataField: "hs_code", headerText: "HS CODE", width: 110},
+				{dataField: "requirement_qty", headerText: "소요량", width: 100, dataType: "numeric", style: ""},
+				{dataField: "input_amount", headerText: "투입금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"},
+				{dataField: "inarea_qty", headerText: "역내수량", width: 100, dataType: "numeric", style: ""},
+				{dataField: "inarea_amount", headerText: "역내금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"},
+				{dataField: "outarea_qty", headerText: "역외수량", width: 100, dataType: "numeric", style: ""},
+				{dataField: "outarea_amount", headerText: "역외금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"}
+			];
+			var gridPropsFailMaterial = { enableFilter: true };
+			this.grid_FailMaterial = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failMaterial", columnLayoutFailMaterial, gridPropsFailMaterial, "");
+			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
+
+			// 판정 품목 조회가 끝나 selectDetailLine이 상태에 맞게 다시 켤 때까지, 두 섹션 모두 기본적으로
+			// 숨겨둔다(비동기 조회 응답이 오기 전 빈 그리드가 잠깐 노출되는 걸 방지)
+			$('#originDetermination_popup_resultSection').hide();
+			$('#originDetermination_popup_failSection').hide();
 		};
 
 		// 시작점
@@ -312,6 +407,8 @@
 			AUIGrid.resize(this.grid_Detail);
 			AUIGrid.resize(this.grid_Result);
 			AUIGrid.resize(this.grid_ResultDetail);
+			AUIGrid.resize(this.grid_FailReason);
+			AUIGrid.resize(this.grid_FailDetail);
 		};
 
 		 // 개별 원산지 판정 임시 숨김 처리
@@ -441,6 +538,7 @@
 			if (lines.length === 0) {
 				this.selectedLineKey = null;
 				this.hideResultSections();
+				this.hideFailSections();
 				return;
 			}
 
@@ -460,16 +558,22 @@
 			this.selectDetailLine(lineKeyToSelect);
 		};
 
-		// 우측 "판정 품목" 표에서 라인 1건을 선택 - 판정완료(status=4) 건만 판정결과/판정 상세내용
-		// 섹션을 보여줌. 개별 원산지 판정(도메스틱 전용) 대상도 이 선택된 라인을 기준으로 한다
+		// 우측 "판정 품목" 표에서 라인 1건을 선택 - 판정완료(status=4)면 판정결과/판정 상세내용을,
+		// 판정실패(status=5)면 판정 실패 사유/판정 실패 상세내용을 보여줌. 그 외 상태는 둘 다 비움.
+		// 개별 원산지 판정(도메스틱 전용) 대상도 이 선택된 라인을 기준으로 한다
 		this.selectDetailLine = function(lineKey) {
 			this.selectedLineKey = lineKey;
 
 			var line = this.findRowByKey(lineKey);
 			if (line && this.isDetermined(line.status)) {
 				this.retrieveResultList(line);
+				this.hideFailSections();
+			} else if (line && this.isFailed(line.status)) {
+				this.retrieveFailList(line);
+				this.hideResultSections();
 			} else {
 				this.hideResultSections();
+				this.hideFailSections();
 			}
 		};
 
@@ -485,10 +589,26 @@
 			return String(status) === "4";
 		};
 
+		this.isFailed = function(status) {
+			return String(status) === "5";
+		};
+
 		this.hideResultSections = function() {
 			this.currentDetailList = [];
 			AUIGrid.setGridData(this.grid_Result, []);
 			AUIGrid.setGridData(this.grid_ResultDetail, []);
+			$('#originDetermination_popup_resultSection').hide();
+		};
+
+		this.hideFailSections = function() {
+			this.currentFailDetailList = [];
+			this.currentFailMaterialList = [];
+			AUIGrid.setGridData(this.grid_FailReason, []);
+			AUIGrid.setGridData(this.grid_FailDetail, []);
+			AUIGrid.setGridData(this.grid_FailMaterial, []);
+			$('#oAuiGrid_originDetermination_popup_failDetail').show();
+			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
+			$('#originDetermination_popup_failSection').hide();
 		};
 
 		// 좌측에서 선택한 그룹(품번/품명)에 속한 라인 전체를 판정 품목 그리드에 나열.
@@ -533,6 +653,11 @@
 
 		// 판정결과 그리드 렌더링. 행 클릭은 createAUIGrid에서 selectResultRow로 한 번만 바인딩해뒀다
 		this.renderResultList = function(list) {
+			$('#originDetermination_popup_resultSection').show();
+			// AUIGrid는 부모가 display:none인 상태로 생성/resize되면 크기를 제대로 못 잡는다(다른 주석 참고).
+			// 숨겨져 있다가 지금 막 보이게 된 경우를 대비해 다시 계산해준다.
+			AUIGrid.resize(this.grid_Result);
+			AUIGrid.resize(this.grid_ResultDetail);
 			AUIGrid.setGridData(this.grid_Result, list || []);
 			AUIGrid.setGridData(this.grid_ResultDetail, []);
 		};
@@ -552,6 +677,71 @@
 			AUIGrid.setGridData(this.grid_ResultDetail, list || []);
 		};
 
+		// 판정실패(status=5) 건의 실패 사유(협정/룰별)와, 그 사유(FTA_CODE)별 상세내용(룰 전체 처리결과)/
+		// 원재료 목록을 한 번에 조회. retrieveResultList와 동일한 패턴 - 상세내용/원재료 목록은 fta_code마다
+		// 별도 호출하지 않고 여기서 받은 목록을 fta_code로 매핑해 화면에서 바로 보여준다(selectFailReasonRow 참고)
+		this.retrieveFailList = function(row) {
+			var self = this;
+			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
+
+			KpackageOBJ.ajax.doSubmit(
+				'/origin/compliance/origindetermination/originDeterminationFailList',
+				request,
+				function(response) {
+					var value = (response && response.value) ? response.value : {};
+					self.currentFailDetailList = value.detailList || [];
+					self.currentFailMaterialList = value.materialList || [];
+					self.renderFailReasonList(value.reasonList || []);
+				}
+			);
+		};
+
+		// 실패 사유 그리드 렌더링. 행 클릭은 createAUIGrid에서 selectFailReasonRow로 한 번만 바인딩해뒀다
+		this.renderFailReasonList = function(list) {
+			$('#originDetermination_popup_failSection').show();
+			AUIGrid.resize(this.grid_FailReason);
+			AUIGrid.resize(this.grid_FailDetail);
+			AUIGrid.resize(this.grid_FailMaterial);
+			AUIGrid.setGridData(this.grid_FailReason, list || []);
+			AUIGrid.setGridData(this.grid_FailDetail, []);
+			AUIGrid.setGridData(this.grid_FailMaterial, []);
+			$('#oAuiGrid_originDetermination_popup_failDetail').show();
+			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
+		};
+
+		// 실패 사유 그리드에서 행을 클릭하면, 별도 API 호출 없이 retrieveFailList에서 이미 받아둔 목록을
+		// 그 fta_code로 필터링해 보여준다. error_code가 MATERIAL_DETAIL_ERROR_CODES(HS코드 누락/금액 0)에
+		// 해당하면 판정 상세내용 대신 원재료 목록을 보여준다
+		this.selectFailReasonRow = function(reasonRow) {
+			var ftaCode = reasonRow.fta_code;
+
+			if (this.MATERIAL_DETAIL_ERROR_CODES.indexOf(reasonRow.error_code) !== -1) {
+				var materials = this.currentFailMaterialList.filter(function(d) {
+					return d.fta_code === ftaCode;
+				});
+				this.renderFailMaterialList(materials);
+				return;
+			}
+
+			var filtered = this.currentFailDetailList.filter(function(d) {
+				return d.fta_code === ftaCode;
+			});
+			this.renderFailDetailList(filtered);
+		};
+
+		this.renderFailDetailList = function(list) {
+			$('#oAuiGrid_originDetermination_popup_failDetail').show();
+			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
+			AUIGrid.setGridData(this.grid_FailDetail, list || []);
+		};
+
+		this.renderFailMaterialList = function(list) {
+			$('#oAuiGrid_originDetermination_popup_failDetail').hide();
+			$('#oAuiGrid_originDetermination_popup_failMaterial').show();
+			AUIGrid.resize(this.grid_FailMaterial);
+			AUIGrid.setGridData(this.grid_FailMaterial, list || []);
+		};
+
 		// 내수는 (invoice_month, customer_code, division_code, product_code) 라인 목록으로
 		// executeDomesticOriginDetermination을, 수출은 (sales_no, division_code) 목록으로
 		// executeExportOriginDetermination을 호출한다 - 응답 형태(groupCount/failedTargets)는
@@ -562,6 +752,12 @@
 			var self = this;
 			var url;
 			var request;
+
+			// 서버가 내려주는 groupCount는 (매출년월+고객사+플랜트) 등으로 묶은 "그룹" 수라서,
+			// 같은 조합의 품목 여러 개가 한 그룹으로 처리되면 실제 품목 수보다 훨씬 작게 보여
+			// 혼란을 줬다. 그래서 안내 메시지는 groupCount 대신 여기서 실제로 요청한 품목(product_code)
+			// 수를 세서 보여준다(handleExecuteResponse 참고)
+			var productCount = new Set(rows.map(function(row) { return row.product_code; })).size;
 
 			if (this.mode === 'export') {
 				url = '/origin/compliance/origindetermination/executeExportOriginDetermination';
@@ -588,20 +784,20 @@
 				url,
 				request,
 				function(response) {
-					self.handleExecuteResponse(response);
+					self.handleExecuteResponse(response, productCount);
 				}
 			);
 		};
 
 		// executeOriginDetermination 응답(내수/수출 공용) 처리: 결과 메시지 표시 후 좌측 목록/상세
 		// 전체를 다시 조회해 최신화한다(선택 중이던 라인이 남아있으면 그 라인을 그대로 유지).
-		this.handleExecuteResponse = function(response) {
+		this.handleExecuteResponse = function(response, productCount) {
 			var value = (response && response.value) ? response.value : {};
 			var failedCount = value.failedTargets ? value.failedTargets.length : 0;
-			var message = (value.groupCount || 0) + "건 원산지 판정을 진행했습니다.";
+			var message = productCount + "건 원산지 판정을 요청했습니다.";
 
 			if (failedCount > 0) {
-				message += " (실패 " + failedCount + "건)";
+				message += " (처리 실패 " + failedCount + "건)";
 			}
 
 			KpackageOBJ.object.alert(message);
@@ -637,6 +833,25 @@
 		// 좌측 목록(lineItems)에서 현재 선택된(selectedLineKey) 라인을 찾음
 		this.findSelectedRow = function() {
 			return this.findRowByKey(this.selectedLineKey);
+		};
+		
+		// BOM 추적: 이 협정(fta_code) 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL)를 팝업으로 보여준다.
+		// sales_no/sales_seq는 row(판정결과 1건)가 아니라 현재 선택된 판정 품목 라인에서 가져온다
+		this.getBomTraceList = function (row) {
+			var line = this.findSelectedRow();
+			if (!line) {
+				return;
+			}
+
+			var getParam = "?sales_no=" + encodeURIComponent(line.sales_no)
+				+ "&sales_seq=" + encodeURIComponent(line.sales_seq)
+				+ "&fta_code=" + encodeURIComponent(row.fta_code)
+				+ "&fta_name=" + encodeURIComponent(row.fta_name || '');
+			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1400px', true);
+		};
+		
+		this.getConversionStrategy = function () {
+				
 		};
 	};
 

@@ -97,6 +97,23 @@ public class OriginDeterminationController extends GenericController {
 		return "origindetermination/originDeterminationDetail_popup";
 	}
 
+	/**
+	 * "BOM 추적" 아이콘 클릭 시 뜨는 팝업. 그 협정(FTA_CODE) 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL)를
+	 * 조회해 보여준다.
+	 */
+	@RequestMapping(value = "/origin/compliance/origindetermination/bomTraceList_popup")
+	public String bomTraceList_popup(@RequestParam(value = "sales_no", required = false) String salesNo,
+			@RequestParam(value = "sales_seq", required = false) String salesSeq,
+			@RequestParam(value = "fta_code", required = false) String ftaCode,
+			@RequestParam(value = "fta_name", required = false) String ftaName, Model model, HttpSession session) {
+		model.addAttribute("sales_no", salesNo);
+		model.addAttribute("sales_seq", salesSeq);
+		model.addAttribute("fta_code", ftaCode);
+		model.addAttribute("fta_name", ftaName);
+
+		return "origindetermination/bomTraceList_popup";
+	}
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")
 	@ResponseBody
 	public Result originDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param)
@@ -121,6 +138,39 @@ public class OriginDeterminationController extends GenericController {
 
 		try {
 			result = originDeterminationService.retrieveOriginDeterminationDetailResultList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationFailList")
+	@ResponseBody
+	public Result originDeterminationFailList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveOriginDeterminationFailList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	// BOM 추적 팝업 전용. param.fta_code로 그 협정 1건의 원재료(FCR_DTL)만 조회한다.
+	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationMaterialList")
+	@ResponseBody
+	public Result originDeterminationMaterialList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveOriginDeterminationMaterialList(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

@@ -86,7 +86,7 @@ public class CtcCriteriaDecisionService {
 			rec.setCtcYn("N");
 			rec.setStatus("E");
 			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("소요량 또는 금액이 0 인 것이 존재합니다.");
+			rec.setErrorMsg("금액이 0 인 것이 존재합니다.");
 			return;
 		}
 
@@ -124,7 +124,7 @@ public class CtcCriteriaDecisionService {
 				rec.setFtaDeMinimisYn("N");
 				rec.setCompanyDeMinimisYn("N");
 				rec.setStatus("E");
-				rec.setErrorCode("DE_MINIMIS01");
+				rec.setErrorCode("MSG_PRODUCT_WEIGHT_NOT_FOUND");
 				rec.setErrorMsg("Product Weight Not found!!");
 			} else {
 				applyDeMinimisResult(ctx, rec, weightRate, frData);
