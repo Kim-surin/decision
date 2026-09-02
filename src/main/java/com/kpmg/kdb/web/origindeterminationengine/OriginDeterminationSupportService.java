@@ -38,8 +38,14 @@ public class OriginDeterminationSupportService extends GeneralService {
 	@Autowired
 	private CooDecisionReferenceDataService referenceDataService;
 
-	/** COMPANY_OPTION(OPTION_CODE='BF') 산정기준에 따라 회사/사업부/제품군/FTA 중 하나에서 버퍼율을 조회해 컨텍스트에 채운다. */
-	public void loadBuffer(OriginDeterminationContext ctx, String companyCode, String divisionCode, String ftaCode,
+	/**
+	 * COMPANY_OPTION(OPTION_CODE='BF') 산정기준에 따라 회사/사업부/제품군/FTA 중 하나에서 버퍼율을 조회해 컨텍스트에 채운다.
+	 *
+	 * @return 조회 성공 여부. 실패(예외 발생) 시 false — 호출자가 이 FTA_CODE 후보를 판정오류로 처리해야 한다.
+	 *         이전에는 실패해도 조용히 넘어가 companyRvcRate/companyCtcRate가 null로 남고, 그게 nvl()로 0
+	 *         취급되면서 회사 버퍼가 없는 것처럼 자사기준 판정이 계속 진행되는 문제가 있었다.
+	 */
+	public boolean loadBuffer(OriginDeterminationContext ctx, String companyCode, String divisionCode, String ftaCode,
 			String productCode, Map<String, BufferRates> productLineBufferCache) {
 		try {
 			String optionValue = referenceDataService.getBufferOptionValue(companyCode);
@@ -59,10 +65,12 @@ public class OriginDeterminationSupportService extends GeneralService {
 				ctx.setCompanyRvcRate(rates.getRvcRate());
 				ctx.setCompanyCtcRate(rates.getDeMinimisRate());
 			}
+			return true;
 		} catch (Exception e) {
-			ctx.setErrorCode("GET_BUFFER");
+			ctx.setErrorCode("MSG_FAILED_LOAD_BUFFER_RATE");
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
-			logger.error("GET_BUFFER 실패. companyCode={}", companyCode, e);
+			logger.error("버퍼율 조회 실패. companyCode={}", companyCode, e);
+			return false;
 		}
 	}
 
@@ -163,23 +171,24 @@ public class OriginDeterminationSupportService extends GeneralService {
 		ctx.setErrorCode("");
 	}
 
-	/** 판정결과 1건을 저장 대기열에 담고 다음 룰 판정을 위해 레코드를 초기화한다. 실제 INSERT는 flushPendingResultsBatch가 배치로 처리한다. */
+	/**
+	 * 판정결과 1건을 저장 대기열에 담고 다음 룰 판정을 위해 레코드를 초기화한다. 실제 INSERT는 flushPendingResultsBatch가 배치로 처리한다.
+	 *
+	 * <p>예외를 흡수하지 않고 그대로 던진다 — 예전에는 여기서 실패하면 이 룰의 결과가 성공도 실패도
+	 * 아닌 채로 조용히 사라지고 다음 룰로 넘어갔다. 지금은 던져서 {@link OriginDecisionPipeline}까지
+	 * 전파시켜 이 대상 전체를 판정실패로 표시하게 한다.
+	 */
 	public void insertFrdAndReset(OriginDeterminationContext ctx, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
-		try {
-			rec.setBufferOption(ctx.getOptionValue());
-			rec.setDeMinimisRate(ctx.getCompanyCtcRate());
-			rec.setRvcRate(ctx.getCompanyRvcRate());
-			rec.setDeleteYn("N");
-			rec.setCreateBy(mode.getProcedureName());
-			rec.setUpdateBy(mode.getProcedureName());
 
-			ctx.addPendingResult(rec.copy());
-		} catch (Exception e) {
-			ctx.setErrorCode("DECISION01");
-			ctx.setErrorMsg(String.valueOf(e.getMessage()));
-			logger.error("INSERT_FRD_PROCESS 실패. rec={}", rec, e);
-		}
+		rec.setBufferOption(ctx.getOptionValue());
+		rec.setDeMinimisRate(ctx.getCompanyCtcRate());
+		rec.setRvcRate(ctx.getCompanyRvcRate());
+		rec.setDeleteYn("N");
+		rec.setCreateBy(mode.getProcedureName());
+		rec.setUpdateBy(mode.getProcedureName());
+
+		ctx.addPendingResult(rec.copy());
 
 		rec.resetForNextRule();
 	}

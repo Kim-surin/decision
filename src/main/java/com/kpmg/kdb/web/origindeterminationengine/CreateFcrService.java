@@ -18,6 +18,7 @@ import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityRequest;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.BomNotFoundResultRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrDtlInsertRow;
@@ -56,6 +57,8 @@ public class CreateFcrService extends GeneralService {
 
 	private static final int INSERT_CHUNK_SIZE = 500;
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+	private static final String BOM_NOT_FOUND_ERROR_CODE = "BOM_NOT_FOUND";
+	private static final String BOM_NOT_FOUND_ERROR_MSG = "BOM이 존재하지 않습니다.";
 
 	@Autowired
 	private MaterialHsCodeService hsCodeService;
@@ -71,7 +74,8 @@ public class CreateFcrService extends GeneralService {
 	/**
 	 * @param productCodes 판정 대상 제품 코드. null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면
 	 *                      그 제품들만(개별 판정) 대상으로 한다.
-	 * @return "successed" / "semisuccess" / "failed"
+	 * @return "successed" / "semisuccess" — BOM이 없는 제품이 있어도 나머지 제품은 계속 진행하고
+	 *         BOM이 없는 제품은 FCR_RESULT에 BOM_NOT_FOUND 오류로 명시 기록한다("semisuccess").
 	 */
 	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam,
 			List<String> productCodes) {
@@ -82,7 +86,6 @@ public class CreateFcrService extends GeneralService {
 		String invoiceDate = header.getInvoiceDate();
 		String yyyymm = invoiceDate.substring(0, 6);
 		String bomPreviousYyyymm = minusMonthsYyyymm(invoiceDate, 60);
-		String virtualYn = header.getVirtualYn();
 
 		String bomType;
 		if ("X".equals(bomTypeParam)) {
@@ -92,13 +95,8 @@ public class CreateFcrService extends GeneralService {
 			bomType = bomTypeParam;
 		}
 
-		int errCnt = checkBomAvailability(dao, companyCode, divisionCode, salesNo, bomType, bomPreviousYyyymm, yyyymm,
-				productCodes);
-
-		// BOM 오류가 없거나 포괄건(가상 매출)이면 오류가 있어도 진행
-		if (errCnt != 0 && !"Y".equals(virtualYn)) {
-			return "failed";
-		}
+		List<SalesDtlBomTarget> missingBomTargets = checkBomAvailability(dao, companyCode, divisionCode, salesNo,
+				bomType, bomPreviousYyyymm, yyyymm, productCodes);
 
 		dao.deleteFcrDtl(salesNo, divisionCode, companyCode, productCodes);
 		dao.deleteFcrResult(salesNo, divisionCode, companyCode, productCodes);
@@ -107,12 +105,19 @@ public class CreateFcrService extends GeneralService {
 		Map<String, String> hsCodeCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> incotermsCache = new LinkedHashMap<>();
 
+		// BOM이 있는 제품만 selectDomesticSalesLines/selectExportSalesLines(BOM_STATUS<>'1')를 통해
+		// 정상적으로 FCR_MST/FCR_DTL이 생성된다. BOM이 없는 제품은 아래에서 별도로 BOM_NOT_FOUND 오류를 남긴다.
 		if ("D".equals(exportFlag)) {
 			createDomesticFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
 					hsCodeCache, incotermsCache);
 		} else {
 			createExportFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
 					hsCodeCache, incotermsCache);
+		}
+
+		if (!missingBomTargets.isEmpty()) {
+			insertBomNotFoundResults(dao, companyCode, divisionCode, salesNo, exportFlag, bomType, missingBomTargets,
+					hsCodeCache);
 		}
 
 		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
@@ -151,16 +156,19 @@ public class CreateFcrService extends GeneralService {
 
 		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
 
-		return errCnt > 0 ? "semisuccess" : "successed";
+		return missingBomTargets.isEmpty() ? "successed" : "semisuccess";
 	}
 
-	/** 제품별 실적/표준 BOM 존재 여부를 확인하고 SALES_DTL.BOM_STATUS를 갱신한다. BOM이 없으면 errCnt 증가. */
-	private int checkBomAvailability(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
-			String bomType, String bomPreviousYyyymm, String yyyymm, List<String> productCodes) {
+	/**
+	 * 제품별 실적/표준 BOM 존재 여부를 확인하고 SALES_DTL.BOM_STATUS를 갱신한다.
+	 * @return BOM이 없는(BOM_STATUS='1') 대상 목록
+	 */
+	private List<SalesDtlBomTarget> checkBomAvailability(CreateFcrDao dao, String companyCode, String divisionCode,
+			String salesNo, String bomType, String bomPreviousYyyymm, String yyyymm, List<String> productCodes) {
 		List<SalesDtlBomTarget> targets = dao.selectSalesDtlBomTargets(companyCode, divisionCode, salesNo,
 				productCodes);
 		if (targets.isEmpty()) {
-			return 0;
+			return List.of();
 		}
 
 		Map<String, BomAvailabilityRequest> distinctLookups = new LinkedHashMap<>();
@@ -176,7 +184,7 @@ public class CreateFcrService extends GeneralService {
 					result);
 		}
 
-		int errCnt = 0;
+		List<SalesDtlBomTarget> missingBomTargets = new ArrayList<>();
 		List<SalesDtlBomStatusUpdateRow> updateRows = new ArrayList<>(targets.size());
 		for (SalesDtlBomTarget target : targets) {
 			String status = "5".equals(target.getStatus()) ? "1" : "0";
@@ -197,7 +205,7 @@ public class CreateFcrService extends GeneralService {
 				bomDivisionCode = availability.getAnyDivisionCode();
 			} else {
 				bomStatus = "1";
-				errCnt++;
+				missingBomTargets.add(target);
 			}
 
 			updateRows.add(new SalesDtlBomStatusUpdateRow(target.getSalesSeq(), target.getProductCode(), status,
@@ -205,7 +213,7 @@ public class CreateFcrService extends GeneralService {
 		}
 
 		dao.updateSalesDtlBomStatusBatch(salesNo, divisionCode, companyCode, updateRows);
-		return errCnt;
+		return missingBomTargets;
 	}
 
 	private static String bomAvailabilityKey(String prodDivisionCode, String productCode) {
@@ -323,6 +331,110 @@ public class CreateFcrService extends GeneralService {
 		if (!chunk.isEmpty()) {
 			dao.insertFcrMstRows(chunk);
 		}
+	}
+
+	/**
+	 * BOM이 없는 대상들의 FTA_CODE 후보마다 FCR_MST(RULE_CONTENTS는 채우지 않음) + FCR_RESULT(STATUS='E',
+	 * BOM_NOT_FOUND)를 명시적으로 생성한다. RULE_CONTENTS가 비어있는 FCR_MST는
+	 * updateSalesMstDecisionComplete/updateSalesDtlDecisionComplete 집계에서 판정실패로 잡히고,
+	 * selectOriginDeterminationTargets가 SALES_DTL.BOM_STATUS='1'인 행을 제외하므로 이후 determineOrigin()이
+	 * 이 FCR_MST를 다시 처리해 값을 덮어쓰는 일도 없다.
+	 */
+	private void insertBomNotFoundResults(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
+			String exportFlag, String bomType, List<SalesDtlBomTarget> missingBomTargets,
+			Map<String, String> hsCodeCache) {
+		List<Integer> salesSeqs = new ArrayList<>(missingBomTargets.size());
+		for (SalesDtlBomTarget target : missingBomTargets) {
+			salesSeqs.add(target.getSalesSeq());
+		}
+
+		List<FcrMstInsertRow> mstRows = new ArrayList<>();
+		List<BomNotFoundResultRow> resultRows = new ArrayList<>();
+
+		if ("D".equals(exportFlag)) {
+			List<DomesticSalesLine> salesLines = dao.selectDomesticSalesLinesBySalesSeqs(companyCode, divisionCode,
+					salesNo, salesSeqs);
+			List<FtaMasterActive> ftaMasters = referenceDataService.selectActiveFtaMasters(companyCode);
+			for (DomesticSalesLine sales : salesLines) {
+				for (FtaMasterActive fta : ftaMasters) {
+					String hsCode = resolveHsCodeCached(hsCodeCache, sales.getCompanyCode(),
+							sales.getProdDivisionCode(), sales.getDeliveryCustomerCode(), sales.getProductCode(),
+							sales.getArrivalNation(), fta.getFtaCode(), sales.getInvoiceDate());
+					mstRows.add(buildBomNotFoundFcrMstRow(sales.getSalesNo(), sales.getSalesSeq(),
+							sales.getProductCode(), sales.getDivisionCode(), sales.getCompanyCode(),
+							substr(hsCode, 6), sales.getStandard(), sales.getSpCooYn(), sales.getWoCooYn(),
+							sales.getProductUnit(), sales.getProductAssetsType(), sales.getProdDivisionCode(),
+							resolveImApplyYn(bomType, fta.getIntermediateYn()), fta.getFtaCode()));
+					resultRows.add(buildBomNotFoundResultRow(sales.getSalesNo(), sales.getSalesSeq(),
+							fta.getFtaCode(), sales.getDivisionCode(), sales.getCompanyCode(), substr(hsCode, 6),
+							sales.getProductCode(), sales.getStandard()));
+				}
+			}
+		} else {
+			List<ExportSalesLine> salesLines = dao.selectExportSalesLinesBySalesSeqs(companyCode, divisionCode,
+					salesNo, salesSeqs);
+			for (ExportSalesLine sales : salesLines) {
+				String hsCode = resolveHsCodeCached(hsCodeCache, sales.getCompanyCode(), sales.getProdDivisionCode(),
+						sales.getDeliveryCustomerCode(), sales.getProductCode(), sales.getArrivalNation(),
+						sales.getFtaCode(), sales.getInvoiceDate());
+				mstRows.add(buildBomNotFoundFcrMstRow(sales.getSalesNo(), sales.getSalesSeq(),
+						sales.getProductCode(), sales.getDivisionCode(), sales.getCompanyCode(), substr(hsCode, 6),
+						sales.getStandard(), sales.getSpCooYn(), sales.getWoCooYn(), sales.getProductUnit(),
+						sales.getProductAssetsType(), sales.getProdDivisionCode(),
+						resolveImApplyYn(bomType, sales.getIntermediateYn()), sales.getFtaCode()));
+				resultRows.add(buildBomNotFoundResultRow(sales.getSalesNo(), sales.getSalesSeq(), sales.getFtaCode(),
+						sales.getDivisionCode(), sales.getCompanyCode(), substr(hsCode, 6), sales.getProductCode(),
+						sales.getStandard()));
+			}
+		}
+
+		if (!mstRows.isEmpty()) {
+			dao.insertFcrMstRows(mstRows);
+		}
+		if (!resultRows.isEmpty()) {
+			dao.insertFcrResultsForBomNotFound(resultRows, BOM_NOT_FOUND_ERROR_CODE, BOM_NOT_FOUND_ERROR_MSG);
+		}
+	}
+
+	/** BOM이 없어 재료비 계산이 불가하므로 금액계 필드는 모두 0으로 남긴다(어차피 이후 determineOrigin()에서 재처리되지 않는다). */
+	private static FcrMstInsertRow buildBomNotFoundFcrMstRow(String salesNo, int salesSeq, String productCode,
+			String divisionCode, String companyCode, String hsCode, String standard, String spCooYn, String woCooYn,
+			String productUnit, String productAssetsType, String prodDivisionCode, String imApplyYn,
+			String ftaCode) {
+		FcrMstInsertRow row = new FcrMstInsertRow();
+		row.setFtaCode(ftaCode);
+		row.setSalesNo(salesNo);
+		row.setSalesSeq(salesSeq);
+		row.setProductCode(productCode);
+		row.setDivisionCode(divisionCode);
+		row.setCompanyCode(companyCode);
+		row.setHsCode(hsCode);
+		row.setStandard(standard);
+		row.setAmount(BigDecimal.ZERO);
+		row.setNetCostAmount(BigDecimal.ZERO);
+		row.setExworkAmount(BigDecimal.ZERO);
+		row.setFobAmount(BigDecimal.ZERO);
+		row.setSpCooYn(spCooYn);
+		row.setWoCooYn(woCooYn);
+		row.setProductUnit(productUnit);
+		row.setProductAssetsType(productAssetsType);
+		row.setProdDivisionCode(prodDivisionCode);
+		row.setImApplyYn(imApplyYn);
+		return row;
+	}
+
+	private static BomNotFoundResultRow buildBomNotFoundResultRow(String salesNo, int salesSeq, String ftaCode,
+			String divisionCode, String companyCode, String hsCode, String productCode, String standard) {
+		BomNotFoundResultRow row = new BomNotFoundResultRow();
+		row.setSalesNo(salesNo);
+		row.setSalesSeq(salesSeq);
+		row.setFtaCode(ftaCode);
+		row.setDivisionCode(divisionCode);
+		row.setCompanyCode(companyCode);
+		row.setHsCode(hsCode);
+		row.setProductCode(productCode);
+		row.setStandard(standard);
+		return row;
 	}
 
 	/** BOM 최말단 자재를 (자재,FTA,매출라인) 단위로 집계해 FCR_DTL 생성 */
