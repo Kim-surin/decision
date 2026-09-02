@@ -101,16 +101,26 @@
 		};
 
 		this.renderCthSection = function(list) {
+			var wasHidden = $('#conversionStrategy_cthSection').prop('hidden');
 			$('#conversionStrategy_cthSection').prop('hidden', list.length === 0);
 			AUIGrid.setGridData(this.grid_Cth, list);
+			// 목록이 비동기로 도착해 섹션이 이제 막 보이게 된 시점엔 그리드가 그 전까지 계속 hidden
+			// 컨테이너 안에 있었던 상태라 너비를 못 잡고 있다 - 다시 보이자마자 resize로 잡아준다
+			if (wasHidden && list.length > 0) {
+				AUIGrid.resize(this.grid_Cth);
+			}
 		};
 
 		this.renderValueSection = function(list) {
+			var wasHidden = $('#conversionStrategy_valueSection').prop('hidden');
 			$('#conversionStrategy_valueSection').prop('hidden', list.length === 0);
 			list.forEach(function(row, index) {
 				row.rank = index + 1;
 			});
 			AUIGrid.setGridData(this.grid_Value, list);
+			if (wasHidden && list.length > 0) {
+				AUIGrid.resize(this.grid_Value);
+			}
 		};
 
 		this.toggleEmptyMessage = function(cthTargetList, valueTargetList) {
