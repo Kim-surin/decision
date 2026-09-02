@@ -28,6 +28,9 @@ public class OriginDeterminationController extends GenericController {
 	@Autowired
 	protected OriginDeterminationService originDeterminationService;
 
+	@Autowired
+	protected ConversionStrategyService conversionStrategyService;
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDetermination")
 	public String domesticOriginDetermination_view(Model model, HttpSession session) {
 		return "origindetermination/domesticOriginDetermination_view";
@@ -112,6 +115,39 @@ public class OriginDeterminationController extends GenericController {
 		model.addAttribute("fta_name", ftaName);
 
 		return "origindetermination/bomTraceList_popup";
+	}
+
+	/**
+	 * "역내전환전략" 아이콘 클릭 시 뜨는 팝업. 세번변경기준/부가가치기준 충족을 위해 원산지확인서
+	 * 수취가 필요한 원재료 목록을 보여준다.
+	 */
+	@RequestMapping(value = "/origin/compliance/origindetermination/conversionStrategy_popup")
+	public String conversionStrategy_popup(@RequestParam(value = "sales_no", required = false) String salesNo,
+			@RequestParam(value = "sales_seq", required = false) String salesSeq,
+			@RequestParam(value = "fta_code", required = false) String ftaCode,
+			@RequestParam(value = "fta_name", required = false) String ftaName, Model model, HttpSession session) {
+		model.addAttribute("sales_no", salesNo);
+		model.addAttribute("sales_seq", salesSeq);
+		model.addAttribute("fta_code", ftaCode);
+		model.addAttribute("fta_name", ftaName);
+
+		return "origindetermination/conversionStrategy_popup";
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/conversionStrategyTargetList")
+	@ResponseBody
+	public Result conversionStrategyTargetList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = conversionStrategyService.retrieveConversionStrategyTargets(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
 	}
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")

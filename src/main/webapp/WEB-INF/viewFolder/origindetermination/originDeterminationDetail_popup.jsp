@@ -280,6 +280,10 @@
 					self.getBomTraceList(event.item);
 					return;
 				}
+				if (event.dataField === "conversion_strategy") {
+					self.getConversionStrategy(event.item);
+					return;
+				}
 				self.selectResultRow(event.item.fta_code);
 			});
 
@@ -850,8 +854,19 @@
 			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1400px', true);
 		};
 		
-		this.getConversionStrategy = function () {
-				
+		// 역내전환전략: 세번변경기준/부가가치기준 충족을 위해 원산지확인서 수취가 필요한 원재료 목록을 팝업으로 보여준다.
+		// sales_no/sales_seq는 row(판정결과 1건)가 아니라 현재 선택된 판정 품목 라인에서 가져온다
+		this.getConversionStrategy = function (row) {
+			var line = this.findSelectedRow();
+			if (!line) {
+				return;
+			}
+
+			var getParam = "?sales_no=" + encodeURIComponent(line.sales_no)
+				+ "&sales_seq=" + encodeURIComponent(line.sales_seq)
+				+ "&fta_code=" + encodeURIComponent(row.fta_code)
+				+ "&fta_name=" + encodeURIComponent(row.fta_name || '');
+			KpackageOBJ.sidepanel.open('conversionStrategyPopup', '/origin/compliance/origindetermination/conversionStrategy_popup' + getParam, '1000px', true);
 		};
 	};
 
