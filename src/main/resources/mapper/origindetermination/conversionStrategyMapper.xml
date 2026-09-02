@@ -45,13 +45,13 @@
 	-->
 	<sql id="vendorCertifyGapLateral">
 		LEFT   JOIN LATERAL (
-		       SELECT PL.VENDOR_CODE                    AS VENDOR_CODE
-		             ,MIN(PL.WAREHOUSING_DATE)           AS FROM_DATE
-		             ,MAX(PL.WAREHOUSING_DATE)           AS TO_DATE
+		       SELECT PL.VENDOR_CODE                                        AS VENDOR_CODE
+		             ,TO_CHAR(MIN(TO_DATE(PL.WAREHOUSING_DATE, 'YYYYMMDD')), 'YYYY-MM-DD') AS FROM_DATE
+		             ,TO_CHAR(MAX(TO_DATE(PL.WAREHOUSING_DATE, 'YYYYMMDD')), 'YYYY-MM-DD') AS TO_DATE
 		       FROM   PO_LEDGER PL
 		       WHERE  PL.COMPANY_CODE = FD.COMPANY_CODE
 		       AND    PL.ITEM_CODE = FD.ITEM_CODE
-		       AND    PL.WAREHOUSING_DATE >= (CURRENT_DATE - INTERVAL '6 months')
+		       AND    PL.WAREHOUSING_DATE >= TO_CHAR(CURRENT_DATE - INTERVAL '6 months', 'YYYYMMDD')
 		       AND    NOT EXISTS (
 		                SELECT 1
 		                FROM   EXT_COO_CERTIFY_MST ECM
