@@ -185,28 +185,44 @@
 								{dataField: "sales_no", headerText: "매출번호", width: 130, visible: false},
 								{dataField: "division_code", headerText: "플랜트코드", width: 120, visible: false},
 								{dataField: "customer_code", headerText: "고객사코드", width: 120, visible: false},
-								{dataField: "invoice_date", headerText: "매출일", width: 120, filter: {showIcon: true}},
-								{dataField: "division_name", headerText: "플랜트", width: 200, filter: {showIcon: true}},
-								{dataField: "customer_name", headerText: "고객사", width: 200, filter: {showIcon: true}},
-								{dataField: "invoice_no", headerText: "Invoice No", width: 250, filter: {showIcon: true}},
-								{dataField: "export_nation", headerText: "수출국", width: 130, filter: {showIcon: true}},
-								{dataField: "fta_name", headerText: "판정대상 협정", width: 120, filter: {showIcon: true}},
+								{dataField: "invoice_date", headerText: "매출일", width: 120, filter: {showIcon: true}, tooltip: {show: false}},
+								{dataField: "division_name", headerText: "플랜트", width: 200, filter: {showIcon: true}, tooltip: {show: false}},
+								{dataField: "customer_name", headerText: "고객사", width: 200, filter: {showIcon: true}, tooltip: {show: false}},
+								{dataField: "invoice_no", headerText: "Invoice No", width: 250, filter: {showIcon: true}, tooltip: {show: false}},
+								{dataField: "export_nation", headerText: "수출국", width: 130, filter: {showIcon: true}, tooltip: {show: false}},
+								{dataField: "target_fta_cnt", headerText: "판정대상 협정", width: 130, dataType: "numeric", style: "grid-center-text",
+									tooltip: {
+										tooltipFunction: function (rowIndex, columnIndex, value, headerText, item, dataField) {
+											if (!item.target_fta_name) {
+												return "";
+											}
+											return item.target_fta_name.split("|").map(function (name, index) {
+												return (index + 1) + ". " + name;
+											}).join("<br>");
+										}
+									}
+								},
 								{dataField: "status", headerText: "판정상태", width: 130, visible: false},
-								{dataField: "status_name", headerText: "판정상태", width: 130, filter: {showIcon: true}, 
+								{dataField: "status_name", headerText: "판정상태", width: 130, filter: {showIcon: true}, tooltip: {show: false},
 									styleFunction: function(rowIndex, columnIndex, value, headerText, item, dataField){
 										if(Object.hasOwn(EXPORT_ORIGIN_DETERMINATIONVIEW.STATUS_NAME_STYLE, item.status)){
 											return EXPORT_ORIGIN_DETERMINATIONVIEW.STATUS_NAME_STYLE[item.status];
 										}
-										
+
 									}}
 							];
 
 							const gridProps = {
-								rowNumColumnWidth: 50,			// 행번호 너비
+								// 행번호 너비
+								rowNumColumnWidth: 50,				
 								usePaging: true,
 								pageRowCount: 20,
 								showPageRowSelect: true,
-								enableFilter: true
+								enableFilter: true,
+								// 툴팁 출력 여부
+								showTooltip: true,		
+								// 마우스오버 후 툴팁이 뜨기까지의 지연시간(ms)			
+								tooltipSensitivity: 150
 							};
 
 

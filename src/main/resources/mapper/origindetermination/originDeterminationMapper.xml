@@ -116,9 +116,14 @@
        		, SD.UNIT_PRICE
        		, SD.AMOUNT
        FROM (
+       <if test="datas != null and !datas.isEmpty()">
        <foreach collection="datas" item="d" separator=" UNION ALL ">
        		SELECT #{d.sales_no} AS SALES_NO, #{d.division_code} AS DIVISION_CODE, #{d.sales_seq}::numeric AS SALES_SEQ
        </foreach>
+       </if>
+       <if test="datas == null or datas.isEmpty()">
+       		SELECT NULL::text AS SALES_NO, NULL::text AS DIVISION_CODE, NULL::numeric AS SALES_SEQ WHERE 1=0
+       </if>
        ) KEYS
        INNER JOIN SALES_MST SM
        		ON SM.COMPANY_CODE = #{company_code}
@@ -275,14 +280,9 @@
        		, SM.INVOICE_NO
        		, SM.STATUS
        		, GET_CODE_NAME(SM.STATUS, 'DS', SM.COMPANY_CODE, 'KOR') AS STATUS_NAME
-       		, GET_CODE_NAME(COALESCE(SM.ARRIVAL_NATION, FAN.NATION_CODE), 'NA', SM.COMPANY_CODE, 'KOR') AS EXPORT_NATION
-       		, FM.FTA_NAME
-       		/* , (SELECT COUNT(*) 
-       			FROM FTA_APPLY_NATION FAN 
-       			WHERE FAN.NATION_CODE = COALESCE(SM.ARRIVAL_NATION, C.NATION_CODE)
-				AND FAN.EFFECT_DATE &lt;= SM.INVOICE_DATE
-				AND FM.FTA_CODE = FAN.FTA_CODE) AS FTA_CNT
-			*/
+       		, FTA.EXPORT_NATION
+       		, FTA.TARGET_FTA_CNT
+       		, FTA.TARGET_FTA_NAME
        FROM (
 			SELECT SM.COMPANY_CODE
 				, SM.SALES_NO
@@ -320,13 +320,19 @@
 			INNER JOIN CUSTOMER C
 				ON C.COMPANY_CODE = SM.COMPANY_CODE
 				AND C.CUSTOMER_CODE = SM.CUSTOMER_CODE
-			LEFT JOIN FTA_MASTER FM
-				ON SM.COMPANY_CODE = FM.COMPANY_CODE
-				AND SM.TARGET_FTA_CODE = FM.FTA_CODE
-				AND FM.DELETE_YN = 'N'
-				AND FM.FTA_STATUS = '4'
-			LEFT JOIN FTA_APPLY_NATION FAN
-				ON FAN.NATION_CODE = C.NATION_CODE
+			LEFT JOIN LATERAL (
+				SELECT GET_CODE_NAME(MIN(FAN.NATION_CODE), 'NA', SM.COMPANY_CODE, 'KOR') AS EXPORT_NATION
+				     , COUNT(*) AS TARGET_FTA_CNT
+				     , STRING_AGG(FM.FTA_NAME, '|' ORDER BY FM.FTA_NAME) AS TARGET_FTA_NAME
+				FROM FTA_APPLY_NATION FAN
+				LEFT JOIN FTA_MASTER FM
+					ON SM.COMPANY_CODE = FM.COMPANY_CODE
+					AND FAN.FTA_CODE = FM.FTA_CODE
+					AND FM.DELETE_YN = 'N'
+					AND FM.FTA_STATUS = '4'
+				WHERE FAN.NATION_CODE = COALESCE(SM.ARRIVAL_NATION, C.NATION_CODE)
+				AND FAN.EFFECT_DATE &lt;= SM.INVOICE_DATE
+			) FTA ON TRUE
 		WHERE 1=1	
 		<if test="division_code != null">
 				AND D.DIVISION_CODE = #{division_code}
