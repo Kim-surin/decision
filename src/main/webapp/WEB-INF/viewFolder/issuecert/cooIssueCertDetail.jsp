@@ -5,37 +5,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>확인서 발급내역</title>
+    <title>증명서 발급내역</title>
     <style>
     .aui-row-checked {
         background-color: #eaf3ff !important;
     }
-    
-    .download-icon-btn {
-	    width: 82px;
-	    padding: 6px 4px !important;
-	    border-radius: 10px;
-	    transition: all 0.2s ease-in-out;
-	}
-	
-	.download-icon-btn:hover {
-	    background-color: #eef6ff !important;
-	    border-color: #b6d4fe !important;
-	    transform: translateY(-2px);
-	}
-	
-	.download-icon-btn:hover .download-icon-label {
-	    color: #0d6efd !important;
-	}
-	
-	.download-icon-btn:hover .sa-icon {
-	    color: #0d6efd !important;
-	}
 </style>
 </head>
 <body>
     <div class="modal-header py-2 px-3">
-	    <h5 class="modal-title fs-5 fw-semibold mb-0">확인서 발급내역</h5>
+	    <h5 class="modal-title fs-5 fw-semibold mb-0">증명서 발급내역</h5>
 	    <button type="button" class="btn btn-sm btn-system ms-auto p-1" data-bs-dismiss="modal" aria-label="Close">
 	        <svg class="sa-icon" style="width: 1rem; height: 1rem;">
 	            <use href="/rcs/ui5x/img/sprite.svg#x"></use>
@@ -43,12 +22,11 @@
 	    </button>
 	</div>
     <div class="modal-body">
-        <form:form id="COO_ISSUE_DETAIL_POPUP-form" method="post" action="" novalidate="novalidate">
+        <form:form id="COO_ISSUE_CERT_DETAIL_POPUP-form" method="post" action="" novalidate="novalidate">
             <input type="hidden" id="dialog_id" name="dialog_id" value="${dialog_id}"/>
             <input type="hidden" id="opener_pgm_id" name="opener_pgm_id" value="${opener_pgm_id}"/>
             <input type="hidden" id="customer_code" name="customer_code" value="${customer_code}"/>
             <input type="hidden" id="coo_certify_no" name="coo_certify_no" value="${coo_certify_no}"/>
-            <input type="hidden" id="division_code" name="division_code"/>
             <input type="hidden" id="issue_date" name="issue_date" value="${issue_date}"/>
             <input type="hidden" id="export_flag" name="export_flag" value="${export_flag}"/>
 		    <div class="card-body p-0">
@@ -119,7 +97,7 @@
 					                <button type="button"
 					                        class="btn btn-sm btn-outline-info px-2 py-1 d-inline-flex align-items-center text-nowrap"
 					                        style="min-width: 140px;"
-					                        onclick="COO_ISSUE_DETAIL_POPUP.downloadAllZip();">
+					                        onclick="COO_ISSUE_CERT_DETAIL_POPUP.downloadAllZip();">
 					                    <svg class="sa-icon me-1 flex-shrink-0" style="width: 0.8rem; height: 0.8rem;">
 					                        <use href="/rcs/ui5x/img/sprite.svg#download"></use>
 					                    </svg>
@@ -129,7 +107,43 @@
 					
 					            <!-- 아이콘 4개 -->
 					            <div id="downloadArea" class="d-flex justify-content-between align-items-start gap-2">
-					            	<!-- 다운로드 버튼 영역 -->
+					
+					                <button type="button"
+					                        class="btn p-0 border-0 bg-transparent d-flex flex-column align-items-center"
+					                        onclick="COO_ISSUE_CERT_DETAIL_POPUP.downloadConfirmPdf();">
+					                    <svg class="sa-icon text-danger" style="width: 30px; height: 30px;">
+					                        <use href="/rcs/ui5x/img/sprite.svg#file"></use>
+					                    </svg>
+					                    <span class="mt-1 small fw-semibold text-dark text-nowrap">증명서</span>
+					                </button>
+					
+					                <button type="button"
+					                        class="btn p-0 border-0 bg-transparent d-flex flex-column align-items-center"
+					                        onclick="COO_ISSUE_CERT_DETAIL_POPUP.downloadExplanationPdf();">
+					                    <svg class="sa-icon text-danger" style="width: 30px; height: 30px;">
+					                        <use href="/rcs/ui5x/img/sprite.svg#file"></use>
+					                    </svg>
+					                    <span class="mt-1 small fw-semibold text-dark text-nowrap">소명서</span>
+					                </button>
+					
+					                <button type="button"
+					                        class="btn p-0 border-0 bg-transparent d-flex flex-column align-items-center"
+					                        onclick="COO_ISSUE_CERT_DETAIL_POPUP.downloadLedgerPdf();">
+					                    <svg class="sa-icon text-danger" style="width: 30px; height: 30px;">
+					                        <use href="/rcs/ui5x/img/sprite.svg#file"></use>
+					                    </svg>
+					                    <span class="mt-1 small fw-semibold text-dark text-nowrap">작성대장</span>
+					                </button>
+					
+					                <button type="button"
+					                        class="btn p-0 border-0 bg-transparent d-flex flex-column align-items-center"
+					                        onclick="COO_ISSUE_CERT_DETAIL_POPUP.downloadBomExcel();">
+					                    <svg class="sa-icon text-success" style="width: 30px; height: 30px;">
+					                        <use href="/rcs/ui5x/img/sprite.svg#file"></use>
+					                    </svg>
+					                    <span class="mt-1 small fw-semibold text-dark text-nowrap">BOM</span>
+					                </button>
+					
 					            </div>
 					
 					        </div>
@@ -142,12 +156,12 @@
 			        <div class="d-flex justify-content-between align-items-center mb-3">
 			            <div>
 			                <h6 class="fw-bold mb-0">발급 정보</h6>
-			                <div class="text-secondary small">확인서 발급 기본정보</div>
+			                <div class="text-secondary small">증명서 발급 기본정보</div>
 			            </div>
 			            <div class="d-flex gap-2">
 			                <button type="button"
 							        class="btn btn-outline-primary btn-sm px-4"
-							        onclick="COO_ISSUE_DETAIL_POPUP.openModifyIssuePopup();">
+							        onclick="COO_ISSUE_CERT_DETAIL_POPUP.openModifyIssuePopup();">
 							    수정발급
 							</button>
 			            </div>
@@ -169,12 +183,12 @@
 			            </div>
 			
 			            <div class="col-md-4">
-			                <div class="border rounded-3 px-3 py-2 h-100">
+			                <div id="div_coverDate_FromTo" class="border rounded-3 px-3 py-2 h-100">
 			                    <div class="text-secondary small mb-1">포괄기간</div>
 			                    <div class="fw-semibold text-dark">
-			                        <span id="view_cover_from_date">-</span>
+			                        <span id="view_cert_from_date">-</span>
 			                        <span class="mx-1 text-secondary">~</span>
-			                        <span id="view_cover_to_date">-</span>
+			                        <span id="view_cert_to_date">-</span>
 			                    </div>
 			                </div>
 			            </div>
@@ -185,15 +199,15 @@
 
         <div class="row">
             <div class="col-12">
-                <div id="oAuiGrid_COO_ISSUE_DETAIL_POPUP_01" style="width:100%; height:490px; margin:0 auto;"></div>
+                <div id="oAuiGrid_COO_ISSUE_CERT_DETAIL_POPUP_01" style="width:100%; height:490px; margin:0 auto;"></div>
             </div>
         </div>
     </div>
 
 	<script>
-	    var COO_ISSUE_DETAIL_POPUP = new function() {
+	    var COO_ISSUE_CERT_DETAIL_POPUP = new function() {
 	
-	        this.grid_COO_ISSUE_DETAIL_POPUP_01 = null;
+	        this.grid_COO_ISSUE_CERT_DETAIL_POPUP_01 = null;
 	
 	        this.Initialize_viewObject = function() {
 	            this.createAUIGrid();
@@ -202,36 +216,36 @@
 	
 	
 	        this.setDefaultValue = function() {
-	        	
+	        	var $form = $("#COO_ISSUE_CERT_DETAIL_POPUP-form");
 	            /* init */
-	        	$("#customer_name").text("N/A");
-                $("#officer_name").text("N/A");
-                $("#tel_no").text("N/A");
-                $("#email").text("N/A");
-                $("#address").text("N/A");
+	        	$form.find("#customer_name").text("N/A");
+                $form.find("#officer_name").text("N/A");
+                $form.find("#tel_no").text("N/A");
+                $form.find("#email").text("N/A");
+                $form.find("#address").text("N/A");
 	
 	            /* 상단 고객사 정보 조회 */
 	            //var params = checkedArray[0]["item"];
-	            var params = KpackageOBJ.data.makePostData("COO_ISSUE_DETAIL_POPUP-form");    
+	            var params = KpackageOBJ.data.makePostData("COO_ISSUE_CERT_DETAIL_POPUP-form");    
 	
 	            KpackageOBJ.ajax.doSubmit("/issuecover/retrieveCooIssueTargetCustomerInfo", params, (result) => {
 	                var value = result.value || {};
 	                var data = $.isArray(value) ? (value[0] || {}) : value;
 	
-	                $("#customer_name").text(data.customer_name || "N/A");
-	                $("#officer_name").text(data.officer_name || "N/A");
-	                $("#tel_no").text(data.tel_no || "N/A");
-	                $("#email").text(data.email || "N/A");
-	                $("#address").text(data.address || "N/A");
+	                $form.find("#customer_name").text(data.customer_name || "N/A");
+	                $form.find("#officer_name").text(data.officer_name || "N/A");
+	                $form.find("#tel_no").text(data.tel_no || "N/A");
+	                $form.find("#email").text(data.email || "N/A");
+	                $form.find("#address").text(data.address || "N/A");
 	            });
+	            
 	
-	            /* 확인서 발급 데이터 목록 */
+	            /* 증명서 발급 데이터 목록 */
 	            KpackageOBJ.auiGrid.retrieve(
-	                COO_ISSUE_DETAIL_POPUP.grid_COO_ISSUE_DETAIL_POPUP_01,
-	                "/issuecover/retrieveIssuedCoverList",
+	                COO_ISSUE_CERT_DETAIL_POPUP.grid_COO_ISSUE_CERT_DETAIL_POPUP_01,
+	                "/issuecert/retrieveIssuedCertList",
 	                params
 	            );
-	            
 	        };
 	
 	        this.createAUIGrid = function() {
@@ -283,7 +297,6 @@
 	                {   dataField: "issue_date", headerText: "issue_date", width: 110, style: "aui-center", headerStyle: "aui-center", visible: false},
 	                {   dataField: "apply_date", headerText: "apply_date", width: 110, style: "aui-center", headerStyle: "aui-center", visible: false},
 	                {   dataField: "end_date", headerText: "end_date", width: 110, style: "aui-center", headerStyle: "aui-center", visible: false}
-	                
 	            ];
 
 	            const gridProps = {
@@ -303,30 +316,35 @@
 	    			rowSelectionWithMerge: false
 	            };
 
-	            COO_ISSUE_DETAIL_POPUP.grid_COO_ISSUE_DETAIL_POPUP_01 =
+	            COO_ISSUE_CERT_DETAIL_POPUP.grid_COO_ISSUE_CERT_DETAIL_POPUP_01 =
 	                KpackageOBJ.auiGrid.create(
-	                    "oAuiGrid_COO_ISSUE_DETAIL_POPUP_01",
+	                    "oAuiGrid_COO_ISSUE_CERT_DETAIL_POPUP_01",
 	                    columnLayout,
 	                    gridProps,
 	                    "number"
 	                );
 
 	            /* 데이터 로드가 완료되면 */
-	            AUIGrid.bind(COO_ISSUE_DETAIL_POPUP.grid_COO_ISSUE_DETAIL_POPUP_01, "ready", function (event) {
-	            	var gridDataList = KpackageOBJ.auiGrid.getGridData(COO_ISSUE_DETAIL_POPUP.grid_COO_ISSUE_DETAIL_POPUP_01);
+	            AUIGrid.bind(COO_ISSUE_CERT_DETAIL_POPUP.grid_COO_ISSUE_CERT_DETAIL_POPUP_01, "ready", function (event) {
+	            	var gridDataList = KpackageOBJ.auiGrid.getGridData(COO_ISSUE_CERT_DETAIL_POPUP.grid_COO_ISSUE_CERT_DETAIL_POPUP_01);
 	            	
 	            	if(gridDataList.length > 0){
-	            		var rowData = KpackageOBJ.auiGrid.getGridData(COO_ISSUE_DETAIL_POPUP.grid_COO_ISSUE_DETAIL_POPUP_01)[0];
+	            		var rowData = KpackageOBJ.auiGrid.getGridData(COO_ISSUE_CERT_DETAIL_POPUP.grid_COO_ISSUE_CERT_DETAIL_POPUP_01)[0];
 		            	
 		            	$("#view_coo_certify_no").text(rowData.coo_certify_no);
 		            	$("#view_issue_date").text(rowData.view_issue_date);
-		            	$("#view_cover_from_date").text(rowData.view_cover_from_date);
-		            	$("#view_cover_to_date").text(rowData.view_cover_to_date);	
+		            	$("#view_cert_from_date").text(rowData.view_cert_from_date);
+		            	$("#view_cert_to_date").text(rowData.view_cert_to_date);
 		            	
-		            	/* 확인서 발급 내역에서 division_code 추출 */
-		            	KpackageOBJ.object.setFormValue("COO_ISSUE_DETAIL_POPUP-form", "division_code", rowData.division_code);
+		            	var coverYn = rowData.cover_yn;
+		            	
+		            	if("Y" != coverYn){
+		            		$("#div_coverDate_FromTo").hide();
+		            	}
+		            	
+		            	
 		            	/* 우측 다운로드 버튼 영역 Render*/
-		            	COO_ISSUE_DETAIL_POPUP.renderDownloadArea(rowData);
+		            	COO_ISSUE_CERT_DETAIL_POPUP.renderDownloadArea(rowData);
 	            	}
 	            });
 	            
@@ -346,7 +364,7 @@
 
 	            KpackageOBJ.ajax.doSubmit("/ireport/retrieveCooIssueDocumentInfo", params, function(result) {
 	                var ftaDocumentList = result.value || [];
-	                var $downloadArea = $("#COO_ISSUE_DETAIL_POPUP-form #downloadArea");
+	                var $downloadArea = $("#COO_ISSUE_CERT_DETAIL_POPUP-form #downloadArea");
 
 	                $downloadArea.empty();
 
@@ -384,7 +402,7 @@
 	                        makeDocButton(
 	                            formName,
 	                            "text-danger",
-	                            "COO_ISSUE_DETAIL_POPUP.downloadFtaDocument",
+	                            "COO_ISSUE_CERT_DETAIL_POPUP.downloadFtaDocument",
 	                            formId,
 	                            formFileName,
 	                            formName
@@ -396,7 +414,7 @@
 	                    makeDocButton(
 	                        "작성대장",
 	                        "text-danger",
-	                        "COO_ISSUE_DETAIL_POPUP.downloadLedgerPdf"
+	                        "COO_ISSUE_CERT_DETAIL_POPUP.downloadLedgerPdf"
 	                    )
 	                );
 
@@ -404,15 +422,15 @@
 	                    makeDocButton(
 	                        "BOM",
 	                        "text-success",
-	                        "COO_ISSUE_DETAIL_POPUP.downloadBomExcel"
+	                        "COO_ISSUE_CERT_DETAIL_POPUP.downloadBomExcel"
 	                    )
 	                );
 	            });
 	        };
 	        
 	        this.downloadFtaDocument = function(formId, formFileName, formName) {
-	            var cooCertifyNo = KpackageOBJ.object.getFormValue("COO_ISSUE_DETAIL_POPUP-form", "coo_certify_no");
-	            var division_code = KpackageOBJ.object.getFormValue("COO_ISSUE_DETAIL_POPUP-form", "division_code");
+	            var cooCertifyNo = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_DETAIL_POPUP-form", "coo_certify_no");
+
 	            if (!cooCertifyNo) {
 	                alert("원산지증명번호가 없습니다.");
 	                return;
@@ -421,53 +439,38 @@
 	            var url = "/ireport/downloadFtaDocument"
 	                    + "?coo_certify_no=" + encodeURIComponent(cooCertifyNo)
 	                    + "&form_id=" + encodeURIComponent(formId)
-	                    + "&form_file_name=" + encodeURIComponent(formFileName)
-	                    + "&division_code=" + encodeURIComponent(division_code)
-	                    + "&P_DIRECT_DOWNLOAD=Y"
-	                    + "&p_download_file_name=" + encodeURIComponent(cooCertifyNo)   // 다운로드할 파일명
-	                    + "&report_file_type=" + encodeURIComponent("pdf");
+	                    + "&form_file_name=" + encodeURIComponent(formFileName);
 
-	            
-	            var iframe = document.getElementById("downloadFrame");
-	            if (!iframe) {
-	                iframe = document.createElement("iframe");
-	                iframe.id = "downloadFrame";
-	                iframe.style.display = "none";
-	                document.body.appendChild(iframe);
-	            }
-	            iframe.src = url;
-	            
-	            /* Toast Message*/
-	            MAINPAGE.showDownloadToast("다운로드가 시작되었습니다.");
+	            window.location.href = url;
 	        };
 	        
 	        /* 수정발급 버튼 클릭 */
 	        this.openModifyIssuePopup = function() {
-	            var originCooCertifyNo = KpackageOBJ.object.getFormValue("COO_ISSUE_DETAIL_POPUP-form", "coo_certify_no");
+	            var originCooCertifyNo = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_DETAIL_POPUP-form", "coo_certify_no");
 
 	            if (!originCooCertifyNo) {
 	                alert("원산지증명번호가 없습니다.");
 	                return;
 	            }
 
-	            if (!confirm("확인서 수정발급을 진행하시겠습니까?")) {
+	            if (!confirm("증명서 수정발급을 진행하시겠습니까?")) {
 	                return;
 	            }
 
-	            var url = "/issuecover/cooIssueCoverModifyForm"
+	            var url = "/issuecert/cooIssueCertModifyForm"
 	                    + "?origin_coo_certify_no=" + encodeURIComponent(originCooCertifyNo);
 
 	            KpackageOBJ.sidepanel.close("cooIssueDetailPopup");
 
 	            setTimeout(function() {
-	                KpackageOBJ.sidepanel.open("cooIssueCoverModifyForm", url, "1300px", true);
+	                KpackageOBJ.sidepanel.open("cooIssueCertModifyForm", url, "1300px", true);
 	            }, 200);
 	        };
 	
 	    };
 	
 	    $(document).ready(function() {
-	        COO_ISSUE_DETAIL_POPUP.Initialize_viewObject();
+	        COO_ISSUE_CERT_DETAIL_POPUP.Initialize_viewObject();
 	    });
 	</script>
 </body>

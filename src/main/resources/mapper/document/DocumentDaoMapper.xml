@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.document.DocumentDao">
+
+	<select id="retrieveCooIssueDocumentInfo" parameterType="map" resultType="map">
+	    SELECT fcf.form_index
+	         , fcf.form_name
+	         , fcf.form_id
+	         , fcf.form_index
+	         , fcf.form_file_name
+	         , fcm.default_selection_yn
+	    FROM fta_coo_forms_mapping fcm
+	    INNER JOIN fta_coo_forms fcf
+	            ON fcf.form_id = fcm.form_id
+	           AND #{issue_date} BETWEEN fcf.start_date AND COALESCE(fcf.end_date, '99991231')
+	    WHERE fcm.fta_code = COALESCE(#{fta_code}, 'KOREA')
+	    <if test="assets_type == 'M' or assets_type == 'R' or assets_type == 'B'">
+	        AND fcf.form_name NOT LIKE '%소명서%'
+	    </if>
+	    ORDER BY fcm.sort_no	
+	</select>
+</mapper>

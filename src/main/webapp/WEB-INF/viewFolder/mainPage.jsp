@@ -80,6 +80,21 @@
 			    z-index: 9;
 			}
 			
+			/* 다운로드 토스트 관련 css */
+			#downloadToast {
+			    opacity: 0;
+			    transition: opacity 0.5s ease-in-out;
+			}
+			
+			#downloadToast.show {
+			    display: block !important;
+			    opacity: 1;
+			}
+			
+			#downloadToast.hide {
+			    opacity: 0;
+			}
+			/* 다운로드 토스트 관련 css End */
 		</style>
 	</head>
 	<body>
@@ -249,6 +264,20 @@
 		</div>
 		
 		<div id="backdropDiv_Area"></div>
+		
+		<!-- download Toast div -->
+		<div id="downloadToast" class="position-fixed top-0 end-0 p-3" style="z-index: 2000; display: none;">
+		    <div class="toast show align-items-center text-bg-primary border-0 shadow-sm"
+		         role="alert"
+		         aria-live="assertive"
+		         aria-atomic="true">
+		        <div class="d-flex">
+		            <div class="toast-body fw-semibold">
+		                다운로드가 시작되었습니다.
+		            </div>
+		        </div>
+		    </div>
+		</div>
 
 
 	
@@ -350,7 +379,22 @@
 	<script type="text/javascript">
 	var MAINPAGE = new function(){
 
-		
+		this.showDownloadToast = function(message) {
+		    var $toast = $("#downloadToast");
+		    $toast.find(".toast-body").text(message || "다운로드가 시작되었습니다.");
+
+		    $toast.show();
+		    $toast.removeClass("hide").addClass("show");
+
+		    setTimeout(function() {
+		        $toast.removeClass("show").addClass("hide");
+
+		        setTimeout(function() {
+		            $toast.hide();
+		            $toast.removeClass("hide");
+		        }, 500);
+		    }, 2500);
+		};
 	};
 	$(document).ready(function() {
 	    checkURL();

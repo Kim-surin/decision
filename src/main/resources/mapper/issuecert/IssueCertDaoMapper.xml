@@ -2,9 +2,8 @@
 <!-- mapper DTD 선언 -->
 <!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
-<mapper namespace="com.kpmg.kdb.web.ts.issuecover.IssueCoverDao">
-	
-	<select id="retrieveCooIssueCoverList" parameterType="hashMap" resultType="hashMap">
+<mapper namespace="com.kpmg.kdb.web.ts.issuecert.IssueCertDao">
+	<select id="retrieveCooIssueCertList" parameterType="map" resultType="map">
 	    WITH date_param AS (
 	        SELECT
 	              REPLACE(#{from_yyyymm}, '-', '') || '01' AS from_date
@@ -28,63 +27,109 @@
 	                      ORDER BY ch.create_date DESC, ch.change_seq DESC
 	                  ) AS rn
 	            FROM public.change_history ch
-	            WHERE ch.program_id = 'cooIssueCoverModifyForm'
+	            WHERE ch.program_id = 'cooIssueCertModifyForm'
+	        ) t
+	        WHERE t.rn = 1
+	    ),
+	    target_product AS (
+	        SELECT *
+	        FROM (
+	            SELECT
+	                  sd.company_code
+	                , sd.division_code
+	                , sd.sales_no
+	                , sd.sales_seq
+	                , sd.order_no
+	                , sd.product_code
+	                , sd.product_name
+	                , sd.hs_code
+	                , sd.prod_division_code
+	                , sd.delivery_customer_code
+	                , ROW_NUMBER() OVER (
+	                      PARTITION BY sd.company_code, sd.division_code, sd.sales_no
+	                      ORDER BY sd.sales_seq
+	                  ) AS rn
+	            FROM public.sales_dtl sd
+	            WHERE sd.status = '4'
+	              AND sd.coo_certify_no IS NULL
 	        ) t
 	        WHERE t.rn = 1
 	    ),
 	    target_list AS (
 	        SELECT
-	              sd.division_code
-	            , di.division_name
-	            , SUBSTRING(sm.invoice_date, 1, 6) AS yyyymm
+	              di.division_name
+	            , sm.division_code
+	            , sm.sales_no
+	            , NULL::varchar(30) AS coo_certify_no
+	            , sm.invoice_no
+	            , sm.bl_no
+	            , cd.code_name AS co_issue_flag_name
+	            , sm.export_flag
 	            , sm.invoice_date
 	            , sm.customer_code
 	            , cu.customer_name
-	            , sd.product_code
-	            , sd.product_name
-	            , sd.hs_code
-	            , NULL::varchar(30) AS coo_certify_no
+	            , TO_CHAR(sm.coo_date, 'YYYY-MM-DD') AS coo_date
+	            , sm.target_fta_code AS fta_code
+	            , fm.fta_name
+	            , fm.co_issue_flag
+	            , fm.cover_yn
+	            , sm.ship_invoice_no
+	            , tp.order_no
+	            , tp.product_code
+	            , tp.product_name
+	            , tp.sales_seq
 	            , 'NOT_ISSUED'::varchar(20) AS issue_status
 	            , '미발급'::varchar(50) AS issue_status_name
 	            , NULL::varchar(4000) AS modify_issue_reason
-	            , sd.sales_no
-	            , sd.sales_seq
+	            , SUBSTRING(sm.invoice_date, 1, 6) AS yyyymm
 	        FROM public.sales_mst sm
-	        JOIN public.sales_dtl sd
-	          ON sd.company_code = sm.company_code
-	         AND sd.division_code = sm.division_code
-	         AND sd.sales_no = sm.sales_no
-	        JOIN public.division di
-	          ON di.company_code = sd.company_code
-	         AND di.division_code = sd.division_code
+	        JOIN target_product tp
+	          ON tp.company_code = sm.company_code
+	         AND tp.division_code = sm.division_code
+	         AND tp.sales_no = sm.sales_no
 	        JOIN public.customer cu
-	          ON cu.company_code = sm.company_code
-	         AND cu.customer_code = sm.customer_code
-	
+	          ON cu.customer_code = sm.customer_code
+	         AND cu.company_code = sm.company_code
+	        JOIN public.division di
+	          ON di.division_code = sm.division_code
+	         AND di.company_code = sm.company_code
+	        LEFT JOIN public.fta_master fm
+	          ON fm.fta_code = sm.target_fta_code
+	         AND fm.company_code = sm.company_code
+	         AND fm.delete_yn = 'N'
+	        LEFT JOIN public.code_dtl cd
+	          ON cd.company_code = sm.company_code
+	         AND cd.code = fm.co_issue_flag
+	         AND cd.category = 'CI'
 	        <if test="search_type == 'CUSTOMER_MODEL' and search_keyword != null and search_keyword != ''">
 	        JOIN public.customer_model cm
-	          ON cm.company_code = sd.company_code
-	         AND cm.item_code = sd.product_code
-	         AND cm.division_code = sd.prod_division_code
-	         AND cm.customer_code = sd.delivery_customer_code
+	          ON cm.company_code = tp.company_code
+	         AND cm.item_code = tp.product_code
+	         AND cm.division_code = tp.prod_division_code
+	         AND cm.customer_code = tp.delivery_customer_code
 	        </if>
-	
 	        CROSS JOIN date_param dp
-	        WHERE sm.company_code = #{company_code}
+	        WHERE sm.status = '4'
+	          AND sm.export_flag = 'E'
+	          AND sm.company_code = #{company_code}
 	          AND sm.invoice_date BETWEEN dp.from_date AND dp.to_date
-	          AND sd.status = '4'
-	          AND sd.coo_certify_no IS NULL
-	          AND COALESCE(sm.virtual_yn, 'Y') = 'Y'
-	          AND sm.customer_code = #{customer_code}
-	          AND sd.division_code = #{division_code}
-	
+	          AND sm.coo_certify_no IS NULL
+	          <if test="customer_code != null and customer_code != ''">
+	            AND sm.customer_code = #{customer_code}
+	          </if>
+	          <if test="division_code != null and division_code != ''">
+	            AND sm.division_code = #{division_code}
+	          </if>
 	          <if test="search_keyword != null and search_keyword != ''">
 	              <choose>
 	                  <when test="search_type == 'ITEM_CODE'">
-	                      AND sd.product_code LIKE '%' || #{search_keyword} || '%'
+	                      AND tp.product_code LIKE '%' || #{search_keyword} || '%'
 	                  </when>
 	                  <when test="search_type == 'CUSTOMER_MODEL'">
 	                      AND cm.customer_item_code LIKE '%' || #{search_keyword} || '%'
+	                  </when>
+	                  <when test="search_type == 'SALES_NO'">
+	                      AND tp.sales_no LIKE #{search_keyword} || '%'
 	                  </when>
 	                  <when test="search_type == 'COO_CERTIFY_NO'">
 	                      AND 1 = 0
@@ -92,18 +137,58 @@
 	              </choose>
 	          </if>
 	    ),
+	    issued_product AS (
+	        SELECT *
+	        FROM (
+	            SELECT
+	                  cld.coo_certify_no
+	                , cld.company_code
+	                , cld.division_code
+	                , cld.sales_no
+	                , cld.sales_seq
+	                , cld.fta_code
+	                , cld.product_code
+	                , sd.product_name
+	                , sd.order_no
+	                , sd.hs_code
+	                , sd.prod_division_code
+	                , sd.delivery_customer_code
+	                , ROW_NUMBER() OVER (
+	                      PARTITION BY cld.company_code, cld.division_code, cld.sales_no, cld.coo_certify_no
+	                      ORDER BY cld.sales_seq
+	                  ) AS rn
+	            FROM public.coo_certify_ledger_dtl cld
+	            JOIN public.sales_dtl sd
+	              ON sd.company_code = cld.company_code
+	             AND sd.division_code = cld.division_code
+	             AND sd.sales_no = cld.sales_no
+	             AND sd.sales_seq = cld.sales_seq
+	        ) t
+	        WHERE t.rn = 1
+	    ),
 	    issued_detail AS (
 	        SELECT
-	              cl.division_code
-	            , di.division_name
-	            , SUBSTRING(sm.invoice_date, 1, 6) AS yyyymm
+	              di.division_name
+	            , cl.division_code
+	            , ip.sales_no
+	            , cl.coo_certify_no
+	            , sm.invoice_no
+	            , sm.bl_no
+	            , cd.code_name AS co_issue_flag_name
+	            , cl.export_flag
 	            , sm.invoice_date
 	            , cl.customer_code
 	            , cu.customer_name
-	            , cld.product_code
-	            , sd.product_name
-	            , sd.hs_code
-	            , cl.coo_certify_no
+	            , TO_CHAR(TO_DATE(cl.issue_date, 'YYYYMMDD'), 'YYYY-MM-DD') AS coo_date
+	            , ip.fta_code
+	            , fm.fta_name
+	            , fm.co_issue_flag
+	            , fm.cover_yn
+	            , sm.ship_invoice_no
+	            , ip.order_no
+	            , ip.product_code
+	            , ip.product_name
+	            , ip.sales_seq
 	            , CASE
 	                  WHEN (cl.origin_coo_certify_no IS NOT NULL AND TRIM(cl.origin_coo_certify_no) <![CDATA[<>]]> '')
 	                    OR (lc.content IS NOT NULL AND TRIM(lc.content) <![CDATA[<>]]> '')
@@ -117,50 +202,53 @@
 	                  ELSE '발급'
 	              END AS issue_status_name
 	            , lc.content AS modify_issue_reason
-	            , cld.sales_no
-	            , cld.sales_seq
+	            , SUBSTRING(sm.invoice_date, 1, 6) AS yyyymm
 	        FROM public.coo_certify_ledger cl
-	        JOIN public.coo_certify_ledger_dtl cld
-	          ON cld.coo_certify_no = cl.coo_certify_no
-	         AND cld.company_code = cl.company_code
-	         AND cld.division_code = cl.division_code
+	        JOIN issued_product ip
+	          ON ip.coo_certify_no = cl.coo_certify_no
+	         AND ip.company_code = cl.company_code
+	         AND ip.division_code = cl.division_code
 	        JOIN public.sales_mst sm
-	          ON sm.company_code = cld.company_code
-	         AND sm.division_code = cld.division_code
-	         AND sm.sales_no = cld.sales_no
-	        JOIN public.sales_dtl sd
-	          ON sd.company_code = cld.company_code
-	         AND sd.division_code = cld.division_code
-	         AND sd.sales_no = cld.sales_no
-	         AND sd.sales_seq = cld.sales_seq
-	        JOIN public.division di
-	          ON di.company_code = cl.company_code
-	         AND di.division_code = cl.division_code
+	          ON sm.company_code = ip.company_code
+	         AND sm.division_code = ip.division_code
+	         AND sm.sales_no = ip.sales_no
 	        JOIN public.customer cu
-	          ON cu.company_code = cl.company_code
-	         AND cu.customer_code = cl.customer_code
-	
-	        <if test="search_type == 'CUSTOMER_MODEL' and search_keyword != null and search_keyword != ''">
-	        JOIN public.customer_model cm
-	          ON cm.company_code = sd.company_code
-	         AND cm.item_code = sd.product_code
-	         AND cm.division_code = sd.prod_division_code
-	         AND cm.customer_code = sd.delivery_customer_code
-	        </if>
-	
+	          ON cu.customer_code = cl.customer_code
+	         AND cu.company_code = cl.company_code
+	        JOIN public.division di
+	          ON di.division_code = cl.division_code
+	         AND di.company_code = cl.company_code
+	        LEFT JOIN public.fta_master fm
+	          ON fm.fta_code = ip.fta_code
+	         AND fm.delete_yn = 'N'
+	         AND fm.company_code = cl.company_code
+	        LEFT JOIN public.code_dtl cd
+	          ON cd.company_code = cl.company_code
+	         AND cd.code = fm.co_issue_flag
+	         AND cd.category = 'CI'
 	        LEFT JOIN latest_change lc
 	          ON lc.company_code = cl.company_code
 	         AND lc.key_no = cl.coo_certify_no
+	        <if test="search_type == 'CUSTOMER_MODEL' and search_keyword != null and search_keyword != ''">
+	        JOIN public.customer_model cm
+	          ON cm.company_code = ip.company_code
+	         AND cm.item_code = ip.product_code
+	         AND cm.division_code = ip.prod_division_code
+	         AND cm.customer_code = ip.delivery_customer_code
+	        </if>
 	        CROSS JOIN date_param dp
 	        WHERE cl.company_code = #{company_code}
 	          AND cl.issue_date BETWEEN dp.from_date AND dp.to_date
-	          AND cl.customer_code = #{customer_code}
-	          AND cl.division_code = #{division_code}
-	
+	          <if test="customer_code != null and customer_code != ''">
+	            AND cl.customer_code = #{customer_code}
+	          </if>
+	          <if test="division_code != null and division_code != ''">
+	            AND cl.division_code = #{division_code}
+	          </if>
 	          <if test="search_keyword != null and search_keyword != ''">
 	              <choose>
 	                  <when test="search_type == 'ITEM_CODE'">
-	                      AND cld.product_code LIKE '%' || #{search_keyword} || '%'
+	                      AND ip.product_code LIKE '%' || #{search_keyword} || '%'
 	                  </when>
 	                  <when test="search_type == 'CUSTOMER_MODEL'">
 	                      AND cm.customer_item_code LIKE '%' || #{search_keyword} || '%'
@@ -173,20 +261,30 @@
 	    )
 	    SELECT DISTINCT
 	          division_name
-	        , yyyymm
-	        , invoice_date
-	        , customer_name
-	        , product_code
-	        , product_name
-	        , hs_code
-	        , issue_status_name
-	        , coo_certify_no
-	        , customer_code
-	        , issue_status
-	        , modify_issue_reason
 	        , division_code
 	        , sales_no
+	        , coo_certify_no
+	        , invoice_no
+	        , bl_no
+	        , co_issue_flag_name
+	        , export_flag
+	        , TO_CHAR(TO_DATE(invoice_date, 'YYYYMMDD'), 'YYYY-MM-DD') AS invoice_date
+	        , customer_code
+	        , customer_name
+	        , coo_date
+	        , fta_code
+	        , fta_name
+	        , co_issue_flag
+	        , cover_yn
+	        , ship_invoice_no
+	        , order_no
+	        , product_code
+	        , product_name
 	        , sales_seq
+	        , issue_status
+	        , issue_status_name
+	        , modify_issue_reason
+	        , yyyymm
 	    FROM (
 	        SELECT * FROM target_list
 	        UNION ALL
@@ -197,122 +295,68 @@
 	            a.issue_status = #{issue_status}
 	        </if>
 	    </where>
-	    ORDER BY customer_code, division_code, yyyymm, product_code, coo_certify_no NULLS FIRST
+	    ORDER BY customer_code
+	           , division_code
+	           , yyyymm
+	           , sales_no
+	           , coo_certify_no NULLS FIRST
 	</select>
 	
-	
-	<select id="retrieveCooIssueTargetCustomerInfo" parameterType="map" resultType="map">
-	    SELECT customer_code
-	         , company_code
-	         , business_no
-	         , officer_name
-	         , officer_name_eng
-	         , customer_name
-	         , customer_name_eng
-	         , nation_code
-	         , zip_code
-	         , address
-	         , address_eng
-	         , tel_no
-	         , fax_no
-	         , co_certified_exporter_yn
-	         , certification_no
-	         , remark
-	         , intg_interface_trans_id
-	         , target_yn
-	         , email
-	         , send_receive_identifier_code
-	         , delete_yn
-	         , attribute01
-	         , attribute02
-	         , attribute03
-	         , attribute04
-	         , attribute05
-	    FROM customer
-	    WHERE customer_code = #{customer_code}
-	      AND company_code = #{company_code}
-	    LIMIT 1
-	</select>
 	
 	<select id="retrieveCooIssueTargetList" parameterType="map" resultType="map">
-	    SELECT DISTINCT
-               mst.company_code
-             , NULL::text AS coo_certify_no
-	         , mst.fta_code
+	    SELECT NULL::text AS coo_certify_no
+	         , fm.fta_code
 	         , fta.fta_name
 	         , fta.co_issue_flag
-	         , mst.sales_no
-	         , mst.sales_seq
-	         , mst.product_code
-	         , item.item_name AS product_name
-	         , mst.division_code
-	         , div.division_name
-	         , mst.hs_code
-	         , CASE
-	               WHEN mst.product_assets_type = 'M' THEN '상품판정'
-	               ELSE fr.rule_code
-	           END AS rule_contents
-	         , mst.fta_coo_yn
-	         , mst.company_coo_yn
-	         , TO_CHAR(mst.coo_date, 'YYYY-MM-DD') AS coo_date
+	         , fm.sales_no
+	         , fm.sales_seq
+	         , fm.product_code
+	         , im.item_name AS product_name
+	         , fm.division_code
+	         , di.division_name
+	         , fm.hs_code
+	         , fm.rule_contents
+	         , fm.fta_coo_yn
+	         , fm.company_coo_yn
+	         , TO_CHAR(fm.coo_date, 'YYYY-MM-DD') AS coo_date
+	         , sm.department_code
+	         , sm.bl_no
 	         , NULL::text AS new_certify_no
 	         , NULL::text AS cover_date
-	         , CASE WHEN mst.company_coo_yn = 'Y' THEN 'KR'
+	         , CASE WHEN fm.company_coo_yn = 'Y' THEN 'KR'
 	               ELSE 'Non-KR'
 	           END AS coo_yn_name
-		FROM fcr_mst mst
-		INNER JOIN fcr_result fr
-		   ON fr.division_code = mst.division_code
-		  AND fr.company_code = mst.company_code
-		  AND fr.sales_no = mst.sales_no
-		  AND fr.sales_seq = mst.sales_seq
-		  AND fr.fta_code = mst.fta_code  
-		INNER JOIN fta_master fta
-		   ON fta.fta_code = mst.fta_code
-		  AND fta.delete_yn = 'N'
-		  AND fta.company_code = mst.company_code
-		INNER JOIN item_mst item
-		   ON item.item_code = mst.product_code
-		  AND item.company_code = mst.company_code
-		INNER JOIN division div
-		   ON div.division_code = mst.division_code
-		  AND div.company_code = mst.company_code
-	    WHERE mst.company_code = #{company_code}
-	    <if test="salesList != null and salesList.size() > 0">
-	      AND (mst.sales_no, mst.sales_seq) IN
-	      <foreach collection="salesList" item="item" open="(" separator="," close=")">
-	          (#{item.salesNo}, #{item.salesSeq})
+	         , fta.cover_yn
+	    FROM fcr_mst fm
+	    INNER JOIN sales_mst sm
+	            ON fm.company_code = sm.company_code
+	           AND fm.division_code = sm.division_code
+	           AND fm.sales_no = sm.sales_no
+	    INNER JOIN fta_master fta
+	            ON fta.fta_code = fm.fta_code
+	           AND fta.company_code = fm.company_code
+	           AND fta.delete_yn = 'N'
+	    INNER JOIN item_mst im
+	            ON im.item_code = fm.product_code
+	           AND im.company_code = fm.company_code
+	    INNER JOIN division di
+	            ON di.division_code = fm.division_code
+	           AND di.company_code = fm.company_code
+	    WHERE fm.company_code = #{company_code}
+	      AND fm.fta_code = #{fta_code}
+	      <if test="salesList != null and salesList.size() > 0">
+	        AND fm.sales_no IN
+	        <foreach collection="salesList" item="item"  separator="," >
+	          (#{item.salesNo})
 	      </foreach>
-	      AND mst.sales_no = (
-	            SELECT MAX(fm.sales_no)
-	            FROM fcr_mst fm
-	            WHERE fm.fta_code = mst.fta_code
-	              AND fm.division_code = mst.division_code
-	              AND fm.company_code = mst.company_code
-	              AND fm.product_code = mst.product_code
-	              AND (fm.sales_no, fm.sales_seq) IN
-	              <foreach collection="salesList" item="item" open="(" separator="," close=")">
-	                  (#{item.salesNo}, #{item.salesSeq})
-	              </foreach>
-	      )
-	    </if>
-	    ORDER BY mst.company_code
-	           , mst.division_code
-	           , mst.sales_no
-	           , mst.sales_seq
-	           , mst.product_code
-	           , mst.fta_code
+	      </if>
+	    ORDER BY fm.company_code
+	           , fm.division_code
+	           , fm.sales_no
+	           , fm.sales_seq
+	           , fm.product_code
+	           , fm.fta_code
 	</select>
-	
-	<select id="checkDuplicateCertifyNo" parameterType="map" resultType="int">
-	    SELECT COUNT(*)
-	    FROM coo_certify_ledger
-	    WHERE company_code = #{company_code}
-	      AND division_code = #{division_code}
-	      AND coo_certify_no = #{coo_certify_no}
-	</select>
-	
-	
 	
 	<select id="makeCooCertifyNo" parameterType="map" resultType="string">
 	    SELECT #{division_code}
@@ -363,64 +407,64 @@
 	</select>
 	
 	<insert id="insertCooCertifyLedger" parameterType="map">
-	    INSERT INTO coo_certify_ledger
-	    (
-	        coo_certify_no
-	      , division_code
-	      , company_code
-	      , customer_code
-	      , issue_type
-	      , export_flag
-	      , coo_type
-	      , issue_date
-	      , apply_date
-	      , end_date
-	      , department_code
-	      , bl_no
-	      , invoice_no
-	      , sign_seq
-	      , fta_category
-	      , origin_coo_certify_no
-	      , create_date
-	      , create_by
-	      , update_date
-	      , update_by
-	    )
-	    VALUES
-	    (
-	        #{coo_certify_no}
-	      , #{division_code}
-	      , #{company_code}
-	      , #{customer_code}
-	      , #{issue_type}
-	      , #{export_flag}
-	      , #{coo_type}
-	      , COALESCE(
-	            NULLIF(REPLACE(COALESCE(#{issue_date}, ''), '-', ''), ''),
-	            CASE
-	                WHEN #{coo_type} = 'C' THEN #{apply_date}
-	                ELSE REPLACE(#{invoice_date}, '-', '')
-	            END
-	        )
-	      , CASE
-	            WHEN #{coo_type} = 'C' THEN #{apply_date}
-	            ELSE NULL
-	        END
-	      , CASE
-	            WHEN #{coo_type} = 'C' THEN #{end_date}
-	            ELSE NULL
-	        END
-	      , COALESCE(#{department_code}, '')
-	      , COALESCE(#{bl_no}, '')
-	      , #{invoice_no}
-	      , #{sign_seq}
-	      , #{fta_category}
-	      , COALESCE(#{origin_coo_certify_no}, '')
-	      , CURRENT_TIMESTAMP
-	      , #{create_by}
-	      , CURRENT_TIMESTAMP
-	      , #{update_by}
-	    )
+		INSERT INTO coo_certify_ledger
+		    (
+		        coo_certify_no
+		      , division_code
+		      , company_code
+		      , customer_code
+		      , issue_type
+		      , export_flag
+		      , coo_type
+		      , issue_date
+		      , apply_date
+		      , end_date
+		      , department_code
+		      , bl_no
+		      , invoice_no
+		      , sign_seq
+		      , fta_category
+		      , origin_coo_certify_no
+		      , create_date
+		      , create_by
+		      , update_date
+		      , update_by
+		    )
+		    VALUES
+		    (
+		        #{coo_certify_no}
+		      , #{division_code}
+		      , #{company_code}
+		      , #{customer_code}
+		      , #{issue_type}
+		      , #{export_flag}
+		      , #{coo_type}
+		      , COALESCE(
+		            NULLIF(REPLACE(COALESCE(#{issue_date}, ''), '-', ''), ''),
+		            CASE
+		                WHEN #{coo_type} = 'C' THEN REPLACE(COALESCE(#{apply_date}, ''), '-', '')
+		                ELSE REPLACE(COALESCE(#{invoice_date}, ''), '-', '')
+		            END
+		        )
+		      , CASE
+		            WHEN #{coo_type} = 'C' THEN REPLACE(COALESCE(#{apply_date}, ''), '-', '')
+		            ELSE NULL
+		        END
+		      , CASE
+		            WHEN #{coo_type} = 'C' THEN REPLACE(COALESCE(#{end_date}, ''), '-', '')
+		            ELSE NULL
+		        END
+		      , COALESCE(#{department_code}, '')
+		      , COALESCE(#{bl_no}, '')
+		      , #{invoice_no}
+		      , #{sign_seq}
+		      , #{fta_category}
+		      , COALESCE(#{origin_coo_certify_no}, '')
+		      , CURRENT_TIMESTAMP
+		      , #{create_by}
+		      , CURRENT_TIMESTAMP
+		      , #{update_by}
+		    )
 	</insert>
 	
 	<insert id="insertCooCertifyLedgerDtl" parameterType="map">
@@ -457,16 +501,16 @@
 	      , COALESCE(
 	            NULLIF(REPLACE(COALESCE(#{issue_date}, ''), '-', ''), ''),
 	            CASE
-	                WHEN #{coo_type} = 'C' THEN #{apply_date}
-	                ELSE REPLACE(#{invoice_date}, '-', '')
+	                WHEN #{coo_type} = 'C' THEN REPLACE(COALESCE(#{apply_date}, ''), '-', '')
+	                ELSE REPLACE(COALESCE(#{invoice_date}, ''), '-', '')
 	            END
 	        )
 	      , CASE
-	            WHEN #{coo_type} = 'C' THEN #{apply_date}
+	            WHEN #{coo_type} = 'C' THEN REPLACE(COALESCE(#{apply_date}, ''), '-', '')
 	            ELSE NULL
 	        END
 	      , CASE
-	            WHEN #{coo_type} = 'C' THEN #{end_date}
+	            WHEN #{coo_type} = 'C' THEN REPLACE(COALESCE(#{end_date}, ''), '-', '')
 	            ELSE NULL
 	        END
 	      , COALESCE(#{new_certify_no}, '')
@@ -655,7 +699,8 @@
 	    WHERE ccld.coo_certify_no = #{coo_certify_no}
 	</insert>
 	
-	<select id="retrieveIssuedCoverList" parameterType="map" resultType="map">
+	
+	<select id="retrieveIssuedCertList" parameterType="map" resultType="map">
 	    SELECT
 	          ccl.coo_certify_no
 	        , TO_CHAR(TO_DATE(ccl.issue_date, 'YYYYMMDD'), 'YYYY-MM-DD') AS view_issue_date
@@ -728,7 +773,7 @@
 	    LIMIT 1
 	</select>
 	
-	<select id="retrieveCooModifyCoverList" parameterType="map" resultType="map">
+	<select id="retrieveCooModifyCertList" parameterType="map" resultType="map">
 	    SELECT
 		     distinct
 	          ccl.coo_certify_no
@@ -738,6 +783,7 @@
 	        , ccd.sales_no
 	        , ccd.sales_seq
 	        , sm.invoice_date
+	        , ccd.fta_code
 	    FROM coo_certify_ledger ccl
 	    INNER JOIN coo_certify_ledger_dtl ccd
 	            ON ccd.coo_certify_no = ccl.coo_certify_no
@@ -784,8 +830,4 @@
 	      AND key_no = #{coo_certify_no}
 	      AND company_code = #{company_code}
 	</insert>
-	
-	
-	
-
 </mapper>

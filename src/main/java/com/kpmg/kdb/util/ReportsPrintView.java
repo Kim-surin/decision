@@ -96,13 +96,14 @@ public class ReportsPrintView {
 		if(!"applet".equals(REPORT_OUTPUT_TYPE)) {
 			ByteArrayOutputStream output = (ByteArrayOutputStream) EXPORT_PARAMETERS.get(JRExporterParameter.OUTPUT_STREAM);
 			bytes = output.toByteArray();
-			String fileName = StringUtil.null2String(param.get("P_FILE_NAME"),param.get("P_PRESENTN_NO")+"");
+			String fileName = StringUtil.null2String(param.get("p_download_file_name"),param.get("P_FILE_NAME")+"");
 			String directDownloadFlag = StringUtil.null2String(param.get("P_DIRECT_DOWNLOAD"), "N");
 			if (bytes != null && bytes.length > 0) {
 				if("pdf".equals(REPORT_OUTPUT_TYPE)) {
 					response.setContentType("application/pdf");
 					if("Y".equalsIgnoreCase(directDownloadFlag)) {
-						response.setHeader("Content-disposition", "attachment; filename=\"" + fileName + ".pdf\"");	
+						response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + ".pdf\"");
+				        response.setHeader("Content-Transfer-Encoding", "binary");	
 					}
 				} else if("xls".equals(REPORT_OUTPUT_TYPE) || "xlsx".equals(REPORT_OUTPUT_TYPE)) {
 					response.setContentType("application/x-msexcel");
