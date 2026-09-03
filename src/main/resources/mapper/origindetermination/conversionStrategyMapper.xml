@@ -13,7 +13,10 @@
 	-->
 	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
 		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
+		      ,FM.PRODUCT_CODE                                                AS PRODUCT_CODE
+		      ,IM.ITEM_NAME                                                   AS PRODUCT_NAME
 		      ,FM.HS_CODE                                                     AS HS_CODE
+		      ,FM.AMOUNT                                                      AS AMOUNT
 		      ,FR.RULE_ID                                                     AS RULE_ID
 		      ,FR.CTH_RULE                                                    AS CTH_RULE
 		      ,COALESCE(FR.BU_RULE, 0)                                        AS BU_RULE
@@ -28,6 +31,9 @@
 		INNER  JOIN FTA_MASTER FTA
 		ON     FTA.COMPANY_CODE = FM.COMPANY_CODE
 		AND    FTA.FTA_CODE = FM.FTA_CODE
+		LEFT   JOIN ITEM_MST IM
+		ON     IM.COMPANY_CODE = FM.COMPANY_CODE
+		AND    IM.ITEM_CODE = FM.PRODUCT_CODE
 		INNER  JOIN FCR_RESULT FR2
 		ON     FM.COMPANY_CODE = FR2.COMPANY_CODE AND FM.DIVISION_CODE = FR2.DIVISION_CODE
 		AND    FM.FTA_CODE = FR2.FTA_CODE AND FM.SALES_NO = FR2.SALES_NO AND FM.SALES_SEQ = FR2.SALES_SEQ

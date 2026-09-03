@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -55,6 +57,7 @@ public class ConversionStrategyService extends GeneralService {
 			}
 
 			Map<String, Object> value = new LinkedHashMap<>();
+			value.put("header", buildHeader(contextRows));
 			value.put("cthTargetList", cthTargetList);
 			value.put("valueTargetList", valueTargetList);
 
@@ -67,6 +70,60 @@ public class ConversionStrategyService extends GeneralService {
 		}
 
 		return result;
+	}
+
+	// 팝업 상단 요약(품번/품명/HS코드/판매가격/PSR). product_code, product_name, hs_code, amount는
+	// FCR_MST/ITEM_MST 기준이라 조회된 룰 행마다 동일하게 반복되므로 첫 행에서 가져오면 되고,
+	// PSR(세번변경/부가가치기준 요약)만 시도된 룰 전체(contextRows)를 훑어서 "CTH or MC50%" 형태로 합친다.
+	private Map<String, Object> buildHeader(List<Map<String, Object>> contextRows) {
+		Map<String, Object> header = new LinkedHashMap<>();
+
+		if (contextRows.isEmpty()) {
+			return header;
+		}
+
+		Map<String, Object> first = contextRows.get(0);
+		header.put("product_code", first.get("product_code"));
+		header.put("product_name", first.get("product_name"));
+		header.put("hs_code", first.get("hs_code"));
+		header.put("amount", first.get("amount"));
+		header.put("psr", buildPsr(contextRows));
+
+		return header;
+	}
+
+	private String buildPsr(List<Map<String, Object>> contextRows) {
+		Set<String> labels = new LinkedHashSet<>();
+
+		for (Map<String, Object> ctx : contextRows) {
+			if (hasCthRule(ctx)) {
+				labels.add("CTH");
+			}
+
+			BigDecimal buRule = toBigDecimal(ctx.get("bu_rule"));
+			BigDecimal bdRule = toBigDecimal(ctx.get("bd_rule"));
+			BigDecimal ncRule = toBigDecimal(ctx.get("nc_rule"));
+			BigDecimal mcRule = toBigDecimal(ctx.get("mc_rule"));
+
+			if (positive(buRule)) {
+				labels.add("BU" + formatRate(buRule) + "%");
+			}
+			if (positive(bdRule)) {
+				labels.add("BD" + formatRate(bdRule) + "%");
+			}
+			if (positive(ncRule)) {
+				labels.add("NC" + formatRate(ncRule) + "%");
+			}
+			if (positive(mcRule)) {
+				labels.add("MC" + formatRate(mcRule) + "%");
+			}
+		}
+
+		return String.join(" or ", labels);
+	}
+
+	private static String formatRate(BigDecimal rate) {
+		return rate.stripTrailingZeros().toPlainString();
 	}
 
 	private boolean hasCthRule(Map<String, Object> ctx) {
