@@ -13,8 +13,9 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultR
  */
 public interface ConversionStrategyDao {
 
-	// 이 협정 판정에 실제로 적용된 FTA_RULE 1건(0~1행): cth_rule, bu_rule/bd_rule/nc_rule/mc_rule,
-	// inkoterms_amount, net_cost_amount, inarea_amount, outarea_amount
+	// 이 협정 판정 시 시도된 FTA_RULE 전체(0건 이상, 룰별 1행씩): cth_rule, bu_rule/bd_rule/nc_rule/mc_rule,
+	// inkoterms_amount, net_cost_amount, inarea_amount, outarea_amount. 세번변경/부가가치기준이 서로
+	// 다른 룰(대안)로 존재할 수 있어 "채택된 룰 1건"이 아니라 시도된 룰 전체를 반환한다.
 	public List<Map<String, Object>> selectConversionStrategyRuleContext(OriginDeterminationDetailResultRequestDto param);
 
 	// 세번변경기준 충족을 위해 원산지확인서 수취가 필요한 대상(제품과 동일한 호이면서 역외인 원재료)

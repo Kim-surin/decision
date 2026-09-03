@@ -24,24 +24,33 @@ public class ConversionStrategyService extends GeneralService {
 
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
+	// 판정 엔진(OriginDeterminationExecutionService)은 이 협정/HS코드에 적용 가능한 룰(RULE_SEQ)을
+	// 전부 순회하며 각각 FCR_RESULT에 기록한다(하나가 통과하면 그걸 최종 결과로 채택). 즉 세번변경기준
+	// 룰과 부가가치기준 룰이 서로 다른 RULE_SEQ(별개 대안)로 존재하는 경우가 흔하다. 예전에는
+	// "실제 채택된 룰 1건"(FM.RULE_CONTENTS와 일치하는 것)만 봐서 세번변경/부가가치 중 어느 한쪽만
+	// 잡혔는데, 사용자가 어느 기준으로 원산지확인서를 받을지 직접 고를 수 있어야 하므로 시도된 룰
+	// 전체(selectConversionStrategyRuleContext가 이제 여러 행을 반환)를 보고 CTH/부가가치 각각
+	// 존재 여부를 독립적으로 판단해야 한다.
 	public Result retrieveConversionStrategyTargets(OriginDeterminationDetailResultRequestDto param) throws Exception {
 		Result result = new Result();
 
 		try {
 			ConversionStrategyDao dao = sqlSession.getMapper(ConversionStrategyDao.class);
 			List<Map<String, Object>> contextRows = dao.selectConversionStrategyRuleContext(param);
-			Map<String, Object> ctx = contextRows.isEmpty() ? null : contextRows.get(0);
 
 			List<Map<String, Object>> cthTargetList = new ArrayList<>();
 			List<Map<String, Object>> valueTargetList = new ArrayList<>();
 
-			if (ctx != null) {
-				if (hasCthRule(ctx)) {
+			if (!contextRows.isEmpty()) {
+				boolean hasCth = contextRows.stream().anyMatch(this::hasCthRule);
+				Map<String, Object> valueRuleCtx = contextRows.stream().filter(this::hasValueRule).findFirst().orElse(null);
+
+				if (hasCth) {
 					cthTargetList = dao.selectCthCertifyTargetList(param);
 				}
-				if (hasValueRule(ctx)) {
+				if (valueRuleCtx != null) {
 					List<Map<String, Object>> candidates = dao.selectValueContentCertifyCandidateList(param);
-					valueTargetList = resolveValueContentTargets(ctx, candidates);
+					valueTargetList = resolveValueContentTargets(valueRuleCtx, candidates);
 				}
 			}
 

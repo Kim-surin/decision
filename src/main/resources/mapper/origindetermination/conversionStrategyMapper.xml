@@ -3,13 +3,18 @@
 <mapper namespace="com.kpmg.kdb.web.origindetermination.ConversionStrategyDao">
 
 	<!--
-		이 협정(FTA_CODE) 판정에 실제로 적용된 FTA_RULE 1건(FM.RULE_CONTENTS=FCR_RESULT.RULE_CODE,
-		FCR_RESULT.RULE_SEQ=FTA_RULE.RULE_ID)을 찾아 세번변경/부가가치기준 존재 여부와 RVC 계산에
-		필요한 기준액(INKOTERMS/NET_COST/역내·역외 재료비)을 함께 반환한다.
+		이 협정(FTA_CODE) 판정 시 판정 엔진(OriginDeterminationExecutionService)이 실제로 시도한
+		FTA_RULE 전체(FCR_RESULT.RULE_SEQ=FTA_RULE.RULE_ID인 행 전부)를 반환한다. 판정 엔진은 적용
+		가능한 룰(RULE_SEQ)을 전부 순회하며 각각 FCR_RESULT에 기록하므로(그중 하나가 통과하면 그걸
+		최종 결과로 채택 - FM.RULE_CONTENTS), 세번변경기준 룰과 부가가치기준 룰이 서로 다른 대안으로
+		존재하는 경우가 흔하다. "실제 채택된 룰 1건"만 보면 둘 중 하나만 잡히므로, 시도된 룰 전체를
+		반환해 세번변경/부가가치 존재 여부를 독립적으로 판단할 수 있게 한다. RVC 계산에 필요한
+		기준액(INKOTERMS/NET_COST/역내·역외 재료비)은 FCR_MST 기준이라 룰마다 동일하게 반복된다.
 	-->
 	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
-		SELECT FM.FTA_CODE                                                    AS FTA_CODE
+		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
 		      ,FM.HS_CODE                                                     AS HS_CODE
+		      ,FR.RULE_ID                                                     AS RULE_ID
 		      ,FR.CTH_RULE                                                    AS CTH_RULE
 		      ,COALESCE(FR.BU_RULE, 0)                                        AS BU_RULE
 		      ,COALESCE(FR.BD_RULE, 0)                                        AS BD_RULE
@@ -26,15 +31,12 @@
 		INNER  JOIN FCR_RESULT FR2
 		ON     FM.COMPANY_CODE = FR2.COMPANY_CODE AND FM.DIVISION_CODE = FR2.DIVISION_CODE
 		AND    FM.FTA_CODE = FR2.FTA_CODE AND FM.SALES_NO = FR2.SALES_NO AND FM.SALES_SEQ = FR2.SALES_SEQ
-		AND    FM.RULE_CONTENTS = FR2.RULE_CODE
 		INNER  JOIN FTA_RULE FR
 		ON     FR.RULE_ID = FR2.RULE_SEQ
 		WHERE  FM.COMPANY_CODE = #{company_code}
 		AND    FM.SALES_NO = #{sales_no}
 		AND    FM.SALES_SEQ = #{sales_seq}
 		AND    FM.FTA_CODE = #{fta_code}
-		ORDER  BY FR2.RULE_SEQ DESC
-		FETCH FIRST 1 ROW ONLY
 	</select>
 
 	<!--
