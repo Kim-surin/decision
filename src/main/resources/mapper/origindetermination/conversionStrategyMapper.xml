@@ -3,27 +3,10 @@
 <mapper namespace="com.kpmg.kdb.web.origindetermination.ConversionStrategyDao">
 
 	<!--
-		이 협정(FTA_CODE) 판정 시 판정 엔진(OriginDeterminationExecutionService)이 실제로 시도한
-		FTA_RULE 전체(FCR_RESULT.RULE_SEQ=FTA_RULE.RULE_ID인 행 전부)를 반환한다. 판정 엔진은 적용
-		가능한 룰(RULE_SEQ)을 전부 순회하며 각각 FCR_RESULT에 기록하므로(그중 하나가 통과하면 그걸
-		최종 결과로 채택 - FM.RULE_CONTENTS), 세번변경기준 룰과 부가가치기준 룰이 서로 다른 대안으로
-		존재하는 경우가 흔하다. "실제 채택된 룰 1건"만 보면 둘 중 하나만 잡히므로, 시도된 룰 전체를
-		반환해 세번변경/부가가치 존재 여부를 독립적으로 판단할 수 있게 한다. RVC 계산에 필요한
-		기준액(INKOTERMS/NET_COST/역내·역외 재료비)은 FCR_MST 기준이라 룰마다 동일하게 반복된다.
-
-		FTA_RULE.RULE_ID는 협정 전체에서 유니크한 값이 아니라서(다른 협정에도 같은 RULE_ID가 존재),
-		RULE_ID만으로 조인하면 다른 협정의 룰까지 섞여 들어온다. retrieveOriginDeterminationDetailResultDetailList가
-		쓰는 것과 동일하게 FTA_CODE 일치 + HS_CODE 앞자리 매칭 조건을 함께 걸어야 한다.
-
-		RULE_CODE(예: "CTSH+BD45")는 세번변경기준(CTSH)과 부가가치기준(BD45%)이 그 룰 안에서 AND로
-		함께 충족돼야 함을 나타내는 판정 엔진의 조합 표기다. CTH_RULE/BU_RULE/BD_RULE/NC_RULE/MC_RULE을
-		따로따로 흩어서 "CTH or BD45%"처럼 재조합하면 이 AND 관계가 깨지므로, PSR 표시에는
-		FCR_RESULT.RULE_CODE(판정 상세내용 결정기준 컬럼과 동일한 값)를 그대로 써야 한다.
-
-		ConversionStrategyService가 이 결과의 필드를 getter로 직접 읽으므로(RVC 컷오프 재계산),
-		이 select만 resultType을 실제 DTO로 지정해 MyBatis가 진짜 그 클래스의 인스턴스를 채워 넣게
-		한다(다른 두 select처럼 HashMap을 DTO인 척 선언하는 게 아니다). mapUnderscoreToCamelCase=true라
-		컬럼 별칭(FTA_CODE 등)이 DTO의 camelCase 프로퍼티(ftaCode)에 자동으로 매핑된다.
+		이 협정에서 시도된 FTA_RULE 전체(RULE_SEQ=RULE_ID)를 반환해 채택된 룰 1건만으론 놓치는
+		세번변경/부가가치기준 존재 여부를 각각 판단한다. RULE_ID는 협정별로만 유니크해 FTA_CODE+
+		HS_CODE 접두 매칭을 함께 걸어야 하고, PSR은 AND로 묶인 RULE_CODE(예: CTSH+BD45)를 그대로
+		쓴다(재조합 금지). Service가 getter로 필드를 읽어 resultType을 실제 DTO로 지정했다.
 	-->
 	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto">
 		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
