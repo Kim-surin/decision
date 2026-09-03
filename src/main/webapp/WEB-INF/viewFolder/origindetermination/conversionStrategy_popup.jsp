@@ -13,7 +13,7 @@
 		margin-bottom: 8px;
 	}
 	.conversion-strategy-header-left {
-		flex: 0 0 320px;
+		flex: 0 0 500px;
 	}
 	.conversion-strategy-header-right {
 		flex: 1 1 auto;
@@ -71,7 +71,7 @@
 			</div>
 			<div class="conversion-strategy-header-right">
 				<div class="conversion-strategy-header-right-label">PSR</div>
-				<div id="oAuiGrid_conversionStrategy_psr" style="width:100%;height:130px;"></div>
+				<div id="oAuiGrid_conversionStrategy_psr" style="width:100%;height:150px;"></div>
 			</div>
 		</div>
 		<div id="conversionStrategy_cthSection">
@@ -126,7 +126,7 @@
 			];
 
 			var PsrColumns = [
-				{dataField: "rule_code", headerText: "결정기준", width: 200, style: "grid-center-text"}
+				{dataField: "rule_code", headerText: "결정기준", width: 500, style: "grid-center-text"}
 			];
 
 			var gridProps = { enableFilter: true, showTooltip: true, tooltipSensitivity: 150 };
