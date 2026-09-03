@@ -422,13 +422,17 @@
     </select>
 
     <!--
-    	(매출년월/플랜트/고객사/품번) 그룹별로 "지금 시점" 판정 대상 SALES_NO/SALES_SEQ와 판정상태를 다시
-    	조회한다. retrieveDomesticOriginDetermination의 AGG(가상매출 우선 - VIRTUAL_YN DESC) 로직과 동일한
-    	기준으로 만들어졌다 - 그쪽 판정 대상 그룹 규칙이 바뀌면 이 쿼리도 같이 맞춰야 한다.
-    	원산지 판정 상세 팝업이 열릴 때, 그리고 그 팝업 안에서 판정을 실행한 직후에 호출해 캐시된
-    	sales_no/판정상태가 아니라 항상 최신 상태를 반영하도록 한다.
+    	원산지 판정 상세 팝업(내수 전용) - (매출년월/플랜트/고객사/품번) 그룹별로 "지금 시점" 판정 대상
+    	SALES_NO/SALES_SEQ를 다시 찾아(가상매출 우선 - retrieveDomesticOriginDetermination의 AGG 로직과
+    	동일 기준. 그쪽 판정 대상 그룹 규칙이 바뀌면 이 쿼리도 같이 맞춰야 한다) 그 라인의 판정상태와
+    	상품상세(retrieveOriginDeterminationDetailList와 동일한 항목)를 한 번에 조회한다. 원래 이 두 조회를
+    	나눠서(키 재조회 API + 공용 상세조회 API 재사용) 처리했으나, retrieveOriginDeterminationDetailList는
+    	수출과 공유하는 쿼리라 내수 전용 재조회 로직을 거기 섞고 싶지 않았을 뿐 합쳐도 문제 없어 하나로
+    	합쳤다 - 왕복이 한 번 줄고 프론트에서 두 응답을 이어붙일 필요도 없어진다.
+    	팝업이 열릴 때, 그리고 팝업 안에서 판정을 실행한 직후 호출해 캐시된 값이 아니라 항상 최신 상태를
+    	반영하도록 한다. 수출은 가상매출 개념이 없어 retrieveOriginDeterminationDetailList를 그대로 쓴다.
     -->
-    <select id="resolveDomesticSalesKeys" parameterType="com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto" resultType="HashMap">
+    <select id="retrieveDomesticOriginDeterminationDetailList" parameterType="com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto" resultType="HashMap">
     	WITH BASE AS (
     		SELECT SM.SALES_NO
     		     , SD.SALES_SEQ
@@ -478,15 +482,43 @@
     		                           ORDER BY VIRTUAL_YN DESC, SALES_NO, SALES_SEQ) AS RN
     		FROM BASE
     	)
-    	SELECT AGG.PRODUCT_CODE
-    	     , AGG.CUSTOMER_CODE
-    	     , AGG.DIVISION_CODE
-    	     , AGG.INVOICE_MONTH
-    	     , AGG.SALES_NO
-    	     , AGG.SALES_SEQ
-    	     , AGG.STATUS
-    	     , GET_CODE_NAME(AGG.STATUS, 'DS', #{company_code}, 'KOR') AS STATUS_NAME
-    	FROM AGG
-    	WHERE AGG.RN = 1
+    	SELECT DISTINCT SM.SALES_NO
+    		, SD.SALES_SEQ
+    		, SD.DIVISION_CODE
+    		, KEYS.CUSTOMER_CODE
+    		, KEYS.INVOICE_MONTH
+    		, SD.PRODUCT_CODE
+    		, IM.ITEM_NAME AS PRODUCT_NAME
+    		, IM.HS_CODE
+    		, SD.QUANTITY
+    		, IM.UNIT
+    		, SD.UNIT_PRICE
+    		, SD.AMOUNT
+    		, KEYS.STATUS
+    		, KEYS.STATUS_NAME
+    	FROM (
+    		SELECT AGG.PRODUCT_CODE
+    		     , AGG.CUSTOMER_CODE
+    		     , AGG.DIVISION_CODE
+    		     , AGG.INVOICE_MONTH
+    		     , AGG.SALES_NO
+    		     , AGG.SALES_SEQ
+    		     , AGG.STATUS
+    		     , GET_CODE_NAME(AGG.STATUS, 'DS', #{company_code}, 'KOR') AS STATUS_NAME
+    		FROM AGG
+    		WHERE AGG.RN = 1
+    	) KEYS
+    	INNER JOIN SALES_MST SM
+    		ON SM.COMPANY_CODE = #{company_code}
+    		AND SM.SALES_NO = KEYS.SALES_NO
+    		AND SM.DIVISION_CODE = KEYS.DIVISION_CODE
+    	INNER JOIN SALES_DTL SD
+    		ON SM.COMPANY_CODE = SD.COMPANY_CODE
+    		AND SM.SALES_NO = SD.SALES_NO
+    		AND SM.DIVISION_CODE = SD.DIVISION_CODE
+    		AND (KEYS.SALES_SEQ IS NULL OR SD.SALES_SEQ = KEYS.SALES_SEQ)
+    	INNER JOIN ITEM_MST IM
+    		ON IM.COMPANY_CODE = SD.COMPANY_CODE
+    		AND IM.ITEM_CODE = SD.PRODUCT_CODE
     </select>
 </mapper>

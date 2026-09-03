@@ -166,16 +166,17 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 
-	// 원산지 판정 상세 팝업이 열릴 때/판정 실행 직후에 호출. (매출년월/플랜트/고객사/품번) 그룹 기준으로
-	// "지금 시점" sales_no/sales_seq/판정상태를 다시 조회한다 - 리스트 조회 시점의 스냅샷이 낡아지는 문제 대응.
-	@RequestMapping(value = "/origin/compliance/origindetermination/resolveDomesticSalesKeys")
+	// 원산지 판정 상세 팝업(내수 전용)이 열릴 때/판정 실행 직후에 호출. (매출년월/플랜트/고객사/품번) 그룹
+	// 기준으로 "지금 시점" sales_no/sales_seq를 다시 찾아 판정상태/상품상세와 함께 조회한다 - 리스트 조회
+	// 시점의 스냅샷이 낡아지는 문제 대응.
+	@RequestMapping(value = "/origin/compliance/origindetermination/retrieveDomesticOriginDeterminationDetailList")
 	@ResponseBody
-	public Result resolveDomesticSalesKeys(@RequestBody DomesticOriginDeterminationExecuteRequestDto param)
+	public Result retrieveDomesticOriginDeterminationDetailList(@RequestBody DomesticOriginDeterminationExecuteRequestDto param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.resolveDomesticSalesKeys(param);
+			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

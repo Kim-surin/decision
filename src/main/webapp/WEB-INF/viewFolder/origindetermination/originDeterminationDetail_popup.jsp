@@ -386,13 +386,22 @@
 		// 내수는 리스트 조회 시점에 가상매출 우선(있으면 가상매출, 없으면 원본)으로 sales_no/sales_seq를
 		// 미리 정해서 넘겨준다. 이 값은 그 시점의 스냅샷이라, 팝업을 여는 사이 또는 팝업 안에서 판정을
 		// 실행한 직후 새로 가상매출이 생기면 금방 낡은 값이 된다. 팝업을 열 때와 판정 실행 직후 이 함수로
-		// (매출년월/플랜트/고객사/품번) 그룹 기준 "지금 시점" sales_no/sales_seq/판정상태를 다시 조회해
-		// this.datas를 갱신한 뒤 조회를 진행한다. 수출은 가상매출 개념이 없어 그대로 넘어간다.
+		// (매출년월/플랜트/고객사/품번) 그룹 기준 "지금 시점" sales_no/sales_seq/판정상태/상품상세를 한 번에
+		// 조회해, this.datas를 갱신하면서 그 응답을 그대로 상세 목록으로도 사용한다(retrieveDetailList처럼
+		// 별도로 다시 조회하지 않음 - 원래는 키 재조회와 상세조회를 나눠서 호출했으나 수출과 공유하는
+		// originDeterminationDetailList에 내수 전용 재조회 로직을 섞고 싶지 않았을 뿐이라, 내수 전용
+		// 상세조회 쿼리(retrieveDomesticOriginDeterminationDetailList) 하나로 합쳐 왕복을 줄였다).
+		// 수출은 가상매출 개념이 없어 retrieveDetailList로 그대로 넘어간다.
 		this.refreshSalesKeysThenRetrieveDetailList = function() {
 			var self = this;
 
-			if (this.mode !== 'domestic' || this.datas.length === 0) {
+			if (this.mode !== 'domestic') {
 				this.retrieveDetailList();
+				return;
+			}
+
+			if (this.datas.length === 0) {
+				this.applyDetailListResponse([]);
 				return;
 			}
 
@@ -414,19 +423,17 @@
 			};
 
 			KpackageOBJ.ajax.doSubmit(
-				'/origin/compliance/origindetermination/resolveDomesticSalesKeys',
+				'/origin/compliance/origindetermination/retrieveDomesticOriginDeterminationDetailList',
 				request,
 				function(response) {
-					var resolvedList = (response && response.value) ? response.value : [];
+					var list = (response && response.value) ? response.value : [];
 					var resolvedMap = {};
-					resolvedList.forEach(function(row) {
-						var key = self.buildSalesKeyGroupKey(row);
-						resolvedMap[key] = row;
+					list.forEach(function(row) {
+						resolvedMap[self.buildSalesKeyGroupKey(row)] = row;
 					});
 
 					self.datas.forEach(function(row) {
-						var key = self.buildSalesKeyGroupKey(row);
-						var resolved = resolvedMap[key];
+						var resolved = resolvedMap[self.buildSalesKeyGroupKey(row)];
 						if (resolved) {
 							row.sales_no = resolved.sales_no;
 							row.sales_seq = resolved.sales_seq;
@@ -435,7 +442,7 @@
 						}
 					});
 
-					self.retrieveDetailList();
+					self.applyDetailListResponse(list);
 				}
 			);
 		};
@@ -514,9 +521,8 @@
 			});
 		};
 
-		// 체크되어 넘어온 항목(this.datas)의 상세정보를 한번에 조회하고, 그 응답으로 좌측 목록
-		// (this.lineItems)까지 새로 구성한다. 일괄/개별 판정 실행 뒤 최신화할 때도 이 함수를 그대로
-		// 다시 호출한다(선택 중이던 라인이 남아있으면 그 라인을, 없으면 첫 라인을 다시 선택).
+		// 수출 전용(내수는 refreshSalesKeysThenRetrieveDetailList가 대신 처리). 체크되어 넘어온
+		// 항목(this.datas)의 상세정보를 한번에 조회하고, applyDetailListResponse로 좌측 목록을 구성한다.
 		this.retrieveDetailList = function() {
 			var self = this;
 
@@ -531,22 +537,29 @@
 				request,
 				function(response) {
 					var list = (response && response.value) ? response.value : [];
-					var previousGroupKey = self.selectedGroupKey;
-
-					self.buildDetailMapAndLineItems(list);
-					self.buildGroupedItems();
-					self.renderSidebar();
-
-					var keyToSelect = (previousGroupKey && self.findGroupByKey(previousGroupKey)) ? previousGroupKey : null;
-					if (!keyToSelect && self.groupedItems.length > 0) {
-						keyToSelect = self.groupedItems[0].key;
-					}
-
-					if (keyToSelect) {
-						self.selectItem(keyToSelect);
-					}
+					self.applyDetailListResponse(list);
 				}
 			);
+		};
+
+		// retrieveDetailList/refreshSalesKeysThenRetrieveDetailList 공용: 상세 목록 응답으로 좌측 목록
+		// (this.lineItems)까지 새로 구성한다. 일괄/개별 판정 실행 뒤 최신화할 때도 이 경로를 그대로
+		// 다시 탄다(선택 중이던 라인이 남아있으면 그 라인을, 없으면 첫 라인을 다시 선택).
+		this.applyDetailListResponse = function(list) {
+			var previousGroupKey = this.selectedGroupKey;
+
+			this.buildDetailMapAndLineItems(list);
+			this.buildGroupedItems();
+			this.renderSidebar();
+
+			var keyToSelect = (previousGroupKey && this.findGroupByKey(previousGroupKey)) ? previousGroupKey : null;
+			if (!keyToSelect && this.groupedItems.length > 0) {
+				keyToSelect = this.groupedItems[0].key;
+			}
+
+			if (keyToSelect) {
+				this.selectItem(keyToSelect);
+			}
 		};
 
 		// detailMap: buildKey(sales_no, sales_seq) -> 그 라인의 상세 1건.
