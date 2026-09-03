@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kpmg.kdb.web.origindetermination.ConversionStrategyDao">
+
+	<!--
+		이 협정에서 시도된 FTA_RULE 전체(RULE_SEQ=RULE_ID)를 반환해 채택된 룰 1건만으론 놓치는
+		세번변경/부가가치기준 존재 여부를 각각 판단한다. 
+	-->
+	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto">
+		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
+		      ,FM.PRODUCT_CODE                                                AS PRODUCT_CODE
+		      ,IM.ITEM_NAME                                                   AS PRODUCT_NAME
+		      ,FM.HS_CODE                                                     AS HS_CODE
+		      ,FM.AMOUNT                                                      AS AMOUNT
+		      ,FR.RULE_ID                                                     AS RULE_ID
+		      ,FR2.RULE_CODE                                                  AS RULE_CODE
+		      ,FR.CTH_RULE                                                    AS CTH_RULE
+		      ,COALESCE(FR.BU_RULE, 0)                                        AS BU_RULE
+		      ,COALESCE(FR.BD_RULE, 0)                                        AS BD_RULE
+		      ,COALESCE(FR.NC_RULE, 0)                                        AS NC_RULE
+		      ,COALESCE(FR.MC_RULE, 0)                                        AS MC_RULE
+		      ,CASE WHEN FTA.INKOTERMS_TYPE = 'EXW' THEN FM.EXWORK_AMOUNT ELSE FM.FOB_AMOUNT END AS INKOTERMS_AMOUNT
+		      ,FM.NET_COST_AMOUNT                                             AS NET_COST_AMOUNT
+		      ,FM.INAREA_AMOUNT                                               AS INAREA_AMOUNT
+		      ,FM.OUTAREA_AMOUNT                                              AS OUTAREA_AMOUNT
+		FROM   FCR_MST FM
+		INNER  JOIN FTA_MASTER FTA
+		ON     FTA.COMPANY_CODE = FM.COMPANY_CODE
+		AND    FTA.FTA_CODE = FM.FTA_CODE
+		LEFT   JOIN ITEM_MST IM
+		ON     IM.COMPANY_CODE = FM.COMPANY_CODE
+		AND    IM.ITEM_CODE = FM.PRODUCT_CODE
+		INNER  JOIN FCR_RESULT FR2
+		ON     FM.COMPANY_CODE = FR2.COMPANY_CODE AND FM.DIVISION_CODE = FR2.DIVISION_CODE
+		AND    FM.FTA_CODE = FR2.FTA_CODE AND FM.SALES_NO = FR2.SALES_NO AND FM.SALES_SEQ = FR2.SALES_SEQ
+		INNER  JOIN FTA_RULE FR
+		ON     FR.HS_CODE = SUBSTR(FR2.HS_CODE, 1, LENGTH(FR.HS_CODE))
+		AND    FR.FTA_CODE = FR2.FTA_CODE
+		AND    FR.RULE_ID = FR2.RULE_SEQ
+		WHERE  FM.COMPANY_CODE = #{company_code}
+		AND    FM.SALES_NO = #{sales_no}
+		AND    FM.SALES_SEQ = #{sales_seq}
+		AND    FM.FTA_CODE = #{fta_code}
+	</select>
+
+	<!--
+		자재(ITEM_CODE)의 최근 6개월 입고 건 중, 이 협정(FTA_CODE)으로 원산지확인서가 확보되지 않은 구매처/기간을 찾는다. 
+		실제 판정 엔진(ItemOriginRateService)의 재고회전 기반 조회 구간까지는 재현하지 않고 최근 6개월로 단순화했다.
+	-->
+	<sql id="vendorCertifyGapLateral">
+		LEFT   JOIN LATERAL (
+		       SELECT PL.VENDOR_CODE                                        AS VENDOR_CODE
+		             ,TO_CHAR(MIN(TO_DATE(PL.WAREHOUSING_DATE, 'YYYYMMDD')), 'YYYY-MM-DD') AS FROM_DATE
+		             ,TO_CHAR(MAX(TO_DATE(PL.WAREHOUSING_DATE, 'YYYYMMDD')), 'YYYY-MM-DD') AS TO_DATE
+		       FROM   PO_LEDGER PL
+		       WHERE  PL.COMPANY_CODE = FD.COMPANY_CODE
+		       AND    PL.ITEM_CODE = FD.ITEM_CODE
+		       AND    PL.WAREHOUSING_DATE >= TO_CHAR(CURRENT_DATE - INTERVAL '6 months', 'YYYYMMDD')
+		       AND    NOT EXISTS (
+		                SELECT 1
+		                FROM   EXT_COO_CERTIFY_MST ECM
+		                INNER  JOIN EXT_COO_CERTIFY_DTL ECD
+		                ON     ECD.COO_CERTIFY_NO = ECM.COO_CERTIFY_NO
+		                AND    ECD.COMPANY_CODE = ECM.COMPANY_CODE
+		                AND    ECD.DIVISION_CODE = ECM.DIVISION_CODE
+		                AND    ECD.VENDOR_CODE = ECM.VENDOR_CODE
+		                WHERE  ECM.SUBMIT_STATUS = '4'
+		                AND    ECM.VENDOR_CODE = PL.VENDOR_CODE
+		                AND    ECM.COMPANY_CODE = PL.COMPANY_CODE
+		                AND    ECD.FTA_CODE = FD.FTA_CODE
+		                AND    ECD.COO_YN = 'Y'
+		                AND    ECD.ITEM_CODE = PL.ITEM_CODE
+		                AND    ((ECM.COO_CERTIFY_TYPE = 'C' AND PL.WAREHOUSING_DATE BETWEEN ECD.APPLY_DATE AND ECD.END_DATE)
+		                       OR (ECM.COO_CERTIFY_TYPE = 'N' AND PL.WAREHOUSING_NO = ECD.WAREHOUSING_NO AND PL.SEQ = ECD.WAREHOUSING_SEQ)))
+		       GROUP  BY PL.VENDOR_CODE
+		       ) V ON TRUE
+		LEFT   JOIN VENDOR VE
+		ON     VE.COMPANY_CODE = FD.COMPANY_CODE
+		AND    VE.VENDOR_CODE = V.VENDOR_CODE
+	</sql>
+
+	<!--
+		세번변경기준(CTH) 충족을 위해 원산지확인서 수취가 필요한 대상: 제품과 동일한 호(HS 4자리)이면서
+		현재 역외(OUTAREA_QTY>0)인 원재료. 같은 호인 비원산지 원재료가 하나라도 있으면 CTH는 원산지확인서로
+		원산지를 인정받는 것 외엔 해결 방법이 없다.
+	-->
+	<select id="selectCthCertifyTargetList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+		SELECT FD.ITEM_CODE                                AS ITEM_CODE
+		      ,IM.ITEM_NAME                                AS ITEM_NAME
+		      ,FD.HS_CODE                                   AS HS_CODE
+		      ,FD.OUTAREA_AMOUNT                             AS OUTAREA_AMOUNT
+		      ,V.VENDOR_CODE                                AS VENDOR_CODE
+		      ,VE.VENDOR_NAME                               AS VENDOR_NAME
+		      ,V.FROM_DATE                                  AS FROM_DATE
+		      ,V.TO_DATE                                    AS TO_DATE
+		FROM   FCR_DTL FD
+		INNER  JOIN FCR_MST FM
+		ON     FM.FTA_CODE = FD.FTA_CODE AND FM.SALES_NO = FD.SALES_NO AND FM.SALES_SEQ = FD.SALES_SEQ
+		AND    FM.DIVISION_CODE = FD.DIVISION_CODE AND FM.COMPANY_CODE = FD.COMPANY_CODE
+		LEFT   JOIN ITEM_MST IM
+		ON     IM.COMPANY_CODE = FD.COMPANY_CODE AND IM.ITEM_CODE = FD.ITEM_CODE
+		<include refid="vendorCertifyGapLateral" />
+		WHERE  FD.COMPANY_CODE = #{company_code}
+		AND    FD.SALES_NO = #{sales_no}
+		AND    FD.SALES_SEQ = #{sales_seq}
+		AND    FD.FTA_CODE = #{fta_code}
+		AND    FD.OUTAREA_QTY > 0
+		AND    LEFT(FD.HS_CODE, 4) = LEFT(FM.HS_CODE, 4)
+		ORDER  BY FD.OUTAREA_AMOUNT DESC
+	</select>
+
+	<!--
+		부가가치기준 충족 후보: 역외(OUTAREA_QTY>0) 원재료를 재료비(OUTAREA_AMOUNT) 비중이 큰 순으로 정렬한다.
+		이 중 실제로 몇 건까지 원산지확인서를 받아야 기준을 넘는지는 ConversionStrategyService에서
+		RvcCriteriaDecisionService와 동일한 BU/BD/NC/MC 산식으로 계산한다.
+	-->
+	<select id="selectValueContentCertifyCandidateList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+		SELECT FD.ITEM_CODE                                AS ITEM_CODE
+		      ,IM.ITEM_NAME                                AS ITEM_NAME
+		      ,FD.HS_CODE                                   AS HS_CODE
+		      ,FD.OUTAREA_AMOUNT                             AS OUTAREA_AMOUNT
+		      ,V.VENDOR_CODE                                AS VENDOR_CODE
+		      ,VE.VENDOR_NAME                               AS VENDOR_NAME
+		      ,V.FROM_DATE                                  AS FROM_DATE
+		      ,V.TO_DATE                                    AS TO_DATE
+		FROM   FCR_DTL FD
+		LEFT   JOIN ITEM_MST IM
+		ON     IM.COMPANY_CODE = FD.COMPANY_CODE AND IM.ITEM_CODE = FD.ITEM_CODE
+		<include refid="vendorCertifyGapLateral" />
+		WHERE  FD.COMPANY_CODE = #{company_code}
+		AND    FD.SALES_NO = #{sales_no}
+		AND    FD.SALES_SEQ = #{sales_seq}
+		AND    FD.FTA_CODE = #{fta_code}
+		AND    FD.OUTAREA_QTY > 0
+		ORDER  BY FD.OUTAREA_AMOUNT DESC
+	</select>
+</mapper>

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.MonthlyOriginDeterminationExecuteRequestDto;
@@ -178,6 +179,28 @@ public class OriginDeterminationService extends GeneralService {
 					.getMapper(OriginDeterminationDao.class).retrieveOriginDeterminationFailMaterialList(param);
 
 			result.setValue(materialList);
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	// 원산지 판정 상세 팝업(내수 전용)이 열릴 때, 그리고 그 팝업 안에서 판정을 실행한 직후에 호출된다.
+	// 리스트 조회 시점에 정해진 sales_no/sales_seq/판정상태는 스냅샷이라 그 이후 가상매출이 새로 생기면
+	// 낡은 값이 되므로, (매출년월/플랜트/고객사/품번) 그룹 기준으로 "지금 시점" sales_no/sales_seq를
+	// 다시 찾아 판정상태/상품상세와 함께 돌려준다.
+	public Result retrieveDomesticOriginDeterminationDetailList(DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
+		Result result = new Result();
+
+		try {
+			List<DomesticOriginDeterminationDetailResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class)
+					.retrieveDomesticOriginDeterminationDetailList(param);
+
+			result.setValue(list);
 			result.setSuccess(true);
 			result.setMessage(DEFAULT_MESSAGE_OK);
 		} catch (Exception e) {

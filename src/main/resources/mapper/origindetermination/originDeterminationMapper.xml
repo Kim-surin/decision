@@ -143,7 +143,10 @@
          FM.RULE_CONTENTS = FR.RULE_CODE 조인은 텍스트 일치라 같은 협정 안에 RULE_CODE가 같은
          RULE_SEQ가 여러 개 있으면(예: 동일 CTSH 기준이 예외조건만 다르게 RULE_SEQ별로 나뉜 경우)
          FCR_RESULT 쪽에서 여러 행이 걸릴 수 있다. DISTINCT ON (FM.FTA_CODE)으로 협정당 정확히
-         1행만 남기고, 동률이면 RULE_SEQ가 가장 큰(가장 나중에 정의된) 행을 채택한다 -->
+         1행만 남기고, 동률이면 RULE_SEQ가 가장 큰(가장 나중에 정의된) 행을 채택한다.
+
+         PRODUCT_ASSETS_TYPE은 화면에서 역내전환전략 아이콘 노출 여부를 가리는 데 쓴다
+         상품(M/R/B)은 역내전환전략 계산에 필요한 룰별 BU/BD/NC/MC 세부 데이터가 아예 없다 -->
     <select id="retrieveOriginDeterminationDetailResultList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
        SELECT DISTINCT ON (FM.FTA_CODE)
               FM.FTA_CODE
@@ -153,6 +156,7 @@
        		, FTA.INKOTERMS_TYPE
        		, FM.RULE_CONTENTS
        		, FM.COMPANY_COO_YN
+       		, FM.PRODUCT_ASSETS_TYPE
        		, FR.RVC_COMPANY_RESULT_RATE AS RVC_RATE
        		, FR.CTC_COMPANY_RESULT_RATE AS DE_MINIMIS_RATE
        FROM FCR_MST FM
@@ -419,5 +423,106 @@
 				AND SM.EXPORT_FLAG = #{export_flag}
 		</if>
 		ORDER BY SM.INVOICE_DATE, C.CUSTOMER_CODE, D.DIVISION_CODE, SD.PRODUCT_CODE, F.FTA_NAME
+    </select>
+
+    <!--
+    	원산지 판정 상세 팝업(내수 전용) - (매출년월/플랜트/고객사/품번) 그룹별로 "지금 시점" 판정 대상
+    	SALES_NO/SALES_SEQ를 다시 찾아(가상매출 우선 - retrieveDomesticOriginDetermination의 AGG 로직과
+    	동일 기준. 그쪽 판정 대상 그룹 규칙이 바뀌면 이 쿼리도 같이 맞춰야 한다) 그 라인의 판정상태와
+    	상품상세(retrieveOriginDeterminationDetailList와 동일한 항목)를 한 번에 조회한다. 원래 이 두 조회를
+    	나눠서(키 재조회 API + 공용 상세조회 API 재사용) 처리했으나, retrieveOriginDeterminationDetailList는
+    	수출과 공유하는 쿼리라 내수 전용 재조회 로직을 거기 섞고 싶지 않았을 뿐 합쳐도 문제 없어 하나로
+    	합쳤다 - 왕복이 한 번 줄고 프론트에서 두 응답을 이어붙일 필요도 없어진다.
+    	팝업이 열릴 때, 그리고 팝업 안에서 판정을 실행한 직후 호출해 캐시된 값이 아니라 항상 최신 상태를
+    	반영하도록 한다. 수출은 가상매출 개념이 없어 retrieveOriginDeterminationDetailList를 그대로 쓴다.
+    -->
+    <select id="retrieveDomesticOriginDeterminationDetailList" parameterType="com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto" resultType="HashMap">
+    	WITH BASE AS (
+    		SELECT SM.SALES_NO
+    		     , SD.SALES_SEQ
+    		     , SD.DIVISION_CODE
+    		     , SM.COMPANY_CODE
+    		     , SM.CUSTOMER_CODE
+    		     , SD.PRODUCT_CODE
+    		     , SUBSTR(SM.INVOICE_DATE, 1, 6) AS INVOICE_MONTH
+    		     , SM.VIRTUAL_YN
+    		     , SD.STATUS
+    		FROM SALES_MST SM
+    		INNER JOIN SALES_DTL SD
+    			ON SM.COMPANY_CODE = SD.COMPANY_CODE
+    			AND SM.SALES_NO = SD.SALES_NO
+    			AND SM.DIVISION_CODE = SD.DIVISION_CODE
+    		WHERE SM.COMPANY_CODE = #{company_code}
+    		AND SM.EXPORT_FLAG = 'D'
+    		AND SD.QUANTITY > 0
+    		AND EXISTS (
+    			SELECT 1 FROM CUSTOMER C
+    			WHERE C.COMPANY_CODE = SD.COMPANY_CODE
+    			AND C.CUSTOMER_CODE = SD.DELIVERY_CUSTOMER_CODE
+    		)
+    		AND (SUBSTR(SM.INVOICE_DATE, 1, 6), SD.DIVISION_CODE, SM.CUSTOMER_CODE, SD.PRODUCT_CODE) IN
+    		<choose>
+    			<when test="datas != null and !datas.isEmpty()">
+    				<foreach collection="datas" item="g" open="(" separator="," close=")">
+    					(#{g.invoice_month}, #{g.division_code}, #{g.customer_code}, #{g.product_code})
+    				</foreach>
+    			</when>
+    			<otherwise>
+    				((NULL, NULL, NULL, NULL))
+    			</otherwise>
+    		</choose>
+    	),
+    	AGG AS (
+    		SELECT COMPANY_CODE
+    		     , INVOICE_MONTH
+    		     , DIVISION_CODE
+    		     , CUSTOMER_CODE
+    		     , PRODUCT_CODE
+    		     , SALES_NO
+    		     , SALES_SEQ
+    		     , COALESCE(SUM(CASE WHEN VIRTUAL_YN = 'Y' THEN STATUS::INTEGER ELSE 0 END)
+    		         OVER (PARTITION BY COMPANY_CODE, INVOICE_MONTH, DIVISION_CODE, CUSTOMER_CODE, PRODUCT_CODE), 0)::VARCHAR AS STATUS
+    		     , ROW_NUMBER() OVER (PARTITION BY COMPANY_CODE, INVOICE_MONTH, DIVISION_CODE, CUSTOMER_CODE, PRODUCT_CODE
+    		                           ORDER BY VIRTUAL_YN DESC, SALES_NO, SALES_SEQ) AS RN
+    		FROM BASE
+    	)
+    	SELECT DISTINCT SM.SALES_NO
+    		, SD.SALES_SEQ
+    		, SD.DIVISION_CODE
+    		, KEYS.CUSTOMER_CODE
+    		, KEYS.INVOICE_MONTH
+    		, SD.PRODUCT_CODE
+    		, IM.ITEM_NAME AS PRODUCT_NAME
+    		, IM.HS_CODE
+    		, SD.QUANTITY
+    		, IM.UNIT
+    		, SD.UNIT_PRICE
+    		, SD.AMOUNT
+    		, KEYS.STATUS
+    		, KEYS.STATUS_NAME
+    	FROM (
+    		SELECT AGG.PRODUCT_CODE
+    		     , AGG.CUSTOMER_CODE
+    		     , AGG.DIVISION_CODE
+    		     , AGG.INVOICE_MONTH
+    		     , AGG.SALES_NO
+    		     , AGG.SALES_SEQ
+    		     , AGG.STATUS
+    		     , GET_CODE_NAME(AGG.STATUS, 'DS', #{company_code}, 'KOR') AS STATUS_NAME
+    		FROM AGG
+    		WHERE AGG.RN = 1
+    	) KEYS
+    	INNER JOIN SALES_MST SM
+    		ON SM.COMPANY_CODE = #{company_code}
+    		AND SM.SALES_NO = KEYS.SALES_NO
+    		AND SM.DIVISION_CODE = KEYS.DIVISION_CODE
+    	INNER JOIN SALES_DTL SD
+    		ON SM.COMPANY_CODE = SD.COMPANY_CODE
+    		AND SM.SALES_NO = SD.SALES_NO
+    		AND SM.DIVISION_CODE = SD.DIVISION_CODE
+    		AND (KEYS.SALES_SEQ IS NULL OR SD.SALES_SEQ = KEYS.SALES_SEQ)
+    	INNER JOIN ITEM_MST IM
+    		ON IM.COMPANY_CODE = SD.COMPANY_CODE
+    		AND IM.ITEM_CODE = SD.PRODUCT_CODE
     </select>
 </mapper>

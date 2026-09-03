@@ -3,6 +3,8 @@ package com.kpmg.kdb.web.origindetermination;
 import java.util.List;
 import java.util.Map;
 
+import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationDetailResponseDto;
+import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultDetailResponseDto;
@@ -32,4 +34,7 @@ public interface OriginDeterminationDao {
 	// MSG_FAILED_DECISION_QTY_AMOUNT 사유일 때(param.fta_code 미지정 - 프론트에서 fta_code로 매핑해 사용)와
 	// BOM 추적 팝업(param.fta_code 지정 - 그 협정 1건만 조회)에서 함께 쓴다
 	public List<OriginDeterminationFailMaterialResponseDto> retrieveOriginDeterminationFailMaterialList(OriginDeterminationDetailResultRequestDto param);
+	// 원산지 판정 상세 팝업(내수 전용). (매출년월/플랜트/고객사/품번) 그룹별로 "지금 시점" 판정 대상
+	// SALES_NO/SALES_SEQ(가상매출 우선)와 판정상태/상품상세를 함께 조회한다. 
+	public List<DomesticOriginDeterminationDetailResponseDto> retrieveDomesticOriginDeterminationDetailList(DomesticOriginDeterminationExecuteRequestDto param);
 }

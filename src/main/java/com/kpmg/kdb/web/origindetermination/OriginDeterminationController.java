@@ -28,6 +28,9 @@ public class OriginDeterminationController extends GenericController {
 	@Autowired
 	protected OriginDeterminationService originDeterminationService;
 
+	@Autowired
+	protected ConversionStrategyService conversionStrategyService;
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDetermination")
 	public String domesticOriginDetermination_view(Model model, HttpSession session) {
 		return "origindetermination/domesticOriginDetermination_view";
@@ -114,6 +117,39 @@ public class OriginDeterminationController extends GenericController {
 		return "origindetermination/bomTraceList_popup";
 	}
 
+	/**
+	 * "역내전환전략" 아이콘 클릭 시 뜨는 팝업. 세번변경기준/부가가치기준 충족을 위해 원산지확인서
+	 * 수취가 필요한 원재료 목록을 보여준다.
+	 */
+	@RequestMapping(value = "/origin/compliance/origindetermination/conversionStrategy_popup")
+	public String conversionStrategy_popup(@RequestParam(value = "sales_no", required = false) String salesNo,
+			@RequestParam(value = "sales_seq", required = false) String salesSeq,
+			@RequestParam(value = "fta_code", required = false) String ftaCode,
+			@RequestParam(value = "fta_name", required = false) String ftaName, Model model, HttpSession session) {
+		model.addAttribute("sales_no", salesNo);
+		model.addAttribute("sales_seq", salesSeq);
+		model.addAttribute("fta_code", ftaCode);
+		model.addAttribute("fta_name", ftaName);
+
+		return "origindetermination/conversionStrategy_popup";
+	}
+
+	@RequestMapping(value = "/origin/compliance/origindetermination/conversionStrategyTargetList")
+	@ResponseBody
+	public Result conversionStrategyTargetList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = conversionStrategyService.retrieveConversionStrategyTargets(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")
 	@ResponseBody
 	public Result originDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param)
@@ -122,6 +158,24 @@ public class OriginDeterminationController extends GenericController {
 
 		try {
 			result = originDeterminationService.retrieveOriginDeterminationDetailList(param);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	// 원산지 판정 상세 팝업(내수 전용)이 열릴 때/판정 실행 직후에 호출. (매출년월/플랜트/고객사/품번) 그룹
+	// 기준으로 "지금 시점" sales_no/sales_seq를 다시 찾아 판정상태/상품상세와 함께 조회한다 
+	@RequestMapping(value = "/origin/compliance/origindetermination/retrieveDomesticOriginDeterminationDetailList")
+	@ResponseBody
+	public Result retrieveDomesticOriginDeterminationDetailList(@RequestBody DomesticOriginDeterminationExecuteRequestDto param)
+			throws Exception {
+		Result result;
+
+		try {
+			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(param);
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

@@ -3366,7 +3366,9 @@ var KpackageOBJ = {
     }, // Date End
 	
 	sidepanel : {
-	    open : function(modalId, url, pWidth, isStatic, pData) {
+	    // onClose: 팝업이 닫힌 뒤(hidden.bs.modal) 호출할 콜백(선택). 팝업 안에서 바뀐 내용을
+	    // 반영하기 위해 팝업을 연 화면 쪽에서 재조회 등을 트리거할 때 쓴다.
+	    open : function(modalId, url, pWidth, isStatic, pData, onClose) {
 	
 	        if ($("#" + modalId).length > 0) {
 	            return;
@@ -3440,6 +3442,10 @@ var KpackageOBJ = {
 	
 	                if (opener && typeof opener.focus === 'function') {
 	                    opener.focus();
+	                }
+	
+	                if (typeof onClose === 'function') {
+	                    onClose();
 	                }
 	            });
 	

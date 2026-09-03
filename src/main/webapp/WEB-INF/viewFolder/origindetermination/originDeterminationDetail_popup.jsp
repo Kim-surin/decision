@@ -117,9 +117,10 @@
 		// this.lineItems(라인 단위로 펼친 목록)를 쓰고, this.datas는 일괄/개별 판정 실행(executeOriginDetermination)
 		// 대상 식별에만 쓴다.
 		this.datas = [];
-		// lineItems를 (품번, 품명) 기준으로 묶은 좌측 사이드바 표시 단위 목록 - retrieveDetailList 응답으로 채워짐.
-		// 동일 품번/품명이 여러 라인(SALES_SEQ)에 걸쳐 있어도 좌측엔 하나만 노출하고, 그 그룹에 속한
-		// 라인들을 우측 "판정 품목" 표에 모두 나열한다.
+		// lineItems를 (SALES_NO, 품번) 기준으로 묶은 좌측 사이드바 표시 단위 목록 - retrieveDetailList 응답으로 채워짐.
+		// 동일 SALES_NO 안에서 같은 품번이 여러 라인(SALES_SEQ)에 걸쳐 있어도 좌측엔 하나만 노출하고, 그 그룹에
+		// 속한 라인들을 우측 "판정 품목" 표에 모두 나열한다. SALES_NO가 다르면(매출년월/고객사가 다르면)
+		// 품번이 같아도 별도 그룹으로 분리한다.
 		this.lineItems = [];
 		this.groupedItems = [];
 		// sales_no + '_' + sales_seq 를 key 로 하는 라인별 상세정보 맵
@@ -154,20 +155,26 @@
 			return salesNo + "_" + salesSeq;
 		};
 
-		this.buildGroupKey = function(productCode, productName) {
-			return productCode + "_" + productName;
+		this.buildGroupKey = function(salesNo, productCode) {
+			return salesNo + "_" + productCode;
 		};
 
-		// this.lineItems를 (품번, 품명) 기준으로 묶어 this.groupedItems를 구성.
+		// resolveDomesticSalesKeys 요청/응답 매칭용 키(매출년월+플랜트+고객사+품번)
+		this.buildSalesKeyGroupKey = function(row) {
+			return [row.invoice_month, row.division_code, row.customer_code, row.product_code].join('_');
+		};
+
+		// this.lineItems를 (SALES_NO, 품번) 기준으로 묶어 this.groupedItems를 구성.
+		// 매출년월/고객사가 달라 SALES_NO가 다르면 품번이 같아도 별도 그룹으로 분리해야 한다.
 		// 그룹의 판정상태 배지는 그 그룹에 속한 첫 번째 라인의 값을 대표로 사용한다
-		// (같은 품번이 여러 라인에 걸쳐 있어도 보통 같은 송장/그룹에 속해 판정상태를 공유함)
+		// (같은 SALES_NO 안의 라인들은 보통 같은 송장에 속해 판정상태를 공유함)
 		this.buildGroupedItems = function() {
 			var self = this;
 			var groupMap = {};
 			var order = [];
 
 			this.lineItems.forEach(function(row) {
-				var groupKey = self.buildGroupKey(row.product_code, row.product_name);
+				var groupKey = self.buildGroupKey(row.sales_no, row.product_code);
 
 				if (!groupMap[groupKey]) {
 					groupMap[groupKey] = {
@@ -267,7 +274,7 @@
 					    iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
 					    iconHeight: 16,
 					    iconFunction: function (rowIndex, columnIndex, value, item) {
-					    	return item.company_coo_yn === 'N' ? "/rcs/auigrid/images/icon-search.png" : null;
+					    	return self.isConversionStrategyAvailable(item) ? "/rcs/auigrid/images/icon-search.png" : null;
 					    }
 					}
 				}
@@ -278,6 +285,12 @@
 			AUIGrid.bind(this.grid_Result, "cellClick", function(event) {
 				if (event.dataField === "bom_trace") {
 					self.getBomTraceList(event.item);
+					return;
+				}
+				if (event.dataField === "conversion_strategy") {
+					if (self.isConversionStrategyAvailable(event.item)) {
+						self.getConversionStrategy(event.item);
+					}
 					return;
 				}
 				self.selectResultRow(event.item.fta_code);
@@ -371,7 +384,71 @@
 			this.createAUIGrid();
 			this.bindModalShownResize();
 
-			this.retrieveDetailList();
+			this.refreshSalesKeysThenRetrieveDetailList();
+		};
+
+		// 내수는 리스트 조회 시점에 가상매출 우선(있으면 가상매출, 없으면 원본)으로 sales_no/sales_seq를
+		// 미리 정해서 넘겨준다. 이 값은 그 시점의 스냅샷이라, 팝업을 여는 사이 또는 팝업 안에서 판정을
+		// 실행한 직후 새로 가상매출이 생기면 금방 낡은 값이 된다. 팝업을 열 때와 판정 실행 직후 이 함수로
+		// (매출년월/플랜트/고객사/품번) 그룹 기준 "지금 시점" sales_no/sales_seq/판정상태/상품상세를 한 번에
+		// 조회해, this.datas를 갱신하면서 그 응답을 그대로 상세 목록으로도 사용한다(retrieveDetailList처럼
+		// 별도로 다시 조회하지 않음 - 원래는 키 재조회와 상세조회를 나눠서 호출했으나 수출과 공유하는
+		// originDeterminationDetailList에 내수 전용 재조회 로직을 섞고 싶지 않았을 뿐이라, 내수 전용
+		// 상세조회 쿼리(retrieveDomesticOriginDeterminationDetailList) 하나로 합쳐 왕복을 줄였다).
+		// 수출은 가상매출 개념이 없어 retrieveDetailList로 그대로 넘어간다.
+		this.refreshSalesKeysThenRetrieveDetailList = function() {
+			var self = this;
+
+			if (this.mode !== 'domestic') {
+				this.retrieveDetailList();
+				return;
+			}
+
+			if (this.datas.length === 0) {
+				this.applyDetailListResponse([]);
+				return;
+			}
+
+			var groupMap = {};
+			this.datas.forEach(function(row) {
+				var key = self.buildSalesKeyGroupKey(row);
+				if (!groupMap[key]) {
+					groupMap[key] = {
+						invoice_month: row.invoice_month,
+						division_code: row.division_code,
+						customer_code: row.customer_code,
+						product_code: row.product_code
+					};
+				}
+			});
+
+			var request = {
+				datas: Object.keys(groupMap).map(function(key) { return groupMap[key]; })
+			};
+
+			KpackageOBJ.ajax.doSubmit(
+				'/origin/compliance/origindetermination/retrieveDomesticOriginDeterminationDetailList',
+				request,
+				function(response) {
+					var list = (response && response.value) ? response.value : [];
+					var resolvedMap = {};
+					list.forEach(function(row) {
+						resolvedMap[self.buildSalesKeyGroupKey(row)] = row;
+					});
+
+					self.datas.forEach(function(row) {
+						var resolved = resolvedMap[self.buildSalesKeyGroupKey(row)];
+						if (resolved) {
+							row.sales_no = resolved.sales_no;
+							row.sales_seq = resolved.sales_seq;
+							row.status = resolved.status;
+							row.status_name = resolved.status_name;
+						}
+					});
+
+					self.applyDetailListResponse(list);
+				}
+			);
 		};
 
 		// 이 팝업이 열리는 modal-dialog-end 는 슬라이드인 트랜지션(.modal.fade .modal-dialog-end 의
@@ -382,9 +459,7 @@
 		this.disableModalFadeTransition = function() {
 			$('.origin-detail-split').closest('.modal').removeClass('fade');
 		};
-
-		// AUIGrid는 생성 시점에 부모 Div가 화면에 보이는 상태여야 실제 크기를 계산한다(보이지 않으면
-		// 기본 크기로 축소됨 - package.common-v2.3.js auiGrid.resize 주석 참고). 이 팝업은
+		
 		// KpackageOBJ.sidepanel.open이 부트스트랩 모달을 아직 show() 하기 전에 콘텐츠를 주입하고
 		// 그 안에서 그리드를 생성하므로(createAUIGrid), 생성 시점엔 모달이 아직 안 보인 상태다.
 		// disableModalFadeTransition으로 트랜지션을 없앴으므로 shown.bs.modal은 show() 호출과 거의
@@ -416,8 +491,8 @@
 			$('#originDetermination_popup_individualBtn').hide();
 		};
 
-		// 좌측 사이드바 렌더링 (매출년월/품번/품명) - this.groupedItems(품번+품명 단위) 기준.
-		// 동일 품번/품명은 여러 라인에 걸쳐 있어도 하나만 노출한다
+		// 좌측 사이드바 렌더링 (매출년월/품번/품명) - this.groupedItems(SALES_NO+품번 단위) 기준.
+		// 동일 SALES_NO 안의 동일 품번은 여러 라인에 걸쳐 있어도 하나만 노출한다
 		this.renderSidebar = function() {
 			var $sidebar = $('#originDetermination_popup_sidebar');
 			$sidebar.empty();
@@ -448,9 +523,8 @@
 			});
 		};
 
-		// 체크되어 넘어온 항목(this.datas)의 상세정보를 한번에 조회하고, 그 응답으로 좌측 목록
-		// (this.lineItems)까지 새로 구성한다. 일괄/개별 판정 실행 뒤 최신화할 때도 이 함수를 그대로
-		// 다시 호출한다(선택 중이던 라인이 남아있으면 그 라인을, 없으면 첫 라인을 다시 선택).
+		// 수출 전용(내수는 refreshSalesKeysThenRetrieveDetailList가 대신 처리). 체크되어 넘어온
+		// 항목(this.datas)의 상세정보를 한번에 조회하고, applyDetailListResponse로 좌측 목록을 구성한다.
 		this.retrieveDetailList = function() {
 			var self = this;
 
@@ -465,22 +539,29 @@
 				request,
 				function(response) {
 					var list = (response && response.value) ? response.value : [];
-					var previousGroupKey = self.selectedGroupKey;
-
-					self.buildDetailMapAndLineItems(list);
-					self.buildGroupedItems();
-					self.renderSidebar();
-
-					var keyToSelect = (previousGroupKey && self.findGroupByKey(previousGroupKey)) ? previousGroupKey : null;
-					if (!keyToSelect && self.groupedItems.length > 0) {
-						keyToSelect = self.groupedItems[0].key;
-					}
-
-					if (keyToSelect) {
-						self.selectItem(keyToSelect);
-					}
+					self.applyDetailListResponse(list);
 				}
 			);
+		};
+
+		// retrieveDetailList/refreshSalesKeysThenRetrieveDetailList 공용: 상세 목록 응답으로 좌측 목록
+		// (this.lineItems)까지 새로 구성한다. 일괄/개별 판정 실행 뒤 최신화할 때도 이 경로를 그대로
+		// 다시 탄다(선택 중이던 라인이 남아있으면 그 라인을, 없으면 첫 라인을 다시 선택).
+		this.applyDetailListResponse = function(list) {
+			var previousGroupKey = this.selectedGroupKey;
+
+			this.buildDetailMapAndLineItems(list);
+			this.buildGroupedItems();
+			this.renderSidebar();
+
+			var keyToSelect = (previousGroupKey && this.findGroupByKey(previousGroupKey)) ? previousGroupKey : null;
+			if (!keyToSelect && this.groupedItems.length > 0) {
+				keyToSelect = this.groupedItems[0].key;
+			}
+
+			if (keyToSelect) {
+				this.selectItem(keyToSelect);
+			}
 		};
 
 		// detailMap: buildKey(sales_no, sales_seq) -> 그 라인의 상세 1건.
@@ -520,7 +601,7 @@
 			});
 		};
 
-		// 좌측 그룹(품번/품명) 선택 시, 그 그룹에 속한 라인 전체를 우측 "판정 품목"에 나열하고,
+		// 좌측 그룹(SALES_NO+품번) 선택 시, 그 그룹에 속한 라인 전체를 우측 "판정 품목"에 나열하고,
 		// 그 중 하나(이전에 선택돼 있던 라인 우선, 없으면 판정완료 라인, 그마저 없으면 첫 라인)를
 		// 자동으로 선택해 판정결과를 보여준다
 		this.selectItem = function(key) {
@@ -746,18 +827,13 @@
 		// executeDomesticOriginDetermination을, 수출은 (sales_no, division_code) 목록으로
 		// executeExportOriginDetermination을 호출한다 - 응답 형태(groupCount/failedTargets)는
 		// 동일해서 처리(handleExecuteResponse)는 공용으로 쓴다.
-		// 주의: 판정상태(status) 배지는 좌측 목록(datas)이 팝업을 열 때 넘어온 값을 그대로 쓰고 있어,
-		// 여기서는 갱신하지 않는다 - 최신 판정상태를 보려면 팝업을 닫고 다시 열어야 한다.
 		this.executeOriginDetermination = function(rows) {
 			var self = this;
 			var url;
 			var request;
 
-			// 서버가 내려주는 groupCount는 (매출년월+고객사+플랜트) 등으로 묶은 "그룹" 수라서,
-			// 같은 조합의 품목 여러 개가 한 그룹으로 처리되면 실제 품목 수보다 훨씬 작게 보여
-			// 혼란을 줬다. 그래서 안내 메시지는 groupCount 대신 여기서 실제로 요청한 품목(product_code)
-			// 수를 세서 보여준다(handleExecuteResponse 참고)
-			var productCount = new Set(rows.map(function(row) { return row.product_code; })).size;
+			// 안내 메시지는 groupCount 대신 여기서 실제로 요청한 품목 수를세서 보여준다
+			var productCount = new Set(rows.map(function(row) { return self.buildGroupKey(row.sales_no, row.product_code); })).size;
 
 			if (this.mode === 'export') {
 				url = '/origin/compliance/origindetermination/executeExportOriginDetermination';
@@ -791,6 +867,8 @@
 
 		// executeOriginDetermination 응답(내수/수출 공용) 처리: 결과 메시지 표시 후 좌측 목록/상세
 		// 전체를 다시 조회해 최신화한다(선택 중이던 라인이 남아있으면 그 라인을 그대로 유지).
+		// 내수는 이번 실행으로 가상매출이 새로 생겼을 수 있어, sales_no/sales_seq/판정상태를 먼저
+		// 다시 조회(refreshSalesKeysThenRetrieveDetailList)한 뒤에 상세를 조회한다.
 		this.handleExecuteResponse = function(response, productCount) {
 			var value = (response && response.value) ? response.value : {};
 			var failedCount = value.failedTargets ? value.failedTargets.length : 0;
@@ -802,7 +880,7 @@
 
 			KpackageOBJ.object.alert(message);
 
-			this.retrieveDetailList();
+			this.refreshSalesKeysThenRetrieveDetailList();
 		};
 
 		// 우측의 모든 품목을 대상으로 원산지 판정 진행
@@ -850,8 +928,27 @@
 			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1400px', true);
 		};
 		
-		this.getConversionStrategy = function () {
-				
+		// 상품(product_assets_type IN M/R/B)은 룰별 BU/BD/NC/MC 세부 데이터 자체가 없다.
+		// 상품 건은 아이콘을 아예 노출/클릭하지 못하게 막는다.
+		this.isConversionStrategyAvailable = function (item) {
+			var productAssetsType = item && item.product_assets_type;
+			var isCommodity = productAssetsType === 'M' || productAssetsType === 'R' || productAssetsType === 'B';
+			return item && item.company_coo_yn === 'N' && !isCommodity;
+		};
+
+		// 역내전환전략: 세번변경기준/부가가치기준 충족을 위해 원산지확인서 수취가 필요한 원재료 목록을 팝업으로 보여준다.
+		// sales_no/sales_seq는 row(판정결과 1건)가 아니라 현재 선택된 판정 품목 라인에서 가져온다
+		this.getConversionStrategy = function (row) {
+			var line = this.findSelectedRow();
+			if (!line) {
+				return;
+			}
+
+			var getParam = "?sales_no=" + encodeURIComponent(line.sales_no)
+				+ "&sales_seq=" + encodeURIComponent(line.sales_seq)
+				+ "&fta_code=" + encodeURIComponent(row.fta_code)
+				+ "&fta_name=" + encodeURIComponent(row.fta_name || '');
+			KpackageOBJ.sidepanel.open('conversionStrategyPopup', '/origin/compliance/origindetermination/conversionStrategy_popup' + getParam, '1400px', true);
 		};
 	};
 
