@@ -14,6 +14,11 @@
 		FTA_RULE.RULE_ID는 협정 전체에서 유니크한 값이 아니라서(다른 협정에도 같은 RULE_ID가 존재),
 		RULE_ID만으로 조인하면 다른 협정의 룰까지 섞여 들어온다. retrieveOriginDeterminationDetailResultDetailList가
 		쓰는 것과 동일하게 FTA_CODE 일치 + HS_CODE 앞자리 매칭 조건을 함께 걸어야 한다.
+
+		RULE_CODE(예: "CTSH+BD45")는 세번변경기준(CTSH)과 부가가치기준(BD45%)이 그 룰 안에서 AND로
+		함께 충족돼야 함을 나타내는 판정 엔진의 조합 표기다. CTH_RULE/BU_RULE/BD_RULE/NC_RULE/MC_RULE을
+		따로따로 흩어서 "CTH or BD45%"처럼 재조합하면 이 AND 관계가 깨지므로, PSR 표시에는
+		FCR_RESULT.RULE_CODE(판정 상세내용 결정기준 컬럼과 동일한 값)를 그대로 써야 한다.
 	-->
 	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
 		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
@@ -22,6 +27,7 @@
 		      ,FM.HS_CODE                                                     AS HS_CODE
 		      ,FM.AMOUNT                                                      AS AMOUNT
 		      ,FR.RULE_ID                                                     AS RULE_ID
+		      ,FR2.RULE_CODE                                                  AS RULE_CODE
 		      ,FR.CTH_RULE                                                    AS CTH_RULE
 		      ,COALESCE(FR.BU_RULE, 0)                                        AS BU_RULE
 		      ,COALESCE(FR.BD_RULE, 0)                                        AS BD_RULE

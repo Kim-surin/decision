@@ -126,8 +126,7 @@
 			];
 
 			var PsrColumns = [
-				{dataField: "criteria", headerText: "결정기준", width: 100, style: "grid-center-text"},
-				{dataField: "rate", headerText: "비율", width: 100, style: "grid-center-text"}
+				{dataField: "rule_code", headerText: "결정기준", width: 200, style: "grid-center-text"}
 			];
 
 			var gridProps = { enableFilter: true, showTooltip: true, tooltipSensitivity: 150 };

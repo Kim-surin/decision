@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -90,42 +92,29 @@ public class ConversionStrategyService extends GeneralService {
 		return header;
 	}
 
-	// 시도된 룰 전체(contextRows)를 훑어서 결정기준(CTH/BU/BD/NC/MC)별로 한 행씩 만든다.
-	// 동일한 결정기준+비율 조합이 여러 룰 행에 걸쳐 중복될 수 있어 키로 중복을 제거한다.
+	// 시도된 룰 전체(contextRows)를 훑어서 룰 하나당 한 행을 만든다. RULE_CODE(예: "CTSH+BD45")는
+	// 세번변경기준과 부가가치기준이 그 룰 안에서 AND로 함께 충족돼야 함을 나타내는 판정 엔진의 조합
+	// 표기라, 판정 상세내용 결정기준 컬럼과 동일하게 이 값을 그대로 쓴다(CTH_RULE/BU_RULE 등을
+	// 따로 조합하면 AND 관계가 깨져 "CTH or BD45%"처럼 잘못 보인다). 같은 RULE_CODE가 여러 시도
+	// 행에 걸쳐 중복될 수 있어 Set으로 중복을 제거한다.
 	private List<Map<String, Object>> buildPsrList(List<Map<String, Object>> contextRows) {
-		Map<String, Map<String, Object>> rows = new LinkedHashMap<>();
+		Set<String> ruleCodes = new LinkedHashSet<>();
 
 		for (Map<String, Object> ctx : contextRows) {
-			if (hasCthRule(ctx)) {
-				addPsrRow(rows, "CTH", null);
+			Object ruleCode = ctx.get("rule_code");
+			if (ruleCode != null && !String.valueOf(ruleCode).isEmpty()) {
+				ruleCodes.add(String.valueOf(ruleCode));
 			}
-
-			addPsrRowIfPositive(rows, "BU", toBigDecimal(ctx.get("bu_rule")));
-			addPsrRowIfPositive(rows, "BD", toBigDecimal(ctx.get("bd_rule")));
-			addPsrRowIfPositive(rows, "NC", toBigDecimal(ctx.get("nc_rule")));
-			addPsrRowIfPositive(rows, "MC", toBigDecimal(ctx.get("mc_rule")));
 		}
 
-		return new ArrayList<>(rows.values());
-	}
-
-	private void addPsrRowIfPositive(Map<String, Map<String, Object>> rows, String criteria, BigDecimal rate) {
-		if (positive(rate)) {
-			addPsrRow(rows, criteria, formatRate(rate) + "%");
-		}
-	}
-
-	private void addPsrRow(Map<String, Map<String, Object>> rows, String criteria, String rate) {
-		rows.computeIfAbsent(criteria + "|" + rate, key -> {
+		List<Map<String, Object>> rows = new ArrayList<>();
+		for (String ruleCode : ruleCodes) {
 			Map<String, Object> row = new LinkedHashMap<>();
-			row.put("criteria", criteria);
-			row.put("rate", rate);
-			return row;
-		});
-	}
+			row.put("rule_code", ruleCode);
+			rows.add(row);
+		}
 
-	private static String formatRate(BigDecimal rate) {
-		return rate.stripTrailingZeros().toPlainString();
+		return rows;
 	}
 
 	private boolean hasCthRule(Map<String, Object> ctx) {
