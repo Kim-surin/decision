@@ -28,11 +28,11 @@
 		</div>
 	</div>
 	<div class="modal-body">
-		<div id="conversionStrategy_cthSection" hidden>
+		<div id="conversionStrategy_cthSection">
 			<div class="conversion-strategy-section-title">세번변경기준 충족을 위해 원산지확인서 수취가 필요한 대상은 아래와 같습니다.</div>
 			<div id="oAuiGrid_conversionStrategy_cth" style="width:100%;height:220px;"></div>
 		</div>
-		<div id="conversionStrategy_valueSection" hidden>
+		<div id="conversionStrategy_valueSection">
 			<div class="conversion-strategy-section-title">부가가치기준 충족을 위해 원산지확인서 수취가 필요한 대상은 아래와 같습니다.</div>
 			<div id="oAuiGrid_conversionStrategy_value" style="width:100%;height:220px;"></div>
 		</div>
@@ -100,27 +100,16 @@
 			);
 		};
 
+		// 대상이 없어도 섹션(그리드) 자체는 항상 보여주고, 그리드가 빈 상태로 표시되게 한다
 		this.renderCthSection = function(list) {
-			var wasHidden = $('#conversionStrategy_cthSection').prop('hidden');
-			$('#conversionStrategy_cthSection').prop('hidden', list.length === 0);
 			AUIGrid.setGridData(this.grid_Cth, list);
-			// 목록이 비동기로 도착해 섹션이 이제 막 보이게 된 시점엔 그리드가 그 전까지 계속 hidden
-			// 컨테이너 안에 있었던 상태라 너비를 못 잡고 있다 - 다시 보이자마자 resize로 잡아준다
-			if (wasHidden && list.length > 0) {
-				AUIGrid.resize(this.grid_Cth);
-			}
 		};
 
 		this.renderValueSection = function(list) {
-			var wasHidden = $('#conversionStrategy_valueSection').prop('hidden');
-			$('#conversionStrategy_valueSection').prop('hidden', list.length === 0);
 			list.forEach(function(row, index) {
 				row.rank = index + 1;
 			});
 			AUIGrid.setGridData(this.grid_Value, list);
-			if (wasHidden && list.length > 0) {
-				AUIGrid.resize(this.grid_Value);
-			}
 		};
 
 		this.toggleEmptyMessage = function(cthTargetList, valueTargetList) {
