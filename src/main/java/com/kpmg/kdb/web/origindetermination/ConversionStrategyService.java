@@ -4,10 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -74,7 +72,7 @@ public class ConversionStrategyService extends GeneralService {
 
 	// 팝업 상단 요약(품번/품명/HS코드/판매가격/PSR). product_code, product_name, hs_code, amount는
 	// FCR_MST/ITEM_MST 기준이라 조회된 룰 행마다 동일하게 반복되므로 첫 행에서 가져오면 되고,
-	// PSR(세번변경/부가가치기준 요약)만 시도된 룰 전체(contextRows)를 훑어서 "CTH or MC50%" 형태로 합친다.
+	// PSR(세번변경/부가가치기준 요약)은 우측 AUI그리드에 결정기준별 행으로 뿌릴 수 있게 목록으로 내려준다.
 	private Map<String, Object> buildHeader(List<Map<String, Object>> contextRows) {
 		Map<String, Object> header = new LinkedHashMap<>();
 
@@ -87,39 +85,43 @@ public class ConversionStrategyService extends GeneralService {
 		header.put("product_name", first.get("product_name"));
 		header.put("hs_code", first.get("hs_code"));
 		header.put("amount", first.get("amount"));
-		header.put("psr", buildPsr(contextRows));
+		header.put("psr", buildPsrList(contextRows));
 
 		return header;
 	}
 
-	private String buildPsr(List<Map<String, Object>> contextRows) {
-		Set<String> labels = new LinkedHashSet<>();
+	// 시도된 룰 전체(contextRows)를 훑어서 결정기준(CTH/BU/BD/NC/MC)별로 한 행씩 만든다.
+	// 동일한 결정기준+비율 조합이 여러 룰 행에 걸쳐 중복될 수 있어 키로 중복을 제거한다.
+	private List<Map<String, Object>> buildPsrList(List<Map<String, Object>> contextRows) {
+		Map<String, Map<String, Object>> rows = new LinkedHashMap<>();
 
 		for (Map<String, Object> ctx : contextRows) {
 			if (hasCthRule(ctx)) {
-				labels.add("CTH");
+				addPsrRow(rows, "CTH", null);
 			}
 
-			BigDecimal buRule = toBigDecimal(ctx.get("bu_rule"));
-			BigDecimal bdRule = toBigDecimal(ctx.get("bd_rule"));
-			BigDecimal ncRule = toBigDecimal(ctx.get("nc_rule"));
-			BigDecimal mcRule = toBigDecimal(ctx.get("mc_rule"));
-
-			if (positive(buRule)) {
-				labels.add("BU" + formatRate(buRule) + "%");
-			}
-			if (positive(bdRule)) {
-				labels.add("BD" + formatRate(bdRule) + "%");
-			}
-			if (positive(ncRule)) {
-				labels.add("NC" + formatRate(ncRule) + "%");
-			}
-			if (positive(mcRule)) {
-				labels.add("MC" + formatRate(mcRule) + "%");
-			}
+			addPsrRowIfPositive(rows, "BU", toBigDecimal(ctx.get("bu_rule")));
+			addPsrRowIfPositive(rows, "BD", toBigDecimal(ctx.get("bd_rule")));
+			addPsrRowIfPositive(rows, "NC", toBigDecimal(ctx.get("nc_rule")));
+			addPsrRowIfPositive(rows, "MC", toBigDecimal(ctx.get("mc_rule")));
 		}
 
-		return String.join(" or ", labels);
+		return new ArrayList<>(rows.values());
+	}
+
+	private void addPsrRowIfPositive(Map<String, Map<String, Object>> rows, String criteria, BigDecimal rate) {
+		if (positive(rate)) {
+			addPsrRow(rows, criteria, formatRate(rate) + "%");
+		}
+	}
+
+	private void addPsrRow(Map<String, Map<String, Object>> rows, String criteria, String rate) {
+		rows.computeIfAbsent(criteria + "|" + rate, key -> {
+			Map<String, Object> row = new LinkedHashMap<>();
+			row.put("criteria", criteria);
+			row.put("rate", rate);
+			return row;
+		});
 	}
 
 	private static String formatRate(BigDecimal rate) {

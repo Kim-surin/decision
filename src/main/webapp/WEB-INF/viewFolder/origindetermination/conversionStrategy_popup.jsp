@@ -5,10 +5,24 @@
 <head>
 <style>
 	.conversion-strategy-header {
+		display: flex;
+		gap: 24px;
 		border: 1px dashed #ced4da;
 		border-radius: 4px;
 		padding: 12px 16px;
 		margin-bottom: 8px;
+	}
+	.conversion-strategy-header-left {
+		flex: 0 0 320px;
+	}
+	.conversion-strategy-header-right {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+	.conversion-strategy-header-right-label {
+		font-size: 13px;
+		color: #6c757d;
+		margin-bottom: 4px;
 	}
 	.conversion-strategy-header-row {
 		display: flex;
@@ -48,12 +62,17 @@
 	</div>
 	<div class="modal-body">
 		<div class="conversion-strategy-header">
-			<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">품번</span><span class="conversion-strategy-header-value" id="conversionStrategy_productCode">-</span></div>
-			<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">품명</span><span class="conversion-strategy-header-value" id="conversionStrategy_productName">-</span></div>
-			<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">협정명</span><span class="conversion-strategy-header-value" id="conversionStrategy_ftaName">-</span></div>
-			<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">HS CODE</span><span class="conversion-strategy-header-value" id="conversionStrategy_hsCode">-</span></div>
-			<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">PSR</span><span class="conversion-strategy-header-value" id="conversionStrategy_psr">-</span></div>
-			<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">판매가격</span><span class="conversion-strategy-header-value" id="conversionStrategy_amount">-</span></div>
+			<div class="conversion-strategy-header-left">
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">품번</span><span class="conversion-strategy-header-value" id="conversionStrategy_productCode">-</span></div>
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">품명</span><span class="conversion-strategy-header-value" id="conversionStrategy_productName">-</span></div>
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">협정명</span><span class="conversion-strategy-header-value" id="conversionStrategy_ftaName">-</span></div>
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">HS CODE</span><span class="conversion-strategy-header-value" id="conversionStrategy_hsCode">-</span></div>
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">판매가격</span><span class="conversion-strategy-header-value" id="conversionStrategy_amount">-</span></div>
+			</div>
+			<div class="conversion-strategy-header-right">
+				<div class="conversion-strategy-header-right-label">PSR</div>
+				<div id="oAuiGrid_conversionStrategy_psr" style="width:100%;height:130px;"></div>
+			</div>
 		</div>
 		<div id="conversionStrategy_cthSection">
 			<div class="conversion-strategy-section-title">세번변경기준 충족을 위해 원산지확인서 수취가 필요한 대상은 아래와 같습니다.</div>
@@ -70,6 +89,7 @@
 	var CONVERSION_STRATEGY_POPUP = new function() {
 		this.grid_Cth = null;
 		this.grid_Value = null;
+		this.grid_Psr = null;
 
 		this.createAUIGrid = function() {
 			var self = this;
@@ -105,9 +125,15 @@
 				}
 			];
 
+			var PsrColumns = [
+				{dataField: "criteria", headerText: "결정기준", width: 100, style: "grid-center-text"},
+				{dataField: "rate", headerText: "비율", width: 100, style: "grid-center-text"}
+			];
+
 			var gridProps = { enableFilter: true, showTooltip: true, tooltipSensitivity: 150 };
 			this.grid_Cth = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_cth", CTHColumns, gridProps, "");
 			this.grid_Value = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_value", RVCColumns, gridProps, "");
+			this.grid_Psr = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_psr", PsrColumns, { enableFilter: false }, "");
 		};
 
 		// bomTraceList_popup과 동일한 이유(모달 show() 이전에 그리드가 생성돼 좁게 그려지는 문제)로
@@ -119,6 +145,7 @@
 			var resize = function() {
 				AUIGrid.resize(self.grid_Cth);
 				AUIGrid.resize(self.grid_Value);
+				AUIGrid.resize(self.grid_Psr);
 			};
 
 			if ($modal.hasClass('show')) {
@@ -162,8 +189,9 @@
 			$('#conversionStrategy_productCode').text(header.product_code || '-');
 			$('#conversionStrategy_productName').text(header.product_name || '-');
 			$('#conversionStrategy_hsCode').text(header.hs_code || '-');
-			$('#conversionStrategy_psr').text(header.psr || '-');
 			$('#conversionStrategy_amount').text(header.amount != null ? KpackageOBJ.formatter.commas(Math.round(header.amount)) + '원' : '-');
+
+			AUIGrid.setGridData(this.grid_Psr, header.psr || []);
 		};
 
 		// 대상이 없어도 섹션(그리드) 자체는 항상 보여주고, 그리드가 빈 상태로 표시되게 한다
