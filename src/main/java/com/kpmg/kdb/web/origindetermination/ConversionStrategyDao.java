@@ -8,16 +8,6 @@ import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultR
 
 /**
  * 역내전환전략 팝업 전용 DAO.
- *
- * selectCthCertifyTargetList/selectValueContentCertifyCandidateList는 Java에서 필드를 개별로 읽지 않고
- * 그대로 프론트로 내려주므로 매퍼 XML의 resultType="HashMap" 그대로 List&lt;Map&lt;String, Object&gt;&gt;로
- * 선언한다(실제 만들어지는 객체가 HashMap이라 사실대로 선언한 것 - DTO로 선언해도 리스트 반환은 제네릭
- * 타입 소거 때문에 당장 캐스팅 오류는 안 나지만, 원소를 꺼내 그 DTO 타입으로 쓰려는 순간 ClassCastException이
- * 난다).
- *
- * selectConversionStrategyRuleContext는 RVC 컷오프 재계산을 위해 Service가 필드값을 직접 읽어야 해서,
- * 매퍼 XML의 resultType 자체를 실제 DTO 클래스로 지정해 MyBatis가 진짜 그 클래스의 인스턴스를 만들게
- * 했다. 그래서 이 메서드만 getter로 안전하게 읽을 수 있는 진짜 DTO를 반환한다.
  */
 public interface ConversionStrategyDao {
 

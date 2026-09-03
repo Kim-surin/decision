@@ -35,9 +35,6 @@ public interface OriginDeterminationDao {
 	// BOM 추적 팝업(param.fta_code 지정 - 그 협정 1건만 조회)에서 함께 쓴다
 	public List<OriginDeterminationFailMaterialResponseDto> retrieveOriginDeterminationFailMaterialList(OriginDeterminationDetailResultRequestDto param);
 	// 원산지 판정 상세 팝업(내수 전용). (매출년월/플랜트/고객사/품번) 그룹별로 "지금 시점" 판정 대상
-	// SALES_NO/SALES_SEQ(가상매출 우선)와 판정상태/상품상세를 함께 조회한다. 리스트 조회 시점에 정해진
-	// 값은 스냅샷이라 이후 가상매출이 새로 생기면 낡은 값이 되므로, 팝업이 열릴 때와 그 팝업 안에서
-	// 판정을 실행한 직후에 이 메서드로 다시 최신화한다. 수출은 가상매출 개념이 없어
-	// retrieveOriginDeterminationDetailList를 그대로 쓴다.
+	// SALES_NO/SALES_SEQ(가상매출 우선)와 판정상태/상품상세를 함께 조회한다. 
 	public List<DomesticOriginDeterminationDetailResponseDto> retrieveDomesticOriginDeterminationDetailList(DomesticOriginDeterminationExecuteRequestDto param);
 }

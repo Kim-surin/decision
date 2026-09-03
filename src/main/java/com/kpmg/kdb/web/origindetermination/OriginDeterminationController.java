@@ -167,8 +167,7 @@ public class OriginDeterminationController extends GenericController {
 	}
 
 	// 원산지 판정 상세 팝업(내수 전용)이 열릴 때/판정 실행 직후에 호출. (매출년월/플랜트/고객사/품번) 그룹
-	// 기준으로 "지금 시점" sales_no/sales_seq를 다시 찾아 판정상태/상품상세와 함께 조회한다 - 리스트 조회
-	// 시점의 스냅샷이 낡아지는 문제 대응.
+	// 기준으로 "지금 시점" sales_no/sales_seq를 다시 찾아 판정상태/상품상세와 함께 조회한다 
 	@RequestMapping(value = "/origin/compliance/origindetermination/retrieveDomesticOriginDeterminationDetailList")
 	@ResponseBody
 	public Result retrieveDomesticOriginDeterminationDetailList(@RequestBody DomesticOriginDeterminationExecuteRequestDto param)

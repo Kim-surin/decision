@@ -93,9 +93,7 @@
 
 		this.createAUIGrid = function() {
 			var self = this;
-			// showTooltip:true(그리드 옵션)를 켜면 tooltip 설정이 없는 컬럼도 기본값으로 자기 셀 값을
-			// 툴팁으로 보여주므로, 재료비 비중 순위 컬럼에만 커스텀 툴팁을 띄우려면 나머지 컬럼엔
-			// tooltip:{show:false}를 명시해야 한다
+
 			var CTHColumns = [
 				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
 				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}, tooltip: {show: false}},

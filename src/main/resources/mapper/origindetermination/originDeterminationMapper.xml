@@ -145,10 +145,8 @@
          FCR_RESULT 쪽에서 여러 행이 걸릴 수 있다. DISTINCT ON (FM.FTA_CODE)으로 협정당 정확히
          1행만 남기고, 동률이면 RULE_SEQ가 가장 큰(가장 나중에 정의된) 행을 채택한다.
 
-         PRODUCT_ASSETS_TYPE은 화면에서 역내전환전략 아이콘 노출 여부를 가리는 데 쓴다: 상품
-         (M/R/B, CommodityOriginDeterminationDao.insertFcrResultForCommodities 경로)은 룰 단위로
-         FTA_RULE을 순회하지 않고 FCR_RESULT.RULE_SEQ를 항상 -1로 기록해, 역내전환전략 계산에
-         필요한 룰별 BU/BD/NC/MC 세부 데이터가 아예 없다 -->
+         PRODUCT_ASSETS_TYPE은 화면에서 역내전환전략 아이콘 노출 여부를 가리는 데 쓴다
+         상품(M/R/B)은 역내전환전략 계산에 필요한 룰별 BU/BD/NC/MC 세부 데이터가 아예 없다 -->
     <select id="retrieveOriginDeterminationDetailResultList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
        SELECT DISTINCT ON (FM.FTA_CODE)
               FM.FTA_CODE

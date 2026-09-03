@@ -327,7 +327,6 @@
 								mode: 'domestic'
 							}
 
-							// 팝업 안에서 판정을 진행하면 이 리스트의 판정상태가 갱신되지 않은 채로 남아있게 되므로,
 							// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다.
 							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
 								function() {

@@ -95,9 +95,7 @@ public class ConversionStrategyService extends GeneralService {
 
 	// 시도된 룰 전체(contextRows)를 훑어서 룰 하나당 한 행을 만든다. RULE_CODE(예: "CTSH+BD45")는
 	// 세번변경기준과 부가가치기준이 그 룰 안에서 AND로 함께 충족돼야 함을 나타내는 판정 엔진의 조합
-	// 표기라, 판정 상세내용 결정기준 컬럼과 동일하게 이 값을 그대로 쓴다(CTH_RULE/BU_RULE 등을
-	// 따로 조합하면 AND 관계가 깨져 "CTH or BD45%"처럼 잘못 보인다). 같은 RULE_CODE가 여러 시도
-	// 행에 걸쳐 중복될 수 있어 Set으로 중복을 제거한다.
+	// 표기라, 판정 상세내용 결정기준 컬럼과 동일하게 이 값을 그대로 쓴다
 	private List<Map<String, Object>> buildPsrList(List<ConversionStrategyRuleContextDto> contextRows) {
 		Set<String> ruleCodes = new LinkedHashSet<>();
 

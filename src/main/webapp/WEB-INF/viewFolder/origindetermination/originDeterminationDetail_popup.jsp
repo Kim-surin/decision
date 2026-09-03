@@ -459,9 +459,7 @@
 		this.disableModalFadeTransition = function() {
 			$('.origin-detail-split').closest('.modal').removeClass('fade');
 		};
-
-		// AUIGrid는 생성 시점에 부모 Div가 화면에 보이는 상태여야 실제 크기를 계산한다(보이지 않으면
-		// 기본 크기로 축소됨 - package.common-v2.3.js auiGrid.resize 주석 참고). 이 팝업은
+		
 		// KpackageOBJ.sidepanel.open이 부트스트랩 모달을 아직 show() 하기 전에 콘텐츠를 주입하고
 		// 그 안에서 그리드를 생성하므로(createAUIGrid), 생성 시점엔 모달이 아직 안 보인 상태다.
 		// disableModalFadeTransition으로 트랜지션을 없앴으므로 shown.bs.modal은 show() 호출과 거의
@@ -834,12 +832,7 @@
 			var url;
 			var request;
 
-			// 서버가 내려주는 groupCount는 (매출년월+고객사+플랜트) 등으로 묶은 "그룹" 수라서,
-			// 같은 조합의 품목 여러 개가 한 그룹으로 처리되면 실제 품목 수보다 훨씬 작게 보여
-			// 혼란을 줬다. 그래서 안내 메시지는 groupCount 대신 여기서 실제로 요청한 품목 수를
-			// 세서 보여준다(handleExecuteResponse 참고). 좌측 사이드바 그룹핑과 동일하게
-			// SALES_NO+PRODUCT_CODE 단위로 세야 매출년월/고객사가 달라 SALES_NO가 다른 건이
-			// 같은 품번이라는 이유로 하나로 뭉쳐 보이지 않는다.
+			// 안내 메시지는 groupCount 대신 여기서 실제로 요청한 품목 수를세서 보여준다
 			var productCount = new Set(rows.map(function(row) { return self.buildGroupKey(row.sales_no, row.product_code); })).size;
 
 			if (this.mode === 'export') {
@@ -935,11 +928,8 @@
 			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1400px', true);
 		};
 		
-		// 역내전환전략은 완제품 판정 경로(OriginDeterminationExecutionService, FTA_RULE을 룰 단위로
-		// 순회하며 FCR_RESULT.RULE_SEQ에 실제 RULE_ID를 기록)에서만 계산 가능하다. 상품(product_assets_type
-		// IN M/R/B)은 CommodityOriginDeterminationDao의 별도 판정 경로를 타는데, 여긴 룰 단위로 FTA_RULE을
-		// 순회하지 않고 FCR_RESULT.RULE_SEQ를 항상 -1로 기록해 역내전환전략에 필요한 룰별 BU/BD/NC/MC
-		// 세부 데이터 자체가 없다. 그래서 상품 건은 아이콘을 아예 노출/클릭하지 못하게 막는다.
+		// 상품(product_assets_type IN M/R/B)은 룰별 BU/BD/NC/MC 세부 데이터 자체가 없다.
+		// 상품 건은 아이콘을 아예 노출/클릭하지 못하게 막는다.
 		this.isConversionStrategyAvailable = function (item) {
 			var productAssetsType = item && item.product_assets_type;
 			var isCommodity = productAssetsType === 'M' || productAssetsType === 'R' || productAssetsType === 'B';

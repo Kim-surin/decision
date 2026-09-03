@@ -4,9 +4,7 @@
 
 	<!--
 		이 협정에서 시도된 FTA_RULE 전체(RULE_SEQ=RULE_ID)를 반환해 채택된 룰 1건만으론 놓치는
-		세번변경/부가가치기준 존재 여부를 각각 판단한다. RULE_ID는 협정별로만 유니크해 FTA_CODE+
-		HS_CODE 접두 매칭을 함께 걸어야 하고, PSR은 AND로 묶인 RULE_CODE(예: CTSH+BD45)를 그대로
-		쓴다(재조합 금지). Service가 getter로 필드를 읽어 resultType을 실제 DTO로 지정했다.
+		세번변경/부가가치기준 존재 여부를 각각 판단한다. 
 	-->
 	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto">
 		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
@@ -46,10 +44,8 @@
 	</select>
 
 	<!--
-		자재(ITEM_CODE)의 최근 6개월 입고 건 중, 이 협정(FTA_CODE)으로 원산지확인서가 확보되지 않은
-		구매처/기간을 찾는다. selectNonCertifiedOriginSummary(ItemOriginRateDaoMapper.xml)와 동일한
-		PO_LEDGER+EXT_COO_CERTIFY_MST/DTL 조인 구조를 재사용한다. 실제 판정 엔진(ItemOriginRateService)의
-		재고회전 기반 조회 구간까지는 재현하지 않고 최근 6개월로 단순화했다.
+		자재(ITEM_CODE)의 최근 6개월 입고 건 중, 이 협정(FTA_CODE)으로 원산지확인서가 확보되지 않은 구매처/기간을 찾는다. 
+		실제 판정 엔진(ItemOriginRateService)의 재고회전 기반 조회 구간까지는 재현하지 않고 최근 6개월로 단순화했다.
 	-->
 	<sql id="vendorCertifyGapLateral">
 		LEFT   JOIN LATERAL (

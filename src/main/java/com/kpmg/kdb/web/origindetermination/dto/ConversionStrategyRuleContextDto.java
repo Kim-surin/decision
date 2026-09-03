@@ -2,12 +2,6 @@ package com.kpmg.kdb.web.origindetermination.dto;
 
 import java.math.BigDecimal;
 
-/**
- * selectConversionStrategyRuleContext 전용 DTO. 이 패키지의 다른 응답 DTO(snake_case 필드, 전부 String)와
- * 달리 매퍼 XML의 resultType이 실제로 이 클래스를 가리켜서 MyBatis가 리플렉션으로 필드를 채워 넣는다.
- * mapUnderscoreToCamelCase=true 설정으로 컬럼(FTA_CODE 등)이 camelCase 프로퍼티(ftaCode)에 매핑되므로
- * 필드명을 camelCase로, 타입도 실제 연산에 쓰는 타입(BigDecimal 등) 그대로 선언해야 한다.
- */
 public class ConversionStrategyRuleContextDto {
 	private String ftaCode;
 	private String productCode;
