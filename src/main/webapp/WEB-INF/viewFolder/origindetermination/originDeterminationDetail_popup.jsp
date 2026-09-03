@@ -834,9 +834,11 @@
 
 			// 서버가 내려주는 groupCount는 (매출년월+고객사+플랜트) 등으로 묶은 "그룹" 수라서,
 			// 같은 조합의 품목 여러 개가 한 그룹으로 처리되면 실제 품목 수보다 훨씬 작게 보여
-			// 혼란을 줬다. 그래서 안내 메시지는 groupCount 대신 여기서 실제로 요청한 품목(product_code)
-			// 수를 세서 보여준다(handleExecuteResponse 참고)
-			var productCount = new Set(rows.map(function(row) { return row.product_code; })).size;
+			// 혼란을 줬다. 그래서 안내 메시지는 groupCount 대신 여기서 실제로 요청한 품목 수를
+			// 세서 보여준다(handleExecuteResponse 참고). 좌측 사이드바 그룹핑과 동일하게
+			// SALES_NO+PRODUCT_CODE 단위로 세야 매출년월/고객사가 달라 SALES_NO가 다른 건이
+			// 같은 품번이라는 이유로 하나로 뭉쳐 보이지 않는다.
+			var productCount = new Set(rows.map(function(row) { return self.buildGroupKey(row.sales_no, row.product_code); })).size;
 
 			if (this.mode === 'export') {
 				url = '/origin/compliance/origindetermination/executeExportOriginDetermination';
