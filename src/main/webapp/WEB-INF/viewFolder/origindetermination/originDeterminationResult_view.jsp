@@ -118,7 +118,20 @@
 							</div>
 						</form:form>
 					</div>
-					
+
+					<div class="row">
+						<div class="col-12">
+							<div class="frame-wrap">
+								<div class="demo" style="text-align: right;">
+									<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed"
+										onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.excelDownload();">
+										Excel Download
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<div class="row">
 						<div class="col-12">
 							<div id="oAuigrid_ORIGIN_DETERMINATION_RESULT" style="width:100%;height:700px; margin:0 auto;"></div>
@@ -180,7 +193,22 @@
 							});
 						}
 						
-						this.retrieve_GridData = function () {
+						this.excelDownload = function () {
+						const exportProps = {
+							fileName: "원산지 판정 결과 조회",
+							sheetName: "원산지 판정 결과 조회",
+							exportWithStyle: true,
+							progressBar: true,
+							showRowNumColumn: false
+						};
+
+						AUIGrid.exportToXlsx(
+							ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT,
+							exportProps
+						);
+					}
+
+					this.retrieve_GridData = function () {
 							var params = {
 							/* 날짜 파라메터 '-' 제거  */
 							"from_date": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "from_date").replace(/-/gi, "")
