@@ -45,7 +45,7 @@
 		this.grid_Value = null;
 
 		this.createAUIGrid = function() {
-			var vendorColumns = [
+			var CTHColumns = [
 				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}},
 				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}},
 				{dataField: "hs_code", headerText: "HS CODE", width: 120, filter: {showIcon: true}},
@@ -53,9 +53,16 @@
 				{dataField: "from_date", headerText: "수취 필요 포괄기간(시작)", width: 160, dataType: "date"},
 				{dataField: "to_date", headerText: "수취 필요 포괄기간(종료)", width: 160, dataType: "date"}
 			];
-			var valueColumns = [
+			
+			var RVCColumns = [
+				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}},
+				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}},
+				{dataField: "hs_code", headerText: "HS CODE", width: 120, filter: {showIcon: true}},
+				{dataField: "vendor_name", headerText: "구매처", width: 160, filter: {showIcon: true}},
+				{dataField: "from_date", headerText: "수취 필요 포괄기간(시작)", width: 160, dataType: "date"},
+				{dataField: "to_date", headerText: "수취 필요 포괄기간(종료)", width: 160, dataType: "date"},
 				{dataField: "rank", headerText: "재료비 비중 순위", width: 120, dataType: "numeric"}
-			].concat(vendorColumns);
+			];
 
 			var gridProps = { enableFilter: true };
 			this.grid_Cth = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_cth", vendorColumns, gridProps, "");
