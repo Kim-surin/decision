@@ -72,19 +72,33 @@
 		this.grid_Value = null;
 
 		this.createAUIGrid = function() {
+			var self = this;
+			// showTooltip:true(그리드 옵션)를 켜면 tooltip 설정이 없는 컬럼도 기본값으로 자기 셀 값을
+			// 툴팁으로 보여주므로, 재료비 비중 순위 컬럼에만 커스텀 툴팁을 띄우려면 나머지 컬럼엔
+			// tooltip:{show:false}를 명시해야 한다
 			var vendorColumns = [
-				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}},
-				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}},
-				{dataField: "hs_code", headerText: "HS CODE", width: 120, filter: {showIcon: true}},
-				{dataField: "vendor_name", headerText: "구매처", width: 160, filter: {showIcon: true}},
-				{dataField: "from_date", headerText: "수취 필요 포괄기간(시작)", width: 160, dataType: "date"},
-				{dataField: "to_date", headerText: "수취 필요 포괄기간(종료)", width: 160, dataType: "date"}
+				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
+				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}, tooltip: {show: false}},
+				{dataField: "hs_code", headerText: "HS CODE", width: 120, filter: {showIcon: true}, tooltip: {show: false}},
+				{dataField: "vendor_name", headerText: "구매처", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
+				{dataField: "from_date", headerText: "수취 필요 포괄기간(시작)", width: 160, dataType: "date", tooltip: {show: false}},
+				{dataField: "to_date", headerText: "수취 필요 포괄기간(종료)", width: 160, dataType: "date", tooltip: {show: false}}
 			];
 			var valueColumns = [
-				{dataField: "rank", headerText: "재료비 비중 순위", width: 120, dataType: "numeric"}
+				{dataField: "rank", headerText: "재료비 비중 순위", width: 120, dataType: "numeric", style: "grid-center-text",
+					tooltip: {
+						tooltipFunction: function (rowIndex, columnIndex, value, headerText, item, dataField) {
+							var materialCost = Number(item.outarea_amount) || 0;
+							var sellingPrice = self.headerAmount || 0;
+							var ratio = sellingPrice > 0 ? (materialCost / sellingPrice * 100) : 0;
+							return "재료비 : " + KpackageOBJ.formatter.commas(Math.round(materialCost)) + "원<br>"
+								+ "판매가격 대비 비중 : " + ratio.toFixed(2) + "%";
+						}
+					}
+				}
 			].concat(vendorColumns);
 
-			var gridProps = { enableFilter: true };
+			var gridProps = { enableFilter: true, showTooltip: true, tooltipSensitivity: 150 };
 			this.grid_Cth = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_cth", vendorColumns, gridProps, "");
 			this.grid_Value = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_value", valueColumns, gridProps, "");
 		};
@@ -135,6 +149,9 @@
 		};
 
 		this.renderHeader = function(header) {
+			// 재료비 비중 순위 툴팁(판매가격 대비 비중 계산)에서 참조
+			this.headerAmount = Number(header.amount) || 0;
+
 			$('#conversionStrategy_productCode').text(header.product_code || '-');
 			$('#conversionStrategy_productName').text(header.product_name || '-');
 			$('#conversionStrategy_hsCode').text(header.hs_code || '-');
