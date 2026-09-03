@@ -10,6 +10,10 @@
 		존재하는 경우가 흔하다. "실제 채택된 룰 1건"만 보면 둘 중 하나만 잡히므로, 시도된 룰 전체를
 		반환해 세번변경/부가가치 존재 여부를 독립적으로 판단할 수 있게 한다. RVC 계산에 필요한
 		기준액(INKOTERMS/NET_COST/역내·역외 재료비)은 FCR_MST 기준이라 룰마다 동일하게 반복된다.
+
+		FTA_RULE.RULE_ID는 협정 전체에서 유니크한 값이 아니라서(다른 협정에도 같은 RULE_ID가 존재),
+		RULE_ID만으로 조인하면 다른 협정의 룰까지 섞여 들어온다. retrieveOriginDeterminationDetailResultDetailList가
+		쓰는 것과 동일하게 FTA_CODE 일치 + HS_CODE 앞자리 매칭 조건을 함께 걸어야 한다.
 	-->
 	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
 		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
@@ -38,7 +42,9 @@
 		ON     FM.COMPANY_CODE = FR2.COMPANY_CODE AND FM.DIVISION_CODE = FR2.DIVISION_CODE
 		AND    FM.FTA_CODE = FR2.FTA_CODE AND FM.SALES_NO = FR2.SALES_NO AND FM.SALES_SEQ = FR2.SALES_SEQ
 		INNER  JOIN FTA_RULE FR
-		ON     FR.RULE_ID = FR2.RULE_SEQ
+		ON     FR.HS_CODE = SUBSTR(FR2.HS_CODE, 1, LENGTH(FR.HS_CODE))
+		AND    FR.FTA_CODE = FR2.FTA_CODE
+		AND    FR.RULE_ID = FR2.RULE_SEQ
 		WHERE  FM.COMPANY_CODE = #{company_code}
 		AND    FM.SALES_NO = #{sales_no}
 		AND    FM.SALES_SEQ = #{sales_seq}
