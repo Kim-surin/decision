@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 
 /**
@@ -38,14 +39,14 @@ public class ConversionStrategyService extends GeneralService {
 
 		try {
 			ConversionStrategyDao dao = sqlSession.getMapper(ConversionStrategyDao.class);
-			List<Map<String, Object>> contextRows = dao.selectConversionStrategyRuleContext(param);
+			List<ConversionStrategyRuleContextDto> contextRows = dao.selectConversionStrategyRuleContext(param);
 
 			List<Map<String, Object>> cthTargetList = new ArrayList<>();
 			List<Map<String, Object>> valueTargetList = new ArrayList<>();
 
 			if (!contextRows.isEmpty()) {
 				boolean hasCth = contextRows.stream().anyMatch(this::hasCthRule);
-				Map<String, Object> valueRuleCtx = contextRows.stream().filter(this::hasValueRule).findFirst().orElse(null);
+				ConversionStrategyRuleContextDto valueRuleCtx = contextRows.stream().filter(this::hasValueRule).findFirst().orElse(null);
 
 				if (hasCth) {
 					cthTargetList = dao.selectCthCertifyTargetList(param);
@@ -75,18 +76,18 @@ public class ConversionStrategyService extends GeneralService {
 	// 팝업 상단 요약(품번/품명/HS코드/판매가격/PSR). product_code, product_name, hs_code, amount는
 	// FCR_MST/ITEM_MST 기준이라 조회된 룰 행마다 동일하게 반복되므로 첫 행에서 가져오면 되고,
 	// PSR(세번변경/부가가치기준 요약)은 우측 AUI그리드에 결정기준별 행으로 뿌릴 수 있게 목록으로 내려준다.
-	private Map<String, Object> buildHeader(List<Map<String, Object>> contextRows) {
+	private Map<String, Object> buildHeader(List<ConversionStrategyRuleContextDto> contextRows) {
 		Map<String, Object> header = new LinkedHashMap<>();
 
 		if (contextRows.isEmpty()) {
 			return header;
 		}
 
-		Map<String, Object> first = contextRows.get(0);
-		header.put("product_code", first.get("product_code"));
-		header.put("product_name", first.get("product_name"));
-		header.put("hs_code", first.get("hs_code"));
-		header.put("amount", first.get("amount"));
+		ConversionStrategyRuleContextDto first = contextRows.get(0);
+		header.put("product_code", first.getProductCode());
+		header.put("product_name", first.getProductName());
+		header.put("hs_code", first.getHsCode());
+		header.put("amount", first.getAmount());
 		header.put("psr", buildPsrList(contextRows));
 
 		return header;
@@ -97,13 +98,13 @@ public class ConversionStrategyService extends GeneralService {
 	// 표기라, 판정 상세내용 결정기준 컬럼과 동일하게 이 값을 그대로 쓴다(CTH_RULE/BU_RULE 등을
 	// 따로 조합하면 AND 관계가 깨져 "CTH or BD45%"처럼 잘못 보인다). 같은 RULE_CODE가 여러 시도
 	// 행에 걸쳐 중복될 수 있어 Set으로 중복을 제거한다.
-	private List<Map<String, Object>> buildPsrList(List<Map<String, Object>> contextRows) {
+	private List<Map<String, Object>> buildPsrList(List<ConversionStrategyRuleContextDto> contextRows) {
 		Set<String> ruleCodes = new LinkedHashSet<>();
 
-		for (Map<String, Object> ctx : contextRows) {
-			Object ruleCode = ctx.get("rule_code");
-			if (ruleCode != null && !String.valueOf(ruleCode).isEmpty()) {
-				ruleCodes.add(String.valueOf(ruleCode));
+		for (ConversionStrategyRuleContextDto ctx : contextRows) {
+			String ruleCode = ctx.getRuleCode();
+			if (ruleCode != null && !ruleCode.isEmpty()) {
+				ruleCodes.add(ruleCode);
 			}
 		}
 
@@ -117,14 +118,14 @@ public class ConversionStrategyService extends GeneralService {
 		return rows;
 	}
 
-	private boolean hasCthRule(Map<String, Object> ctx) {
-		Object cthRule = ctx.get("cth_rule");
+	private boolean hasCthRule(ConversionStrategyRuleContextDto ctx) {
+		String cthRule = ctx.getCthRule();
 		return cthRule != null && !"*".equals(cthRule);
 	}
 
-	private boolean hasValueRule(Map<String, Object> ctx) {
-		return positive(toBigDecimal(ctx.get("bu_rule"))) || positive(toBigDecimal(ctx.get("bd_rule")))
-				|| positive(toBigDecimal(ctx.get("nc_rule"))) || positive(toBigDecimal(ctx.get("mc_rule")));
+	private boolean hasValueRule(ConversionStrategyRuleContextDto ctx) {
+		return positive(ctx.getBuRule()) || positive(ctx.getBdRule())
+				|| positive(ctx.getNcRule()) || positive(ctx.getMcRule());
 	}
 
 	/**
@@ -132,16 +133,16 @@ public class ConversionStrategyService extends GeneralService {
 	 * RvcCriteriaDecisionService.decideRvc와 동일한 산식(BU>BD>NC>MC 우선순위)으로 재계산해
 	 * 기준을 충족하는 시점까지 필요한 원재료만 반환한다.
 	 */
-	private List<Map<String, Object>> resolveValueContentTargets(Map<String, Object> ctx, List<Map<String, Object>> candidates) {
-		BigDecimal buRule = toBigDecimal(ctx.get("bu_rule"));
-		BigDecimal bdRule = toBigDecimal(ctx.get("bd_rule"));
-		BigDecimal ncRule = toBigDecimal(ctx.get("nc_rule"));
-		BigDecimal mcRule = toBigDecimal(ctx.get("mc_rule"));
-		BigDecimal inkotermsAmount = toBigDecimal(ctx.get("inkoterms_amount"));
-		BigDecimal netCostAmount = toBigDecimal(ctx.get("net_cost_amount"));
+	private List<Map<String, Object>> resolveValueContentTargets(ConversionStrategyRuleContextDto ctx, List<Map<String, Object>> candidates) {
+		BigDecimal buRule = toBigDecimal(ctx.getBuRule());
+		BigDecimal bdRule = toBigDecimal(ctx.getBdRule());
+		BigDecimal ncRule = toBigDecimal(ctx.getNcRule());
+		BigDecimal mcRule = toBigDecimal(ctx.getMcRule());
+		BigDecimal inkotermsAmount = toBigDecimal(ctx.getInkotermsAmount());
+		BigDecimal netCostAmount = toBigDecimal(ctx.getNetCostAmount());
 
-		BigDecimal originatingAmount = toBigDecimal(ctx.get("inarea_amount"));
-		BigDecimal nonOriginatingAmount = toBigDecimal(ctx.get("outarea_amount"));
+		BigDecimal originatingAmount = toBigDecimal(ctx.getInareaAmount());
+		BigDecimal nonOriginatingAmount = toBigDecimal(ctx.getOutareaAmount());
 		BigDecimal inputAmount = originatingAmount.add(nonOriginatingAmount);
 
 		if (isSatisfied(buRule, bdRule, ncRule, mcRule, originatingAmount, nonOriginatingAmount, inputAmount,

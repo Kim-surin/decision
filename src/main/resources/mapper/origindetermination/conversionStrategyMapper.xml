@@ -19,8 +19,13 @@
 		함께 충족돼야 함을 나타내는 판정 엔진의 조합 표기다. CTH_RULE/BU_RULE/BD_RULE/NC_RULE/MC_RULE을
 		따로따로 흩어서 "CTH or BD45%"처럼 재조합하면 이 AND 관계가 깨지므로, PSR 표시에는
 		FCR_RESULT.RULE_CODE(판정 상세내용 결정기준 컬럼과 동일한 값)를 그대로 써야 한다.
+
+		ConversionStrategyService가 이 결과의 필드를 getter로 직접 읽으므로(RVC 컷오프 재계산),
+		이 select만 resultType을 실제 DTO로 지정해 MyBatis가 진짜 그 클래스의 인스턴스를 채워 넣게
+		한다(다른 두 select처럼 HashMap을 DTO인 척 선언하는 게 아니다). mapUnderscoreToCamelCase=true라
+		컬럼 별칭(FTA_CODE 등)이 DTO의 camelCase 프로퍼티(ftaCode)에 자동으로 매핑된다.
 	-->
-	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto">
 		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
 		      ,FM.PRODUCT_CODE                                                AS PRODUCT_CODE
 		      ,IM.ITEM_NAME                                                   AS PRODUCT_NAME
