@@ -117,9 +117,10 @@
 		// this.lineItems(라인 단위로 펼친 목록)를 쓰고, this.datas는 일괄/개별 판정 실행(executeOriginDetermination)
 		// 대상 식별에만 쓴다.
 		this.datas = [];
-		// lineItems를 (품번, 품명) 기준으로 묶은 좌측 사이드바 표시 단위 목록 - retrieveDetailList 응답으로 채워짐.
-		// 동일 품번/품명이 여러 라인(SALES_SEQ)에 걸쳐 있어도 좌측엔 하나만 노출하고, 그 그룹에 속한
-		// 라인들을 우측 "판정 품목" 표에 모두 나열한다.
+		// lineItems를 (SALES_NO, 품번) 기준으로 묶은 좌측 사이드바 표시 단위 목록 - retrieveDetailList 응답으로 채워짐.
+		// 동일 SALES_NO 안에서 같은 품번이 여러 라인(SALES_SEQ)에 걸쳐 있어도 좌측엔 하나만 노출하고, 그 그룹에
+		// 속한 라인들을 우측 "판정 품목" 표에 모두 나열한다. SALES_NO가 다르면(매출년월/고객사가 다르면)
+		// 품번이 같아도 별도 그룹으로 분리한다.
 		this.lineItems = [];
 		this.groupedItems = [];
 		// sales_no + '_' + sales_seq 를 key 로 하는 라인별 상세정보 맵
@@ -154,8 +155,8 @@
 			return salesNo + "_" + salesSeq;
 		};
 
-		this.buildGroupKey = function(productCode, productName) {
-			return productCode + "_" + productName;
+		this.buildGroupKey = function(salesNo, productCode) {
+			return salesNo + "_" + productCode;
 		};
 
 		// resolveDomesticSalesKeys 요청/응답 매칭용 키(매출년월+플랜트+고객사+품번)
@@ -163,16 +164,17 @@
 			return [row.invoice_month, row.division_code, row.customer_code, row.product_code].join('_');
 		};
 
-		// this.lineItems를 (품번, 품명) 기준으로 묶어 this.groupedItems를 구성.
+		// this.lineItems를 (SALES_NO, 품번) 기준으로 묶어 this.groupedItems를 구성.
+		// 매출년월/고객사가 달라 SALES_NO가 다르면 품번이 같아도 별도 그룹으로 분리해야 한다.
 		// 그룹의 판정상태 배지는 그 그룹에 속한 첫 번째 라인의 값을 대표로 사용한다
-		// (같은 품번이 여러 라인에 걸쳐 있어도 보통 같은 송장/그룹에 속해 판정상태를 공유함)
+		// (같은 SALES_NO 안의 라인들은 보통 같은 송장에 속해 판정상태를 공유함)
 		this.buildGroupedItems = function() {
 			var self = this;
 			var groupMap = {};
 			var order = [];
 
 			this.lineItems.forEach(function(row) {
-				var groupKey = self.buildGroupKey(row.product_code, row.product_name);
+				var groupKey = self.buildGroupKey(row.sales_no, row.product_code);
 
 				if (!groupMap[groupKey]) {
 					groupMap[groupKey] = {
@@ -489,8 +491,8 @@
 			$('#originDetermination_popup_individualBtn').hide();
 		};
 
-		// 좌측 사이드바 렌더링 (매출년월/품번/품명) - this.groupedItems(품번+품명 단위) 기준.
-		// 동일 품번/품명은 여러 라인에 걸쳐 있어도 하나만 노출한다
+		// 좌측 사이드바 렌더링 (매출년월/품번/품명) - this.groupedItems(SALES_NO+품번 단위) 기준.
+		// 동일 SALES_NO 안의 동일 품번은 여러 라인에 걸쳐 있어도 하나만 노출한다
 		this.renderSidebar = function() {
 			var $sidebar = $('#originDetermination_popup_sidebar');
 			$sidebar.empty();
@@ -599,7 +601,7 @@
 			});
 		};
 
-		// 좌측 그룹(품번/품명) 선택 시, 그 그룹에 속한 라인 전체를 우측 "판정 품목"에 나열하고,
+		// 좌측 그룹(SALES_NO+품번) 선택 시, 그 그룹에 속한 라인 전체를 우측 "판정 품목"에 나열하고,
 		// 그 중 하나(이전에 선택돼 있던 라인 우선, 없으면 판정완료 라인, 그마저 없으면 첫 라인)를
 		// 자동으로 선택해 판정결과를 보여준다
 		this.selectItem = function(key) {
