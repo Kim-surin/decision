@@ -76,7 +76,7 @@
 			// showTooltip:true(그리드 옵션)를 켜면 tooltip 설정이 없는 컬럼도 기본값으로 자기 셀 값을
 			// 툴팁으로 보여주므로, 재료비 비중 순위 컬럼에만 커스텀 툴팁을 띄우려면 나머지 컬럼엔
 			// tooltip:{show:false}를 명시해야 한다
-			var vendorColumns = [
+			var CTHColumns = [
 				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
 				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}, tooltip: {show: false}},
 				{dataField: "hs_code", headerText: "HS CODE", width: 120, filter: {showIcon: true}, tooltip: {show: false}},
@@ -84,7 +84,14 @@
 				{dataField: "from_date", headerText: "수취 필요 포괄기간(시작)", width: 160, dataType: "date", tooltip: {show: false}},
 				{dataField: "to_date", headerText: "수취 필요 포괄기간(종료)", width: 160, dataType: "date", tooltip: {show: false}}
 			];
-			var valueColumns = [
+
+			var RVCColumns = [
+				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
+				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}, tooltip: {show: false}},
+				{dataField: "hs_code", headerText: "HS CODE", width: 120, filter: {showIcon: true}, tooltip: {show: false}},
+				{dataField: "vendor_name", headerText: "구매처", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
+				{dataField: "from_date", headerText: "수취 필요 포괄기간(시작)", width: 160, dataType: "date", tooltip: {show: false}},
+				{dataField: "to_date", headerText: "수취 필요 포괄기간(종료)", width: 160, dataType: "date", tooltip: {show: false}},
 				{dataField: "rank", headerText: "재료비 비중 순위", width: 120, dataType: "numeric", style: "grid-center-text",
 					tooltip: {
 						tooltipFunction: function (rowIndex, columnIndex, value, headerText, item, dataField) {
@@ -96,11 +103,11 @@
 						}
 					}
 				}
-			].concat(vendorColumns);
+			];
 
 			var gridProps = { enableFilter: true, showTooltip: true, tooltipSensitivity: 150 };
-			this.grid_Cth = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_cth", vendorColumns, gridProps, "");
-			this.grid_Value = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_value", valueColumns, gridProps, "");
+			this.grid_Cth = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_cth", CTHColumns, gridProps, "");
+			this.grid_Value = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_value", RVCColumns, gridProps, "");
 		};
 
 		// bomTraceList_popup과 동일한 이유(모달 show() 이전에 그리드가 생성돼 좁게 그려지는 문제)로
