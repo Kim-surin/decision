@@ -3,6 +3,8 @@ package com.kpmg.kdb.web.origindetermination;
 import java.util.List;
 import java.util.Map;
 
+import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.DomesticSalesKeyResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultDetailResponseDto;
@@ -32,4 +34,8 @@ public interface OriginDeterminationDao {
 	// MSG_FAILED_DECISION_QTY_AMOUNT 사유일 때(param.fta_code 미지정 - 프론트에서 fta_code로 매핑해 사용)와
 	// BOM 추적 팝업(param.fta_code 지정 - 그 협정 1건만 조회)에서 함께 쓴다
 	public List<OriginDeterminationFailMaterialResponseDto> retrieveOriginDeterminationFailMaterialList(OriginDeterminationDetailResultRequestDto param);
+	// (매출년월/플랜트/고객사/품번) 그룹별로 "지금 시점" 판정 대상 SALES_NO/SALES_SEQ와 판정상태를 다시 조회한다.
+	// 리스트 조회 시점에 정해진 값은 스냅샷이라 이후 가상매출이 새로 생기면 낡은 값이 되므로, 원산지 판정
+	// 상세 팝업이 열릴 때와 그 팝업 안에서 판정을 실행한 직후에 이 메서드로 다시 최신화한다.
+	public List<DomesticSalesKeyResponseDto> resolveDomesticSalesKeys(DomesticOriginDeterminationExecuteRequestDto param);
 }

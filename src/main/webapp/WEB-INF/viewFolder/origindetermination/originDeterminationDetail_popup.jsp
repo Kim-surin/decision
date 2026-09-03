@@ -158,6 +158,11 @@
 			return productCode + "_" + productName;
 		};
 
+		// resolveDomesticSalesKeys 요청/응답 매칭용 키(매출년월+플랜트+고객사+품번)
+		this.buildSalesKeyGroupKey = function(row) {
+			return [row.invoice_month, row.division_code, row.customer_code, row.product_code].join('_');
+		};
+
 		// this.lineItems를 (품번, 품명) 기준으로 묶어 this.groupedItems를 구성.
 		// 그룹의 판정상태 배지는 그 그룹에 속한 첫 번째 라인의 값을 대표로 사용한다
 		// (같은 품번이 여러 라인에 걸쳐 있어도 보통 같은 송장/그룹에 속해 판정상태를 공유함)
@@ -375,7 +380,64 @@
 			this.createAUIGrid();
 			this.bindModalShownResize();
 
-			this.retrieveDetailList();
+			this.refreshSalesKeysThenRetrieveDetailList();
+		};
+
+		// 내수는 리스트 조회 시점에 가상매출 우선(있으면 가상매출, 없으면 원본)으로 sales_no/sales_seq를
+		// 미리 정해서 넘겨준다. 이 값은 그 시점의 스냅샷이라, 팝업을 여는 사이 또는 팝업 안에서 판정을
+		// 실행한 직후 새로 가상매출이 생기면 금방 낡은 값이 된다. 팝업을 열 때와 판정 실행 직후 이 함수로
+		// (매출년월/플랜트/고객사/품번) 그룹 기준 "지금 시점" sales_no/sales_seq/판정상태를 다시 조회해
+		// this.datas를 갱신한 뒤 조회를 진행한다. 수출은 가상매출 개념이 없어 그대로 넘어간다.
+		this.refreshSalesKeysThenRetrieveDetailList = function() {
+			var self = this;
+
+			if (this.mode !== 'domestic' || this.datas.length === 0) {
+				this.retrieveDetailList();
+				return;
+			}
+
+			var groupMap = {};
+			this.datas.forEach(function(row) {
+				var key = self.buildSalesKeyGroupKey(row);
+				if (!groupMap[key]) {
+					groupMap[key] = {
+						invoice_month: row.invoice_month,
+						division_code: row.division_code,
+						customer_code: row.customer_code,
+						product_code: row.product_code
+					};
+				}
+			});
+
+			var request = {
+				datas: Object.keys(groupMap).map(function(key) { return groupMap[key]; })
+			};
+
+			KpackageOBJ.ajax.doSubmit(
+				'/origin/compliance/origindetermination/resolveDomesticSalesKeys',
+				request,
+				function(response) {
+					var resolvedList = (response && response.value) ? response.value : [];
+					var resolvedMap = {};
+					resolvedList.forEach(function(row) {
+						var key = self.buildSalesKeyGroupKey(row);
+						resolvedMap[key] = row;
+					});
+
+					self.datas.forEach(function(row) {
+						var key = self.buildSalesKeyGroupKey(row);
+						var resolved = resolvedMap[key];
+						if (resolved) {
+							row.sales_no = resolved.sales_no;
+							row.sales_seq = resolved.sales_seq;
+							row.status = resolved.status;
+							row.status_name = resolved.status_name;
+						}
+					});
+
+					self.retrieveDetailList();
+				}
+			);
 		};
 
 		// 이 팝업이 열리는 modal-dialog-end 는 슬라이드인 트랜지션(.modal.fade .modal-dialog-end 의
@@ -750,8 +812,6 @@
 		// executeDomesticOriginDetermination을, 수출은 (sales_no, division_code) 목록으로
 		// executeExportOriginDetermination을 호출한다 - 응답 형태(groupCount/failedTargets)는
 		// 동일해서 처리(handleExecuteResponse)는 공용으로 쓴다.
-		// 주의: 판정상태(status) 배지는 좌측 목록(datas)이 팝업을 열 때 넘어온 값을 그대로 쓰고 있어,
-		// 여기서는 갱신하지 않는다 - 최신 판정상태를 보려면 팝업을 닫고 다시 열어야 한다.
 		this.executeOriginDetermination = function(rows) {
 			var self = this;
 			var url;
@@ -795,6 +855,8 @@
 
 		// executeOriginDetermination 응답(내수/수출 공용) 처리: 결과 메시지 표시 후 좌측 목록/상세
 		// 전체를 다시 조회해 최신화한다(선택 중이던 라인이 남아있으면 그 라인을 그대로 유지).
+		// 내수는 이번 실행으로 가상매출이 새로 생겼을 수 있어, sales_no/sales_seq/판정상태를 먼저
+		// 다시 조회(refreshSalesKeysThenRetrieveDetailList)한 뒤에 상세를 조회한다.
 		this.handleExecuteResponse = function(response, productCount) {
 			var value = (response && response.value) ? response.value : {};
 			var failedCount = value.failedTargets ? value.failedTargets.length : 0;
@@ -806,7 +868,7 @@
 
 			KpackageOBJ.object.alert(message);
 
-			this.retrieveDetailList();
+			this.refreshSalesKeysThenRetrieveDetailList();
 		};
 
 		// 우측의 모든 품목을 대상으로 원산지 판정 진행

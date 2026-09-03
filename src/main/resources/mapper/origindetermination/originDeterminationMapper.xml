@@ -420,4 +420,73 @@
 		</if>
 		ORDER BY SM.INVOICE_DATE, C.CUSTOMER_CODE, D.DIVISION_CODE, SD.PRODUCT_CODE, F.FTA_NAME
     </select>
+
+    <!--
+    	(매출년월/플랜트/고객사/품번) 그룹별로 "지금 시점" 판정 대상 SALES_NO/SALES_SEQ와 판정상태를 다시
+    	조회한다. retrieveDomesticOriginDetermination의 AGG(가상매출 우선 - VIRTUAL_YN DESC) 로직과 동일한
+    	기준으로 만들어졌다 - 그쪽 판정 대상 그룹 규칙이 바뀌면 이 쿼리도 같이 맞춰야 한다.
+    	원산지 판정 상세 팝업이 열릴 때, 그리고 그 팝업 안에서 판정을 실행한 직후에 호출해 캐시된
+    	sales_no/판정상태가 아니라 항상 최신 상태를 반영하도록 한다.
+    -->
+    <select id="resolveDomesticSalesKeys" parameterType="com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto" resultType="HashMap">
+    	WITH BASE AS (
+    		SELECT SM.SALES_NO
+    		     , SD.SALES_SEQ
+    		     , SD.DIVISION_CODE
+    		     , SM.COMPANY_CODE
+    		     , SM.CUSTOMER_CODE
+    		     , SD.PRODUCT_CODE
+    		     , SUBSTR(SM.INVOICE_DATE, 1, 6) AS INVOICE_MONTH
+    		     , SM.VIRTUAL_YN
+    		     , SD.STATUS
+    		FROM SALES_MST SM
+    		INNER JOIN SALES_DTL SD
+    			ON SM.COMPANY_CODE = SD.COMPANY_CODE
+    			AND SM.SALES_NO = SD.SALES_NO
+    			AND SM.DIVISION_CODE = SD.DIVISION_CODE
+    		WHERE SM.COMPANY_CODE = #{company_code}
+    		AND SM.EXPORT_FLAG = 'D'
+    		AND SD.QUANTITY > 0
+    		AND EXISTS (
+    			SELECT 1 FROM CUSTOMER C
+    			WHERE C.COMPANY_CODE = SD.COMPANY_CODE
+    			AND C.CUSTOMER_CODE = SD.DELIVERY_CUSTOMER_CODE
+    		)
+    		AND (SUBSTR(SM.INVOICE_DATE, 1, 6), SD.DIVISION_CODE, SM.CUSTOMER_CODE, SD.PRODUCT_CODE) IN
+    		<choose>
+    			<when test="datas != null and !datas.isEmpty()">
+    				<foreach collection="datas" item="g" open="(" separator="," close=")">
+    					(#{g.invoice_month}, #{g.division_code}, #{g.customer_code}, #{g.product_code})
+    				</foreach>
+    			</when>
+    			<otherwise>
+    				((NULL, NULL, NULL, NULL))
+    			</otherwise>
+    		</choose>
+    	),
+    	AGG AS (
+    		SELECT COMPANY_CODE
+    		     , INVOICE_MONTH
+    		     , DIVISION_CODE
+    		     , CUSTOMER_CODE
+    		     , PRODUCT_CODE
+    		     , SALES_NO
+    		     , SALES_SEQ
+    		     , COALESCE(SUM(CASE WHEN VIRTUAL_YN = 'Y' THEN STATUS::INTEGER ELSE 0 END)
+    		         OVER (PARTITION BY COMPANY_CODE, INVOICE_MONTH, DIVISION_CODE, CUSTOMER_CODE, PRODUCT_CODE), 0)::VARCHAR AS STATUS
+    		     , ROW_NUMBER() OVER (PARTITION BY COMPANY_CODE, INVOICE_MONTH, DIVISION_CODE, CUSTOMER_CODE, PRODUCT_CODE
+    		                           ORDER BY VIRTUAL_YN DESC, SALES_NO, SALES_SEQ) AS RN
+    		FROM BASE
+    	)
+    	SELECT AGG.PRODUCT_CODE
+    	     , AGG.CUSTOMER_CODE
+    	     , AGG.DIVISION_CODE
+    	     , AGG.INVOICE_MONTH
+    	     , AGG.SALES_NO
+    	     , AGG.SALES_SEQ
+    	     , AGG.STATUS
+    	     , GET_CODE_NAME(AGG.STATUS, 'DS', #{company_code}, 'KOR') AS STATUS_NAME
+    	FROM AGG
+    	WHERE AGG.RN = 1
+    </select>
 </mapper>
