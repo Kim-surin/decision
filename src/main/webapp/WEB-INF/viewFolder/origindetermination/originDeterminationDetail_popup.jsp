@@ -941,7 +941,7 @@
 				+ "&sales_seq=" + encodeURIComponent(line.sales_seq)
 				+ "&fta_code=" + encodeURIComponent(row.fta_code)
 				+ "&fta_name=" + encodeURIComponent(row.fta_name || '');
-			KpackageOBJ.sidepanel.open('conversionStrategyPopup', '/origin/compliance/origindetermination/conversionStrategy_popup' + getParam, '1000px', true);
+			KpackageOBJ.sidepanel.open('conversionStrategyPopup', '/origin/compliance/origindetermination/conversionStrategy_popup' + getParam, '1400px', true);
 		};
 	};
 
