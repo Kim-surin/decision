@@ -347,12 +347,16 @@
 		ORDER BY SM.INVOICE_DATE, C.CUSTOMER_CODE, D.DIVISION_CODE
     </select>
     
+    <!-- INVOICE_MONTH/CUSTOMER_CODE는 화면에 안 보여도, 행 클릭 시 여는 원산지 판정 상세 팝업이
+         내수 건을 그룹키(매출년월+플랜트+고객사+품번)로 재조회할 때 필요해 같이 내려준다 -->
     <select id="retrieveOriginDeterminationResult" parameterType="HashMap" resultType="HashMap">
     	SELECT SM.INVOICE_DATE
+    		, SUBSTR(SM.INVOICE_DATE, 1, 6) AS INVOICE_MONTH
     		, SM.DIVISION_CODE
     		, D.DIVISION_NAME
     		, SM.EXPORT_FLAG
 			, GET_CODE_NAME(SM.EXPORT_FLAG, 'EF', SM.COMPANY_CODE, 'KOR') AS EXPORT_FLAG_NAME
+			, SM.CUSTOMER_CODE
 			, C.CUSTOMER_NAME
 			, SD.PRODUCT_CODE
 			, IM.ITEM_NAME AS PRODUCT_NAME
