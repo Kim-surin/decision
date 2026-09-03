@@ -92,8 +92,8 @@
 			];
 
 			var gridProps = { enableFilter: true };
-			this.grid_Cth = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_cth", vendorColumns, gridProps, "");
-			this.grid_Value = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_value", valueColumns, gridProps, "");
+			this.grid_Cth = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_cth", CTHColumns, gridProps, "");
+			this.grid_Value = KpackageOBJ.auiGrid.create("oAuiGrid_conversionStrategy_value", RVCColumns, gridProps, "");
 		};
 
 		// bomTraceList_popup과 동일한 이유(모달 show() 이전에 그리드가 생성돼 좁게 그려지는 문제)로
