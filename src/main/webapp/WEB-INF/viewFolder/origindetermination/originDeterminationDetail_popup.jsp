@@ -274,7 +274,7 @@
 					    iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
 					    iconHeight: 16,
 					    iconFunction: function (rowIndex, columnIndex, value, item) {
-					    	return item.company_coo_yn === 'N' ? "/rcs/auigrid/images/icon-search.png" : null;
+					    	return self.isConversionStrategyAvailable(item) ? "/rcs/auigrid/images/icon-search.png" : null;
 					    }
 					}
 				}
@@ -288,7 +288,9 @@
 					return;
 				}
 				if (event.dataField === "conversion_strategy") {
-					self.getConversionStrategy(event.item);
+					if (self.isConversionStrategyAvailable(event.item)) {
+						self.getConversionStrategy(event.item);
+					}
 					return;
 				}
 				self.selectResultRow(event.item.fta_code);
@@ -933,6 +935,17 @@
 			KpackageOBJ.sidepanel.open('bomTraceListPopup', '/origin/compliance/origindetermination/bomTraceList_popup' + getParam, '1400px', true);
 		};
 		
+		// 역내전환전략은 완제품 판정 경로(OriginDeterminationExecutionService, FTA_RULE을 룰 단위로
+		// 순회하며 FCR_RESULT.RULE_SEQ에 실제 RULE_ID를 기록)에서만 계산 가능하다. 상품(product_assets_type
+		// IN M/R/B)은 CommodityOriginDeterminationDao의 별도 판정 경로를 타는데, 여긴 룰 단위로 FTA_RULE을
+		// 순회하지 않고 FCR_RESULT.RULE_SEQ를 항상 -1로 기록해 역내전환전략에 필요한 룰별 BU/BD/NC/MC
+		// 세부 데이터 자체가 없다. 그래서 상품 건은 아이콘을 아예 노출/클릭하지 못하게 막는다.
+		this.isConversionStrategyAvailable = function (item) {
+			var productAssetsType = item && item.product_assets_type;
+			var isCommodity = productAssetsType === 'M' || productAssetsType === 'R' || productAssetsType === 'B';
+			return item && item.company_coo_yn === 'N' && !isCommodity;
+		};
+
 		// 역내전환전략: 세번변경기준/부가가치기준 충족을 위해 원산지확인서 수취가 필요한 원재료 목록을 팝업으로 보여준다.
 		// sales_no/sales_seq는 row(판정결과 1건)가 아니라 현재 선택된 판정 품목 라인에서 가져온다
 		this.getConversionStrategy = function (row) {
