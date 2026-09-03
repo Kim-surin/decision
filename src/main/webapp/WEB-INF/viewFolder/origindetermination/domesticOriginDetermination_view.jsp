@@ -278,7 +278,9 @@
 
 									AUIGrid.setGridData(DOMESTIC_ORIGIN_DETERMINATIONVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION, list);
 									DOMESTIC_ORIGIN_DETERMINATIONVIEW.updateStats(list);
-								}
+								},
+								null,
+								false
 							);
 						}
 
