@@ -70,21 +70,21 @@
 								<div class="origin-stat-card">
 									<div class="origin-stat-donut"><canvas id="originStatChart2"></canvas></div>
 									<div>
-										<div class="origin-stat-label">-</div>
+										<div class="origin-stat-label">비역내산 비율</div>
 										<div class="origin-stat-value" id="originStatValue2">-</div>
 									</div>
 								</div>
 								<div class="origin-stat-card">
 									<div class="origin-stat-donut"><canvas id="originStatChart3"></canvas></div>
 									<div>
-										<div class="origin-stat-label">-</div>
+										<div class="origin-stat-label">판정 실패 비율</div>
 										<div class="origin-stat-value" id="originStatValue3">-</div>
 									</div>
 								</div>
 								<div class="origin-stat-card">
 									<div class="origin-stat-donut"><canvas id="originStatChart4"></canvas></div>
 									<div>
-										<div class="origin-stat-label">-</div>
+										<div class="origin-stat-label">내수 비율</div>
 										<div class="origin-stat-value" id="originStatValue4">-</div>
 									</div>
 								</div>
@@ -300,24 +300,33 @@
 						});
 					}
 
-					// 상단 통계 도넛차트 갱신. 1번(역내산 비율)만 실제 계산하고 2~4번은 추후 다른 지표를 채울
-					// 자리로 빈 상태만 유지한다
+					// 상단 통계 도넛차트 4개 갱신: 1)역내산 2)비역내산 3)판정 실패 4)내수 비율
 					this.updateStatsCharts = function (list) {
 						list = list || [];
 						var total = list.length;
 						var originCount = list.filter(function (row) { return row.origin_status === 'Y'; }).length;
-						var ratio = total > 0 ? Math.round((originCount / total) * 1000) / 10 : 0;
+						var failCount = list.filter(function (row) { return String(row.status) === '5'; }).length;
+						var domesticCount = list.filter(function (row) { return row.export_flag === 'D'; }).length;
 
-						ORIGIN_DETERMINATION_RESULTVIEW.renderRatioChart("originStatChart1", ratio);
-						$("#originStatValue1").text(ratio + "%");
+						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(1, originCount, total, "#22c55e");
+						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(2, total - originCount, total, "#f97316");
+						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(3, failCount, total, "#ef4444");
+						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(4, domesticCount, total, "#3b82f6");
 					};
 
-					this.renderRatioChart = function (canvasId, ratio) {
+					this.applyStat = function (index, count, total, color) {
+						var ratio = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
+
+						ORIGIN_DETERMINATION_RESULTVIEW.renderRatioChart("originStatChart" + index, ratio, color);
+						$("#originStatValue" + index).text(ratio + "%");
+					};
+
+					this.renderRatioChart = function (canvasId, ratio, color) {
 						var data = {
-							labels: ["역내산", "비역내산"],
+							labels: ["대상", "그 외"],
 							datasets: [{
 								data: [ratio, Math.max(0, 100 - ratio)],
-								backgroundColor: ["#22c55e", "#e5e7eb"],
+								backgroundColor: [color, "#e5e7eb"],
 								borderWidth: 0
 							}]
 						};
