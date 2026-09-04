@@ -293,12 +293,12 @@
 						// 클릭한 행(item) 1건만 대상으로 원산지 판정 팝업을 띄움
 						this.openOriginDeterminationPopup = function (item) {
 							var request = {
-								datas: JSON.stringify([item]),
+								datas: [item],
 								mode: 'export'
 							}
 
 							// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다. 보고 있던 페이지 번호도 유지한다
-							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
+							KpackageOBJ.sidepanel.openJson('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
 								function() {
 									EXPORT_ORIGIN_DETERMINATIONVIEW.retrieve_GridData(true);
 								});

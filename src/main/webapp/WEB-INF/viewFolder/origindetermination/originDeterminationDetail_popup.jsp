@@ -369,14 +369,10 @@
 
 		// 시작점
 		this.Initialize_viewObject = function() {
-			var rawDatas = '${datas}';
+			// datas는 서버가 JSON 문자열을 그대로 스크립트 리터럴로 내려준다(따옴표로 감싸지 않음).
+			// 유효한 JSON 텍스트는 그대로 유효한 JS 배열/객체 리터럴이라 이중 이스케이프 문제가 없다
+			this.datas = ${datas};
 			var rawMode = '${mode}';
-
-			try {
-				this.datas = rawDatas ? JSON.parse(rawDatas) : [];
-			} catch (e) {
-				this.datas = [];
-			}
 
 			this.mode = rawMode || 'domestic';
 			this.applyModeVisibility();

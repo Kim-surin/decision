@@ -1,5 +1,6 @@
 package com.kpmg.kdb.web.origindetermination;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -14,11 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.MonthlyOriginDeterminationExecuteRequestDto;
+import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailPopupRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
@@ -91,10 +94,14 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 
+	// JSON 바디로 받아 datas를 그대로 재직렬화해 뷰에 넘긴다. 폼인코딩 문자열을 거치지 않아 이중 이스케이프가 생기지 않는다
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetail_popup")
-	public String originDeterminationDetail_popup(@RequestParam(value = "datas", required = false) String datas,
-			@RequestParam(value = "mode", required = false) String mode, Model model, HttpSession session) {
-		model.addAttribute("datas", datas);
+	public String originDeterminationDetail_popup(@RequestBody(required = false) OriginDeterminationDetailPopupRequestDto param,
+			Model model, HttpSession session) throws Exception {
+		List<Map<String, Object>> datas = (param != null && param.getDatas() != null) ? param.getDatas() : Collections.emptyList();
+		String mode = param != null ? param.getMode() : null;
+
+		model.addAttribute("datas", new ObjectMapper().writeValueAsString(datas));
 		model.addAttribute("mode", mode);
 
 		return "origindetermination/originDeterminationDetail_popup";
