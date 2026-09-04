@@ -3395,60 +3395,64 @@ var KpackageOBJ = {
 	        var $modalElement = $('#' + modalId);
 	        var $modalBody = $modalElement.find('.modal-body');
 	
-	        // pData가 객체로 주어지면 jQuery.load()가 자동으로 POST + body 전송,
-	        // 생략(undefined)이면 기존과 동일하게 GET
-	        $modalBody.load(url, pData, function(response, status, xhr) {
-	            if (status === 'error') {
-	                $modalBody.html(`
-	                    <div class="d-flex flex-column gap-3">
-	                        <div class="text-danger">
-	                            화면을 불러오는 중 오류가 발생했습니다.
-	                        </div>
-	                        <div class="d-flex justify-content-end">
-	                            <button type="button"
-	                                    class="btn btn-sm btn-system p-1"
-	                                    data-bs-dismiss="modal"
-	                                    aria-label="Close">
-	                                <svg class="sa-icon" style="width: 1rem; height: 1rem;">
-	                                    <use href="/rcs/ui5x/img/sprite.svg#x"></use>
-	                                </svg>
-	                            </button>
-	                        </div>
+	        // 항상 GET으로만 요청한다. pData를 주더라도 body가 아닌 쿼리스트링으로 붙는다(POST 아님)
+	        $.ajax({
+	            url: url,
+	            type: 'GET',
+	            dataType: 'html',
+	            data: pData
+	        }).done(function(response) {
+	            $modalBody.html(response);
+	        }).fail(function() {
+	            $modalBody.html(`
+	                <div class="d-flex flex-column gap-3">
+	                    <div class="text-danger">
+	                        화면을 불러오는 중 오류가 발생했습니다.
 	                    </div>
-	                `);
-	            }
-	
+	                    <div class="d-flex justify-content-end">
+	                        <button type="button"
+	                                class="btn btn-sm btn-system p-1"
+	                                data-bs-dismiss="modal"
+	                                aria-label="Close">
+	                            <svg class="sa-icon" style="width: 1rem; height: 1rem;">
+	                                <use href="/rcs/ui5x/img/sprite.svg#x"></use>
+	                            </svg>
+	                        </button>
+	                    </div>
+	                </div>
+	            `);
+	        }).always(function() {
 	            var modalOptions = {
 	                backdrop: true,
 	                keyboard: true
 	            };
-	
+
 	            if (isStatic === true) {
 	                modalOptions.backdrop = 'static';
 	                modalOptions.keyboard = false;
 	            }
-	
+
 	            var modalObject = new bootstrap.Modal($modalElement[0], modalOptions);
-	
+
 	            $modalElement.on('hide.bs.modal', function() {
 	                if (document.activeElement) {
 	                    document.activeElement.blur();
 	                }
 	            });
-	
+
 	            $modalElement.on('hidden.bs.modal', function() {
 	                modalObject.dispose();
 	                $modalElement.remove();
-	
+
 	                if (opener && typeof opener.focus === 'function') {
 	                    opener.focus();
 	                }
-	
+
 	                if (typeof onClose === 'function') {
 	                    onClose();
 	                }
 	            });
-	
+
 	            modalObject.show();
 	        });
 	    },
