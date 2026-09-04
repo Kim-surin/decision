@@ -42,6 +42,16 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
+		cursor: pointer;
+		border-radius: 8px;
+		padding: 4px 8px;
+	}
+	.bom-trace-donut-card:hover {
+		background-color: #f8f9fa;
+	}
+	.bom-trace-donut-card.active {
+		background-color: #eef3ff;
+		box-shadow: inset 0 0 0 1px #4a6cf7;
 	}
 	.bom-trace-donut {
 		position: relative;
@@ -79,14 +89,14 @@
 				<div class="bom-trace-header-row"><span class="bom-trace-header-label">총 재료비</span><span class="bom-trace-header-value" id="bomTraceStat_total">0</span></div>
 			</div>
 			<div class="bom-trace-header-right">
-				<div class="bom-trace-donut-card">
+				<div class="bom-trace-donut-card" id="bomTraceDonutCard_inarea" onclick="javascript:BOM_TRACE_LIST_POPUP.filterByArea('inarea');">
 					<div class="bom-trace-donut"><canvas id="bomTraceChart_inarea"></canvas></div>
 					<div>
 						<div class="bom-trace-donut-label">역내산 재료비 비율</div>
 						<div class="bom-trace-donut-value" id="bomTraceStat_inareaRatio">-</div>
 					</div>
 				</div>
-				<div class="bom-trace-donut-card">
+				<div class="bom-trace-donut-card" id="bomTraceDonutCard_outarea" onclick="javascript:BOM_TRACE_LIST_POPUP.filterByArea('outarea');">
 					<div class="bom-trace-donut"><canvas id="bomTraceChart_outarea"></canvas></div>
 					<div>
 						<div class="bom-trace-donut-label">비역내산 재료비 비율</div>
@@ -101,6 +111,16 @@
 <script>
 	var BOM_TRACE_LIST_POPUP = new function() {
 		this.grid_BomTrace = null;
+		// 마지막 조회 결과 전체(필터링 전) - 도넛차트 클릭 시 이걸 기준으로 그리드만 다시 필터링한다
+		this.currentList = [];
+		// 현재 선택된 영역('inarea'/'outarea'). 없으면 null
+		this.activeAreaFilter = null;
+
+		// updateStats의 합산 기준과 동일한 조건이어야 한다
+		this.AREA_FILTERS = {
+			inarea: function (row) { return (Number(row.inarea_amount) || 0) > 0; },
+			outarea: function (row) { return (Number(row.outarea_amount) || 0) > 0; }
+		};
 
 		// 이 협정(fta_code) 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL) 목록
 		this.createAUIGrid = function() {
@@ -156,10 +176,35 @@
 				params,
 				function(response) {
 					var list = (response && Array.isArray(response.value)) ? response.value : [];
+
+					BOM_TRACE_LIST_POPUP.currentList = list;
+					BOM_TRACE_LIST_POPUP.activeAreaFilter = null;
+					$('.bom-trace-donut-card').removeClass('active');
+
 					AUIGrid.setGridData(BOM_TRACE_LIST_POPUP.grid_BomTrace, list);
 					BOM_TRACE_LIST_POPUP.updateStats(list);
 				}
 			);
+		};
+
+		// 도넛차트 클릭: 이미 선택된 영역이면 필터를 풀고 전체를, 아니면 그 영역(역내산/비역내산)
+		// 재료비가 있는 행만 그리드에 다시 채운다. 통계 수치는 조회 결과 전체 기준으로 그대로 둔다
+		this.filterByArea = function (area) {
+			var $card = $('#bomTraceDonutCard_' + area);
+
+			if (BOM_TRACE_LIST_POPUP.activeAreaFilter === area) {
+				BOM_TRACE_LIST_POPUP.activeAreaFilter = null;
+				$('.bom-trace-donut-card').removeClass('active');
+				AUIGrid.setGridData(BOM_TRACE_LIST_POPUP.grid_BomTrace, BOM_TRACE_LIST_POPUP.currentList);
+				return;
+			}
+
+			var filtered = BOM_TRACE_LIST_POPUP.currentList.filter(BOM_TRACE_LIST_POPUP.AREA_FILTERS[area]);
+
+			BOM_TRACE_LIST_POPUP.activeAreaFilter = area;
+			$('.bom-trace-donut-card').removeClass('active');
+			$card.addClass('active');
+			AUIGrid.setGridData(BOM_TRACE_LIST_POPUP.grid_BomTrace, filtered);
 		};
 
 		// 조회된 원재료 목록으로 역내산/비역내/총 재료비(각각 inarea_amount/outarea_amount/input_amount 합산)와
