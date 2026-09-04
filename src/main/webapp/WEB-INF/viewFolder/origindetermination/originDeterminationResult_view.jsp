@@ -25,6 +25,15 @@
 				        	border: 1px dashed #ced4da;
 				        	border-radius: 8px;
 				        	padding: 12px 16px;
+				        	cursor: pointer;
+				        }
+				        .origin-stat-card:hover {
+				        	border-color: #adb5bd;
+				        	background-color: #f8f9fa;
+				        }
+				        .origin-stat-card.active {
+				        	border: 1px solid #4a6cf7;
+				        	background-color: #eef3ff;
 				        }
 				        .origin-stat-donut {
 				        	position: relative;
@@ -60,28 +69,28 @@
 					<div class="row">
 						<div class="col-12">
 							<div class="origin-stat-row">
-								<div class="origin-stat-card">
+								<div class="origin-stat-card" id="originStatCard1" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(1);">
 									<div class="origin-stat-donut"><canvas id="originStatChart1"></canvas></div>
 									<div>
 										<div class="origin-stat-label">역내산 비율</div>
 										<div class="origin-stat-value" id="originStatValue1">-</div>
 									</div>
 								</div>
-								<div class="origin-stat-card">
+								<div class="origin-stat-card" id="originStatCard2" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(2);">
 									<div class="origin-stat-donut"><canvas id="originStatChart2"></canvas></div>
 									<div>
 										<div class="origin-stat-label">비역내산 비율</div>
 										<div class="origin-stat-value" id="originStatValue2">-</div>
 									</div>
 								</div>
-								<div class="origin-stat-card">
+								<div class="origin-stat-card" id="originStatCard3" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(3);">
 									<div class="origin-stat-donut"><canvas id="originStatChart3"></canvas></div>
 									<div>
 										<div class="origin-stat-label">판정 실패 비율</div>
 										<div class="origin-stat-value" id="originStatValue3">-</div>
 									</div>
 								</div>
-								<div class="origin-stat-card">
+								<div class="origin-stat-card" id="originStatCard4" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(4);">
 									<div class="origin-stat-donut"><canvas id="originStatChart4"></canvas></div>
 									<div>
 										<div class="origin-stat-label">내수 비율</div>
@@ -220,6 +229,18 @@
 						}
 
 						this.data = [];
+						// 마지막 검색 결과 전체(필터링 전) - 통계 카드 클릭 시 이걸 기준으로 그리드만 다시 필터링한다
+						this.currentList = [];
+						// 현재 선택된 통계 카드 번호(1~4). 없으면 null
+						this.activeStatFilter = null;
+
+						// 통계 카드 번호별 필터 조건. updateStatsCharts의 집계 기준과 반드시 맞춰야 한다
+						this.STAT_FILTERS = {
+							1: function (row) { return row.origin_status === 'Y'; },
+							2: function (row) { return row.origin_status !== 'Y'; },
+							3: function (row) { return String(row.status) === '5'; },
+							4: function (row) { return row.export_flag === 'D'; }
+						};
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
@@ -295,18 +316,43 @@
 						// 갱신해야 해서 결과 목록(list)에 접근할 콜백이 필요하다
 						KpackageOBJ.ajax.doSubmit("/origin/compliance/origindetermination/originDeterminationResultList", params, function (response) {
 							var list = (response && Array.isArray(response.value)) ? response.value : [];
+
+							ORIGIN_DETERMINATION_RESULTVIEW.currentList = list;
+							ORIGIN_DETERMINATION_RESULTVIEW.activeStatFilter = null;
+							$(".origin-stat-card").removeClass("active");
+
 							AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, list);
 							ORIGIN_DETERMINATION_RESULTVIEW.updateStatsCharts(list);
 						});
 					}
 
+					// 통계 카드 클릭: 그 카드가 이미 선택돼 있으면 필터를 풀고 전체를, 아니면 해당 조건에
+					// 맞는 행만 그리드에 다시 채운다. 통계 수치는 검색 결과 전체 기준으로 그대로 둔다
+					this.filterByStat = function (index) {
+						var $card = $("#originStatCard" + index);
+
+						if (ORIGIN_DETERMINATION_RESULTVIEW.activeStatFilter === index) {
+							ORIGIN_DETERMINATION_RESULTVIEW.activeStatFilter = null;
+							$(".origin-stat-card").removeClass("active");
+							AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, ORIGIN_DETERMINATION_RESULTVIEW.currentList);
+							return;
+						}
+
+						var filtered = ORIGIN_DETERMINATION_RESULTVIEW.currentList.filter(ORIGIN_DETERMINATION_RESULTVIEW.STAT_FILTERS[index]);
+
+						ORIGIN_DETERMINATION_RESULTVIEW.activeStatFilter = index;
+						$(".origin-stat-card").removeClass("active");
+						$card.addClass("active");
+						AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, filtered);
+					};
+
 					// 상단 통계 도넛차트 4개 갱신: 1)역내산 2)비역내산 3)판정 실패 4)내수 비율
 					this.updateStatsCharts = function (list) {
 						list = list || [];
 						var total = list.length;
-						var originCount = list.filter(function (row) { return row.origin_status === 'Y'; }).length;
-						var failCount = list.filter(function (row) { return String(row.status) === '5'; }).length;
-						var domesticCount = list.filter(function (row) { return row.export_flag === 'D'; }).length;
+						var originCount = list.filter(ORIGIN_DETERMINATION_RESULTVIEW.STAT_FILTERS[1]).length;
+						var failCount = list.filter(ORIGIN_DETERMINATION_RESULTVIEW.STAT_FILTERS[3]).length;
+						var domesticCount = list.filter(ORIGIN_DETERMINATION_RESULTVIEW.STAT_FILTERS[4]).length;
 
 						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(1, originCount, total, "#22c55e");
 						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(2, total - originCount, total, "#f97316");
