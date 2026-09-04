@@ -3366,100 +3366,7 @@ var KpackageOBJ = {
     }, // Date End
 	
 	sidepanel : {
-	    // onClose: 팝업이 닫힌 뒤(hidden.bs.modal) 호출할 콜백(선택). 팝업 안에서 바뀐 내용을
-	    // 반영하기 위해 팝업을 연 화면 쪽에서 재조회 등을 트리거할 때 쓴다.
-	    open : function(modalId, url, pWidth, isStatic, pData, onClose) {
-	
-	        if ($("#" + modalId).length > 0) {
-	            return;
-	        }
-	
-	        $('#' + modalId).remove();
-	
-	        var opener = document.activeElement;
-	
-	        var modalHtml = `
-	            <div class="modal fade default-example-modal-end-xl" id="${modalId}" tabindex="-1" role="dialog" aria-labelledby="${modalId}_label">
-	                <div class="modal-dialog modal-dialog-end modal-xl" style="width: ${pWidth}; max-width: ${pWidth};">
-	                    <div class="modal-content">
-	                        <div class="modal-body p-3">
-	                            로딩 중...
-	                        </div>
-	                    </div>
-	                </div>
-	            </div>
-	        `;
-	
-	        $('#backdropDiv_Area').append(modalHtml);
-	
-	        var $modalElement = $('#' + modalId);
-	        var $modalBody = $modalElement.find('.modal-body');
-	
-	        // 항상 GET으로만 요청한다. pData를 주더라도 body가 아닌 쿼리스트링으로 붙는다(POST 아님)
-	        $.ajax({
-	            url: url,
-	            type: 'GET',
-	            dataType: 'html',
-	            data: pData
-	        }).done(function(response) {
-	            $modalBody.html(response);
-	        }).fail(function() {
-	            $modalBody.html(`
-	                <div class="d-flex flex-column gap-3">
-	                    <div class="text-danger">
-	                        화면을 불러오는 중 오류가 발생했습니다.
-	                    </div>
-	                    <div class="d-flex justify-content-end">
-	                        <button type="button"
-	                                class="btn btn-sm btn-system p-1"
-	                                data-bs-dismiss="modal"
-	                                aria-label="Close">
-	                            <svg class="sa-icon" style="width: 1rem; height: 1rem;">
-	                                <use href="/rcs/ui5x/img/sprite.svg#x"></use>
-	                            </svg>
-	                        </button>
-	                    </div>
-	                </div>
-	            `);
-	        }).always(function() {
-	            var modalOptions = {
-	                backdrop: true,
-	                keyboard: true
-	            };
-
-	            if (isStatic === true) {
-	                modalOptions.backdrop = 'static';
-	                modalOptions.keyboard = false;
-	            }
-
-	            var modalObject = new bootstrap.Modal($modalElement[0], modalOptions);
-
-	            $modalElement.on('hide.bs.modal', function() {
-	                if (document.activeElement) {
-	                    document.activeElement.blur();
-	                }
-	            });
-
-	            $modalElement.on('hidden.bs.modal', function() {
-	                modalObject.dispose();
-	                $modalElement.remove();
-
-	                if (opener && typeof opener.focus === 'function') {
-	                    opener.focus();
-	                }
-
-	                if (typeof onClose === 'function') {
-	                    onClose();
-	                }
-	            });
-
-	            modalObject.show();
-	        });
-	    },
-
-	    // open과 동일하지만 pData를 폼 인코딩이 아닌 JSON 바디로 보낸다(문자열 재이스케이프 문제 없음).
-	    // 기존 open을 쓰는 다른 팝업에는 영향 없도록 별도 함수로 둔다.
-	    openJson : function(modalId, url, pWidth, isStatic, pData, onClose) {
+	    open : function(modalId, url, pWidth, isStatic, onClose) {
 
 	        if ($("#" + modalId).length > 0) {
 	            return;
@@ -3486,33 +3393,27 @@ var KpackageOBJ = {
 	        var $modalElement = $('#' + modalId);
 	        var $modalBody = $modalElement.find('.modal-body');
 
-	        $.ajax({
-	            url: url,
-	            method: 'POST',
-	            contentType: 'application/json',
-	            dataType: 'html',
-	            data: JSON.stringify(pData || {})
-	        }).done(function(response) {
-	            $modalBody.html(response);
-	        }).fail(function() {
-	            $modalBody.html(`
-	                <div class="d-flex flex-column gap-3">
-	                    <div class="text-danger">
-	                        화면을 불러오는 중 오류가 발생했습니다.
+	        $modalBody.load(url, function(response, status, xhr) {
+				if (status === 'error') {
+	                $modalBody.html(`
+	                    <div class="d-flex flex-column gap-3">
+	                        <div class="text-danger">
+	                            화면을 불러오는 중 오류가 발생했습니다.
+	                        </div>
+	                        <div class="d-flex justify-content-end">
+	                            <button type="button"
+	                                    class="btn btn-sm btn-system p-1"
+	                                    data-bs-dismiss="modal"
+	                                    aria-label="Close">
+	                                <svg class="sa-icon" style="width: 1rem; height: 1rem;">
+	                                    <use href="/rcs/ui5x/img/sprite.svg#x"></use>
+	                                </svg>
+	                            </button>
+	                        </div>
 	                    </div>
-	                    <div class="d-flex justify-content-end">
-	                        <button type="button"
-	                                class="btn btn-sm btn-system p-1"
-	                                data-bs-dismiss="modal"
-	                                aria-label="Close">
-	                            <svg class="sa-icon" style="width: 1rem; height: 1rem;">
-	                                <use href="/rcs/ui5x/img/sprite.svg#x"></use>
-	                            </svg>
-	                        </button>
-	                    </div>
-	                </div>
-	            `);
-	        }).always(function() {
+	                `);
+	            }
+
 	            var modalOptions = {
 	                backdrop: true,
 	                keyboard: true
@@ -3538,10 +3439,12 @@ var KpackageOBJ = {
 	                if (opener && typeof opener.focus === 'function') {
 	                    opener.focus();
 	                }
-
-	                if (typeof onClose === 'function') {
-	                    onClose();
-	                }
+					
+					// onClose: 팝업이 닫힌 뒤(hidden.bs.modal) 호출할 콜백(선택). 팝업 안에서 바뀐 내용을
+					// 반영하기 위해 팝업을 연 화면 쪽에서 재조회 등을 트리거할 때 쓴다.
+					if (typeof onClose === 'function') {
+					    onClose();
+					}
 	            });
 
 	            modalObject.show();
@@ -3550,7 +3453,7 @@ var KpackageOBJ = {
 
 	    close : function(modalId) {
 	        var modalEl = $("#" + modalId);
-	
+
 	        if (modalEl.length > 0) {
 	            var modalInstance = bootstrap.Modal.getInstance(modalEl[0]);
 	            if (modalInstance) {
