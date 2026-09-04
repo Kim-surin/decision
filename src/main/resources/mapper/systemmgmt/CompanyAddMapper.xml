@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.company.CompanyDao">
+
+    <select id="retrieveCompanyList" parameterType="HashMap" resultType="HashMap">
+        SELECT COMPANY_CODE
+             , COMPANY_NAME
+             , COMPANY_NAME_ENG
+             , BUSINESS_NO
+             , OFFICER_NAME
+             , MATERIAL_USE_YN
+             , COMPANY_USE_YN
+          FROM COMPANY
+         WHERE 1 = 1
+        <if test="company_use_yn != null and company_use_yn != ''">
+           AND COMPANY_USE_YN = #{company_use_yn}
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'COMPANY_CODE'">
+           AND COMPANY_CODE ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'COMPANY_NAME'">
+           AND (COMPANY_NAME ILIKE CONCAT('%', #{search_keyword}, '%')
+             OR COMPANY_NAME_ENG ILIKE CONCAT('%', #{search_keyword}, '%'))
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'BUSINESS_NO'">
+           AND BUSINESS_NO ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+         ORDER BY COMPANY_CODE
+    </select>
+
+    <select id="retrieveCompanyDetail" parameterType="HashMap" resultType="HashMap">
+        SELECT COMPANY_CODE
+             , COMPANY_NAME
+             , COMPANY_NAME_ENG
+             , COMPANY_NAME_LOC
+             , BUSINESS_NO
+             , OFFICER_NAME
+             , OFFICER_NAME_ENG
+             , OFFICER_PHONE_NO
+             , OFFICER_EMAIL
+             , COM_PHONE_NO
+             , COM_FAX_NO
+             , ZIP_CODE
+             , ADDRESS
+             , ADDRESS_ENG
+             , CITY_NAME
+             , CITY_NAME_ENG
+             , COM_DE_MINIMIS_RATE
+             , COM_RVC_RATE
+             , INVENTORY_VALUATION_METHOD
+             , CO_CERTIFIED_EXPORTER_YN
+             , CERTIFICATION_NO
+             , CERTIFICATION_TYPE
+             , DEFAULT_LANGUAGE
+             , HR_COMPANY_CODE
+             , SEND_RECEIVE_IDENTIFIER_CODE
+             , MATERIAL_USE_YN
+             , COMPANY_USE_YN
+             , BASIC_AGING_PERIOD
+             , CTC_DECISION_ONLY_YN
+          FROM COMPANY
+         WHERE COMPANY_CODE = #{TMP_COMPANY_CODE}
+    </select>
+
+    <select id="retrieveCompanyCount" parameterType="HashMap" resultType="Integer">
+        SELECT COUNT(*)
+          FROM COMPANY
+         WHERE COMPANY_CODE = #{TMP_COMPANY_CODE}
+    </select>
+
+    <insert id="insertCompany" parameterType="HashMap">
+        INSERT INTO COMPANY
+        (
+            COMPANY_CODE, COMPANY_NAME, COMPANY_NAME_ENG, COMPANY_NAME_LOC,
+            BUSINESS_NO, OFFICER_NAME, OFFICER_NAME_ENG, OFFICER_PHONE_NO, OFFICER_EMAIL,
+            COM_PHONE_NO, COM_FAX_NO, ZIP_CODE, ADDRESS, ADDRESS_ENG, CITY_NAME, CITY_NAME_ENG,
+            COM_DE_MINIMIS_RATE, COM_RVC_RATE, INVENTORY_VALUATION_METHOD,
+            CO_CERTIFIED_EXPORTER_YN, CERTIFICATION_NO, DEFAULT_LANGUAGE, HR_COMPANY_CODE,
+            CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY,
+            SEND_RECEIVE_IDENTIFIER_CODE, CERTIFICATION_TYPE, MATERIAL_USE_YN,
+            COMPANY_USE_YN, BASIC_AGING_PERIOD, CTC_DECISION_ONLY_YN
+        )
+        VALUES
+        (
+            #{TMP_COMPANY_CODE}, #{company_name}, NULLIF(#{company_name_eng}, ''), NULLIF(#{company_name_loc}, ''),
+            NULLIF(#{business_no}, ''), NULLIF(#{officer_name}, ''), NULLIF(#{officer_name_eng}, ''),
+            NULLIF(#{officer_phone_no}, ''), NULLIF(#{officer_email}, ''),
+            NULLIF(#{com_phone_no}, ''), NULLIF(#{com_fax_no}, ''), NULLIF(#{zip_code}, ''),
+            NULLIF(#{address}, ''), NULLIF(#{address_eng}, ''), NULLIF(#{city_name}, ''), NULLIF(#{city_name_eng}, ''),
+            CAST(#{com_de_minimis_rate} AS NUMERIC(5,2)), CAST(#{com_rvc_rate} AS NUMERIC(5,2)),
+            NULLIF(#{inventory_valuation_method}, ''), #{co_certified_exporter_yn}, NULLIF(#{certification_no}, ''),
+            NULLIF(#{default_language}, ''), NULLIF(#{hr_company_code}, ''),
+            NOW(), #{update_by}, NOW(), #{update_by},
+            NULLIF(#{send_receive_identifier_code}, ''), NULLIF(#{certification_type}, ''),
+            COALESCE(NULLIF(#{material_use_yn}, ''), 'N'), #{company_use_yn},
+            CAST(COALESCE(NULLIF(#{basic_aging_period}, ''), '0') AS NUMERIC),
+            COALESCE(NULLIF(#{ctc_decision_only_yn}, ''), 'N')
+        )
+    </insert>
+
+    <update id="updateCompany" parameterType="HashMap">
+        UPDATE COMPANY
+           SET COMPANY_NAME = #{company_name}
+             , COMPANY_NAME_ENG = NULLIF(#{company_name_eng}, '')
+             , COMPANY_NAME_LOC = NULLIF(#{company_name_loc}, '')
+             , BUSINESS_NO = NULLIF(#{business_no}, '')
+             , OFFICER_NAME = NULLIF(#{officer_name}, '')
+             , OFFICER_NAME_ENG = NULLIF(#{officer_name_eng}, '')
+             , OFFICER_PHONE_NO = NULLIF(#{officer_phone_no}, '')
+             , OFFICER_EMAIL = NULLIF(#{officer_email}, '')
+             , COM_PHONE_NO = NULLIF(#{com_phone_no}, '')
+             , COM_FAX_NO = NULLIF(#{com_fax_no}, '')
+             , ZIP_CODE = NULLIF(#{zip_code}, '')
+             , ADDRESS = NULLIF(#{address}, '')
+             , ADDRESS_ENG = NULLIF(#{address_eng}, '')
+             , CITY_NAME = NULLIF(#{city_name}, '')
+             , CITY_NAME_ENG = NULLIF(#{city_name_eng}, '')
+             , COM_DE_MINIMIS_RATE = CAST(#{com_de_minimis_rate} AS NUMERIC(5,2))
+             , COM_RVC_RATE = CAST(#{com_rvc_rate} AS NUMERIC(5,2))
+             , INVENTORY_VALUATION_METHOD = NULLIF(#{inventory_valuation_method}, '')
+             , CO_CERTIFIED_EXPORTER_YN = #{co_certified_exporter_yn}
+             , CERTIFICATION_NO = NULLIF(#{certification_no}, '')
+             , CERTIFICATION_TYPE = NULLIF(#{certification_type}, '')
+             , DEFAULT_LANGUAGE = NULLIF(#{default_language}, '')
+             , HR_COMPANY_CODE = NULLIF(#{hr_company_code}, '')
+             , SEND_RECEIVE_IDENTIFIER_CODE = NULLIF(#{send_receive_identifier_code}, '')
+             , MATERIAL_USE_YN = COALESCE(NULLIF(#{material_use_yn}, ''), 'N')
+             , COMPANY_USE_YN = #{company_use_yn}
+             , BASIC_AGING_PERIOD = CAST(COALESCE(NULLIF(#{basic_aging_period}, ''), '0') AS NUMERIC)
+             , CTC_DECISION_ONLY_YN = COALESCE(NULLIF(#{ctc_decision_only_yn}, ''), 'N')
+             , UPDATE_DATE = NOW()
+             , UPDATE_BY = #{update_by}
+         WHERE COMPANY_CODE = #{TMP_COMPANY_CODE}
+    </update>
+    
+    
+    
+    <update id="updateOptionDetail" parameterType="HashMap">
+		INSERT INTO COMPANY_OPTION
+		  SELECT OPTION_CODE, 
+		  		 #{TMP_COMPANY_CODE}, 
+		  		 OPTION_NAME,
+		  		 OPTION_DESC,
+		  		 OPTION_VALUE, 
+		    	 NOW(), 
+		    	 CREATE_BY, 
+		    	 NOW(), 
+		    	 UPDATE_BY  
+		    FROM COMPANY_OPTION
+		   WHERE COMPANY_CODE = 'ADMIN1000'
+		     AND OPTION_CODE IN ('BF', 'TR', 'SI', 'ME','MA')
+	</update>
+	
+	<insert id="userInfoInsert" parameterType="HashMap">
+		INSERT INTO USER_INFO
+		  SELECT USER_ID,
+		         #{TMP_COMPANY_CODE},
+		         DIVISION_CODE,
+		         DEPT_NAME,
+		         PASSWORD,
+		         EMP_NO,
+		         NAME_KOR,
+		         NAME_ENG,
+		         NAME_LOCAL,
+		         POSITION_NAME,
+		         POSITION_NAME_ENG,
+		         EMAIL,
+		         CELL_PHONE_NO,
+		         OFFICE_PHONE_NO,
+		         FAX_NO,
+		         STATUS,
+		         USER_AUTH,
+		         DEFAULT_LANGUAGE,
+		         SSO_YN,
+		         NOW(),
+		         CREATE_BY,
+		         NOW(),
+		         UPDATE_BY,
+		         WORK_YYYY_MM
+		    FROM USER_INFO
+		   WHERE COMPANY_CODE = 'ADMIN1000'
+		     AND USER_ID IN ('admin', 'fta', 'VENDOR')
+	</insert>
+	
+	<insert id="roleMstInsert" parameterType="HashMap">
+		INSERT INTO ROLE_MST
+		  SELECT ROLE_CODE,
+		         #{TMP_COMPANY_CODE},
+		         ROLE_NAME,
+		         ROLE_DESC,
+		         NOW(),
+		         CREATE_BY,
+		         NOW(),
+		         UPDATE_BY
+		    FROM ROLE_MST
+		   WHERE COMPANY_CODE = 'ADMIN1000'	
+	</insert>
+	
+	<insert id="roleUserInsert" parameterType="HashMap">
+		INSERT INTO ROLE_USER
+		  SELECT 'ADMIN',
+		         'fta',
+		         #{TMP_COMPANY_CODE},
+		         NOW(),
+		         'fta',
+		         NOW(),
+		         'fta'
+	</insert>
+
+	<insert id="roleMenuInsert" parameterType="HashMap">	
+		INSERT INTO ROLE_MENU
+          SELECT 'ADMIN',
+                 RM.MENU_ID,
+                 #{TMP_COMPANY_CODE},
+                 RM.CREATE_DATE,
+                 RM.CREATE_BY,
+                 RM.UPDATE_DATE,
+                 RM.UPDATE_BY,
+                 RM.REG_AUTH,
+                 RM.UPD_AUTH,
+                 RM.DEL_AUTH,
+                 RM.EXC_AUTH,
+                 RM.FLE_AUTH
+            FROM ROLE_MENU RM
+           INNER JOIN MENU ME
+              ON ME.MENU_ID = RM.MENU_ID
+             AND (NVL(ME.PARENT_MENU_ID,'0000') NOT IN ('G000','G001') OR NVL(ME.MENU_ID,'0000') = 'G011')
+           WHERE RM.COMPANY_CODE = 'ADMIN1000'
+             AND RM.ROLE_CODE='ADMIN'
+          UNION ALL
+          SELECT 'USER',
+                 RM.MENU_ID,
+                 #{TMP_COMPANY_CODE},
+                 RM.CREATE_DATE,
+                 RM.CREATE_BY,
+                 RM.UPDATE_DATE,
+                 RM.UPDATE_BY,
+                 RM.REG_AUTH,
+                 RM.UPD_AUTH,
+                 RM.DEL_AUTH,
+                 RM.EXC_AUTH,
+                 RM.FLE_AUTH
+            FROM ROLE_MENU RM
+           INNER JOIN MENU ME
+              ON ME.MENU_ID = RM.MENU_ID
+             AND NVL(ME.PARENT_MENU_ID,'0000') NOT IN ('G000','G001')
+             AND NVL(ME.MENU_ID,'0000') != 'G000'
+           WHERE RM.COMPANY_CODE = 'ADMIN1000'
+             AND RM.ROLE_CODE='USER'
+	</insert>
+
+	<insert id="codeMstInsert" parameterType="HashMap">
+		INSERT INTO CODE_MST
+		  SELECT CATEGORY,
+		         #{TMP_COMPANY_CODE},
+		         CATEGORY_NAME,
+		         CATEGORY_NAME_ENG,
+		         CATEGORY_NAME_LOC,
+		         CODE_LENGTH,
+		         UPDATE_YN,
+		         NOW(),
+		         CREATE_BY,
+		         NOW(),
+		         UPDATE_BY
+		    FROM CODE_MST
+		   WHERE COMPANY_CODE = 'ADMIN1000'
+	</insert>
+
+	<insert id="codeDtlInsert" parameterType="HashMap">
+		INSERT INTO CODE_DTL
+		  SELECT CODE,
+		         CATEGORY,
+		         #{TMP_COMPANY_CODE},
+		         CODE_NAME,
+		         CODE_NAME_ENG,
+		         CODE_NAME_LOC,
+		         SORT_NO,
+		         TXT_VALUE1,
+		         TXT_VALUE2,
+		         TXT_VALUE3,
+		         TXT_VALUE4,
+		         TXT_VALUE5,
+		         NUM_VALUE1,
+		         NUM_VALUE2,
+		         NUM_VALUE3,
+		         NUM_VALUE4,
+		         NUM_VALUE5,
+		         USING_YN,
+		         DELETE_YN,
+		         NOW(),
+		         CREATE_BY,
+		         NOW(),
+		         UPDATE_BY
+		    FROM CODE_DTL
+		   WHERE COMPANY_CODE = 'ADMIN1000'
+	</insert>
+	
+	<insert id="interfaceItemMstInsert" parameterType="HashMap">
+		INSERT INTO INTERFACE_ITEM_MST
+		  SELECT IF_CODE,
+		         #{TMP_COMPANY_CODE},
+		         IF_NAME,
+		         SOURCE_TABLE,
+		         TARGET_TABLE,
+		         HISTORY_TABLE,
+		         VRIFY_PROGRAM_NAME,
+		         SOURCE_PROGRAM_NAME,
+		         INTERFACE_TYPE,
+		         RETURN_COLUMN_NAME,
+		         RETURN_COLUMN_VALUE,
+		         RETURN_MSG_COLUMN_NAME,
+		         REMARK,
+		         USING_YN,
+		         ATTRIBUTE01,
+		         ATTRIBUTE02,
+		         ATTRIBUTE03,
+		         ATTRIBUTE04,
+		         ATTRIBUTE05,
+		         NOW(),
+		         CREATE_BY,
+		         NOW(),
+		         UPDATE_BY,
+		         TRANS_PROGRAM_NAME,
+		         TRANS_COMPANY_CODE_YN,
+		         TRANS_DIVISION_CODE_YN,
+		         EXCEL_UPLOAD_YN
+		    FROM INTERFACE_ITEM_MST
+		   WHERE COMPANY_CODE = 'ADMIN1000'
+	</insert>
+	
+	<insert id="interfaceItemDtlInsert" parameterType="HashMap">
+		INSERT INTO INTERFACE_ITEM_DTL
+		  SELECT INTERFACE_ITEM_DTL_ID,
+		         IF_CODE,
+		         #{TMP_COMPANY_CODE},
+		         COLUMN_TRANS_TYPE,
+		         TARGET_COLUMN,
+		         SOURCE_COLUMN,
+		         HISTORY_COLUMN,
+		         COLUMN_NAME,
+		         COLUMN_TYPE,
+		         COLUMN_LENGTH,
+		         COLUMN_DCMLPOINT_LENGTH,
+		         COLUMN_FORMAT_FORM,
+		         COLUMN_DFLT_VALUE,
+		         COLUMN_VRIFY_PROGRAM_NAME,
+		         COLUMN_REQUIRED_YN,
+		         PK_YN,
+		         USING_YN,
+		         ATTRIBUTE01,
+		         ATTRIBUTE02,
+		         ATTRIBUTE03,
+		         ATTRIBUTE04,
+		         ATTRIBUTE05,
+		         NOW(),
+		         CREATE_BY,
+		         NOW(),
+		         UPDATE_BY,
+		         SAMPLE_DATA
+		    FROM INTERFACE_ITEM_DTL
+		   WHERE COMPANY_CODE = 'ADMIN1000'
+	</insert>
+
+	<insert id="interfaceScheduleInsert" parameterType="HashMap">
+		INSERT INTO INTERFACE_SCHEDULE
+		  SELECT SCHEDULE_CODE,
+		         #{TMP_COMPANY_CODE},
+		         SCHEDULE_NAME,
+		         SCHEDULE_DESC,
+		         EXECUTION_PROGRAM,
+		         APPLY_FROM_DATE,
+		         APPLY_TO_DATE,
+		         MONTH,
+		         WEEK,
+		         DAY,
+		         HOUR,
+		         MINUTES,
+		         STATUS,
+		         SYSTEM_BATCH_YN,
+		         LAST_EXECUTION_DATE,
+		         EXTCUTION_MESSAGE,
+		         BATCH_YYYYMM,
+		         BATCH_YYYYMM_YN,
+		         EXEC_TYPE,
+		         EXEC_MANUAL_START_YYYYMM,
+		         EXEC_MANUAL_END_YYYYMM,
+		         NOW(),
+		         CREATE_BY,
+		         NOW(),
+		         UPDATE_BY,
+		         EXEC_DAILY_PERIOD,
+		         EXEC_MONTHLY_PERIOD
+		    FROM INTERFACE_SCHEDULE
+		   WHERE COMPANY_CODE = 'ADMIN1000'
+	</insert>
+
+	<insert id="interfaceScheduleMappingInsert" parameterType="HashMap">
+		INSERT INTO INTERFACE_SCHEDULE_MAPPING
+		  SELECT SCHEDULE_CODE,
+		         #{TMP_COMPANY_CODE},
+		         SCHEDULE_SEQ,
+		         IF_CODE,
+		         IF_PARENT_CODE,
+		         REQUIRED_YN,
+		         NOW(),
+		         CREATE_BY,
+		         NOW(),
+		         UPDATE_BY,
+		         PROCEDURE_ID,
+		         AUTO_BATCH_YN
+		    FROM INTERFACE_SCHEDULE_MAPPING
+		   WHERE COMPANY_CODE = 'ADMIN1000'	
+   	</insert>
+
+</mapper>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.interfaceSchedule.InterfaceScheduleDao">
+
+    <select id="retrieveScheduleList" parameterType="HashMap" resultType="HashMap">
+        SELECT S.SCHEDULE_CODE, S.SCHEDULE_NAME, S.APPLY_FROM_DATE, S.APPLY_TO_DATE,
+               S.MONTH, S.WEEK, S.DAY, S.HOUR, S.MINUTES, S.SYSTEM_BATCH_YN,
+               S.STATUS,
+               CASE S.STATUS WHEN '0' THEN '대기' WHEN '1' THEN '수행중'
+                    WHEN '2' THEN '완료' WHEN '3' THEN '오류' ELSE S.STATUS END AS STATUS_NAME,
+               S.LAST_EXECUTION_DATE, S.EXTCUTION_MESSAGE
+          FROM INTERFACE_SCHEDULE S
+         WHERE S.COMPANY_CODE = #{company_code}
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'SCHEDULE_CODE'">
+           AND S.SCHEDULE_CODE ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'SCHEDULE_NAME'">
+           AND S.SCHEDULE_NAME ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+         ORDER BY S.SCHEDULE_CODE
+    </select>
+
+    <select id="retrieveScheduleDetail" parameterType="HashMap" resultType="HashMap">
+        SELECT S.SCHEDULE_CODE, S.COMPANY_CODE, S.SCHEDULE_NAME, S.SCHEDULE_DESC,
+               S.EXECUTION_PROGRAM, S.APPLY_FROM_DATE, S.APPLY_TO_DATE,
+               S.MONTH, S.WEEK, S.DAY, S.HOUR, S.MINUTES, S.STATUS,
+               COALESCE(S.SYSTEM_BATCH_YN, 'N') AS SYSTEM_BATCH_YN,
+               S.LAST_EXECUTION_DATE, S.EXTCUTION_MESSAGE, S.BATCH_YYYYMM,
+               COALESCE(S.BATCH_YYYYMM_YN, 'N') AS BATCH_YYYYMM_YN,
+               S.EXEC_TYPE, S.EXEC_MANUAL_START_YYYYMM, S.EXEC_MANUAL_END_YYYYMM,
+               S.EXEC_DAILY_PERIOD, S.EXEC_MONTHLY_PERIOD
+          FROM INTERFACE_SCHEDULE S
+         WHERE S.SCHEDULE_CODE = #{schedule_code}
+           AND S.COMPANY_CODE = #{company_code}
+    </select>
+
+    <select id="retrieveScheduleMappingList" parameterType="HashMap" resultType="HashMap">
+        SELECT M.SCHEDULE_SEQ, M.IF_CODE, M.IF_PARENT_CODE, M.REQUIRED_YN,
+               M.PROCEDURE_ID, M.AUTO_BATCH_YN
+          FROM INTERFACE_SCHEDULE_MAPPING M
+         WHERE M.SCHEDULE_CODE = #{schedule_code}
+           AND M.COMPANY_CODE = #{company_code}
+         ORDER BY M.SCHEDULE_SEQ
+    </select>
+
+    <!-- 사용 중인 인터페이스 항목 Combo 목록 -->
+    <select id="retrieveInterfaceItemCombo" parameterType="HashMap" resultType="HashMap">
+        SELECT I.IF_CODE AS CODE
+             , COALESCE(I.IF_NAME, I.IF_CODE) AS NAME
+          FROM INTERFACE_ITEM_MST I
+         WHERE I.COMPANY_CODE = #{company_code}
+           AND I.USING_YN = 'Y'
+         ORDER BY I.IF_CODE
+    </select>
+
+    <select id="retrieveScheduleCount" parameterType="HashMap" resultType="Integer">
+        SELECT COUNT(*) FROM INTERFACE_SCHEDULE
+         WHERE SCHEDULE_CODE = #{schedule_code} AND COMPANY_CODE = #{company_code}
+    </select>
+
+    <insert id="insertSchedule" parameterType="HashMap">
+        INSERT INTO INTERFACE_SCHEDULE (
+            SCHEDULE_CODE, COMPANY_CODE, SCHEDULE_NAME, SCHEDULE_DESC, EXECUTION_PROGRAM,
+            APPLY_FROM_DATE, APPLY_TO_DATE, MONTH, WEEK, DAY, HOUR, MINUTES, STATUS,
+            SYSTEM_BATCH_YN, BATCH_YYYYMM, BATCH_YYYYMM_YN, EXEC_TYPE,
+            EXEC_MANUAL_START_YYYYMM, EXEC_MANUAL_END_YYYYMM, EXEC_DAILY_PERIOD,
+            EXEC_MONTHLY_PERIOD, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        ) VALUES (
+            #{schedule_code}, #{company_code}, #{schedule_name}, #{schedule_desc}, NULLIF(#{execution_program}, ''),
+            #{apply_from_date}, NULLIF(#{apply_to_date}, ''), NULLIF(#{month}, ''), NULLIF(#{week}, ''),
+            NULLIF(#{day}, ''), NULLIF(#{hour}, ''), NULLIF(#{minutes}, ''), '0',
+            #{system_batch_yn}, NULLIF(#{batch_yyyymm}, ''), #{batch_yyyymm_yn}, NULLIF(#{exec_type}, ''),
+            NULLIF(#{exec_manual_start_yyyymm}, ''), NULLIF(#{exec_manual_end_yyyymm}, ''),
+            CAST(NULLIF(#{exec_daily_period}, '') AS SMALLINT),
+            CAST(NULLIF(#{exec_monthly_period}, '') AS SMALLINT),
+            NOW(), #{update_by}, NOW(), #{update_by}
+        )
+    </insert>
+
+    <update id="updateSchedule" parameterType="HashMap">
+        UPDATE INTERFACE_SCHEDULE
+           SET SCHEDULE_NAME = #{schedule_name}, SCHEDULE_DESC = #{schedule_desc},
+               EXECUTION_PROGRAM = NULLIF(#{execution_program}, ''), APPLY_FROM_DATE = #{apply_from_date},
+               APPLY_TO_DATE = NULLIF(#{apply_to_date}, ''), MONTH = NULLIF(#{month}, ''),
+               WEEK = NULLIF(#{week}, ''), DAY = NULLIF(#{day}, ''), HOUR = NULLIF(#{hour}, ''),
+               MINUTES = NULLIF(#{minutes}, ''), SYSTEM_BATCH_YN = #{system_batch_yn},
+               BATCH_YYYYMM = NULLIF(#{batch_yyyymm}, ''), BATCH_YYYYMM_YN = #{batch_yyyymm_yn},
+               EXEC_TYPE = NULLIF(#{exec_type}, ''),
+               EXEC_MANUAL_START_YYYYMM = NULLIF(#{exec_manual_start_yyyymm}, ''),
+               EXEC_MANUAL_END_YYYYMM = NULLIF(#{exec_manual_end_yyyymm}, ''),
+               EXEC_DAILY_PERIOD = CAST(NULLIF(#{exec_daily_period}, '') AS SMALLINT),
+               EXEC_MONTHLY_PERIOD = CAST(NULLIF(#{exec_monthly_period}, '') AS SMALLINT),
+               UPDATE_DATE = NOW(), UPDATE_BY = #{update_by}
+         WHERE SCHEDULE_CODE = #{schedule_code} AND COMPANY_CODE = #{company_code}
+    </update>
+
+    <delete id="deleteScheduleMapping" parameterType="HashMap">
+        DELETE FROM INTERFACE_SCHEDULE_MAPPING
+         WHERE SCHEDULE_CODE = #{schedule_code} AND COMPANY_CODE = #{company_code}
+    </delete>
+
+    <insert id="insertScheduleMapping" parameterType="HashMap">
+        INSERT INTO INTERFACE_SCHEDULE_MAPPING (
+            SCHEDULE_CODE, COMPANY_CODE, SCHEDULE_SEQ, IF_CODE, IF_PARENT_CODE,
+            REQUIRED_YN, PROCEDURE_ID, AUTO_BATCH_YN, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        ) VALUES (
+            #{schedule_code}, #{company_code}, CAST(#{schedule_seq} AS SMALLINT), #{if_code},
+            NULLIF(#{if_parent_code}, ''), #{required_yn}, NULLIF(#{procedure_id}, ''), #{auto_batch_yn},
+            NOW(), #{update_by}, NOW(), #{update_by}
+        )
+    </insert>
+
+    <update id="restoreScheduleStatus" parameterType="HashMap">
+        UPDATE INTERFACE_SCHEDULE
+           SET STATUS = '0', EXTCUTION_MESSAGE = NULL, UPDATE_DATE = NOW(), UPDATE_BY = #{update_by}
+         WHERE SCHEDULE_CODE = #{schedule_code} AND COMPANY_CODE = #{company_code}
+    </update>
+</mapper>

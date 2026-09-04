@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.menu.MenuDao">
+
+    <!-- 메뉴 Tree 목록 조회 -->
+    <select id="retrieveMenuList" parameterType="HashMap" resultType="HashMap">
+        WITH RECURSIVE MENU_TREE AS
+        (
+            SELECT M.MENU_ID
+                 , M.MENU_NAME
+                 , M.MENU_NAME_ENG
+                 , M.MENU_NAME_LOC
+                 , M.MENU_DESC
+                 , M.MENU_TYPE
+                 , M.LINK_URL
+                 , M.PARENT_MENU_ID
+                 , M.MENU_LEVEL
+                 , M.SORT_NO
+                 , M.USING_YN
+                 , M.SYSTEM_TYPE
+                 , LPAD(M.SORT_NO::VARCHAR, 10, '0') || '/' || M.MENU_ID AS SORT_PATH
+              FROM MENU M
+             WHERE NULLIF(TRIM(M.PARENT_MENU_ID), '') IS NULL
+            <if test="using_yn != null and using_yn != ''">
+               AND M.USING_YN = #{using_yn}
+            </if>
+            <if test="system_type != null and system_type != ''">
+               AND M.SYSTEM_TYPE = #{system_type}
+            </if>
+
+            UNION ALL
+
+            SELECT C.MENU_ID
+                 , C.MENU_NAME
+                 , C.MENU_NAME_ENG
+                 , C.MENU_NAME_LOC
+                 , C.MENU_DESC
+                 , C.MENU_TYPE
+                 , C.LINK_URL
+                 , C.PARENT_MENU_ID
+                 , C.MENU_LEVEL
+                 , C.SORT_NO
+                 , C.USING_YN
+                 , C.SYSTEM_TYPE
+                 , P.SORT_PATH || '/' || LPAD(C.SORT_NO::VARCHAR, 10, '0') || '/' || C.MENU_ID
+              FROM MENU C
+             INNER JOIN MENU_TREE P
+                ON C.PARENT_MENU_ID = P.MENU_ID
+            <if test="using_yn != null and using_yn != ''">
+               AND C.USING_YN = #{using_yn}
+            </if>
+            <if test="system_type != null and system_type != ''">
+               AND C.SYSTEM_TYPE = #{system_type}
+            </if>
+        )
+        SELECT MENU_ID
+             , MENU_NAME
+             , MENU_NAME_ENG
+             , MENU_NAME_LOC
+             , MENU_DESC
+             , MENU_TYPE
+             , LINK_URL
+             , PARENT_MENU_ID
+             , MENU_LEVEL
+             , SORT_NO
+             , USING_YN
+             , SYSTEM_TYPE
+          FROM MENU_TREE
+         ORDER BY SORT_PATH
+    </select>
+
+    <!-- 메뉴 상세 조회 -->
+    <select id="retrieveMenuDetail" parameterType="HashMap" resultType="HashMap">
+        SELECT M.MENU_ID
+             , M.MENU_NAME
+             , M.MENU_NAME_ENG
+             , M.MENU_NAME_LOC
+             , M.MENU_DESC
+             , M.MENU_TYPE
+             , M.LINK_URL
+             , M.PARENT_MENU_ID
+             , P.MENU_NAME AS PARENT_MENU_NAME
+             , M.MENU_LEVEL
+             , M.SORT_NO
+             , M.USING_YN
+             , M.SYSTEM_TYPE
+          FROM MENU M
+          LEFT JOIN MENU P
+            ON M.PARENT_MENU_ID = P.MENU_ID
+         WHERE M.MENU_ID = #{menu_id}
+    </select>
+
+    <!-- 메뉴 ID 중복 확인 -->
+    <select id="retrieveMenuIdCount" parameterType="HashMap" resultType="Integer">
+        SELECT COUNT(*)
+          FROM MENU
+         WHERE MENU_ID = #{menu_id}
+    </select>
+
+    <!-- 메뉴 등록 -->
+    <insert id="insertMenu" parameterType="HashMap">
+        INSERT INTO MENU
+        (
+            MENU_ID
+          , MENU_NAME
+          , MENU_NAME_ENG
+          , MENU_NAME_LOC
+          , MENU_DESC
+          , MENU_TYPE
+          , LINK_URL
+          , PARENT_MENU_ID
+          , MENU_LEVEL
+          , SORT_NO
+          , USING_YN
+          , CREATE_DATE
+          , CREATE_BY
+          , UPDATE_DATE
+          , UPDATE_BY
+          , SYSTEM_TYPE
+        )
+        VALUES
+        (
+            #{menu_id}
+          , #{menu_name}
+          , NULLIF(#{menu_name_eng}, '')
+          , NULLIF(#{menu_name_loc}, '')
+          , NULLIF(#{menu_desc}, '')
+          , #{menu_type}
+          , NULLIF(#{link_url}, '')
+          , NULLIF(#{parent_menu_id}, '')
+          , CAST(#{menu_level} AS SMALLINT)
+          , CAST(#{sort_no} AS INTEGER)
+          , #{using_yn}
+          , NOW()
+          , #{update_by}
+          , NOW()
+          , #{update_by}
+          , #{system_type}
+        )
+    </insert>
+
+    <!-- 메뉴 수정: 메뉴 ID와 계층정보는 변경하지 않음 -->
+    <update id="updateMenu" parameterType="HashMap">
+        UPDATE MENU
+           SET MENU_NAME     = #{menu_name}
+             , MENU_NAME_ENG = NULLIF(#{menu_name_eng}, '')
+             , MENU_NAME_LOC = NULLIF(#{menu_name_loc}, '')
+             , MENU_DESC     = NULLIF(#{menu_desc}, '')
+             , MENU_TYPE     = #{menu_type}
+             , LINK_URL      = NULLIF(#{link_url}, '')
+             , SORT_NO       = CAST(#{sort_no} AS INTEGER)
+             , USING_YN      = #{using_yn}
+             , SYSTEM_TYPE   = #{system_type}
+             , UPDATE_DATE   = NOW()
+             , UPDATE_BY     = #{update_by}
+         WHERE MENU_ID = #{menu_id}
+    </update>
+
+</mapper>

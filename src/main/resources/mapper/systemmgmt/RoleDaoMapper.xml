@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.role.RoleDao">
+
+    <select id="retrieveRoleList" parameterType="HashMap" resultType="HashMap">
+        SELECT ROLE_CODE
+             , ROLE_NAME
+             , ROLE_DESC
+          FROM ROLE_MST
+         WHERE COMPANY_CODE = #{company_code}
+         ORDER BY ROLE_CODE
+    </select>
+
+    <select id="retrieveRoleDetail" parameterType="HashMap" resultType="HashMap">
+        SELECT ROLE_CODE
+             , ROLE_NAME
+             , ROLE_DESC
+          FROM ROLE_MST
+         WHERE COMPANY_CODE = #{company_code}
+           AND ROLE_CODE = #{role_code}
+    </select>
+
+    <!-- 모든 사용 메뉴와 선택 역할의 부여 여부/세부권한을 함께 조회 -->
+    <select id="retrieveRoleMenuList" parameterType="HashMap" resultType="HashMap">
+        WITH RECURSIVE MENU_TREE AS
+        (
+            SELECT M.MENU_ID
+                 , M.MENU_NAME
+                 , M.MENU_DESC
+                 , M.PARENT_MENU_ID
+                 , M.MENU_LEVEL
+                 , M.SORT_NO
+                 , M.SYSTEM_TYPE
+                 , LPAD(M.SORT_NO::VARCHAR, 10, '0') || '/' || M.MENU_ID AS SORT_PATH
+              FROM MENU M
+             WHERE NULLIF(TRIM(M.PARENT_MENU_ID), '') IS NULL
+               AND M.USING_YN = 'Y'
+
+            UNION ALL
+
+            SELECT C.MENU_ID
+                 , C.MENU_NAME
+                 , C.MENU_DESC
+                 , C.PARENT_MENU_ID
+                 , C.MENU_LEVEL
+                 , C.SORT_NO
+                 , C.SYSTEM_TYPE
+                 , P.SORT_PATH || '/' || LPAD(C.SORT_NO::VARCHAR, 10, '0') || '/' || C.MENU_ID
+              FROM MENU C
+             INNER JOIN MENU_TREE P
+                ON C.PARENT_MENU_ID = P.MENU_ID
+             WHERE C.USING_YN = 'Y'
+        )
+        SELECT M.MENU_ID
+             , M.MENU_NAME
+             , M.MENU_DESC
+             , M.PARENT_MENU_ID
+             , M.MENU_LEVEL
+             , M.SYSTEM_TYPE
+             , CASE WHEN R.MENU_ID IS NULL THEN 'N' ELSE 'Y' END AS ASSIGNED_YN
+             , COALESCE(R.REG_AUTH, 'N') AS REG_AUTH
+             , COALESCE(R.UPD_AUTH, 'N') AS UPD_AUTH
+             , COALESCE(R.DEL_AUTH, 'N') AS DEL_AUTH
+             , COALESCE(R.EXC_AUTH, 'N') AS EXC_AUTH
+             , COALESCE(R.FLE_AUTH, 'N') AS FLE_AUTH
+          FROM MENU_TREE M
+          LEFT JOIN ROLE_MENU R
+            ON R.MENU_ID = M.MENU_ID
+           AND R.ROLE_CODE = #{role_code}
+           AND R.COMPANY_CODE = #{company_code}
+         WHERE 1 = 1
+        <if test="system_type != null and system_type != ''">
+           AND M.SYSTEM_TYPE = #{system_type}
+        </if>
+         ORDER BY M.SORT_PATH
+    </select>
+
+    <select id="retrieveRoleCount" parameterType="HashMap" resultType="Integer">
+        SELECT COUNT(*)
+          FROM ROLE_MST
+         WHERE ROLE_CODE = #{role_code}
+           AND COMPANY_CODE = #{company_code}
+    </select>
+
+    <insert id="insertRole" parameterType="HashMap">
+        INSERT INTO ROLE_MST
+        (
+            ROLE_CODE, COMPANY_CODE, ROLE_NAME, ROLE_DESC,
+            CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        )
+        VALUES
+        (
+            #{role_code}, #{company_code}, #{role_name}, NULLIF(#{role_desc}, ''),
+            NOW(), #{update_by}, NOW(), #{update_by}
+        )
+    </insert>
+
+    <update id="updateRole" parameterType="HashMap">
+        UPDATE ROLE_MST
+           SET ROLE_NAME = #{role_name}
+             , ROLE_DESC = NULLIF(#{role_desc}, '')
+             , UPDATE_DATE = NOW()
+             , UPDATE_BY = #{update_by}
+         WHERE ROLE_CODE = #{role_code}
+           AND COMPANY_CODE = #{company_code}
+    </update>
+
+    <delete id="deleteRoleMenu" parameterType="HashMap">
+        DELETE FROM ROLE_MENU
+         WHERE ROLE_CODE = #{role_code}
+           AND COMPANY_CODE = #{company_code}
+    </delete>
+
+    <delete id="deleteRoleUser" parameterType="HashMap">
+        DELETE FROM ROLE_USER
+         WHERE ROLE_CODE = #{role_code}
+           AND COMPANY_CODE = #{company_code}
+    </delete>
+
+    <delete id="deleteRole" parameterType="HashMap">
+        DELETE FROM ROLE_MST
+         WHERE ROLE_CODE = #{role_code}
+           AND COMPANY_CODE = #{company_code}
+    </delete>
+
+    <insert id="insertRoleMenuList" parameterType="HashMap">
+        INSERT INTO ROLE_MENU
+        (
+            ROLE_CODE, MENU_ID, COMPANY_CODE,
+            CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY,
+            REG_AUTH, UPD_AUTH, DEL_AUTH, EXC_AUTH, FLE_AUTH
+        )
+        VALUES
+        <foreach collection="menu_list" item="item" separator=",">
+        (
+            #{role_code}, #{item.menu_id}, #{company_code},
+            NOW(), #{update_by}, NOW(), #{update_by},
+            COALESCE(NULLIF(#{item.reg_auth}, ''), 'N'),
+            COALESCE(NULLIF(#{item.upd_auth}, ''), 'N'),
+            COALESCE(NULLIF(#{item.del_auth}, ''), 'N'),
+            COALESCE(NULLIF(#{item.exc_auth}, ''), 'N'),
+            COALESCE(NULLIF(#{item.fle_auth}, ''), 'N')
+        )
+        </foreach>
+    </insert>
+
+    <!-- 사용자별 권한 목록 -->
+    <select id="retrieveUserRoleList" parameterType="HashMap" resultType="HashMap">
+        SELECT U.USER_ID
+             , U.COMPANY_CODE
+             , U.DIVISION_CODE
+             , U.DEPT_NAME
+             , U.EMP_NO
+             , U.NAME_KOR
+             , U.NAME_ENG
+             , U.STATUS
+             , COALESCE(R.ROLE_CODES, '') AS ROLE_CODES
+             , COALESCE(R.ROLE_NAMES, '') AS ROLE_NAMES
+          FROM USER_INFO U
+          LEFT JOIN
+          (
+              SELECT RU.USER_ID
+                   , RU.COMPANY_CODE
+                   , STRING_AGG(RU.ROLE_CODE, ', ' ORDER BY RU.ROLE_CODE) AS ROLE_CODES
+                   , STRING_AGG(RM.ROLE_NAME, ', ' ORDER BY RU.ROLE_CODE) AS ROLE_NAMES
+                FROM ROLE_USER RU
+               INNER JOIN ROLE_MST RM
+                  ON RM.ROLE_CODE = RU.ROLE_CODE
+                 AND RM.COMPANY_CODE = RU.COMPANY_CODE
+               GROUP BY RU.USER_ID, RU.COMPANY_CODE
+          ) R
+            ON R.USER_ID = U.USER_ID
+           AND R.COMPANY_CODE = U.COMPANY_CODE
+         WHERE U.COMPANY_CODE = #{company_code}
+        <if test="status != null and status != ''">
+           AND U.STATUS = #{status}
+        </if>
+        <if test="division_code != null and division_code != ''">
+           AND U.DIVISION_CODE = #{division_code}
+        </if>
+        <if test="role_code != null and role_code != ''">
+           AND EXISTS
+               (SELECT 1
+                  FROM ROLE_USER RF
+                 WHERE RF.USER_ID = U.USER_ID
+                   AND RF.COMPANY_CODE = U.COMPANY_CODE
+                   AND RF.ROLE_CODE = #{role_code})
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'USER_ID'">
+           AND U.USER_ID ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'NAME'">
+           AND (U.NAME_KOR ILIKE CONCAT('%', #{search_keyword}, '%')
+             OR U.NAME_ENG ILIKE CONCAT('%', #{search_keyword}, '%'))
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'EMP_NO'">
+           AND U.EMP_NO ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'DEPT'">
+           AND U.DEPT_NAME ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+         ORDER BY U.NAME_KOR, U.USER_ID
+    </select>
+
+    <!-- 선택 사용자의 기존 모든 권한 해제 -->
+    <delete id="deleteUserRoleList" parameterType="HashMap">
+        DELETE FROM ROLE_USER
+         WHERE COMPANY_CODE = #{company_code}
+           AND USER_ID IN
+           <foreach collection="user_list" item="item" open="(" separator="," close=")">
+               #{item.user_id}
+           </foreach>
+    </delete>
+
+    <!-- 선택 사용자에게 권한 일괄 적용 -->
+    <insert id="insertUserRoleList" parameterType="HashMap">
+        INSERT INTO ROLE_USER
+        (
+            ROLE_CODE, USER_ID, COMPANY_CODE,
+            CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        )
+        VALUES
+        <foreach collection="user_list" item="item" separator=",">
+        (
+            #{role_code}, #{item.user_id}, #{company_code},
+            NOW(), #{update_by}, NOW(), #{update_by}
+        )
+        </foreach>
+    </insert>
+
+</mapper>

@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.interfaceDetermination.InterfaceDeterminationDao">
+
+    <select id="retrieveScheduleCombo" parameterType="HashMap" resultType="HashMap">
+        SELECT S.SCHEDULE_CODE AS VALUE
+             , S.SCHEDULE_NAME AS NAME
+          FROM INTERFACE_SCHEDULE S
+         WHERE S.COMPANY_CODE = #{company_code}
+           AND TO_CHAR(CURRENT_DATE, 'YYYYMMDD') BETWEEN S.APPLY_FROM_DATE
+               AND COALESCE(NULLIF(S.APPLY_TO_DATE, ''), '99991231')
+         ORDER BY S.SCHEDULE_CODE
+    </select>
+    
+    <select id="retrieveDivisionCombo" parameterType="HashMap" resultType="HashMap">
+        SELECT D.DIVISION_CODE AS VALUE
+             , CONCAT(D.DIVISION_CODE, ' - ', D.DIVISION_NAME) AS NAME
+          FROM DIVISION D
+         WHERE D.COMPANY_CODE = #{company_code}
+           AND D.STATUS = 'Y'
+         ORDER BY D.DIVISION_NAME, D.DIVISION_CODE
+    </select>
+
+    <select id="retrieveInterfaceCombo" parameterType="HashMap" resultType="HashMap">
+        SELECT M.IF_CODE AS VALUE
+             , CONCAT(M.IF_CODE, ' - ', COALESCE(I.IF_NAME, M.IF_CODE)) AS NAME
+          FROM INTERFACE_SCHEDULE_MAPPING M
+          LEFT JOIN INTERFACE_ITEM_MST I
+            ON I.IF_CODE = M.IF_CODE
+           AND I.COMPANY_CODE = M.COMPANY_CODE
+         WHERE M.COMPANY_CODE = #{company_code}
+           AND M.SCHEDULE_CODE = #{schedule_code}
+         ORDER BY M.SCHEDULE_SEQ
+    </select>
+
+    <select id="retrieveExcelInterfaceList" parameterType="HashMap" resultType="HashMap">
+        SELECT I.IF_CODE
+             , I.IF_NAME
+             , I.ATTRIBUTE01 AS SHEET_NAME
+          FROM INTERFACE_ITEM_MST I
+          JOIN INTERFACE_SCHEDULE_MAPPING M
+            ON M.IF_CODE = I.IF_CODE
+           AND M.COMPANY_CODE = I.COMPANY_CODE
+         WHERE I.COMPANY_CODE = #{company_code}
+           AND M.SCHEDULE_CODE = #{schedule_code}
+        <if test="if_code != null and if_code != ''">
+           AND M.IF_CODE = #{if_code}
+        </if>
+           AND I.USING_YN = 'Y'
+           AND TRIM(COALESCE(I.EXCEL_UPLOAD_YN, 'N')) = 'Y'
+         ORDER BY M.SCHEDULE_SEQ
+    </select>
+
+    <select id="retrieveInterfaceColumns" parameterType="HashMap" resultType="HashMap">
+        SELECT D.COLUMN_NAME
+             , D.SOURCE_COLUMN
+             , D.TARGET_COLUMN
+             , D.HISTORY_COLUMN
+             , D.COLUMN_REQUIRED_YN
+          FROM INTERFACE_ITEM_DTL D
+         WHERE D.IF_CODE = #{if_code}
+           AND D.COMPANY_CODE = #{company_code}
+           AND D.COLUMN_TRANS_TYPE = 'I'
+           AND D.USING_YN = 'Y'
+         ORDER BY D.INTERFACE_ITEM_DTL_ID
+    </select>
+
+    <select id="retrieveExecutionTarget" parameterType="HashMap" resultType="HashMap">
+        SELECT S.EXECUTION_PROGRAM
+          FROM INTERFACE_SCHEDULE S
+         WHERE S.SCHEDULE_CODE = #{schedule_code}
+           AND S.COMPANY_CODE = #{company_code}
+         LIMIT 1
+    </select>
+
+    <update id="lockInterfaceTransTable">
+        LOCK TABLE INTG_INTERFACE_TRANS IN SHARE ROW EXCLUSIVE MODE
+    </update>
+
+    <select id="retrieveNextTransId" resultType="Long">
+        SELECT COALESCE(MAX(INTG_INTERFACE_TRANS_ID), 0) + 1
+          FROM INTG_INTERFACE_TRANS
+    </select>
+
+    <insert id="insertInterfaceTrans" parameterType="HashMap">
+        INSERT INTO INTG_INTERFACE_TRANS (
+            INTG_INTERFACE_TRANS_ID, IF_CODE, COMPANY_CODE, DIVISION_CODE, TOTAL_ROWS,
+            TRANS_DATE, TRANS_STATUS, ERROR_MESSAGE, CREATE_DATE, CREATE_BY,
+            UPDATE_DATE, UPDATE_BY, SCHEDULE_CODE, IF_PARAM, STATUS, BATCH_STATUS,
+            ERROR_YN, GROUP_ID, START_TIME, INTERFACE_ID, INTERFACE_TYPE
+        ) VALUES (
+            #{intg_interface_trans_id}, #{if_code}, #{company_code}, NULLIF(#{division_code}, ''),
+            #{total_rows}, NOW(), '1', #{error_message}, NOW(), #{update_by}, NOW(), #{update_by},
+            #{schedule_code}, #{if_param}, 'R', 'N', #{error_yn}, 0, NOW(),
+            #{interface_id}, #{interface_type}
+        )
+    </insert>
+
+    <insert id="insertInterfaceTransDetail" parameterType="HashMap">
+        INSERT INTO INTG_INTERFACE_TRANS_DTL (
+            INTG_INTERFACE_TRANS_ID, INTG_INTERFACE_ID, COMPANY_CODE, CURRENT_ROW,
+            ERROR_YN, ERROR_MESSAGE,
+            ATTRIBUTE01,
+            ATTRIBUTE02,
+            ATTRIBUTE03,
+            ATTRIBUTE04,
+            ATTRIBUTE05,
+            ATTRIBUTE06,
+            ATTRIBUTE07,
+            ATTRIBUTE08,
+            ATTRIBUTE09,
+            ATTRIBUTE10,
+            ATTRIBUTE11,
+            ATTRIBUTE12,
+            ATTRIBUTE13,
+            ATTRIBUTE14,
+            ATTRIBUTE15,
+            ATTRIBUTE16,
+            ATTRIBUTE17,
+            ATTRIBUTE18,
+            ATTRIBUTE19,
+            ATTRIBUTE20,
+            ATTRIBUTE21,
+            ATTRIBUTE22,
+            ATTRIBUTE23,
+            ATTRIBUTE24,
+            ATTRIBUTE25,
+            ATTRIBUTE26,
+            ATTRIBUTE27,
+            ATTRIBUTE28,
+            ATTRIBUTE29,
+            ATTRIBUTE30,
+            ATTRIBUTE31,
+            ATTRIBUTE32,
+            ATTRIBUTE33,
+            ATTRIBUTE34,
+            ATTRIBUTE35,
+            ATTRIBUTE36,
+            ATTRIBUTE37,
+            ATTRIBUTE38,
+            ATTRIBUTE39,
+            ATTRIBUTE40,
+            ATTRIBUTE41,
+            ATTRIBUTE42,
+            ATTRIBUTE43,
+            ATTRIBUTE44,
+            ATTRIBUTE45,
+            ATTRIBUTE46,
+            ATTRIBUTE47,
+            ATTRIBUTE48,
+            ATTRIBUTE49,
+            ATTRIBUTE50,
+            CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        ) VALUES (
+            #{intg_interface_trans_id}, #{intg_interface_id}, #{company_code}, #{current_row},
+            #{error_yn}, NULLIF(#{error_message}, ''),
+            #{attribute01},
+            #{attribute02},
+            #{attribute03},
+            #{attribute04},
+            #{attribute05},
+            #{attribute06},
+            #{attribute07},
+            #{attribute08},
+            #{attribute09},
+            #{attribute10},
+            #{attribute11},
+            #{attribute12},
+            #{attribute13},
+            #{attribute14},
+            #{attribute15},
+            #{attribute16},
+            #{attribute17},
+            #{attribute18},
+            #{attribute19},
+            #{attribute20},
+            #{attribute21},
+            #{attribute22},
+            #{attribute23},
+            #{attribute24},
+            #{attribute25},
+            #{attribute26},
+            #{attribute27},
+            #{attribute28},
+            #{attribute29},
+            #{attribute30},
+            #{attribute31},
+            #{attribute32},
+            #{attribute33},
+            #{attribute34},
+            #{attribute35},
+            #{attribute36},
+            #{attribute37},
+            #{attribute38},
+            #{attribute39},
+            #{attribute40},
+            #{attribute41},
+            #{attribute42},
+            #{attribute43},
+            #{attribute44},
+            #{attribute45},
+            #{attribute46},
+            #{attribute47},
+            #{attribute48},
+            #{attribute49},
+            #{attribute50},
+            NOW(), #{update_by}, NOW(), #{update_by}
+        )
+    </insert>
+
+    <select id="retrieveUploadList" parameterType="HashMap" resultType="HashMap">
+        SELECT T.INTG_INTERFACE_TRANS_ID
+             , T.IF_CODE
+             , COALESCE(I.IF_NAME, T.IF_CODE) AS IF_NAME
+             , T.TOTAL_ROWS
+             , COALESCE(E.ERROR_COUNT, 0) AS ERROR_COUNT
+             , TO_CHAR(T.START_TIME, 'YYYY-MM-DD HH24:MI:SS') AS START_TIME
+             , T.STATUS
+             , CASE WHEN T.STATUS = 'S' THEN 'Y' ELSE 'N' END AS SUBMIT_YN
+             , TO_CHAR(T.TRANS_DATE, 'YYYY-MM-DD HH24:MI:SS') AS TRANS_DATE
+             , T.ERROR_MESSAGE
+          FROM INTG_INTERFACE_TRANS T
+          LEFT JOIN INTERFACE_ITEM_MST I
+            ON I.IF_CODE = T.IF_CODE
+           AND I.COMPANY_CODE = T.COMPANY_CODE
+          LEFT JOIN (
+                SELECT INTG_INTERFACE_TRANS_ID
+                     , COUNT(*) FILTER (WHERE ERROR_YN = 'Y') AS ERROR_COUNT
+                  FROM INTG_INTERFACE_TRANS_DTL
+                 GROUP BY INTG_INTERFACE_TRANS_ID
+               ) E ON E.INTG_INTERFACE_TRANS_ID = T.INTG_INTERFACE_TRANS_ID
+         WHERE T.COMPANY_CODE = #{company_code}
+           AND T.INTERFACE_TYPE = 'EXCEL'
+        <if test="schedule_code != null and schedule_code != ''">
+           AND T.SCHEDULE_CODE = #{schedule_code}
+        </if>
+        <if test="base_yyyymm != null and base_yyyymm != ''">
+           AND T.IF_PARAM ILIKE CONCAT('%BaseYYYYMM=', #{base_yyyymm}, '%')
+        </if>
+        <if test="if_code != null and if_code != ''">
+           AND T.IF_CODE = #{if_code}
+        </if>
+         ORDER BY T.TRANS_DATE, T.INTG_INTERFACE_TRANS_ID
+    </select>
+
+    <select id="retrieveDeterminationList" parameterType="HashMap" resultType="HashMap">
+        SELECT T.INTG_INTERFACE_TRANS_ID
+             , T.IF_CODE
+             , COALESCE(I.IF_NAME, T.IF_CODE) AS IF_NAME
+             , T.TOTAL_ROWS
+             , T.TRANS_STATUS
+             , CASE T.TRANS_STATUS WHEN '0' THEN 'running' WHEN '1' THEN 'succeed'
+                    WHEN '2' THEN 'failed' ELSE T.TRANS_STATUS END AS TRANS_STATUS_NAME
+             , TO_CHAR(T.START_TIME, 'YYYY-MM-DD HH24:MI:SS') AS START_TIME
+             , TO_CHAR(T.TRANS_DATE, 'YYYY-MM-DD HH24:MI:SS') AS TRANS_DATE
+             , T.IF_PARAM
+             , T.ERROR_MESSAGE
+          FROM INTG_INTERFACE_TRANS T
+          LEFT JOIN INTERFACE_ITEM_MST I
+            ON I.IF_CODE = T.IF_CODE
+           AND I.COMPANY_CODE = T.COMPANY_CODE
+         WHERE T.COMPANY_CODE = #{company_code}
+           AND COALESCE(T.INTERFACE_TYPE, '') &lt;&gt; 'EXCEL'
+        <if test="schedule_code != null and schedule_code != ''">
+           AND T.SCHEDULE_CODE = #{schedule_code}
+        </if>
+        <if test="base_yyyymm != null and base_yyyymm != ''">
+           AND T.IF_PARAM ILIKE CONCAT('%', #{base_yyyymm}, '%')
+        </if>
+        <if test="if_code != null and if_code != ''">
+           AND T.IF_CODE = #{if_code}
+        </if>
+         ORDER BY T.TRANS_DATE DESC, T.INTG_INTERFACE_TRANS_ID DESC
+    </select>
+
+    <update id="restoreScheduleStatus" parameterType="HashMap">
+        UPDATE INTERFACE_SCHEDULE
+           SET STATUS = '0'
+             , EXTCUTION_MESSAGE = NULL
+             , UPDATE_DATE = NOW()
+             , UPDATE_BY = #{update_by}
+         WHERE SCHEDULE_CODE = #{schedule_code}
+           AND COMPANY_CODE = #{company_code}
+    </update>
+</mapper>

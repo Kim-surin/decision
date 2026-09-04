@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.interfaceStatus.InterfaceStatusDao">
+
+    <!-- TAB 1. 이관 스케줄 -->
+    <select id="retrieveScheduleStatusList" parameterType="HashMap" resultType="HashMap">
+        SELECT S.SCHEDULE_CODE
+             , S.SCHEDULE_NAME
+             , S.APPLY_FROM_DATE
+             , S.APPLY_TO_DATE
+             , TO_CHAR(S.LAST_EXECUTION_DATE, 'YYYY-MM-DD HH24:MI:SS') AS LAST_EXECUTION_DATE
+             , S.STATUS
+             , CASE S.STATUS WHEN '0' THEN '대기' WHEN '1' THEN '수행중'
+                    WHEN '2' THEN '완료' WHEN '3' THEN '오류' ELSE S.STATUS END AS STATUS_NAME
+          FROM INTERFACE_SCHEDULE S
+         WHERE S.COMPANY_CODE = #{company_code}
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'SCHEDULE_CODE'">
+           AND S.SCHEDULE_CODE ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'SCHEDULE_NAME'">
+           AND S.SCHEDULE_NAME ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+         ORDER BY S.SCHEDULE_CODE
+    </select>
+
+    <!-- TAB 2. 이관 완료 및 에러 -->
+    <select id="retrieveTransferList" parameterType="HashMap" resultType="HashMap">
+        SELECT T.INTG_INTERFACE_TRANS_ID
+             , T.SCHEDULE_CODE
+             , T.IF_CODE
+             , COALESCE(I.IF_NAME, T.IF_CODE) AS IF_NAME
+             , T.DIVISION_CODE
+             , T.TOTAL_ROWS
+             , TO_CHAR(T.START_TIME, 'YYYY-MM-DD HH24:MI:SS') AS START_TIME
+             , TO_CHAR(T.TRANS_DATE, 'YYYY-MM-DD HH24:MI:SS') AS TRANS_DATE
+             , T.TRANS_STATUS
+             , CASE T.TRANS_STATUS WHEN '0' THEN '진행중' WHEN '1' THEN '성공'
+                    WHEN '2' THEN '에러' ELSE T.TRANS_STATUS END AS TRANS_STATUS_NAME
+             , T.STATUS
+             , CASE T.STATUS WHEN 'R' THEN '등록' WHEN 'C' THEN '취소'
+                    WHEN 'S' THEN '제출' ELSE T.STATUS END AS STATUS_NAME
+             , T.BATCH_STATUS
+             , CASE T.BATCH_STATUS WHEN 'N' THEN '미처리' WHEN 'F' THEN '완료'
+                    WHEN 'E' THEN '오류' ELSE T.BATCH_STATUS END AS BATCH_STATUS_NAME
+             , T.ERROR_YN
+             , T.ERROR_MESSAGE
+             , T.IF_PARAM
+             , T.GROUP_ID
+             , T.ORG_ID
+             , T.INTERFACE_ID
+             , T.INTERFACE_TYPE
+          FROM INTG_INTERFACE_TRANS T
+          LEFT JOIN INTERFACE_ITEM_MST I
+            ON I.IF_CODE = T.IF_CODE
+           AND I.COMPANY_CODE = T.COMPANY_CODE
+         WHERE T.COMPANY_CODE = #{company_code}
+        <if test="selected_schedule_code != null and selected_schedule_code != ''">
+           AND T.SCHEDULE_CODE = #{selected_schedule_code}
+        </if>
+        <if test="from_date != null and from_date != ''">
+           AND T.TRANS_DATE &gt;= TO_DATE(#{from_date}, 'YYYYMMDD')
+        </if>
+        <if test="to_date != null and to_date != ''">
+           AND T.TRANS_DATE &lt; TO_DATE(#{to_date}, 'YYYYMMDD') + INTERVAL '1 day'
+        </if>
+        <if test="trans_status != null and trans_status != ''">
+           AND T.TRANS_STATUS = #{trans_status}
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'IF_CODE'">
+           AND T.IF_CODE ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'IF_NAME'">
+           AND I.IF_NAME ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'INTERFACE_ID'">
+           AND T.INTERFACE_ID ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+         ORDER BY T.TRANS_DATE DESC, T.INTG_INTERFACE_TRANS_ID DESC
+    </select>
+
+    <!-- TAB 3. 이관에러 및 상세항목 데이터 -->
+    <select id="retrieveTransferDetailList" parameterType="HashMap" resultType="HashMap">
+        SELECT D.*
+          FROM INTG_INTERFACE_TRANS_DTL D
+         WHERE D.INTG_INTERFACE_TRANS_ID = CAST(#{selected_trans_id} AS BIGINT)
+           AND D.COMPANY_CODE = #{company_code}
+        <if test="error_yn != null and error_yn != ''">
+           AND D.ERROR_YN = #{error_yn}
+        </if>
+         ORDER BY D.CURRENT_ROW, D.INTG_INTERFACE_ID
+    </select>
+
+    <!-- 상세의 ATTRIBUTE01~50을 실제 인터페이스 항목명으로 표시하기 위한 메타데이터 -->
+    <select id="retrieveTransferDetailColumns" parameterType="HashMap" resultType="HashMap">
+        SELECT 'attribute' || LPAD(X.RN::VARCHAR, 2, '0') AS DATA_FIELD
+             , COALESCE(NULLIF(X.COLUMN_NAME, ''), X.TARGET_COLUMN) AS HEADER_TEXT
+             , X.TARGET_COLUMN
+             , X.SOURCE_COLUMN
+          FROM (
+                SELECT ROW_NUMBER() OVER (ORDER BY D.INTERFACE_ITEM_DTL_ID) AS RN
+                     , D.COLUMN_NAME
+                     , D.TARGET_COLUMN
+                     , D.SOURCE_COLUMN
+                  FROM INTERFACE_ITEM_DTL D
+                 WHERE D.IF_CODE = #{if_code}
+                   AND D.COMPANY_CODE = #{company_code}
+                   AND D.USING_YN = 'Y'
+               ) X
+         WHERE X.RN &lt;= 50
+         ORDER BY X.RN
+    </select>
+</mapper>
