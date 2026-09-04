@@ -4,11 +4,41 @@
 			<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 			<html>
 			<head>
+				<script src="/rcs/js/chartjs_v451/chart.js"></script>
+				<script src="/rcs/js/package.chartjs.utils.js"></script>
 				<style>
 				        .origin-determination-fail {
 							background-color: #ffe6e6 !important; /* 연한 빨간색 배경 */
 							color: #d9534f !important;            /* 붉은색 글자 */
 							font-weight: bold;
+				        }
+				        .origin-stat-row {
+				        	display: flex;
+				        	gap: 16px;
+				        	margin-bottom: 16px;
+				        }
+				        .origin-stat-card {
+				        	flex: 1 1 0;
+				        	display: flex;
+				        	align-items: center;
+				        	gap: 12px;
+				        	border: 1px dashed #ced4da;
+				        	border-radius: 8px;
+				        	padding: 12px 16px;
+				        }
+				        .origin-stat-donut {
+				        	position: relative;
+				        	width: 56px;
+				        	height: 56px;
+				        	flex: 0 0 56px;
+				        }
+				        .origin-stat-label {
+				        	font-size: 12px;
+				        	color: #6c757d;
+				        }
+				        .origin-stat-value {
+				        	font-size: 20px;
+				        	font-weight: 700;
 				        }
 				    </style>
 			</head>
@@ -26,6 +56,42 @@
 							</nav>
 						</div>
 					</div>
+
+					<div class="row">
+						<div class="col-12">
+							<div class="origin-stat-row">
+								<div class="origin-stat-card">
+									<div class="origin-stat-donut"><canvas id="originStatChart1"></canvas></div>
+									<div>
+										<div class="origin-stat-label">역내산 비율</div>
+										<div class="origin-stat-value" id="originStatValue1">-</div>
+									</div>
+								</div>
+								<div class="origin-stat-card">
+									<div class="origin-stat-donut"><canvas id="originStatChart2"></canvas></div>
+									<div>
+										<div class="origin-stat-label">-</div>
+										<div class="origin-stat-value" id="originStatValue2">-</div>
+									</div>
+								</div>
+								<div class="origin-stat-card">
+									<div class="origin-stat-donut"><canvas id="originStatChart3"></canvas></div>
+									<div>
+										<div class="origin-stat-label">-</div>
+										<div class="origin-stat-value" id="originStatValue3">-</div>
+									</div>
+								</div>
+								<div class="origin-stat-card">
+									<div class="origin-stat-donut"><canvas id="originStatChart4"></canvas></div>
+									<div>
+										<div class="origin-stat-label">-</div>
+										<div class="origin-stat-value" id="originStatValue4">-</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<div class="row">
 						<form:form id="ORIGIN_DETERMINATION_RESULT-form" class="s4-form" novalidate="novalidate" action="" method="post">
 							<div id="panel-4" class="panel panel-icon">
@@ -150,6 +216,7 @@
 						this.Initialize_viewObject = function () {
 							ORIGIN_DETERMINATION_RESULTVIEW.createAUIGrid();
 							AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, ORIGIN_DETERMINATION_RESULTVIEW.data);
+							ORIGIN_DETERMINATION_RESULTVIEW.updateStatsCharts([]);
 						}
 
 						this.data = [];
@@ -224,9 +291,46 @@
 							, "export_flag": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "export_flag")
 						}
 
-						KpackageOBJ.auiGrid.retrieve(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, "/origin/compliance/origindetermination/originDeterminationResultList", params);
+						// KpackageOBJ.auiGrid.retrieve 대신 직접 호출한다: 상단 통계 도넛차트도 같은 응답으로
+						// 갱신해야 해서 결과 목록(list)에 접근할 콜백이 필요하다
+						KpackageOBJ.ajax.doSubmit("/origin/compliance/origindetermination/originDeterminationResultList", params, function (response) {
+							var list = (response && Array.isArray(response.value)) ? response.value : [];
+							AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, list);
+							ORIGIN_DETERMINATION_RESULTVIEW.updateStatsCharts(list);
+						});
 					}
-					
+
+					// 상단 통계 도넛차트 갱신. 1번(역내산 비율)만 실제 계산하고 2~4번은 추후 다른 지표를 채울
+					// 자리로 빈 상태만 유지한다
+					this.updateStatsCharts = function (list) {
+						list = list || [];
+						var total = list.length;
+						var originCount = list.filter(function (row) { return row.origin_status === 'Y'; }).length;
+						var ratio = total > 0 ? Math.round((originCount / total) * 1000) / 10 : 0;
+
+						ORIGIN_DETERMINATION_RESULTVIEW.renderRatioChart("originStatChart1", ratio);
+						$("#originStatValue1").text(ratio + "%");
+					};
+
+					this.renderRatioChart = function (canvasId, ratio) {
+						var data = {
+							labels: ["역내산", "비역내산"],
+							datasets: [{
+								data: [ratio, Math.max(0, 100 - ratio)],
+								backgroundColor: ["#22c55e", "#e5e7eb"],
+								borderWidth: 0
+							}]
+						};
+
+						ChartUtil.createDoughnut(canvasId, data, {
+							cutout: "72%",
+							plugins: {
+								legend: { display: false },
+								tooltip: { enabled: false }
+							}
+						});
+					};
+
 					// 검색 조건의 매출일자(from_date~to_date) 범위가 걸치는 매출년월 전체를 대상으로
 					// 월 판정(내수+수출 통합)을 진행한다. 대상 회사는 세션값이 서버에서 자동 주입된다.
 					this.executeMonthlyOriginDetermination = function () {
