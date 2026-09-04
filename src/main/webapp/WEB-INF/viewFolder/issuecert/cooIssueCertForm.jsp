@@ -26,6 +26,7 @@
         <form:form id="COO_ISSUE_CERT_POPUP-form" method="post" action="" novalidate="novalidate">
             <input type="hidden" id="dialog_id" name="dialog_id" value="${dialog_id}"/>
             <input type="hidden" id="opener_pgm_id" name="opener_pgm_id" value="${opener_pgm_id}"/>
+            <input type="hidden" id="opener_target_grid_id" name="opener_target_grid_id" value="${opener_target_grid_id}"/>
             <input type="hidden" id="customer_code" name="customer_code" value="${customer_code}"/>
             <!-- 원산지 증명서 기본값 설정 -->
             <input type="hidden" id="issue_type" name="issue_type" value="E"/> <!-- fta_master의 co_issue_flag -->
@@ -191,8 +192,11 @@
 	        this.setDefaultValue = function() {
 	        	var $form = $("#COO_ISSUE_CERT_POPUP-form");
 	        	
+	        	var opener_pgm_id = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_POPUP-form", "opener_pgm_id");
+	        	var opener_target_grid_id = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_POPUP-form", "opener_target_grid_id");
+	        	
 	            /* 부모창 체크된 아이템 ArrayList*/
-	            var checkedArray = KpackageOBJ.auiGrid.getCheckedRowItems(ISSUE_CERT_TARGET.grid_ISSUE_CERT_TARGET_01);
+	            var checkedArray = KpackageOBJ.auiGrid.getCheckedRowItems(opener_pgm_id + "." + opener_target_grid_id);
 	            if (!checkedArray || checkedArray.length === 0) {
 	                $form.find("#customer_name").text("N/A");
 	                $form.find("#officer_name").text("N/A");
@@ -605,7 +609,11 @@
                     
                     		alert("원산지 증명서 발급이 완료되었습니다.");
                     		//부모창 재조회
-                    		ISSUE_CERT_TARGET.retrieve_GridData();
+                    		var opener_pgm_id = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_POPUP-form", "opener_pgm_id");
+                    		var openerObj = window[opener_pgm_id];
+							if (openerObj && typeof openerObj.retrieve_GridData === "function") {
+							    openerObj.retrieve_GridData();
+							}
 	                	}, 200);
 	                	
 	                }
@@ -740,6 +748,7 @@
 	                AUIGrid.refresh(COO_ISSUE_CERT_POPUP.grid_COO_ISSUE_CERT_POPUP_01);
 	            }, 50);
 	        };
+	        
 	        
 	
 	    };

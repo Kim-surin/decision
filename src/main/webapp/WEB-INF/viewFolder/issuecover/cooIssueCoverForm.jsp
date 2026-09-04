@@ -26,6 +26,7 @@
         <form:form id="COO_ISSUE_POPUP-form" method="post" action="" novalidate="novalidate">
             <input type="hidden" id="dialog_id" name="dialog_id" value="${dialog_id}"/>
             <input type="hidden" id="opener_pgm_id" name="opener_pgm_id" value="${opener_pgm_id}"/>
+            <input type="hidden" id="opener_target_grid_id" name="opener_target_grid_id" value="${opener_target_grid_id}"/>
             <input type="hidden" id="customer_code" name="customer_code" value="${customer_code}"/>
             <!-- 원산지 확인서 기본값 설정 -->
             <input type="hidden" id="issue_type" name="issue_type" value="E"/> <!-- 원산지확인서는 E -->
@@ -645,7 +646,11 @@
                     
                     		alert("원산지 확인서 발급이 완료되었습니다.");
                     		//부모창 재조회
-                    		ISSUE_TARGET.retrieve_GridData();
+                    		var opener_pgm_id = KpackageOBJ.object.getFormValue("COO_ISSUE_POPUP-form", "opener_pgm_id");
+                    		var openerObj = window[opener_pgm_id];
+							if (openerObj && typeof openerObj.retrieve_GridData === "function") {
+							    openerObj.retrieve_GridData();
+							}
 	                	}, 200);
 	                	
 	                }

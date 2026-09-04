@@ -669,7 +669,11 @@
                             );
 
                             alert("원산지 증명서 수정 발급이 완료되었습니다.");
-                            ISSUE_CERT_TARGET.retrieve_GridData();
+                            var opener_pgm_id = KpackageOBJ.object.getFormValue("COO_CERT_MODIFY_POPUP-form", "opener_pgm_id");
+                    		var openerObj = window[opener_pgm_id];
+							if (openerObj && typeof openerObj.retrieve_GridData === "function") {
+							    openerObj.retrieve_GridData();
+							}
                         }, 200);
                     }
                 });

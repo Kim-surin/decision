@@ -463,7 +463,8 @@ var ISSUE_TARGET = new function() {
         
         var getParam = "?dialog_id="           + "cooIssueForm"
            + "&opener_pgm_id="    +  "ISSUE_TARGET" 
-           + "&customer_code="    +  baseCustomerCode
+           + "&opener_target_grid_id=" + "grid_ISSUE_TARGET_01"
+           + "&customer_code="    +  baseCustomerCode;
     	
         KpackageOBJ.sidepanel.open('cooIssueCoverForm','/issuecover/cooIssueCoverForm' + getParam, '1300px', true);
     }
