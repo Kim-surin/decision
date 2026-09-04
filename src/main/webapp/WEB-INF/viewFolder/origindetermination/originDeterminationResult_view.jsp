@@ -4,11 +4,50 @@
 			<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 			<html>
 			<head>
+				<script src="/rcs/js/chartjs_v451/chart.js"></script>
+				<script src="/rcs/js/package.chartjs.utils.js"></script>
 				<style>
 				        .origin-determination-fail {
 							background-color: #ffe6e6 !important; /* 연한 빨간색 배경 */
 							color: #d9534f !important;            /* 붉은색 글자 */
 							font-weight: bold;
+				        }
+				        .origin-stat-row {
+				        	display: flex;
+				        	gap: 16px;
+				        	margin-bottom: 16px;
+				        }
+				        .origin-stat-card {
+				        	flex: 1 1 0;
+				        	display: flex;
+				        	align-items: center;
+				        	gap: 12px;
+				        	border: 1px dashed #ced4da;
+				        	border-radius: 8px;
+				        	padding: 12px 16px;
+				        	cursor: pointer;
+				        }
+				        .origin-stat-card:hover {
+				        	border-color: #adb5bd;
+				        	background-color: #f8f9fa;
+				        }
+				        .origin-stat-card.active {
+				        	border: 1px solid #4a6cf7;
+				        	background-color: #eef3ff;
+				        }
+				        .origin-stat-donut {
+				        	position: relative;
+				        	width: 56px;
+				        	height: 56px;
+				        	flex: 0 0 56px;
+				        }
+				        .origin-stat-label {
+				        	font-size: 12px;
+				        	color: #6c757d;
+				        }
+				        .origin-stat-value {
+				        	font-size: 20px;
+				        	font-weight: 700;
 				        }
 				    </style>
 			</head>
@@ -26,6 +65,42 @@
 							</nav>
 						</div>
 					</div>
+
+					<div class="row">
+						<div class="col-12">
+							<div class="origin-stat-row">
+								<div class="origin-stat-card" id="originStatCard1" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(1);">
+									<div class="origin-stat-donut"><canvas id="originStatChart1"></canvas></div>
+									<div>
+										<div class="origin-stat-label">역내산 비율</div>
+										<div class="origin-stat-value" id="originStatValue1">-</div>
+									</div>
+								</div>
+								<div class="origin-stat-card" id="originStatCard2" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(2);">
+									<div class="origin-stat-donut"><canvas id="originStatChart2"></canvas></div>
+									<div>
+										<div class="origin-stat-label">비역내산 비율</div>
+										<div class="origin-stat-value" id="originStatValue2">-</div>
+									</div>
+								</div>
+								<div class="origin-stat-card" id="originStatCard3" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(3);">
+									<div class="origin-stat-donut"><canvas id="originStatChart3"></canvas></div>
+									<div>
+										<div class="origin-stat-label">판정 실패 비율</div>
+										<div class="origin-stat-value" id="originStatValue3">-</div>
+									</div>
+								</div>
+								<div class="origin-stat-card" id="originStatCard4" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(4);">
+									<div class="origin-stat-donut"><canvas id="originStatChart4"></canvas></div>
+									<div>
+										<div class="origin-stat-label">내수 비율</div>
+										<div class="origin-stat-value" id="originStatValue4">-</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<div class="row">
 						<form:form id="ORIGIN_DETERMINATION_RESULT-form" class="s4-form" novalidate="novalidate" action="" method="post">
 							<div id="panel-4" class="panel panel-icon">
@@ -123,9 +198,13 @@
 						<div class="col-12">
 							<div class="frame-wrap">
 								<div class="demo" style="text-align: right;">
+									<button type="button" class="btn btn-sm btn-primary waves-effect waves-themed"
+										onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.executeMonthlyOriginDetermination();">
+										월판정
+									</button>
 									<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed"
 										onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.excelDownload();">
-										Excel Download
+										엑셀 다운로드
 									</button>
 								</div>
 							</div>
@@ -146,9 +225,21 @@
 						this.Initialize_viewObject = function () {
 							ORIGIN_DETERMINATION_RESULTVIEW.createAUIGrid();
 							AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, ORIGIN_DETERMINATION_RESULTVIEW.data);
+							ORIGIN_DETERMINATION_RESULTVIEW.updateStatsCharts([]);
 						}
 
-						this.data = [];
+						// 마지막 검색 결과 전체(필터링 전) - 통계 카드 클릭 시 이걸 기준으로 그리드만 다시 필터링한다
+						this.currentList = [];
+						// 현재 선택된 통계 카드 번호(1~4). 없으면 null
+						this.activeStatFilter = null;
+
+						// 통계 카드 번호별 필터 조건. updateStatsCharts의 집계 기준과 반드시 맞춰야 한다
+						this.STAT_FILTERS = {
+							1: function (row) { return row.origin_status === 'Y'; },
+							2: function (row) { return row.origin_status !== 'Y'; },
+							3: function (row) { return String(row.status) === '5'; },
+							4: function (row) { return row.export_flag === 'D'; }
+						};
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
@@ -208,7 +299,13 @@
 						);
 					}
 
-					this.retrieve_GridData = function () {
+					// preservePage가 true면 재조회 전 보고 있던 페이지 번호를 기억해뒀다가 새 목록에도 그대로
+					// 이동시킨다. 검색 버튼처럼 조건이 바뀌는 조회는 기본값(false)대로 1페이지로 돌아간다
+					this.retrieve_GridData = function (preservePage) {
+							var pageToRestore = preservePage
+								? AUIGrid.getProperty(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, "currentPage")
+								: null;
+
 							var params = {
 							/* 날짜 파라메터 '-' 제거  */
 							"from_date": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "from_date").replace(/-/gi, "")
@@ -220,9 +317,88 @@
 							, "export_flag": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "export_flag")
 						}
 
-						KpackageOBJ.auiGrid.retrieve(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, "/origin/compliance/origindetermination/originDeterminationResultList", params);
+						// KpackageOBJ.auiGrid.retrieve 대신 직접 호출한다: 상단 통계 도넛차트도 같은 응답으로
+						// 갱신해야 해서 결과 목록(list)에 접근할 콜백이 필요하다
+						KpackageOBJ.ajax.doSubmit("/origin/compliance/origindetermination/originDeterminationResultList", 
+							params, 
+							function (response) {
+								var list = (response && Array.isArray(response.value)) ? response.value : [];
+	
+								ORIGIN_DETERMINATION_RESULTVIEW.currentList = list;
+								ORIGIN_DETERMINATION_RESULTVIEW.activeStatFilter = null;
+								$(".origin-stat-card").removeClass("active");
+	
+								AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, list);
+								ORIGIN_DETERMINATION_RESULTVIEW.updateStatsCharts(list);
+	
+								if (pageToRestore > 1) {
+									AUIGrid.movePageTo(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, pageToRestore);
+								}
+						},
+						null,
+						false);
 					}
-					
+
+					// 통계 카드 클릭: 그 카드가 이미 선택돼 있으면 필터를 풀고 전체를, 아니면 해당 조건에
+					// 맞는 행만 그리드에 다시 채운다. 통계 수치는 검색 결과 전체 기준으로 그대로 둔다
+					this.filterByStat = function (index) {
+						var $card = $("#originStatCard" + index);
+
+						if (ORIGIN_DETERMINATION_RESULTVIEW.activeStatFilter === index) {
+							ORIGIN_DETERMINATION_RESULTVIEW.activeStatFilter = null;
+							$(".origin-stat-card").removeClass("active");
+							AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, ORIGIN_DETERMINATION_RESULTVIEW.currentList);
+							return;
+						}
+
+						var filtered = ORIGIN_DETERMINATION_RESULTVIEW.currentList.filter(ORIGIN_DETERMINATION_RESULTVIEW.STAT_FILTERS[index]);
+
+						ORIGIN_DETERMINATION_RESULTVIEW.activeStatFilter = index;
+						$(".origin-stat-card").removeClass("active");
+						$card.addClass("active");
+						AUIGrid.setGridData(ORIGIN_DETERMINATION_RESULTVIEW.grid_ORIGIN_DETERMINATION_RESULT, filtered);
+					};
+
+					// 상단 통계 도넛차트 4개 갱신: 1)역내산 2)비역내산 3)판정 실패 4)내수 비율
+					this.updateStatsCharts = function (list) {
+						list = list || [];
+						var total = list.length;
+						var originCount = list.filter(ORIGIN_DETERMINATION_RESULTVIEW.STAT_FILTERS[1]).length;
+						var failCount = list.filter(ORIGIN_DETERMINATION_RESULTVIEW.STAT_FILTERS[3]).length;
+						var domesticCount = list.filter(ORIGIN_DETERMINATION_RESULTVIEW.STAT_FILTERS[4]).length;
+
+						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(1, originCount, total, "#22c55e");
+						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(2, total - originCount, total, "#f97316");
+						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(3, failCount, total, "#ef4444");
+						ORIGIN_DETERMINATION_RESULTVIEW.applyStat(4, domesticCount, total, "#3b82f6");
+					};
+
+					this.applyStat = function (index, count, total, color) {
+						var ratio = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
+
+						ORIGIN_DETERMINATION_RESULTVIEW.renderRatioChart("originStatChart" + index, ratio, color);
+						$("#originStatValue" + index).text(ratio + "%");
+					};
+
+					this.renderRatioChart = function (canvasId, ratio, color) {
+						var data = {
+							labels: ["대상", "그 외"],
+							datasets: [{
+								data: [ratio, Math.max(0, 100 - ratio)],
+								backgroundColor: [color, "#e5e7eb"],
+								borderWidth: 0
+							}]
+						};
+
+						ChartUtil.createDoughnut(canvasId, data, {
+							cutout: "72%",
+							plugins: {
+								legend: { display: false },
+								tooltip: { enabled: false }
+							}
+						});
+					};
+
 					// 검색 조건의 매출일자(from_date~to_date) 범위가 걸치는 매출년월 전체를 대상으로
 					// 월 판정(내수+수출 통합)을 진행한다. 대상 회사는 세션값이 서버에서 자동 주입된다.
 					this.executeMonthlyOriginDetermination = function () {
@@ -272,7 +448,11 @@
 							mode: data.export_flag === 'E' ? 'export' : 'domestic'
 						}
 
-						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request);
+						// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다. 보고 있던 페이지 번호도 유지한다
+						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
+							function() {
+								ORIGIN_DETERMINATION_RESULTVIEW.retrieve_GridData(true);
+							});
 					}
 
 				}
