@@ -435,7 +435,11 @@
 							mode: data.export_flag === 'E' ? 'export' : 'domestic'
 						}
 
-						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request);
+						// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다.
+						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
+							function() {
+								ORIGIN_DETERMINATION_RESULTVIEW.retrieve_GridData();
+							});
 					}
 
 				}
