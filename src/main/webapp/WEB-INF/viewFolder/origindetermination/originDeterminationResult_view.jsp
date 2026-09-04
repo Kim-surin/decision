@@ -123,6 +123,10 @@
 						<div class="col-12">
 							<div class="frame-wrap">
 								<div class="demo" style="text-align: right;">
+									<button type="button" class="btn btn-sm btn-primary waves-effect waves-themed"
+										onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.executeMonthlyOriginDetermination();">
+										월판정
+									</button>
 									<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed"
 										onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.excelDownload();">
 										Excel Download
