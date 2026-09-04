@@ -3,20 +3,59 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script src="/rcs/js/chartjs_v451/chart.js"></script>
+<script src="/rcs/js/package.chartjs.utils.js"></script>
 <style>
-	/* 원산지 판정(내수) 화면 상단 통계(.origin-stat-*)와 동일한 스타일 */
-	.bom-trace-stat-box {
-		min-width: 90px;
+	/* 역내전환전략 팝업 상단(.conversion-strategy-header-*)과 동일한 구조/글자크기 */
+	.bom-trace-header {
+		display: flex;
+		gap: 24px;
+		border: 1px dashed #ced4da;
+		border-radius: 4px;
+		padding: 12px 16px;
+		margin-bottom: 8px;
 	}
-	.bom-trace-stat-label {
+	.bom-trace-header-left {
+		flex: 0 0 500px;
+	}
+	.bom-trace-header-right {
+		flex: 1 1 auto;
+		min-width: 0;
+		display: flex;
+		gap: 24px;
+	}
+	.bom-trace-header-row {
+		display: flex;
+		font-size: 13px;
+		padding: 3px 0;
+	}
+	.bom-trace-header-label {
+		width: 110px;
+		flex: 0 0 110px;
+		color: #6c757d;
+	}
+	.bom-trace-header-value {
+		font-weight: 600;
+	}
+	.bom-trace-donut-card {
+		flex: 1 1 0;
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+	.bom-trace-donut {
+		position: relative;
+		width: 56px;
+		height: 56px;
+		flex: 0 0 56px;
+	}
+	.bom-trace-donut-label {
 		font-size: 12px;
 		color: #6c757d;
-		margin-bottom: 2px;
 	}
-	.bom-trace-stat-value {
-		font-size: 22px;
-		font-weight: bold;
-		margin-bottom: 0;
+	.bom-trace-donut-value {
+		font-size: 20px;
+		font-weight: 700;
 	}
 </style>
 </head>
@@ -32,22 +71,28 @@
 		</div>
 	</div>
 	<div class="modal-body">
-		<div class="row mb-3">
-			<div class="col-3 d-flex flex-column justify-content-center bom-trace-stat-box">
-				<label class="bom-trace-stat-label mb-0">대상 협정</label>
-				<h4 class="bom-trace-stat-value mb-0" id="bomTraceStat_ftaName">-</h4>
+		<div class="bom-trace-header">
+			<div class="bom-trace-header-left">
+				<div class="bom-trace-header-row"><span class="bom-trace-header-label">대상 협정</span><span class="bom-trace-header-value" id="bomTraceStat_ftaName">-</span></div>
+				<div class="bom-trace-header-row"><span class="bom-trace-header-label">역내산 재료비</span><span class="bom-trace-header-value" id="bomTraceStat_inarea">0</span></div>
+				<div class="bom-trace-header-row"><span class="bom-trace-header-label">비역내산 재료비</span><span class="bom-trace-header-value" id="bomTraceStat_outarea">0</span></div>
+				<div class="bom-trace-header-row"><span class="bom-trace-header-label">총 재료비</span><span class="bom-trace-header-value" id="bomTraceStat_total">0</span></div>
 			</div>
-			<div class="col-3 d-flex flex-column justify-content-center bom-trace-stat-box">
-				<label class="bom-trace-stat-label mb-0">역내산 재료비</label>
-				<h4 class="bom-trace-stat-value mb-0" id="bomTraceStat_inarea">0</h4>
-			</div>
-			<div class="col-3 d-flex flex-column justify-content-center bom-trace-stat-box">
-				<label class="bom-trace-stat-label mb-0">비역내 재료비</label>
-				<h4 class="bom-trace-stat-value mb-0" id="bomTraceStat_outarea">0</h4>
-			</div>
-			<div class="col-3 d-flex flex-column justify-content-center bom-trace-stat-box">
-				<label class="bom-trace-stat-label mb-0">총 재료비</label>
-				<h4 class="bom-trace-stat-value mb-0" id="bomTraceStat_total">0</h4>
+			<div class="bom-trace-header-right">
+				<div class="bom-trace-donut-card">
+					<div class="bom-trace-donut"><canvas id="bomTraceChart_inarea"></canvas></div>
+					<div>
+						<div class="bom-trace-donut-label">역내산 재료비 비율</div>
+						<div class="bom-trace-donut-value" id="bomTraceStat_inareaRatio">-</div>
+					</div>
+				</div>
+				<div class="bom-trace-donut-card">
+					<div class="bom-trace-donut"><canvas id="bomTraceChart_outarea"></canvas></div>
+					<div>
+						<div class="bom-trace-donut-label">비역내산 재료비 비율</div>
+						<div class="bom-trace-donut-value" id="bomTraceStat_outareaRatio">-</div>
+					</div>
+				</div>
 			</div>
 		</div>
 		<div id="oAuiGrid_bomTraceList" style="width:100%;height:400px;"></div>
@@ -117,7 +162,8 @@
 			);
 		};
 
-		// 조회된 원재료 목록으로 역내산/비역내/총 재료비(각각 inarea_amount/outarea_amount/input_amount 합산)를 표시
+		// 조회된 원재료 목록으로 역내산/비역내/총 재료비(각각 inarea_amount/outarea_amount/input_amount 합산)와
+		// 역내산/비역내산 재료비 비율 도넛차트를 표시
 		this.updateStats = function(list) {
 			var inareaSum = 0;
 			var outareaSum = 0;
@@ -132,6 +178,35 @@
 			$('#bomTraceStat_inarea').text(KpackageOBJ.formatter.commas(Math.round(inareaSum)));
 			$('#bomTraceStat_outarea').text(KpackageOBJ.formatter.commas(Math.round(outareaSum)));
 			$('#bomTraceStat_total').text(KpackageOBJ.formatter.commas(Math.round(totalSum)));
+
+			var inareaRatio = totalSum > 0 ? Math.round((inareaSum / totalSum) * 1000) / 10 : 0;
+			var outareaRatio = totalSum > 0 ? Math.round((outareaSum / totalSum) * 1000) / 10 : 0;
+
+			BOM_TRACE_LIST_POPUP.renderRatioChart('bomTraceChart_inarea', inareaRatio, '#22c55e');
+			$('#bomTraceStat_inareaRatio').text(inareaRatio + '%');
+
+			BOM_TRACE_LIST_POPUP.renderRatioChart('bomTraceChart_outarea', outareaRatio, '#f97316');
+			$('#bomTraceStat_outareaRatio').text(outareaRatio + '%');
+		};
+
+		// 원산지 판정 결과 조회 화면의 통계 도넛차트(originStatChart)와 동일한 스타일(링 형태, 범례/툴팁 없음)
+		this.renderRatioChart = function(canvasId, ratio, color) {
+			var data = {
+				labels: ['대상', '그 외'],
+				datasets: [{
+					data: [ratio, Math.max(0, 100 - ratio)],
+					backgroundColor: [color, '#e5e7eb'],
+					borderWidth: 0
+				}]
+			};
+
+			ChartUtil.createDoughnut(canvasId, data, {
+				cutout: '72%',
+				plugins: {
+					legend: { display: false },
+					tooltip: { enabled: false }
+				}
+			});
 		};
 	};
 
