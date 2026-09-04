@@ -236,7 +236,13 @@
 							});
 						}
 
-						this.retrieve_GridData = function () {
+						// preservePage가 true면 재조회 전 보고 있던 페이지 번호를 기억해뒀다가 새 목록에도 그대로
+						// 이동시킨다. 검색 버튼처럼 조건이 바뀌는 조회는 기본값(false)대로 1페이지로 돌아간다
+						this.retrieve_GridData = function (preservePage) {
+							var pageToRestore = preservePage
+								? AUIGrid.getProperty(EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION, "currentPage")
+								: null;
+
 							var params = {
 								/* 날짜 파라메터 '-' 제거  */
 								"from_date": KpackageOBJ.object.getFormValue("EXPORT_ORIGIN_DETERMINATION-form", "from_date").replace(/-/gi, "")
@@ -247,7 +253,7 @@
 								, "status": KpackageOBJ.object.getFormValue("EXPORT_ORIGIN_DETERMINATION-form", "status")
 							}
 
-							
+
 							KpackageOBJ.ajax.doSubmit(
 								"/origin/compliance/origindetermination/exportOriginDeterminationList",
 								params,
@@ -256,6 +262,10 @@
 
 									AUIGrid.setGridData(EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION, list);
 									EXPORT_ORIGIN_DETERMINATIONVIEW.updateStats(list);
+
+									if (pageToRestore > 1) {
+										AUIGrid.movePageTo(EXPORT_ORIGIN_DETERMINATIONVIEW.grid_EXPORT_ORIGIN_DETERMINATION, pageToRestore);
+									}
 								}
 							);
 						}
@@ -287,10 +297,10 @@
 								mode: 'export'
 							}
 
-							// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다.
+							// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다. 보고 있던 페이지 번호도 유지한다
 							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
 								function() {
-									EXPORT_ORIGIN_DETERMINATIONVIEW.retrieve_GridData();
+									EXPORT_ORIGIN_DETERMINATIONVIEW.retrieve_GridData(true);
 								});
 						}
 
