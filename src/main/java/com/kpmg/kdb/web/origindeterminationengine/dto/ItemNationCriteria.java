@@ -6,11 +6,8 @@ public class ItemNationCriteria {
 	private String companyCode;
 	private String divisionCode;
 	private String itemCode;
-	/**
-	 * 원본 P_FTA_CODE: 함수 본문에서는 사용되지 않고 EXT_COO_CERTIFY_DTL.FTA_CODE 조건이 'PKRRC' 로
-	 * 하드코딩되어 있다(호출부가 항상 FTA_CODE='PKRRC' 인 경우에만 이 함수를 호출하므로 실제로는
-	 * 문제되지 않는다). 호출부 호환성 유지를 위해 필드는 유지하되 SQL 바인딩에는 사용하지 않는다.
-	 */
+	// 원본 P_FTA_CODE: 함수 본문에서 안 쓰이고 EXT_COO_CERTIFY_DTL.FTA_CODE 조건이 'PKRRC'로
+	// 하드코딩돼 있다. 호출부 호환성 유지를 위해 필드는 두되 SQL 바인딩엔 안 쓴다.
 	private String ftaCode;
 	private String hsCode;
 	/** 기준일자(YYYYMMDD). null 이면 서비스에서 오늘 날짜로 대체한다. */

@@ -2,9 +2,7 @@
 
 <mapper namespace="com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao">
 
-	<!--
-		CREATE_FCR "3-5. FCR MST UPDATE(상품 원산지 판정)" 이관.
-	-->
+	<!-- CREATE_FCR "3-5. FCR MST UPDATE(상품 원산지 판정)" 이관. -->
 	<update id="mergeFcrMstOriginDetermination">
 		MERGE INTO FCR_MST FM
 		USING (SELECT FM.FTA_CODE
@@ -71,9 +69,7 @@
 			      ,RULE_CONTENTS  = COALESCE(SUB.VENDOR_RULE_CONTENTS, SUB.RULE_CONTENTS)
 	</update>
 
-	<!--
-		CREATE_FCR "3-6. FCR RESULT UPDATE(상품 원산지 판정)" 이관. 
-	-->
+	<!-- CREATE_FCR "3-6. FCR RESULT UPDATE(상품 원산지 판정)" 이관. -->
 	<insert id="insertFcrResultForCommodities">
 		INSERT INTO FCR_RESULT
 			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,

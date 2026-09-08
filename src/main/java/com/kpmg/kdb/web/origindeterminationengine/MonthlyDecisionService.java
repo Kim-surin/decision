@@ -10,10 +10,8 @@ import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
-/**
- * 월판정 전체 진입점. 내수+수출을 함께 판정하기 위해 {@link DomesticDecisionService}(내수)와
- * {@link ExportDecisionService}(수출)를 순서대로 호출해 결과를 하나로 합친다.
- */
+// 월판정 전체 진입점. 내수+수출을 함께 판정하기 위해 DomesticDecisionService(내수)와
+// ExportDecisionService(수출)를 순서대로 호출해 결과를 하나로 합친다.
 @Service
 public class MonthlyDecisionService extends GeneralService
 		implements BulkDecisionService<VirtualSalesGenerationParams> {

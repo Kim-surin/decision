@@ -51,7 +51,7 @@
 											<div class="col-3">
 												<div class="mb-3">
 													<label class="form-label" for="example-select">플랜트</label>
-													<select class="form-select" id="division_code">
+													<select class="form-select" id="search_division_code">
 														<option value="">전체</option>
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
@@ -131,7 +131,7 @@
 							var params = {
 								"search_date": KpackageOBJ.object.getFormValue("STANDARDCOST-form", "search_date").replace(/-/gi, "")
 								, "item": KpackageOBJ.object.getFormValue("STANDARDCOST-form", "item")
-								, "division_code": KpackageOBJ.object.getFormValue("STANDARDCOST-form", "division_code")
+								, "search_division_code": KpackageOBJ.object.getFormValue("STANDARDCOST-form", "search_division_code")
 							}
 
 							KpackageOBJ.auiGrid.retrieve(STANDARDCOSTVIEW.grid_STANDARDCOST, "/origin/compliance/standardCost/standardCostList", params);

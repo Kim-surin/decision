@@ -1,8 +1,8 @@
 package com.kpmg.kdb.web.origindetermination;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpSession;
 
@@ -14,14 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.MonthlyOriginDeterminationExecuteRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 
 @Controller
 public class OriginDeterminationController extends GenericController {
@@ -38,11 +36,11 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationList")
 	@ResponseBody
-	public Result domesticOriginDetermination_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
+	public Result domesticOriginDetermination_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveDomesticOriginDetermination(param);
+			result = originDeterminationService.retrieveDomesticOriginDetermination(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -50,7 +48,7 @@ public class OriginDeterminationController extends GenericController {
 
 		return result;
 	}
-	
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDetermination")
 	public String exportOriginDetermination_view(Model model, HttpSession session) {
 		return "origindetermination/exportOriginDetermination_view";
@@ -58,11 +56,11 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDeterminationList")
 	@ResponseBody
-	public Result exportOriginDetermination_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
+	public Result exportOriginDetermination_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveExportOriginDetermination(param);
+			result = originDeterminationService.retrieveExportOriginDetermination(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -78,11 +76,11 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationResultList")
 	@ResponseBody
-	public Result originDeterminationResult_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
+	public Result originDeterminationResult_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationResult(param);
+			result = originDeterminationService.retrieveOriginDeterminationResult(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -91,19 +89,20 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 
+	// JSON 바디로 받아 datas를 그대로 재직렬화해 뷰에 넘긴다. 폼인코딩 문자열을 거치지 않아 이중 이스케이프가 생기지 않는다.
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetail_popup")
-	public String originDeterminationDetail_popup(@RequestParam(value = "datas", required = false) String datas,
-			@RequestParam(value = "mode", required = false) String mode, Model model, HttpSession session) {
-		model.addAttribute("datas", datas);
+	public String originDeterminationDetail_popup(@RequestBody(required = false) Map param, Model model, HttpSession session)
+			throws Exception {
+		Object datas = (param != null && param.get("datas") != null) ? param.get("datas") : Collections.emptyList();
+		Object mode = param != null ? param.get("mode") : null;
+
+		model.addAttribute("datas", new ObjectMapper().writeValueAsString(datas));
 		model.addAttribute("mode", mode);
 
 		return "origindetermination/originDeterminationDetail_popup";
 	}
 
-	/**
-	 * "BOM 추적" 아이콘 클릭 시 뜨는 팝업. 그 협정(FTA_CODE) 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL)를
-	 * 조회해 보여준다.
-	 */
+	// "BOM 추적" 아이콘 클릭 시 뜨는 팝업. 그 협정(FTA_CODE) 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL)를 보여준다.
 	@RequestMapping(value = "/origin/compliance/origindetermination/bomTraceList_popup")
 	public String bomTraceList_popup(@RequestParam(value = "sales_no", required = false) String salesNo,
 			@RequestParam(value = "sales_seq", required = false) String salesSeq,
@@ -117,10 +116,7 @@ public class OriginDeterminationController extends GenericController {
 		return "origindetermination/bomTraceList_popup";
 	}
 
-	/**
-	 * "역내전환전략" 아이콘 클릭 시 뜨는 팝업. 세번변경기준/부가가치기준 충족을 위해 원산지확인서
-	 * 수취가 필요한 원재료 목록을 보여준다.
-	 */
+	// "역내전환전략" 아이콘 클릭 시 뜨는 팝업. 세번변경/부가가치기준 충족에 원산지확인서가 필요한 원재료를 보여준다.
 	@RequestMapping(value = "/origin/compliance/origindetermination/conversionStrategy_popup")
 	public String conversionStrategy_popup(@RequestParam(value = "sales_no", required = false) String salesNo,
 			@RequestParam(value = "sales_seq", required = false) String salesSeq,
@@ -136,12 +132,12 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/conversionStrategyTargetList")
 	@ResponseBody
-	public Result conversionStrategyTargetList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+	public Result conversionStrategyTargetList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = conversionStrategyService.retrieveConversionStrategyTargets(param);
+			result = conversionStrategyService.retrieveConversionStrategyTargets(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -152,12 +148,12 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")
 	@ResponseBody
-	public Result originDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param)
+	public Result originDeterminationDetailList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationDetailList(param);
+			result = originDeterminationService.retrieveOriginDeterminationDetailList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -167,15 +163,15 @@ public class OriginDeterminationController extends GenericController {
 	}
 
 	// 원산지 판정 상세 팝업(내수 전용)이 열릴 때/판정 실행 직후에 호출. (매출년월/플랜트/고객사/품번) 그룹
-	// 기준으로 "지금 시점" sales_no/sales_seq를 다시 찾아 판정상태/상품상세와 함께 조회한다 
+	// 기준으로 "지금 시점" sales_no/sales_seq를 다시 찾아 판정상태/상품상세와 함께 조회한다
 	@RequestMapping(value = "/origin/compliance/origindetermination/retrieveDomesticOriginDeterminationDetailList")
 	@ResponseBody
-	public Result retrieveDomesticOriginDeterminationDetailList(@RequestBody DomesticOriginDeterminationExecuteRequestDto param)
+	public Result retrieveDomesticOriginDeterminationDetailList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(param);
+			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -186,12 +182,12 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailResultList")
 	@ResponseBody
-	public Result originDeterminationDetailResultList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+	public Result originDeterminationDetailResultList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationDetailResultList(param);
+			result = originDeterminationService.retrieveOriginDeterminationDetailResultList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -202,12 +198,12 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationFailList")
 	@ResponseBody
-	public Result originDeterminationFailList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+	public Result originDeterminationFailList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationFailList(param);
+			result = originDeterminationService.retrieveOriginDeterminationFailList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -219,12 +215,12 @@ public class OriginDeterminationController extends GenericController {
 	// BOM 추적 팝업 전용. param.fta_code로 그 협정 1건의 원재료(FCR_DTL)만 조회한다.
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationMaterialList")
 	@ResponseBody
-	public Result originDeterminationMaterialList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+	public Result originDeterminationMaterialList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationMaterialList(param);
+			result = originDeterminationService.retrieveOriginDeterminationMaterialList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -233,52 +229,42 @@ public class OriginDeterminationController extends GenericController {
 		return result;
 	}
 
-	/**
-	 * 판정 실행 자체는 오래 걸릴 수 있어 {@link Callable}을 반환해 Spring MVC 비동기 요청 처리로 넘긴다.
-	 * Tomcat 워커 스레드는 즉시 반납되고, 실제 판정은 {@code WebConfig}에 설정된 스레드풀에서 실행된 뒤
-	 * 완료 시점에 지금과 동일한 {@link Result} 응답이 내려간다 — 응답 계약/화면 코드는 변경 없음.
-	 */
 	@RequestMapping(value = "/origin/compliance/origindetermination/executeDomesticOriginDetermination")
 	@ResponseBody
-	public Callable<Result> executeDomesticOriginDetermination(
+	public Result executeDomesticOriginDetermination(
 			@RequestBody DomesticOriginDeterminationExecuteRequestDto param) {
-		return () -> {
-			try {
-				return originDeterminationService.executeDomesticOriginDetermination(param);
-			} catch (Exception e) {
-				logger.error("내수 원산지 판정 실행 실패", e);
-				return super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-			}
-		};
+		try {
+			param.setCompany_code((String) super.extendsMap(new HashMap<>()).get("company_code"));
+			return originDeterminationService.executeDomesticOriginDetermination(param);
+		} catch (Exception e) {
+			logger.error("내수 원산지 판정 실행 실패", e);
+			return super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
 	}
 
-	/** {@link #executeDomesticOriginDetermination} 과 동일한 이유로 {@link Callable}을 반환한다. */
 	@RequestMapping(value = "/origin/compliance/origindetermination/executeExportOriginDetermination")
 	@ResponseBody
-	public Callable<Result> executeExportOriginDetermination(
+	public Result executeExportOriginDetermination(
 			@RequestBody ExportOriginDeterminationExecuteRequestDto param) {
-		return () -> {
-			try {
-				return originDeterminationService.executeExportOriginDetermination(param);
-			} catch (Exception e) {
-				logger.error("수출 원산지 판정 실행 실패", e);
-				return super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-			}
-		};
+		try {
+			param.setCompany_code((String) super.extendsMap(new HashMap<>()).get("company_code"));
+			return originDeterminationService.executeExportOriginDetermination(param);
+		} catch (Exception e) {
+			logger.error("수출 원산지 판정 실행 실패", e);
+			return super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
 	}
 
-	/** {@link #executeDomesticOriginDetermination} 과 동일한 이유로 {@link Callable}을 반환한다. */
 	@RequestMapping(value = "/origin/compliance/origindetermination/executeMonthlyOriginDetermination")
 	@ResponseBody
-	public Callable<Result> executeMonthlyOriginDetermination(
+	public Result executeMonthlyOriginDetermination(
 			@RequestBody MonthlyOriginDeterminationExecuteRequestDto param) {
-		return () -> {
-			try {
-				return originDeterminationService.executeMonthlyOriginDetermination(param);
-			} catch (Exception e) {
-				logger.error("월판정 실행 실패", e);
-				return super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-			}
-		};
+		try {
+			param.setCompany_code((String) super.extendsMap(new HashMap<>()).get("company_code"));
+			return originDeterminationService.executeMonthlyOriginDetermination(param);
+		} catch (Exception e) {
+			logger.error("월판정 실행 실패", e);
+			return super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
 	}
 }

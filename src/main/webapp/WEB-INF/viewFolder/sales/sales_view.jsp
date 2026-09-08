@@ -75,7 +75,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<label class="form-label" for="example-select">플랜트</label>
-													<select class="form-select" id="division_code">
+													<select class="form-select" id="search_division_code">
 														<option value="">전체</option>
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
@@ -183,7 +183,7 @@
 								, "to_date": KpackageOBJ.object.getFormValue("SALES-form", "to_date").replace(/-/gi, "")
 								, "product": KpackageOBJ.object.getFormValue("SALES-form", "product")
 								, "customer": KpackageOBJ.object.getFormValue("SALES-form", "customer")
-								, "division_code": KpackageOBJ.object.getFormValue("SALES-form", "division_code")
+								, "search_division_code": KpackageOBJ.object.getFormValue("SALES-form", "search_division_code")
 								, "export_flag": KpackageOBJ.object.getFormValue("SALES-form", "export_flag")
 							}
 

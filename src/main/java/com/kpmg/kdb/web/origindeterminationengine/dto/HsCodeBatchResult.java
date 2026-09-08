@@ -1,10 +1,7 @@
 package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/**
- * {@link com.kpmg.kdb.web.origindeterminationengine.MaterialHsCodeDao#selectHsCodeCandidatesBatch} 배치 조회 1건의 결과.
- * 요청 키 7개(reqCompanyCode~reqBaseDate)를 그대로 돌려받아야 결과를 요청별로 다시 묶을 수 있다
- * (원본 조회 조건 전체가 키이기 때문에 {@link HsCodeCandidateRow} 자체에는 구분 정보가 없다).
- */
+// selectHsCodeCandidatesBatch 배치 조회 1건의 결과. HsCodeCandidateRow 자체엔 구분 정보가 없어
+// 요청 키(reqCompanyCode~reqBaseDate)를 그대로 돌려받아야 결과를 요청별로 다시 묶을 수 있다.
 public class HsCodeBatchResult {
 
 	private String reqCompanyCode;

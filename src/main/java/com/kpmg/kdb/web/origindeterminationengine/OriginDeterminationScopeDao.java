@@ -4,10 +4,8 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
-/**
- * 상품(M,R,B)/제품(P,H) 판정 분기를 정하기 전에 공용으로 조회하는 정보(매출일자, 판정대상 asset type
- * 목록). {@link OriginDeterminationExecutionService#determineOrigin} 이 사용한다.
- */
+// 상품(M,R,B)/제품(P,H) 판정 분기를 정하기 전에 공용으로 조회하는 정보(매출일자, 판정대상 asset type 목록).
+// OriginDeterminationExecutionService#determineOrigin이 사용한다.
 public interface OriginDeterminationScopeDao {
 
 	/** SALES_MST.INVOICE_DATE 조회 (APTA 신규 PSR 적용여부 판단 기준일) */

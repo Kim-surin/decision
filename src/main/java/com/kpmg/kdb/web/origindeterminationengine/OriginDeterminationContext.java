@@ -8,11 +8,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 
-/**
- * 원산지 판정(COO_DECISION) 1건(FTA 후보 1행) 처리 중 쓰는 작업 컨텍스트. 스프링 빈이 아닌 일반
- * POJO로, 판정할 때마다 새로 생성해서 스레드 안전하게 쓴다. FCR_INFO_TEMP(자재원산지 정보)도
- * materialOriginRows에 한 번만 조회해 메모리에 올려두고 이후 판정 로직은 스트림으로 처리한다.
- */
+// 원산지 판정(COO_DECISION) 1건(FTA 후보 1행) 처리 중 쓰는 작업 컨텍스트. 스프링 빈이 아닌 일반 POJO로 판정할
+// 때마다 새로 생성해서 스레드 안전하게 쓰며, FCR_INFO_TEMP(자재원산지 정보)도 materialOriginRows에 한 번만 조회해 메모리에 올려둔다.
 public class OriginDeterminationContext {
 
 	/** 현재 판정 대상 매출/FTA 라인 (원본 FM_LIST) */

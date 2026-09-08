@@ -26,12 +26,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow;
 
-/**
- * 자재 단가 조회 (레거시 FC10_GET_ITEM_PRICE).
- *
- * 수불부(자기 PLANT → 전체 PLANT) → 최근 구매단가 → 표준원가(사업부 → 전체) 순으로 4단계
- * fallback 조회하며, 가격(price &gt; 0)을 찾으면 그 즉시 근거 텍스트와 함께 반환한다.
- */
+// 자재 단가 조회(레거시 FC10_GET_ITEM_PRICE). 수불부(자기 PLANT → 전체 PLANT) → 최근 구매단가 → 표준원가(사업부 →
+// 전체) 순으로 4단계 fallback 조회하며, 가격(price &gt; 0)을 찾으면 그 즉시 근거 텍스트와 함께 반환한다.
 @Service
 public class ItemPriceService extends GeneralService {
 

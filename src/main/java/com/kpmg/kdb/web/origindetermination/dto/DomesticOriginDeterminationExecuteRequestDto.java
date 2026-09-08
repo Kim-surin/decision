@@ -3,12 +3,22 @@ package com.kpmg.kdb.web.origindetermination.dto;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.kpmg.kdb.global.config.aop.dto.BaseRequestDto;
 
-public class DomesticOriginDeterminationExecuteRequestDto extends BaseRequestDto {
+public class DomesticOriginDeterminationExecuteRequestDto {
+	@JsonProperty("company_code")
+	private String company_code;
+
 	// 판정을 실행할 대상 라인(매출년월/고객사/플랜트/품번) 목록
 	@JsonProperty("datas")
 	private List<Line> datas;
+
+	public String getCompany_code() {
+		return company_code;
+	}
+
+	public void setCompany_code(String company_code) {
+		this.company_code = company_code;
+	}
 
 	public List<Line> getDatas() {
 		return datas;

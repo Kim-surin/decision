@@ -29,10 +29,8 @@ public interface CreateFcrDao {
 	long countIntermediateApplyFcrMst(@Param("companyCode") String companyCode,
 			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo);
 
-	/**
-	 * 레거시 CURSOR C_SALES_DTL. productCodes 가 null/빈 리스트면 salesNo 전체 제품(월 판정),
-	 * 값이 있으면 그 제품들만(개별 판정) 대상으로 한다.
-	 */
+	// 레거시 CURSOR C_SALES_DTL. productCodes가 null/빈 리스트면 salesNo 전체 제품(월 판정),
+	// 값이 있으면 그 제품들만(개별 판정) 대상으로 한다.
 	List<SalesDtlBomTarget> selectSalesDtlBomTargets(@Param("companyCode") String companyCode,
 			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
 			@Param("productCodes") List<String> productCodes);
@@ -69,10 +67,8 @@ public interface CreateFcrDao {
 			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
 			@Param("productCodes") List<String> productCodes);
 
-	/**
-	 * BOM이 없어 정상 FCR_MST 대상에서 제외된(BOM_STATUS='1') SALES_SEQ 들의 내수 원시 데이터.
-	 * selectDomesticSalesLines와 달리 BOM_STATUS 조건을 두지 않고 salesSeqs로 직접 지정한다.
-	 */
+	// BOM이 없어 정상 FCR_MST 대상에서 제외된(BOM_STATUS='1') SALES_SEQ들의 내수 원시 데이터.
+	// selectDomesticSalesLines와 달리 BOM_STATUS 조건을 두지 않고 salesSeqs로 직접 지정한다.
 	List<DomesticSalesLine> selectDomesticSalesLinesBySalesSeqs(@Param("companyCode") String companyCode,
 			@Param("divisionCode") String divisionCode, @Param("salesNo") String salesNo,
 			@Param("salesSeqs") List<Integer> salesSeqs);

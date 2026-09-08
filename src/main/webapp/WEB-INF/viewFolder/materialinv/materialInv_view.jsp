@@ -29,12 +29,12 @@
 										<div class="row">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="from_date">기준년월</label>
+													<label class="form-label" for="from_yyyymm">기준년월</label>
 													<div class="d-flex gap-2">
-														<input class="form-control" id="from_date" name="from_date"
-															type="date" value="${from_date}">
-														<input class="form-control" id="to_date" name="to_date"
-															type="date" value="${to_date}">
+														<input class="form-control" id="from_yyyymm" name="from_yyyymm"
+															type="month" value="${from_yyyymm}">
+														<input class="form-control" id="to_yyyymm" name="to_yyyymm"
+															type="month" value="${to_yyyymm}">
 													</div>
 
 												</div>
@@ -54,7 +54,7 @@
 											<div class="col-3">
 												<div class="mb-3">
 													<label class="form-label" for="example-select">플랜트</label>
-													<select class="form-select" id="division_code">
+													<select class="form-select" id="search_division_code">
 														<option value="">전체</option>
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">
@@ -105,7 +105,7 @@
 									headerText: "기초재고", children: [
 										{
 											dataField: "initial_qty", headerText: "수량", width: 120
-											, dataType: "numeric", style: ""
+											, dataType: "numeric", style: "", formatString: "#,##0.000"
 											, editRenderer: {
 												type: "InputEditRenderer",
 												onlyNumeric: true, // 0~9만 입력가능
@@ -117,30 +117,8 @@
 								},
 								{
 									headerText: "입고", children: [{
-										dataField: "warehousing_qty", headerText: "수량"
-										, width: 120
-										, editRenderer: {
-											type: "InputEditRenderer",
-											onlyNumeric: true, // 0~9만 입력가능
-											textAlign: "right", // 오른쪽 정렬로 입력되도록 설정
-											autoThousandSeparator: true // 천단위 구분자 삽입 여부
-										}
-									},
-									{
-										dataField: "input_qty", headerText: "금액"
-										, width: 120
-										, editRenderer: {
-											type: "InputEditRenderer",
-											onlyNumeric: true, // 0~9만 입력가능
-											textAlign: "right", // 오른쪽 정렬로 입력되도록 설정
-											autoThousandSeparator: true // 천단위 구분자 삽입 여부
-										}
-									}]
-								},
-								{
-									headerText: "기타입고", children: [{
-										dataField: "input_amount", headerText: "수량"
-										, width: 120
+										dataField: "input_qty", headerText: "수량"
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
@@ -160,9 +138,31 @@
 									}]
 								},
 								{
+									headerText: "기타입고", children: [{
+										dataField: "extra_input_qty", headerText: "수량"
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
+										, editRenderer: {
+											type: "InputEditRenderer",
+											onlyNumeric: true, // 0~9만 입력가능
+											textAlign: "right", // 오른쪽 정렬로 입력되도록 설정
+											autoThousandSeparator: true // 천단위 구분자 삽입 여부
+										}
+									},
+									{
+										dataField: "extra_input_amount", headerText: "금액"
+										, width: 120
+										, editRenderer: {
+											type: "InputEditRenderer",
+											onlyNumeric: true, // 0~9만 입력가능
+											textAlign: "right", // 오른쪽 정렬로 입력되도록 설정
+											autoThousandSeparator: true // 천단위 구분자 삽입 여부
+										}
+									}]
+								},
+								{
 									headerText: "출고", children: [{
 										dataField: "issue_qty", headerText: "수량"
-										, width: 120
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
@@ -184,7 +184,7 @@
 								{
 									headerText: "기타출고", children: [{
 										dataField: "extra_issue_qty", headerText: "수량"
-										, width: 120
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
@@ -206,7 +206,7 @@
 								{
 									headerText: "기말재고", children: [{
 										dataField: "inventory_qty", headerText: "수량"
-										, width: 120
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
@@ -241,10 +241,10 @@
 
 						this.retrieve_GridData = function () {
 							var params = {
-								"from_date": KpackageOBJ.object.getFormValue("MATERIALINV-form", "from_date").replace(/-/gi, "")
-								, "to_date": KpackageOBJ.object.getFormValue("MATERIALINV-form", "to_date").replace(/-/gi, "")
+								"from_yyyymm": KpackageOBJ.object.getFormValue("MATERIALINV-form", "from_yyyymm").replace(/-/gi, "")
+								, "to_yyyymm": KpackageOBJ.object.getFormValue("MATERIALINV-form", "to_yyyymm").replace(/-/gi, "")
 								, "item": KpackageOBJ.object.getFormValue("MATERIALINV-form", "item")
-								, "division_code": KpackageOBJ.object.getFormValue("MATERIALINV-form", "division_code")
+								, "search_division_code": KpackageOBJ.object.getFormValue("MATERIALINV-form", "search_division_code")
 							}
 
 							KpackageOBJ.auiGrid.retrieve(MATERIALINVVIEW.grid_MATERIALINV, "/origin/compliance/materialinv/materialInvList", params);

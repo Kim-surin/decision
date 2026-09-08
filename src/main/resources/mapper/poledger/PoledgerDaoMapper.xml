@@ -1,7 +1,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.kpmg.kdb.web.poledger.PoledgerDao">
-    <select id="retrievePoledger" parameterType="com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto" resultType="HashMap">
+    <select id="retrievePoledger" parameterType="HashMap" resultType="HashMap">
        SELECT *
        FROM (
 	       SELECT PL.WAREHOUSING_NO
@@ -55,8 +55,8 @@
 		<if test="coo_certify_yn != null">
 				AND COO_CERTIFY_YN = #{coo_certify_yn}
 		</if>
-		<if test="division_code != null">
-				AND DIVISION_CODE = #{division_code}
+		<if test="search_division_code != null">
+				AND DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="warehousing_type != null">
 				AND WAREHOUSING_TYPE = #{warehousing_type}

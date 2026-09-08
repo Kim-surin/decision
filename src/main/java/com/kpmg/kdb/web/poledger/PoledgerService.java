@@ -1,21 +1,20 @@
 package com.kpmg.kdb.web.poledger;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerResponseDto;
 
 @Service
 public class PoledgerService extends GeneralService {
-	public Result retrievePoledger(PoLedgerRequestDto param) throws Exception {
+	public Result retrievePoledger(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<PoLedgerResponseDto> list = sqlSession.getMapper(PoledgerDao.class).retrievePoledger(param);
+			List<Map<String, Object>> list = sqlSession.getMapper(PoledgerDao.class).retrievePoledger(param);
 
 			result.setValue(list);
 			result.setSuccess(true);

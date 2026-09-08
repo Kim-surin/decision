@@ -1,10 +1,7 @@
 package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/**
- * UPDATE_FRM_PROCEDURE 말미의 FCR_MST 갱신 1건. FM_LIST 행(=FTA 후보)마다 즉시 UPDATE 하는 대신
- * determineOrigin() 1회 호출 범위에서 모았다가 한 번의 배치 UPDATE 로 반영한다
- * (OriginDeterminationSupportService#updateFrm/#flushFcrMstUpdates 참고).
- */
+// UPDATE_FRM_PROCEDURE 말미의 FCR_MST 갱신 1건. FTA 후보마다 즉시 UPDATE 하는 대신
+// determineOrigin() 1회 호출 범위에서 모았다가 한 번의 배치 UPDATE로 반영한다.
 public class FcrMstDecisionUpdateRow {
 
 	private final String salesNo;

@@ -1,10 +1,7 @@
 package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/**
- * {@link OriginRatePrecheck} 1건(BOM 자재 1건)의 사전조회 결과. FTA_CODE 와 무관하게 결정되는
- * 조회구간(fromDate~lookupEnd)과 구매원장 집계(poSummary)를 담아, FTA_CODE 별로 반복되는
- * "비인증 원산지 구매 집계"(ItemOriginRateService 4단계) 조회만 다시 하면 되게 한다.
- */
+// OriginRatePrecheck 1건(BOM 자재 1건)의 사전조회 결과. FTA_CODE 무관 조회구간/구매원장 집계를
+// 담아, FTA_CODE별 "비인증 원산지 구매 집계"(4단계) 조회만 다시 하면 되게 한다.
 public class OriginRateStage {
 
 	private final String itemCode;

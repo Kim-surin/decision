@@ -1,10 +1,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateDao">
-	<!--
-		FC10_GET_ITEM_ORIGIN_RATE 이관. 조회 기간 계산은 ItemOriginRateService 가 java.time 으로 수행해
-		문자열로 바인딩하고, 비활성 상태였던 MTM(공정간대체) 로직은 이관하지 않았다.
-	-->
+	<!-- FC10_GET_ITEM_ORIGIN_RATE 이관. 조회 기간 계산은 ItemOriginRateService가 java.time으로 수행해 문자열로
+		 바인딩하고, 비활성 상태였던 MTM(공정간대체) 로직은 이관하지 않았다. -->
 
 	<select id="selectMaterialCandidates" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceRow">
 		SELECT ML.ITEM_CODE                          AS itemCode
@@ -73,12 +71,8 @@
 	</select>
 
 	
-	<!-- 재고 수불의 기초재고(INITIAL_QTY), 입고량(INPUT_QTY), 재고 경과기간(AGING_PERIOD) 조회
-		- BOM: 요청한 그 품목(itemCode) 자체의 재고 이력
-		- FUNGIBLE: 그 품목의 대체 가능 자재(FUNGIBLE_MATERIALS에 등록된, 서로 바꿔 쓸 수 있는 자재)들의 재고 이력
-		
-		[버그 수정 이력] FUNGIBLE(대체자재) 조인의 CASE/OR 조건이 PostgreSQL 플래너 회귀를 유발해(특정 파라미터 조합에서 약 10초) 상호 배타적인 두 케이스로 분리한 뒤 UNION(중복 제거)으로 합쳤다.
-	-->
+	<!-- 재고 수불의 기초재고/입고량/재고 경과기간 조회 - BOM: 요청 품목 자체, FUNGIBLE: 그 품목의 대체 가능 자재들의 재고 이력.
+		 [버그 수정] FUNGIBLE 조인의 CASE/OR 조건이 PostgreSQL 플래너 회귀를 유발해(약 10초) 두 케이스로 분리 후 UNION으로 합쳤다. -->
 	<select id="selectMaterialCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialCandidatesBatchResult">
 		<!-- (BOM) 요청한 품목 자체의 재고 -->
 		SELECT V.REQ_DIVISION_CODE                   AS reqDivisionCode
@@ -216,11 +210,8 @@
 		AND    PL.WAREHOUSING_DATE BETWEEN #{fromDate} AND #{toDate}
 	</select>
 
-	<!--
-		selectPurchaseLedgerSummary 의 배치 버전. 여러 품목의 조회구간 조합 전체를 UNION ALL 파생 테이블(V)
-		로 던지고 GROUP BY 로 집계한다. NOT EXISTS 없는 단순 COUNT/SUM 집계라 V를 드라이빙하는 LEFT JOIN
-		만으로 충분하다 — 매칭 없는 조합도 COUNT=0,SUM=0 인 1행으로 집계된다.
-	-->
+	<!-- selectPurchaseLedgerSummary의 배치 버전. 여러 품목의 조회구간 조합 전체를 UNION ALL 파생 테이블(V)로 던지고
+		 GROUP BY로 집계한다 — 매칭 없는 조합도 COUNT=0,SUM=0인 1행으로 집계된다. -->
 	<select id="selectPurchaseLedgerSummaryBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryBatchResult">
 		SELECT V.ITEM_CODE                                    AS itemCode
 		      ,V.FROM_DATE                                    AS fromDate
@@ -273,10 +264,8 @@
 		AND    PL.WAREHOUSING_DATE BETWEEN #{fromDate} AND #{toDate}
 	</select>
 
-	<!--
-		selectNonCertifiedOriginSummary 의 배치 버전. (itemCode,ftaCode,fromDate,toDate) 조합 전체를
-		UNION ALL 파생 테이블(V)로 던지고 GROUP BY 로 집계한다.
-	-->
+	<!-- selectNonCertifiedOriginSummary의 배치 버전. (itemCode,ftaCode,fromDate,toDate) 조합 전체를
+		 UNION ALL 파생 테이블(V)로 던지고 GROUP BY로 집계한다. -->
 	<select id="selectNonCertifiedOriginSummaryBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.NonCertifiedOriginSummaryResult">
 		SELECT V.ITEM_CODE                                    AS itemCode
 		      ,V.FTA_CODE                                     AS ftaCode

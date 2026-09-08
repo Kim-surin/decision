@@ -2,9 +2,7 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * 레거시 CREATE_FCR 3-3(제품 BOM 소요량) 단계의 BOM 최말단(ISLEAF_YN='Y') 자재 원시 행.
- */
+// 레거시 CREATE_FCR 3-3(제품 BOM 소요량) 단계의 BOM 최말단(ISLEAF_YN='Y') 자재 원시 행.
 public class BomLeafRow {
 
 	private String itemCode;

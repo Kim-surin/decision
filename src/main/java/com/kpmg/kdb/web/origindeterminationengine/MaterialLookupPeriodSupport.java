@@ -4,11 +4,8 @@ import java.time.DateTimeException;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 
-/**
- * {@link ItemOriginRateService}와 {@link ItemNationService}가 공통으로 쓰는 자재 조회구간 날짜 계산.
- * 두 서비스 모두 같은 BOM/대체(FUNGIBLE) 자재 수불부를 순회하며 구매원장 조회구간(fromDate/lookupEnd)을
- * 산정하는데, 이 계산 자체는 완전히 동일해서 한 곳에 모아둔다.
- */
+// ItemOriginRateService와 ItemNationService가 공통으로 쓰는 자재 조회구간 날짜 계산. 두 서비스 모두 같은
+// BOM/대체(FUNGIBLE) 자재 수불부를 순회하며 구매원장 조회구간(fromDate/lookupEnd)을 산정하는 계산이 동일해 모아둔다.
 final class MaterialLookupPeriodSupport {
 
 	static final DateTimeFormatter YYYYMM = DateTimeFormatter.ofPattern("yyyyMM");

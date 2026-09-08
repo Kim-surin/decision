@@ -16,11 +16,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 
-/**
- * 예외판정 (레거시 EXCLUTION_RULE_DECISION).
- *
- * 판정 대상 룰에 걸린 예외타입(1~17)을 순서대로 평가해 EXCLUSION_YN/EXCLUSION_CONDITION을 결정한다.
- */
+// 예외판정(레거시 EXCLUTION_RULE_DECISION). 판정 대상 룰에 걸린 예외타입(1~17)을 순서대로 평가해
+// EXCLUSION_YN/EXCLUSION_CONDITION을 결정한다.
 @Service
 public class ExclusionRuleDecisionService extends GeneralService {
 
@@ -65,11 +62,8 @@ public class ExclusionRuleDecisionService extends GeneralService {
 		}
 	}
 
-	/**
-	 * EXCLUSION_CONDITION 상태 전이만 담당(TYPE16 헤더를 만나면 "E16", 그 외 타입 헤더를 만나면 "N16") —
-	 * 헤더를 순회하는 동안 마지막으로 만난 헤더 종류에 따라 최종 상태가 결정된다. TYPE 판정값(Y/N) 자체와는
-	 * 무관한 별개의 상태라 루프 본문에서 분리했다.
-	 */
+	// EXCLUSION_CONDITION 상태 전이만 담당(TYPE16 헤더면 "E16", 그 외 타입 헤더면 "N16") — 마지막으로 만난
+	// 헤더 종류에 따라 최종 상태가 결정되며, TYPE 판정값(Y/N) 자체와는 무관한 별개의 상태라 분리했다.
 	private void updateExclusionCondition(OriginDeterminationContext ctx, ExclusionRuleHeader header) {
 		boolean isType16 = "16".equals(header.getExclusionType());
 		if (isType16 && !"N16".equals(ctx.getFrdRec().getExclusionCondition())) {
@@ -80,12 +74,8 @@ public class ExclusionRuleDecisionService extends GeneralService {
 		}
 	}
 
-	/**
-	 * 예외타입별 판정결과('Y'/'N')를 header.getJoinCondition()(AND/IF vs OR)에 따라 누적해 최종
-	 * EXCLUSION_YN을 계산한다. 원본 V_AND_HOLD_EXCLUSION_YN/V_OR_HOLD_EXCLUSION_YN 두 변수의 역할을
-	 * 캡슐화한다 — AND/IF 조건은 한 번이라도 'N'이 나오면 그 뒤로도 계속 'N'으로 고정되고(sticky-AND),
-	 * OR 조건은 하나라도 'Y'면 전체가 'Y'가 되는 일반적인 단락(短絡) 누적이다.
-	 */
+	// 예외타입별 판정결과('Y'/'N')를 joinCondition(AND/IF vs OR)에 따라 누적해 최종 EXCLUSION_YN을 계산한다.
+	// AND/IF는 한 번이라도 'N'이면 그 뒤로도 계속 'N'으로 고정되고(sticky-AND), OR는 하나라도 'Y'면 전체가 'Y'가 된다.
 	private static final class JoinConditionAccumulator {
 		private String andHold; // null == NVL(...,'NO')='NO'
 		private String orHold;
@@ -156,8 +146,7 @@ public class ExclusionRuleDecisionService extends GeneralService {
 				return evaluateType15(rows, frData, header, cache);
 			case "16":
 				return evaluateType16(ctx, rows, frData, header, cache, type, currentValue);
-			// TYPE 17: 원본에서는 도달 불가능한 코드였던 결함을 수정(클래스 주석 참고).
-			// TYPE 4 / TYPE 16 2단계와 동일한 값기준 비율 판정 패턴을 사용한다.
+			// TYPE 17: 원본에서 도달 불가능했던 결함을 수정, TYPE 4/16 2단계와 동일한 값기준 비율 판정 패턴을 쓴다.
 			case "17":
 				return nonOriginatingAmountRatioBelowMaxRate(ctx, rows, details(cache, frData, type));
 			default:
@@ -268,10 +257,8 @@ public class ExclusionRuleDecisionService extends GeneralService {
 		return false;
 	}
 
-	// ===== TYPE 15 =====
-	// 분자: HS코드가 '39'로 시작하며 예외HS코드 목록에 매칭되는 자재의 weight*nonOriginatingQty 합
-	// 분모: HS코드가 '39'로 시작하는 전체 자재(매칭 여부 무관)의 weight*requirementQty 합
-	// (분자만 매칭 대상으로 제한되고 분모는 39%대 전체가 기준이 되는 것이 원본의 실제 동작이다)
+	// ===== TYPE 15 ===== 분자: HS코드 '39'로 시작하며 예외HS코드 매칭되는 자재의 weight*nonOriginatingQty 합
+	// 분모: HS코드 '39'로 시작하는 전체 자재(매칭 여부 무관)의 weight*requirementQty 합 — 분모만 전체 기준인 게 원본의 실제 동작이다
 	private String evaluateType15(List<MaterialOriginRow> rows, OriginCriteria frData, ExclusionRuleHeader header,
 			ExclusionRuleCache cache) {
 		List<ExclusionRuleDetail> details = details(cache, frData, "15");

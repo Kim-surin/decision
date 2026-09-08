@@ -1,9 +1,7 @@
 package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/**
- * 레거시 FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 공통 파라미터 대체 객체.
- * 이관 시 동작을 바꾸지 않기 위해 필드는 유지하되 SQL 바인딩에는 사용하지 않는다.
- */
+// 레거시 FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 공통 파라미터 대체 객체.
+// 이관 시 동작을 바꾸지 않기 위해 필드는 유지하되 SQL 바인딩에는 쓰지 않는다.
 public class ItemPriceCriteria {
 
 	private String companyCode;

@@ -37,16 +37,17 @@
 			WHERE ML.COMPANY_CODE = #{company_code}			
 		)
 		WHERE 1=1
-		<if test="from_date != null">
-				<if test="to_date != null and to_date != ''">
-				AND YYYYMM BETWEEN #{from_date} AND #{to_date}
+		<if test="from_yyyymm != null">
+				<if test="to_yyyymm != null and to_yyyymm != ''">
+				AND YYYYMM BETWEEN #{from_yyyymm} AND #{to_yyyymm}
 				</if>
-		</if>	
+		</if>
 		<if test="item != null">
 				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' )
 		</if>
-		<if test="division_code != null">
-				AND DIVISION_CODE = #{division_code}
+		<if test="search_division_code != null">
+				AND DIVISION_CODE = #{search_division_code}
 		</if>
+		ORDER BY YYYYMM, ITEM_CODE, DIVISION_CODE
     </select>
 </mapper>

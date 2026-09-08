@@ -23,10 +23,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmLookupRequest;
 
-/**
- * 원산지 판정(COO_DECISION) 공용 헬퍼: 버퍼율/최소공정 판단, RCEP 최대기여국 산정, 판정결과
- * 저장, FCR_MST 최종 판정결과 갱신을 담당한다.
- */
+// 원산지 판정(COO_DECISION) 공용 헬퍼: 버퍼율/최소공정 판단, RCEP 최대기여국 산정, 판정결과 저장,
+// FCR_MST 최종 판정결과 갱신을 담당한다.
 @Service
 public class OriginDeterminationSupportService extends GeneralService {
 
@@ -38,13 +36,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 	@Autowired
 	private CooDecisionReferenceDataService referenceDataService;
 
-	/**
-	 * COMPANY_OPTION(OPTION_CODE='BF') 산정기준에 따라 회사/사업부/제품군/FTA 중 하나에서 버퍼율을 조회해 컨텍스트에 채운다.
-	 *
-	 * @return 조회 성공 여부. 실패(예외 발생) 시 false — 호출자가 이 FTA_CODE 후보를 판정오류로 처리해야 한다.
-	 *         이전에는 실패해도 조용히 넘어가 companyRvcRate/companyCtcRate가 null로 남고, 그게 nvl()로 0
-	 *         취급되면서 회사 버퍼가 없는 것처럼 자사기준 판정이 계속 진행되는 문제가 있었다.
-	 */
+	// COMPANY_OPTION(OPTION_CODE='BF') 산정기준에 따라 회사/사업부/제품군/FTA 중 하나에서 버퍼율을 조회해 컨텍스트에 채운다.
+	// 반환값은 조회 성공 여부 — 실패 시 호출자가 이 FTA_CODE 후보를 판정오류로 처리해야 한다(과거엔 조용히 null로 남아 버퍼 없는 것처럼 처리되는 문제가 있었다).
 	public boolean loadBuffer(OriginDeterminationContext ctx, String companyCode, String divisionCode, String ftaCode,
 			String productCode, Map<String, BufferRates> productLineBufferCache) {
 		try {
@@ -74,11 +67,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 	}
 
-	/**
-	 * 최소공정 제외 품목 해당 여부('Y'/'N')를 조회해 ctx에 캐싱한 뒤 반환한다. FM_LIST 1건의 모든 룰에서
-	 * 조회 키가 같아 ctx에 캐싱한다. "resolve"인 이유: 단순 getter처럼 보이지만 첫 호출 시 DB 조회 +
-	 * ctx 상태 변경(캐싱)이라는 부수효과가 있다 — 다른 resolve* 메서드들과 동일한 명명 규칙을 따른다.
-	 */
+	// 최소공정 제외 품목 해당 여부('Y'/'N')를 조회해 ctx에 캐싱한 뒤 반환한다. FM_LIST 1건의 모든 룰에서 조회
+	// 키가 같아 ctx에 캐싱하며, "resolve"인 이유는 첫 호출 시 DB 조회 + ctx 상태 변경(캐싱) 부수효과가 있어서다.
 	public String resolveMinimalProcessItemYn(OriginDeterminationContext ctx, String companyCode, String divisionCode,
 			String salesNo, int salesSeq) {
 		if (!ctx.isMinimalProcessItemYnLoaded()) {
@@ -171,13 +161,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 		ctx.setErrorCode("");
 	}
 
-	/**
-	 * 판정결과 1건을 저장 대기열에 담고 다음 룰 판정을 위해 레코드를 초기화한다. 실제 INSERT는 flushPendingResultsBatch가 배치로 처리한다.
-	 *
-	 * <p>예외를 흡수하지 않고 그대로 던진다 — 예전에는 여기서 실패하면 이 룰의 결과가 성공도 실패도
-	 * 아닌 채로 조용히 사라지고 다음 룰로 넘어갔다. 지금은 던져서 {@link OriginDecisionPipeline}까지
-	 * 전파시켜 이 대상 전체를 판정실패로 표시하게 한다.
-	 */
+	// 판정결과 1건을 저장 대기열에 담고 다음 룰 판정을 위해 레코드를 초기화한다(실제 INSERT는 flushPendingResultsBatch가
+	// 배치로 처리). 예외를 흡수하지 않고 그대로 던져 OriginDecisionPipeline까지 전파시켜 이 대상 전체를 판정실패로 표시하게 한다.
 	public void insertFrdAndReset(OriginDeterminationContext ctx, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 
@@ -193,13 +178,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 		rec.resetForNextRule();
 	}
 
-	/**
-	 * 대기열에 쌓인 판정결과를 배치 INSERT로 저장한다. FM_LIST 루프가 끝난 뒤,
-	 * resolveDeferredUpdateFrm보다 먼저 호출해야 한다(그쪽이 방금 저장한 결과를 재조회하므로).
-	 *
-	 * <p>실패 시 예외를 그대로 던진다 — 호출자({@link OriginDecisionPipeline})가 이 대상을
-	 * 판정실패로 표시할 수 있어야 하기 때문이다.
-	 */
+	// 대기열에 쌓인 판정결과를 배치 INSERT로 저장한다. FM_LIST 루프가 끝난 뒤 resolveDeferredUpdateFrm보다 먼저
+	// 호출해야 하며(그쪽이 방금 저장한 결과를 재조회), 실패 시 예외를 그대로 던져 호출자가 판정실패로 표시하게 한다.
 	public void flushPendingResultsBatch(List<OriginDeterminationResult> allPendingResults) {
 		if (allPendingResults.isEmpty()) {
 			return;
@@ -215,12 +195,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 	}
 
-	/**
-	 * "룰 없음"/"재료비 0원" 오류를 검사해 즉시 확정하거나, 그 외에는 판정결과 재조회가 필요한 행으로
-	 * deferredTargets에 등록한다. 실제 재조회는 resolveDeferredUpdateFrm이 배치로 처리한다.
-	 *
-	 * @param mode RVC_CTC일 때만 "재료비 0원" 오류를 검사한다(CTC 전용 모드는 값기준 계산이 없어 미검사).
-	 */
+	// "룰 없음"/"재료비 0원" 오류를 검사해 즉시 확정하거나, 그 외에는 판정결과 재조회가 필요한 행으로 deferredTargets에
+	// 등록한다(실제 재조회는 resolveDeferredUpdateFrm이 배치 처리). mode가 RVC_CTC일 때만 "재료비 0원" 오류를 검사한다.
 	public void prepareUpdateFrm(OriginDeterminationContext ctx, OriginDeterminationMode mode,
 			List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates, List<OriginDeterminationTarget> deferredTargets) {
 		OriginDeterminationTarget fm = ctx.getFmData();
@@ -327,12 +303,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 		return value == null ? "" : value;
 	}
 
-	/**
-	 * 대기 중인 FCR_MST 갱신을 배치 UPDATE로 반영한다.
-	 *
-	 * <p>실패 시 예외를 그대로 던진다 — 호출자({@link OriginDecisionPipeline})가 이 대상을
-	 * 판정실패로 표시할 수 있어야 하기 때문이다.
-	 */
+	// 대기 중인 FCR_MST 갱신을 배치 UPDATE로 반영한다. 실패 시 예외를 그대로 던져
+	// 호출자(OriginDecisionPipeline)가 이 대상을 판정실패로 표시할 수 있게 한다.
 	public void flushFcrMstUpdates(List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates) {
 		if (pendingFcrMstUpdates.isEmpty()) {
 			return;
