@@ -1,9 +1,11 @@
 package com.kpmg.kdb.web.origindetermination.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.kpmg.kdb.global.config.aop.dto.BaseRequestDto;
 
-public class MonthlyOriginDeterminationExecuteRequestDto extends BaseRequestDto {
+public class MonthlyOriginDeterminationExecuteRequestDto {
+	@JsonProperty("company_code")
+	private String company_code;
+
 	// 매출일자 (from, YYYYMMDD)
 	@JsonProperty("from_date")
 	private String from_date;
@@ -11,6 +13,14 @@ public class MonthlyOriginDeterminationExecuteRequestDto extends BaseRequestDto 
 	// 매출일자 (to, YYYYMMDD)
 	@JsonProperty("to_date")
 	private String to_date;
+
+	public String getCompany_code() {
+		return company_code;
+	}
+
+	public void setCompany_code(String company_code) {
+		this.company_code = company_code;
+	}
 
 	public String getFrom_date() {
 		return from_date;

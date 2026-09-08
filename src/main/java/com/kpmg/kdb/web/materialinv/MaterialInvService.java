@@ -1,21 +1,20 @@
 package com.kpmg.kdb.web.materialinv;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.materialinv.dto.MaterialInvRequestDto;
-import com.kpmg.kdb.web.materialinv.dto.MaterialInvResponseDto;
 
 @Service
 public class MaterialInvService extends GeneralService {
-	public Result retrieveMaterialInv(MaterialInvRequestDto param) throws Exception {
+	public Result retrieveMaterialInv(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<MaterialInvResponseDto> list = sqlSession.getMapper(MaterialInvDao.class).retrieveMaterialInv(param);
+			List<Map<String, Object>> list = sqlSession.getMapper(MaterialInvDao.class).retrieveMaterialInv(param);
 
 			result.setValue(list);
 			result.setSuccess(true);

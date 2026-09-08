@@ -75,7 +75,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<label class="form-label" for="example-select">플랜트</label>
-													<select class="form-select" id="division_code">
+													<select class="form-select" id="search_division_code">
 														<option value="">전체</option>
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
@@ -189,7 +189,7 @@
 								, "to_date": KpackageOBJ.object.getFormValue("poledger-form", "to_date").replace(/-/gi, "")
 								, "item": KpackageOBJ.object.getFormValue("poledger-form", "item")
 								, "coo_certify_yn": KpackageOBJ.object.getFormValue("poledger-form", "coo_certify_yn")
-								, "division_code": KpackageOBJ.object.getFormValue("poledger-form", "division_code")
+								, "search_division_code": KpackageOBJ.object.getFormValue("poledger-form", "search_division_code")
 								, "warehousing_type": KpackageOBJ.object.getFormValue("poledger-form", "warehousing_type")
 								, "mail_send_yn": KpackageOBJ.object.getFormValue("poledger-form", "mail_send_yn")
 							}

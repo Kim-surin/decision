@@ -28,8 +28,8 @@
 		<if test="item != null">
 				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' )
 		</if>	
-		<if test="division_code != null">
-				AND DIVISION_CODE = #{division_code}
+		<if test="search_division_code != null">
+				AND DIVISION_CODE = #{search_division_code}
 		</if>
     </select>
 </mapper>

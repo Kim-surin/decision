@@ -13,10 +13,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 
-/**
- * 부가가치기준(RVC) 원산지 판정 (레거시 COO_DECISION_FOR_RVC).
- * CTC_ONLY 모드는 부가가치기준을 쓰지 않아 FTA_RVC_YN/COMPANY_RVC_YN을 무조건 'N'으로 설정한다.
- */
+// 부가가치기준(RVC) 원산지 판정(레거시 COO_DECISION_FOR_RVC). CTC_ONLY 모드는 부가가치기준을 쓰지 않아
+// FTA_RVC_YN/COMPANY_RVC_YN을 무조건 'N'으로 설정한다.
 @Service
 public class RvcCriteriaDecisionService {
 

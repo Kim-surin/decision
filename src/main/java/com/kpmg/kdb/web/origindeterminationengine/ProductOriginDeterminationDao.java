@@ -12,16 +12,12 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchRequest;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchResult;
 
-/**
- * 제품(P,H) 원산지판정 전용 조회: FTA 후보(FCR_MST)/룰(FTA_RULE)/자재원산지(FCR_DTL). "상품"(M,R,B)은
- * {@link CommodityOriginDeterminationDao} 참고. 오케스트레이션은 {@link OriginDeterminationExecutionService} 참고.
- */
+// 제품(P,H) 원산지판정 전용 조회: FTA 후보(FCR_MST)/룰(FTA_RULE)/자재원산지(FCR_DTL). "상품"(M,R,B)은
+// CommodityOriginDeterminationDao, 오케스트레이션은 OriginDeterminationExecutionService 참고.
 public interface ProductOriginDeterminationDao {
 
-	/**
-	 * 판정대상 매출(SALES_NO) 1건에 존재하는 FTA_CODE 후보 전체를 조회한다. productCodes가 null/빈 리스트면
-	 * salesNo 전체 제품(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상으로 한다.
-	 */
+	// 판정대상 매출(SALES_NO) 1건에 존재하는 FTA_CODE 후보 전체를 조회한다. productCodes가 null/빈 리스트면
+	// salesNo 전체 제품(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상으로 한다.
 	List<OriginDeterminationTarget> selectOriginDeterminationTargets(@Param("companyCode") String companyCode,
 			@Param("salesNo") String salesNo, @Param("productCodes") List<String> productCodes);
 

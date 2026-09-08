@@ -1,5 +1,7 @@
 package com.kpmg.kdb.web.ftabom;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +13,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailRequestDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailVendorRequestDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomMasterRequestDto;
 
 @Controller
 public class FtaBomController extends GenericController {
@@ -27,11 +26,11 @@ public class FtaBomController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/ftaBom/ftaBomMasterList")
 	@ResponseBody
-	public Result ftaBomMaster_list(@RequestBody FtaBomMasterRequestDto param) throws Exception {
+	public Result ftaBomMaster_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = ftaBomService.retrieveftaBomMaster(param);
+			result = ftaBomService.retrieveftaBomMaster(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -42,11 +41,11 @@ public class FtaBomController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/ftaBom/ftaBomDetailList")
 	@ResponseBody
-	public Result ftaBomDetail_list(@RequestBody FtaBomDetailRequestDto param) throws Exception {
+	public Result ftaBomDetail_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = ftaBomService.retrieveftaBomDetail(param);
+			result = ftaBomService.retrieveftaBomDetail(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -57,11 +56,11 @@ public class FtaBomController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/ftaBom/ftaBomDetailVendorList")
 	@ResponseBody
-	public Result ftaBomDetailVendor_list(@RequestBody FtaBomDetailVendorRequestDto param) throws Exception {
+	public Result ftaBomDetailVendor_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = ftaBomService.retrieveftaBomDetailVendor(param);
+			result = ftaBomService.retrieveftaBomDetailVendor(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

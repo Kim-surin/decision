@@ -1,9 +1,6 @@
 package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/**
- * 레거시 FS03_GET_HS_CODE(companyCode, divisionCode, customerCode, itemCode,
- * nationCode, ftaCode, yyyymmdd) 파라미터 대체 객체.
- */
+// 레거시 FS03_GET_HS_CODE(companyCode, divisionCode, customerCode, itemCode, nationCode, ftaCode, yyyymmdd) 파라미터 대체 객체.
 public class HsCodeCriteria {
 
 	private String companyCode;

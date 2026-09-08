@@ -1,10 +1,8 @@
 package com.kpmg.kdb.web.materialinv;
 
 import java.util.List;
-
-import com.kpmg.kdb.web.materialinv.dto.MaterialInvRequestDto;
-import com.kpmg.kdb.web.materialinv.dto.MaterialInvResponseDto;
+import java.util.Map;
 
 public interface MaterialInvDao {
-	public List<MaterialInvResponseDto> retrieveMaterialInv(MaterialInvRequestDto param);
+	public List<Map<String, Object>> retrieveMaterialInv(Map param);
 }

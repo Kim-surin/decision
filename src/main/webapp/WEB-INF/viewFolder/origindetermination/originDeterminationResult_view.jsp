@@ -156,7 +156,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<label class="form-label" for="example-select">플랜트</label>
-													<select class="form-select" id="division_code">
+													<select class="form-select" id="search_division_code">
 														<option value="">전체</option>
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
@@ -312,7 +312,7 @@
 							, "to_date": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "to_date").replace(/-/gi, "")
 							, "customer": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "customer")
 							, "product": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "product")
-							, "division_code": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "division_code")
+							, "search_division_code": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "search_division_code")
 							, "status": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "status")
 							, "export_flag": KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "export_flag")
 						}
@@ -444,12 +444,12 @@
 					// 클릭한 행의 판매구분에 맞춰 팝업이 내수/수출 판정 API를 호출하도록 mode를 함께 넘긴다
 					this.retrive_DetailData = function (data) {
 						var request = {
-							datas: JSON.stringify([data]),
+							datas: [data],
 							mode: data.export_flag === 'E' ? 'export' : 'domestic'
 						}
 
 						// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다. 보고 있던 페이지 번호도 유지한다
-						KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
+						KpackageOBJ.sidepanel.openJson('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
 							function() {
 								ORIGIN_DETERMINATION_RESULTVIEW.retrieve_GridData(true);
 							});

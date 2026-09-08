@@ -21,49 +21,45 @@
 			WHERE FBM.COMPANY_CODE = #{company_code}			
 		)
 		WHERE 1=1
-		<if test="from_date != null and from_date != ''">
-				<if test="to_date != null and to_date != ''">
-				AND YYYYMM BETWEEN #{from_date} AND #{to_date}
+		<if test="from_yyyymm != null and from_yyyymm != ''">
+				<if test="to_yyyymm != null and to_yyyymm != ''">
+				AND YYYYMM BETWEEN #{from_yyyymm} AND #{to_yyyymm}
 				</if>
-		</if>	
+		</if>
 		<if test="product != null">
 				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' )
 		</if>
-		<if test="division_code != null">
-				AND DIVISION_CODE = #{division_code}
+		<if test="search_division_code != null">
+				AND DIVISION_CODE = #{search_division_code}
 		</if>
 		ORDER BY YYYYMM, DIVISION_CODE, PRODUCT_CODE
     </select>
 
     <select id="retrieveftaBomDetail" parameterType="HashMap" resultType="HashMap">
-       SELECT *
-       FROM (
-	       SELECT FBD.YYYYMM
-	       		, IM.ITEM_CODE 		
-				, IM.ITEM_NAME 	
-				, IM.UNIT	
-				, FBD.HS_CODE
-				, FBD.REQ_QTY
-	       FROM FTA_BOM_DTL FBD
-	       INNER JOIN DIVISION DV
-	       		ON DV.DIVISION_CODE = FBD.DIVISION_CODE
-				AND DV.COMPANY_CODE = FBD.COMPANY_CODE
-				AND DV.STATUS = 'Y'
-			INNER JOIN ITEM_MST IM
-				ON IM.ITEM_CODE = FBD.ITEM_CODE
-				AND IM.COMPANY_CODE = FBD.COMPANY_CODE
-			WHERE FBD.COMPANY_CODE = #{company_code}	
-			<if test="yyyymm != null">
-					AND FBD.YYYYMM = #{yyyymm}
-			</if>	
-			<if test="product_code != null">
-					AND FBD.PRODUCT_CODE = #{product_code}
-			</if>	
-			<if test="division_code != null">
-					AND FBD.DIVISION_CODE = #{division_code}
-			</if>	
-		)
-		WHERE 1=1
+       SELECT FBD.YYYYMM
+       		, IM.ITEM_CODE
+			, IM.ITEM_NAME
+			, IM.UNIT
+			, FBD.HS_CODE
+			, FBD.REQ_QTY
+       FROM FTA_BOM_DTL FBD
+       INNER JOIN DIVISION DV
+       		ON DV.DIVISION_CODE = FBD.DIVISION_CODE
+			AND DV.COMPANY_CODE = FBD.COMPANY_CODE
+			AND DV.STATUS = 'Y'
+		INNER JOIN ITEM_MST IM
+			ON IM.ITEM_CODE = FBD.ITEM_CODE
+			AND IM.COMPANY_CODE = FBD.COMPANY_CODE
+		WHERE FBD.COMPANY_CODE = #{company_code}
+		<if test="yyyymm != null">
+				AND FBD.YYYYMM = #{yyyymm}
+		</if>
+		<if test="product_code != null">
+				AND FBD.PRODUCT_CODE = #{product_code}
+		</if>
+		<if test="division_code != null">
+				AND FBD.DIVISION_CODE = #{division_code}
+		</if>
     </select>
     
     <select id="retrieveftaBomDetailVendor" parameterType="HashMap" resultType="HashMap">

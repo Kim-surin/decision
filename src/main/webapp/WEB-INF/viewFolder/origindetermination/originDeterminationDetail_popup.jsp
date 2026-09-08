@@ -112,15 +112,11 @@
 </body>
 <script>
 	var ORIGIN_DETERMINATION_DETAIL_POPUP = new function() {
-		// 팝업을 연 화면에서 체크되어 넘어온 원본 목록. 내수는 이미 라인(SALES_NO+SALES_SEQ) 단위라
-		// 좌측 목록에도 그대로 쓰지만, 수출은 송장(SALES_NO) 단위라 좌측 목록/상세 렌더링에는
-		// this.lineItems(라인 단위로 펼친 목록)를 쓰고, this.datas는 일괄/개별 판정 실행(executeOriginDetermination)
-		// 대상 식별에만 쓴다.
+		// 체크되어 넘어온 원본 목록. 수출은 송장(SALES_NO) 단위라 좌측/상세 렌더링엔 lineItems를 쓰고,
+		// datas는 판정 실행(executeOriginDetermination) 대상 식별에만 쓴다.
 		this.datas = [];
-		// lineItems를 (SALES_NO, 품번) 기준으로 묶은 좌측 사이드바 표시 단위 목록 - retrieveDetailList 응답으로 채워짐.
-		// 동일 SALES_NO 안에서 같은 품번이 여러 라인(SALES_SEQ)에 걸쳐 있어도 좌측엔 하나만 노출하고, 그 그룹에
-		// 속한 라인들을 우측 "판정 품목" 표에 모두 나열한다. SALES_NO가 다르면(매출년월/고객사가 다르면)
-		// 품번이 같아도 별도 그룹으로 분리한다.
+		// lineItems를 (SALES_NO, 품번) 기준으로 묶은 좌측 표시 단위. SALES_NO가 다르면 품번이 같아도
+		// 별도 그룹으로 분리하고, 그룹에 속한 라인은 우측 "판정 품목" 표에 모두 나열한다.
 		this.lineItems = [];
 		this.groupedItems = [];
 		// sales_no + '_' + sales_seq 를 key 로 하는 라인별 상세정보 맵
@@ -138,9 +134,8 @@
 		this.currentFailMaterialList = [];
 		// 판정 실패 상세내용 대신 원재료 목록을 보여줘야 하는 실패 사유(ERROR_CODE)
 		this.MATERIAL_DETAIL_ERROR_CODES = ["TXT_HSCODE_INCLUDE_MISSING", "MSG_FAILED_DECISION_QTY_AMOUNT"];
-		// 팝업을 연 화면(내수/수출) - 값이 없으면(구버전 호출부 등) 내수로 취급.
-		// 내수는 "개별/일괄 원산지 판정" 버튼이 둘 다 있고 executeDomesticOriginDetermination을,
-		// 수출은 "일괄 원산지 판정" 버튼만 있고 executeExportOriginDetermination을 호출한다.
+		// 팝업을 연 화면(내수/수출, 값 없으면 내수 취급). 내수는 개별/일괄 판정 버튼이 둘 다 있고,
+		// 수출은 일괄 판정 버튼만 있다.
 		this.mode = 'domestic';
 
 		// 판정 품목 -> 판정결과 -> 판정 상세내용으로 이어지는 마스터-디테일 그리드 3개
@@ -164,10 +159,8 @@
 			return [row.invoice_month, row.division_code, row.customer_code, row.product_code].join('_');
 		};
 
-		// this.lineItems를 (SALES_NO, 품번) 기준으로 묶어 this.groupedItems를 구성.
-		// 매출년월/고객사가 달라 SALES_NO가 다르면 품번이 같아도 별도 그룹으로 분리해야 한다.
-		// 그룹의 판정상태 배지는 그 그룹에 속한 첫 번째 라인의 값을 대표로 사용한다
-		// (같은 SALES_NO 안의 라인들은 보통 같은 송장에 속해 판정상태를 공유함)
+		// lineItems를 (SALES_NO, 품번) 기준으로 묶어 groupedItems를 구성한다. SALES_NO가 다르면
+		// 품번이 같아도 별도 그룹으로 분리하고, 그룹의 판정상태 배지는 첫 번째 라인 값을 쓴다.
 		this.buildGroupedItems = function() {
 			var self = this;
 			var groupMap = {};
@@ -326,10 +319,8 @@
 				self.selectFailReasonRow(event.item);
 			});
 
-			// 판정 실패 상세내용: 실패 사유 그리드에서 협정(FTA_CODE) 행을 클릭하면, 그 협정에 걸린
-			// 룰 전체(오류 여부 무관)의 처리결과를 보여준다 - 어떤 룰은 통과하고 어떤 룰만 실패했는지 함께 확인 가능.
-			// 단 실패 사유가 MATERIAL_DETAIL_ERROR_CODES에 해당하면 이 그리드 대신 원재료 목록을 보여준다
-			// (selectFailReasonRow 참고)
+			// 판정 실패 상세내용: 실패 사유 행 클릭 시 그 협정에 걸린 룰 전체의 처리결과를 보여준다.
+			// 실패 사유가 MATERIAL_DETAIL_ERROR_CODES면 이 그리드 대신 원재료 목록을 보여준다(selectFailReasonRow 참고).
 			var columnLayoutFailDetail = [
 				{dataField: "rule_seq", headerText: "룰순번", width: 90},
 				{dataField: "rule_code", headerText: "결정기준", width: 150, filter: {showIcon: true}},
@@ -369,14 +360,10 @@
 
 		// 시작점
 		this.Initialize_viewObject = function() {
-			var rawDatas = '${datas}';
+			// datas는 서버가 JSON 문자열을 따옴표 없이 스크립트 리터럴로 내려준다.
+			// 유효한 JSON 텍스트는 그대로 유효한 JS 배열 리터럴이라 이중 이스케이프 문제가 없다
+			this.datas = ${datas};
 			var rawMode = '${mode}';
-
-			try {
-				this.datas = rawDatas ? JSON.parse(rawDatas) : [];
-			} catch (e) {
-				this.datas = [];
-			}
 
 			this.mode = rawMode || 'domestic';
 			this.applyModeVisibility();
@@ -387,15 +374,8 @@
 			this.refreshSalesKeysThenRetrieveDetailList();
 		};
 
-		// 내수는 리스트 조회 시점에 가상매출 우선(있으면 가상매출, 없으면 원본)으로 sales_no/sales_seq를
-		// 미리 정해서 넘겨준다. 이 값은 그 시점의 스냅샷이라, 팝업을 여는 사이 또는 팝업 안에서 판정을
-		// 실행한 직후 새로 가상매출이 생기면 금방 낡은 값이 된다. 팝업을 열 때와 판정 실행 직후 이 함수로
-		// (매출년월/플랜트/고객사/품번) 그룹 기준 "지금 시점" sales_no/sales_seq/판정상태/상품상세를 한 번에
-		// 조회해, this.datas를 갱신하면서 그 응답을 그대로 상세 목록으로도 사용한다(retrieveDetailList처럼
-		// 별도로 다시 조회하지 않음 - 원래는 키 재조회와 상세조회를 나눠서 호출했으나 수출과 공유하는
-		// originDeterminationDetailList에 내수 전용 재조회 로직을 섞고 싶지 않았을 뿐이라, 내수 전용
-		// 상세조회 쿼리(retrieveDomesticOriginDeterminationDetailList) 하나로 합쳐 왕복을 줄였다).
-		// 수출은 가상매출 개념이 없어 retrieveDetailList로 그대로 넘어간다.
+		// 내수의 sales_no/sales_seq는 가상매출 생성 시점의 스냅샷이라 금방 낡을 수 있어, 팝업을 열 때와
+		// 판정 실행 직후 "지금 시점" 값을 다시 조회해 datas와 상세 목록을 함께 갱신한다. 수출은 가상매출이 없어 바로 넘어간다.
 		this.refreshSalesKeysThenRetrieveDetailList = function() {
 			var self = this;
 
@@ -451,19 +431,14 @@
 			);
 		};
 
-		// 이 팝업이 열리는 modal-dialog-end 는 슬라이드인 트랜지션(.modal.fade .modal-dialog-end 의
-		// transform)이 걸려 있어 열릴 때마다 화면이 접혔다 펴지는 것처럼 보인다. 부트스트랩은 show()
-		// 호출 시점에 대상 엘리먼트의 fade 클래스 유무를 그때그때 확인하므로(Modal.prototype._isAnimated),
-		// KpackageOBJ.sidepanel.open이 modalObject.show()를 호출하기 전인 지금(스크립트가 콘텐츠 주입과
-		// 함께 동기 실행되는 시점) fade 클래스를 미리 떼어내면 트랜지션 없이 즉시 나타난다.
+		// modal-dialog-end의 슬라이드인 트랜지션 때문에 열릴 때마다 접혔다 펴지는 것처럼 보인다.
+		// show() 호출 전인 지금 fade 클래스를 떼어내면 트랜지션 없이 즉시 나타난다.
 		this.disableModalFadeTransition = function() {
 			$('.origin-detail-split').closest('.modal').removeClass('fade');
 		};
 		
-		// KpackageOBJ.sidepanel.open이 부트스트랩 모달을 아직 show() 하기 전에 콘텐츠를 주입하고
-		// 그 안에서 그리드를 생성하므로(createAUIGrid), 생성 시점엔 모달이 아직 안 보인 상태다.
-		// disableModalFadeTransition으로 트랜지션을 없앴으므로 shown.bs.modal은 show() 호출과 거의
-		// 동시에(대기 없이) 발생한다 - 그 시점에 그리드 크기를 다시 계산한다.
+		// 모달이 아직 show()되기 전에 그리드가 생성돼(createAUIGrid) 크기를 못 잡는다.
+		// shown.bs.modal 시점에 그리드 크기를 다시 계산한다.
 		this.bindModalShownResize = function() {
 			var self = this;
 			var $modal = $('.origin-detail-split').closest('.modal');
@@ -544,9 +519,8 @@
 			);
 		};
 
-		// retrieveDetailList/refreshSalesKeysThenRetrieveDetailList 공용: 상세 목록 응답으로 좌측 목록
-		// (this.lineItems)까지 새로 구성한다. 일괄/개별 판정 실행 뒤 최신화할 때도 이 경로를 그대로
-		// 다시 탄다(선택 중이던 라인이 남아있으면 그 라인을, 없으면 첫 라인을 다시 선택).
+		// 상세 목록 응답으로 좌측 목록(lineItems)까지 새로 구성한다. 판정 실행 뒤 최신화할 때도
+		// 이 경로를 다시 타며, 선택 중이던 라인이 남아있으면 그 라인을 다시 선택한다.
 		this.applyDetailListResponse = function(list) {
 			var previousGroupKey = this.selectedGroupKey;
 
@@ -564,11 +538,8 @@
 			}
 		};
 
-		// detailMap: buildKey(sales_no, sales_seq) -> 그 라인의 상세 1건.
-		// lineItems: 좌측 사이드바/선택 기준이 되는 라인 목록. 내수는 this.datas 자체가 이미 라인
-		// 단위라 그대로 쓰고, 수출은 this.datas가 송장(SALES_NO) 단위라 방금 받은 라인 목록으로
-		// 새로 구성한다 - 품번/품명은 그 라인 상세에서, 판정상태는 그 라인이 속한 송장의 원본
-		// this.datas 항목에서 가져온다(판정상태는 송장 단위라 같은 송장의 모든 라인이 공유).
+		// detailMap: buildKey(sales_no, sales_seq) -> 상세 1건. lineItems: 좌측 목록 기준 라인.
+		// 내수는 datas가 이미 라인 단위지만, 수출은 송장 단위라 받은 라인 목록으로 새로 구성한다.
 		this.buildDetailMapAndLineItems = function(list) {
 			var self = this;
 
@@ -601,9 +572,8 @@
 			});
 		};
 
-		// 좌측 그룹(SALES_NO+품번) 선택 시, 그 그룹에 속한 라인 전체를 우측 "판정 품목"에 나열하고,
-		// 그 중 하나(이전에 선택돼 있던 라인 우선, 없으면 판정완료 라인, 그마저 없으면 첫 라인)를
-		// 자동으로 선택해 판정결과를 보여준다
+		// 좌측 그룹 선택 시 그 그룹의 라인 전체를 우측 "판정 품목"에 나열하고, 그중 하나(이전 선택
+		// 라인 우선, 없으면 판정완료 라인, 그마저 없으면 첫 라인)를 자동 선택해 판정결과를 보여준다.
 		this.selectItem = function(key) {
 			this.selectedGroupKey = key;
 
@@ -639,9 +609,8 @@
 			this.selectDetailLine(lineKeyToSelect);
 		};
 
-		// 우측 "판정 품목" 표에서 라인 1건을 선택 - 판정완료(status=4)면 판정결과/판정 상세내용을,
-		// 판정실패(status=5)면 판정 실패 사유/판정 실패 상세내용을 보여줌. 그 외 상태는 둘 다 비움.
-		// 개별 원산지 판정(도메스틱 전용) 대상도 이 선택된 라인을 기준으로 한다
+		// 판정 품목 표에서 라인 선택 - 판정완료면 판정결과/상세를, 판정실패면 실패 사유/상세를
+		// 보여준다(그 외는 둘 다 비움). 개별 원산지 판정 대상도 이 선택 라인 기준이다.
 		this.selectDetailLine = function(lineKey) {
 			this.selectedLineKey = lineKey;
 
@@ -714,9 +683,8 @@
 			AUIGrid.setGridData(this.grid_Detail, data);
 		};
 
-		// 판정완료 건의 판정결과(협정별)와 판정 상세내용(기준별)을 한 번에 조회.
-		// 판정 상세내용은 협정(FTA_CODE)마다 별도 호출하지 않고, 여기서 받은 detailList 를
-		// fta_code 로 매핑해 화면에서 바로 보여준다(selectResultRow 참고)
+		// 판정완료 건의 판정결과/상세내용을 한 번에 조회한다. 상세내용은 fta_code마다 별도 호출
+		// 없이 받은 detailList를 매핑해 바로 보여준다(selectResultRow 참고).
 		this.retrieveResultList = function(row) {
 			var self = this;
 			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
@@ -735,7 +703,7 @@
 		// 판정결과 그리드 렌더링. 행 클릭은 createAUIGrid에서 selectResultRow로 한 번만 바인딩해뒀다
 		this.renderResultList = function(list) {
 			$('#originDetermination_popup_resultSection').show();
-			// AUIGrid는 부모가 display:none인 상태로 생성/resize되면 크기를 제대로 못 잡는다(다른 주석 참고).
+			// AUIGrid는 부모가 display:none인 상태로 생성/resize되면 크기를 제대로 못 잡는다
 			// 숨겨져 있다가 지금 막 보이게 된 경우를 대비해 다시 계산해준다.
 			AUIGrid.resize(this.grid_Result);
 			AUIGrid.resize(this.grid_ResultDetail);
@@ -743,9 +711,8 @@
 			AUIGrid.setGridData(this.grid_ResultDetail, []);
 		};
 
-		// 판정결과 그리드에서 협정(FTA_CODE) 행을 클릭하면, 별도 API 호출 없이
-		// retrieveResultList에서 이미 받아둔 currentDetailList를 그 fta_code로 필터링해
-		// 판정 상세내용 그리드에 보여준다
+		// 협정 행 클릭 시 별도 API 호출 없이 이미 받아둔 currentDetailList를 fta_code로
+		// 필터링해 판정 상세내용 그리드에 보여준다.
 		this.selectResultRow = function(ftaCode) {
 			var filtered = this.currentDetailList.filter(function(d) {
 				return d.fta_code === ftaCode;
@@ -758,9 +725,8 @@
 			AUIGrid.setGridData(this.grid_ResultDetail, list || []);
 		};
 
-		// 판정실패(status=5) 건의 실패 사유(협정/룰별)와, 그 사유(FTA_CODE)별 상세내용(룰 전체 처리결과)/
-		// 원재료 목록을 한 번에 조회. retrieveResultList와 동일한 패턴 - 상세내용/원재료 목록은 fta_code마다
-		// 별도 호출하지 않고 여기서 받은 목록을 fta_code로 매핑해 화면에서 바로 보여준다(selectFailReasonRow 참고)
+		// 판정실패 건의 실패 사유/상세내용/원재료 목록을 한 번에 조회한다. fta_code마다 별도 호출
+		// 없이 받은 목록을 매핑해 바로 보여준다(retrieveResultList와 동일 패턴, selectFailReasonRow 참고).
 		this.retrieveFailList = function(row) {
 			var self = this;
 			var request = { sales_no: row.sales_no, sales_seq: row.sales_seq };
@@ -790,9 +756,8 @@
 			$('#oAuiGrid_originDetermination_popup_failMaterial').hide();
 		};
 
-		// 실패 사유 그리드에서 행을 클릭하면, 별도 API 호출 없이 retrieveFailList에서 이미 받아둔 목록을
-		// 그 fta_code로 필터링해 보여준다. error_code가 MATERIAL_DETAIL_ERROR_CODES(HS코드 누락/금액 0)에
-		// 해당하면 판정 상세내용 대신 원재료 목록을 보여준다
+		// 행 클릭 시 별도 API 호출 없이 이미 받아둔 목록을 fta_code로 필터링해 보여준다.
+		// error_code가 MATERIAL_DETAIL_ERROR_CODES면 상세내용 대신 원재료 목록을 보여준다.
 		this.selectFailReasonRow = function(reasonRow) {
 			var ftaCode = reasonRow.fta_code;
 
@@ -823,10 +788,8 @@
 			AUIGrid.setGridData(this.grid_FailMaterial, list || []);
 		};
 
-		// 내수는 (invoice_month, customer_code, division_code, product_code) 라인 목록으로
-		// executeDomesticOriginDetermination을, 수출은 (sales_no, division_code) 목록으로
-		// executeExportOriginDetermination을 호출한다 - 응답 형태(groupCount/failedTargets)는
-		// 동일해서 처리(handleExecuteResponse)는 공용으로 쓴다.
+		// 내수/수출은 각각 다른 라인 목록으로 executeDomestic/ExportOriginDetermination을 호출하지만,
+		// 응답 형태(groupCount/failedTargets)가 같아 처리(handleExecuteResponse)는 공용으로 쓴다.
 		this.executeOriginDetermination = function(rows) {
 			var self = this;
 			var url;
@@ -865,10 +828,8 @@
 			);
 		};
 
-		// executeOriginDetermination 응답(내수/수출 공용) 처리: 결과 메시지 표시 후 좌측 목록/상세
-		// 전체를 다시 조회해 최신화한다(선택 중이던 라인이 남아있으면 그 라인을 그대로 유지).
-		// 내수는 이번 실행으로 가상매출이 새로 생겼을 수 있어, sales_no/sales_seq/판정상태를 먼저
-		// 다시 조회(refreshSalesKeysThenRetrieveDetailList)한 뒤에 상세를 조회한다.
+		// 실행 결과 메시지 표시 후 좌측 목록/상세를 다시 조회해 최신화한다. 내수는 가상매출이
+		// 새로 생겼을 수 있어 refreshSalesKeysThenRetrieveDetailList로 먼저 키를 갱신한다.
 		this.handleExecuteResponse = function(response, productCount) {
 			var value = (response && response.value) ? response.value : {};
 			var failedCount = value.failedTargets ? value.failedTargets.length : 0;

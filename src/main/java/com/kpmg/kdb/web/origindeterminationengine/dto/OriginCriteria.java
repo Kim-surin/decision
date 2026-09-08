@@ -2,10 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * 레거시 PKG99_COO_DECISION.COO_DECISION 의 커서 변수 FR_LIST(CURSOR C_FTA_RULE) 한 행.
- * 판정 대상 HS코드에 적용 가능한 FTA_RULE(협정별 원산지 판정기준) 한 건을 표현한다.
- */
+// 레거시 PKG99_COO_DECISION.COO_DECISION의 커서 FR_LIST(C_FTA_RULE) 한 행.
+// 판정 대상 HS코드에 적용 가능한 FTA_RULE(협정별 원산지 판정기준) 한 건.
 public class OriginCriteria {
 
 	private Integer ruleId;

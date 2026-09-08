@@ -9,11 +9,8 @@ import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
-/**
- * "1. 가상매출 생성" 단계(내수 전용). 내수(고객사/사업부 그룹) 단위로 가상 SALES_MST/SALES_DTL을
- * 만들고 판정대상 커서를 조회하는 {@link AggregatedVirtualSalesDao} 쿼리를 순서대로 호출한다.
- * {@link OriginDecisionPipeline} 이 사용한다.
- */
+// "1. 가상매출 생성" 단계(내수 전용). 내수(고객사/사업부 그룹) 단위로 가상 SALES_MST/SALES_DTL을 만들고
+// 판정대상 커서를 조회하는 AggregatedVirtualSalesDao 쿼리를 순서대로 호출한다. OriginDecisionPipeline이 사용한다.
 @Service
 public class AggregatedVirtualSalesGenerator extends GeneralService {
 

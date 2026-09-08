@@ -7,10 +7,8 @@ import org.apache.ibatis.annotations.Param;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
-/**
- * 내수(고객사/사업부 그룹) 포괄 가상매출(SALES_MST/SALES_DTL) 생성과 판정대상 커서 조회.
- * {@link AggregatedVirtualSalesGenerator} 가 사용한다.
- */
+// 내수(고객사/사업부 그룹) 포괄 가상매출(SALES_MST/SALES_DTL) 생성과 판정대상 커서 조회.
+// AggregatedVirtualSalesGenerator가 사용한다.
 public interface AggregatedVirtualSalesDao {
 
 	/** "1. 내수 포괄 매출 생성" 전처리: 기존 가상 SALES_DTL 삭제 */
@@ -25,9 +23,7 @@ public interface AggregatedVirtualSalesDao {
 	int mergeAggregatedSalesMst(@Param("virtualSalesNo") String virtualSalesNo,
 			@Param("p") VirtualSalesGenerationParams params);
 
-	/**
-	 * 가상 SALES_MST에 대응하는 집계 SALES_DTL을 MERGE로 생성.
-	 */
+	// 가상 SALES_MST에 대응하는 집계 SALES_DTL을 MERGE로 생성
 	int mergeAggregatedSalesDtl(@Param("virtualSalesNo") String virtualSalesNo,
 			@Param("p") VirtualSalesGenerationParams params);
 

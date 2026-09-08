@@ -151,13 +151,8 @@
 		AND    FRD.STATUS = 'N'
 	</select>
 
-	<!--
-		selectOwnCooFcrResult(역내산 우선)/selectNonCooFcrResult(역외산만 존재) 2단계 조회를 단일 배치로
-		통합. 요청받은 (salesSeq,ftaCode,divisionCode) 조합 전체를 UNION ALL 파생 테이블(V)로 던지고
-		LATERAL 서브쿼리 안에서 두 단건 쿼리를 각각 FETCH FIRST 1 ROW ONLY 로 조회 후 UNION ALL 로 합쳐
-		역내산을 우선해 1건만 뽑는다. 매칭 행이 전혀 없는 조합도 결과에 포함되며(LEFT JOIN LATERAL) 그
-		경우 matchTier 를 포함한 모든 FCR_RESULT 컬럼이 NULL 이다.
-	-->
+	<!-- selectOwnCooFcrResult(역내산 우선)/selectNonCooFcrResult(역외산만 존재) 2단계 조회를 단일 배치로 통합.
+		 요청 조합 전체를 UNION ALL 파생 테이블(V)로 던져 역내산을 우선해 1건만 뽑으며, 매칭 없는 조합도 결과에 포함되고(LEFT JOIN LATERAL) 그때 matchTier 등 모든 컬럼이 NULL이다. -->
 	<select id="selectOwnOrNonCooFcrResultBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmBatchResult">
 		SELECT V.SALES_SEQ     AS reqSalesSeq
 		      ,V.FTA_CODE      AS reqFtaCode

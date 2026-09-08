@@ -43,15 +43,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary;
 import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow;
 
-/**
- * "CREATE_FCR" 단계 (레거시 CREATE_FCR 프로시저). {@link OriginDecisionPipeline} 이 사용한다.
- *
- * 매출(SALES_NO) 1건에 대해 BOM/표준 BOM 존재를 확인하고, FCR_MST(제품×FTA 후보)를 생성한 뒤
- * BOM 최말단 자재와 상품/부산물을 집계해 FCR_DTL(원산지 판정용 원재료 명세)을 생성한다.
- *
- * <p>원본과 동일하게 이 메서드는 예외를 흡수하지 않는다 — 매출 1건 처리 실패를 배치 전체 중단
- * 없이 넘기는 책임은 호출자({@link BulkPipelineRunner})에 있다.
- */
+// "CREATE_FCR" 단계(레거시 CREATE_FCR 프로시저). OriginDecisionPipeline이 사용한다. 매출(SALES_NO) 1건에 대해
+// BOM/표준 BOM 존재를 확인해 FCR_MST를 생성한 뒤 자재를 집계해 FCR_DTL을 만든다. 예외를 흡수하지 않아 배치 중단 없이 넘기는 책임은 BulkPipelineRunner에 있다.
 @Service
 public class CreateFcrService extends GeneralService {
 
@@ -71,12 +64,8 @@ public class CreateFcrService extends GeneralService {
 	@Autowired
 	private CreateFcrReferenceDataService referenceDataService;
 
-	/**
-	 * @param productCodes 판정 대상 제품 코드. null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면
-	 *                      그 제품들만(개별 판정) 대상으로 한다.
-	 * @return "successed" / "semisuccess" — BOM이 없는 제품이 있어도 나머지 제품은 계속 진행하고
-	 *         BOM이 없는 제품은 FCR_RESULT에 BOM_NOT_FOUND 오류로 명시 기록한다("semisuccess").
-	 */
+	// productCodes: null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상.
+	// 반환값 "semisuccess"는 BOM 없는 제품이 있어 나머지만 진행하고 해당 제품은 FCR_RESULT에 BOM_NOT_FOUND로 명시 기록했다는 뜻.
 	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam,
 			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);
@@ -159,10 +148,8 @@ public class CreateFcrService extends GeneralService {
 		return missingBomTargets.isEmpty() ? "successed" : "semisuccess";
 	}
 
-	/**
-	 * 제품별 실적/표준 BOM 존재 여부를 확인하고 SALES_DTL.BOM_STATUS를 갱신한다.
-	 * @return BOM이 없는(BOM_STATUS='1') 대상 목록
-	 */
+	// 제품별 실적/표준 BOM 존재 여부를 확인하고 SALES_DTL.BOM_STATUS를 갱신한다.
+	// @return BOM이 없는(BOM_STATUS='1') 대상 목록
 	private List<SalesDtlBomTarget> checkBomAvailability(CreateFcrDao dao, String companyCode, String divisionCode,
 			String salesNo, String bomType, String bomPreviousYyyymm, String yyyymm, List<String> productCodes) {
 		List<SalesDtlBomTarget> targets = dao.selectSalesDtlBomTargets(companyCode, divisionCode, salesNo,
@@ -333,13 +320,8 @@ public class CreateFcrService extends GeneralService {
 		}
 	}
 
-	/**
-	 * BOM이 없는 대상들의 FTA_CODE 후보마다 FCR_MST(RULE_CONTENTS는 채우지 않음) + FCR_RESULT(STATUS='E',
-	 * BOM_NOT_FOUND)를 명시적으로 생성한다. RULE_CONTENTS가 비어있는 FCR_MST는
-	 * updateSalesMstDecisionComplete/updateSalesDtlDecisionComplete 집계에서 판정실패로 잡히고,
-	 * selectOriginDeterminationTargets가 SALES_DTL.BOM_STATUS='1'인 행을 제외하므로 이후 determineOrigin()이
-	 * 이 FCR_MST를 다시 처리해 값을 덮어쓰는 일도 없다.
-	 */
+	// BOM이 없는 대상들의 FTA_CODE 후보마다 FCR_MST(RULE_CONTENTS 미채움) + FCR_RESULT(STATUS='E', BOM_NOT_FOUND)를 명시
+	// 생성한다. RULE_CONTENTS가 비면 판정실패로 잡히고 BOM_STATUS='1'은 이후 조회에서 제외돼 재처리로 덮어쓰는 일도 없다.
 	private void insertBomNotFoundResults(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
 			String exportFlag, String bomType, List<SalesDtlBomTarget> missingBomTargets,
 			Map<String, String> hsCodeCache) {

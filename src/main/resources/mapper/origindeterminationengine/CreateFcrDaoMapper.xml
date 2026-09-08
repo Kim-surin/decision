@@ -43,10 +43,8 @@
 		</if>
 	</select>
 
-	<!--
-		자기 사업장 BOM(own)/타 사업장 BOM(any) 조회를 대상 조합 전체에 대해 LATERAL 로 배치 조회한다.
-		Java(CreateFcrService#checkBomAvailability)에서 own 우선, 없으면 any 로 폴백한다.
-	-->
+	<!-- 자기 사업장 BOM(own)/타 사업장 BOM(any) 조회를 대상 조합 전체에 대해 LATERAL로 배치 조회한다.
+		 Java(CreateFcrService#checkBomAvailability)에서 own 우선, 없으면 any로 폴백한다. -->
 	<select id="selectBomAvailabilityBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult">
 		SELECT V.PROD_DIVISION_CODE AS reqProdDivisionCode
 		      ,V.PRODUCT_CODE       AS reqProductCode

@@ -12,12 +12,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 
-/**
- * 세번변경기준 + 미소기준 판정 (레거시 COO_DECISION_FOR_CTC).
- *
- * RVC_CTC 모드와 CTC_ONLY 모드는 계산 로직이 상당히 달라(미소기준/버퍼 계산이 CTC_ONLY엔 없음)
- * 모드별로 분리했다. HS코드 누락 체크만 두 모드에 동일하게 있다.
- */
+// 세번변경기준 + 미소기준 판정(레거시 COO_DECISION_FOR_CTC). RVC_CTC 모드와 CTC_ONLY 모드는 계산 로직이
+// 상당히 달라(미소기준/버퍼 계산이 CTC_ONLY엔 없음) 모드별로 분리했고, HS코드 누락 체크만 두 모드에 동일하다.
 @Service
 public class CtcCriteriaDecisionService {
 
@@ -165,11 +161,8 @@ public class CtcCriteriaDecisionService {
 		}
 	}
 
-	/**
-	 * DE_MINIMIS_UNIT 'W'/'A' 공용: 협정기준/회사기준 충족여부 판정.
-	 * frData.deMinimisRate 가 NULL 이면 Oracle의 NULL 전파 규칙(NULL 사칙연산/비교는 항상 NULL=거짓)과
-	 * 동일하게 두 결과율을 NULL로, 두 충족여부를 모두 'N'으로 처리한다.
-	 */
+	// DE_MINIMIS_UNIT 'W'/'A' 공용: 협정기준/회사기준 충족여부 판정. frData.deMinimisRate가 NULL이면
+	// Oracle의 NULL 전파 규칙과 동일하게 두 결과율을 NULL로, 두 충족여부를 모두 'N'으로 처리한다.
 	private void applyDeMinimisResult(OriginDeterminationContext ctx, OriginDeterminationResult rec, BigDecimal rate, OriginCriteria frData) {
 		rec.setCtcResultRate(rate);
 

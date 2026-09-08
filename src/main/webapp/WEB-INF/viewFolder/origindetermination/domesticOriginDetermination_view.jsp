@@ -128,7 +128,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<label class="form-label" for="example-select">플랜트</label>
-													<select class="form-select" id="division_code">
+													<select class="form-select" id="search_division_code">
 														<option value="">전체</option>
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
@@ -270,7 +270,7 @@
 								/* 날짜 파라메터 '-' 제거  */
 								"from_date": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION-form", "from_date").replace(/-/gi, "")
 								, "to_date": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION-form", "to_date").replace(/-/gi, "")
-								, "division_code": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION-form", "division_code")
+								, "search_division_code": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION-form", "search_division_code")
 								, "customer": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION-form", "customer")
 								, "product": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION-form", "product")
 								, "status": KpackageOBJ.object.getFormValue("DOMESTIC_ORIGIN_DETERMINATION-form", "status")
@@ -333,12 +333,12 @@
 							    });
 							
 							var request = {
-								datas: JSON.stringify(datas),
+								datas: datas,
 								mode: 'domestic'
 							}
 
 							// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다. 보고 있던 페이지 번호도 유지한다
-							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
+							KpackageOBJ.sidepanel.openJson('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
 								function() {
 									DOMESTIC_ORIGIN_DETERMINATIONVIEW.retrieve_GridData(true);
 								});

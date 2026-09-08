@@ -17,7 +17,7 @@
 				, SD.AMOUNT
 				, SM.INVOICE_DATE
 				, SM.EXPORT_FLAG 
-				, CASE SM.EXPORT_FLAG WHEN 'D' THEN '내수' WHEN 'E' THEN '수출' ELSE SM.EXPORT_FLAG END EXPORT_FLAG_NAME
+				, GET_CODE_NAME(SM.EXPORT_FLAG, 'EF', SM.COMPANY_CODE, 'KOR') AS EXPORT_FLAG_NAME
 	       FROM SALES_MST SM
 	       INNER JOIN SALES_DTL SD
 	       		ON SM.COMPANY_CODE = SD.COMPANY_CODE
@@ -49,8 +49,8 @@
 		<if test="product != null">
 				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' )
 		</if>
-		<if test="division_code != null">
-				AND DIVISION_CODE = #{division_code}
+		<if test="search_division_code != null">
+				AND DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="customer != null">
 				AND (CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )

@@ -2,10 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * 원산지판정용 워킹데이터(BOM 소요량 기준) 한 행. 매출 1건당 한 번만 조회해 이 DTO 리스트로 메모리에
- * 적재한 뒤 판정 로직 전체(배제기준/CTC/RVC/RCEP 등)가 스트림 연산으로 처리한다(반복 DB 호출 제거).
- */
+// 원산지판정용 워킹데이터(BOM 소요량 기준) 한 행. 매출 1건당 한 번만 조회해 메모리에 적재한 뒤
+// 판정 로직 전체(배제기준/CTC/RVC/RCEP 등)가 스트림 연산으로 처리한다(반복 DB 호출 제거).
 public class MaterialOriginRow {
 
 	private String ftaCode;
