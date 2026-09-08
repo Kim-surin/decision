@@ -32,9 +32,9 @@
 													<label class="form-label" for="from_date">기준년월</label>
 													<div class="d-flex gap-2">
 														<input class="form-control" id="from_date" name="from_date"
-															type="date" value="${from_date}">
+															type="month" value="${from_date}">
 														<input class="form-control" id="to_date" name="to_date"
-															type="date" value="${to_date}">
+															type="month" value="${to_date}">
 
 													</div>
 												</div>
