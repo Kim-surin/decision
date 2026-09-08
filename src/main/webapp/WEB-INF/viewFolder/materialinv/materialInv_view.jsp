@@ -105,7 +105,7 @@
 									headerText: "기초재고", children: [
 										{
 											dataField: "initial_qty", headerText: "수량", width: 120
-											, dataType: "numeric", style: ""
+											, dataType: "numeric", style: "", formatString: "#,##0.000"
 											, editRenderer: {
 												type: "InputEditRenderer",
 												onlyNumeric: true, // 0~9만 입력가능
@@ -118,7 +118,7 @@
 								{
 									headerText: "입고", children: [{
 										dataField: "input_qty", headerText: "수량"
-										, width: 120
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
@@ -140,7 +140,7 @@
 								{
 									headerText: "기타입고", children: [{
 										dataField: "extra_input_qty", headerText: "수량"
-										, width: 120
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
@@ -162,7 +162,7 @@
 								{
 									headerText: "출고", children: [{
 										dataField: "issue_qty", headerText: "수량"
-										, width: 120
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
@@ -184,7 +184,7 @@
 								{
 									headerText: "기타출고", children: [{
 										dataField: "extra_issue_qty", headerText: "수량"
-										, width: 120
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
@@ -206,7 +206,7 @@
 								{
 									headerText: "기말재고", children: [{
 										dataField: "inventory_qty", headerText: "수량"
-										, width: 120
+										, width: 120, dataType: "numeric", formatString: "#,##0.000"
 										, editRenderer: {
 											type: "InputEditRenderer",
 											onlyNumeric: true, // 0~9만 입력가능
