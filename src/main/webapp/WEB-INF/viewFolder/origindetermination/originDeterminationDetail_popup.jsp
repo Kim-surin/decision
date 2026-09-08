@@ -703,7 +703,7 @@
 		// 판정결과 그리드 렌더링. 행 클릭은 createAUIGrid에서 selectResultRow로 한 번만 바인딩해뒀다
 		this.renderResultList = function(list) {
 			$('#originDetermination_popup_resultSection').show();
-			// AUIGrid는 부모가 display:none인 상태로 생성/resize되면 크기를 제대로 못 잡는다(다른 주석 참고).
+			// AUIGrid는 부모가 display:none인 상태로 생성/resize되면 크기를 제대로 못 잡는다
 			// 숨겨져 있다가 지금 막 보이게 된 경우를 대비해 다시 계산해준다.
 			AUIGrid.resize(this.grid_Result);
 			AUIGrid.resize(this.grid_ResultDetail);
