@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -15,7 +16,10 @@
 			<div class="row">
 				<div class="col-12 dual-grid-wrap">
 					<div class="w-45 h-full" >
-						<div class="grid-title mb-1">협정 추가 가능 국가 목록</div>
+						<div class="grid-title mb-1">
+						 	<!-- 협정 추가 가능 국가 목록 -->
+							<spring:message code='TXT.AVAILABLE_AGREEMENT_COUNTRY_LIST'/>
+						</div>
 						<div id="oAuiGrid_nationL" class="w-100 h-100"></div>
 					</div>
 					<div class="col-2 transfer-btn-area">
@@ -28,7 +32,10 @@
 				        </button> 
 				    </div>
 				    <div class="w-45 h-full" >
-				    	<div class="grid-title mb-1">협정 국가 목록</div>
+				    	<div class="grid-title mb-1">
+				    		<!-- 협정 국가 목록 -->	
+				    		<spring:message code='TXT.AGREEMENT_COUNTRY_LIST'/>
+				    	</div>
 						<div id="oAuiGrid_nationR" class="w-100 h-100"></div>
 					</div>
 				</div>
@@ -58,7 +65,7 @@
 			const leftGridColumnLayout = [
 				{
 					dataField: "nation_code"
-				  , headerText: "국가 코드"
+				  , headerText:  "<spring:message code='TXT.NATION_CODE'/>"  //국가 코드
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -66,7 +73,7 @@
 				},
 				{
 					dataField: "nation_name"
-				  , headerText: "국가명"
+				  , headerText:  "<spring:message code='TXT.NATION_NAME'/>"  //국가명
 				  , width: 120
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
@@ -77,7 +84,7 @@
 			const rightGridColumnLayout = [
 				{
 					dataField: "nation_code"
-				  , headerText: "국가 코드"
+				  , headerText: "<spring:message code='TXT.NATION_CODE'/>"  //국가 코드
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -85,7 +92,7 @@
 				},
 				{
 					dataField: "nation_name"
-				  , headerText: "국가명"
+				  , headerText: "<spring:message code='TXT.NATION_NAME'/>"  //국가명
 				  , width: 120
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
@@ -93,7 +100,7 @@
 				},
 				{
 					dataField: "effect_date"
-				  , headerText: "일자"
+				  , headerText: "<spring:message code='TXT.EFFECT_DATE'/>"  //발효일자  
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -118,7 +125,7 @@
 								isValid = true;
 							}
 							// 리턴값은 Object 이며 validate 의 값이 true 라면 패스, false 라면 message 를 띄움
-							return { "validate": isValid, "message": "유효한 날짜 형식으로 입력해주세요." };
+							return { "validate": isValid, "message":   "<spring:message code='MSG.INVALID_DATE_FORMAT'/>" }; //유효한 날짜 형식으로 입력해주세요.
 						}
 					}
 				},
@@ -158,12 +165,12 @@
 		//오측 그리드 저장
 		this.fnSave = function() {
 			const data = KpackageOBJ.auiGrid.getGridDataWithState(FTAINFO_NATION.gridIdR);  //전체 삭제후 INSERT이므로 전처데이터
-			const isValid = KpackageOBJ.auiGrid.validateGridData(FTAINFO_NATION.gridIdR, ["effect_date"], "해당 값은 필수 입력값입니다.")
+			const isValid = KpackageOBJ.auiGrid.validateGridData(FTAINFO_NATION.gridIdR, ["effect_date"], "<spring:message code='MSG.REQUIRED_VALUE'/>") //해당 값은 필수 입력값입니다.
 		
 
 			if(isValid){
 
-				if (!confirm("저장하시겠습니까?")) {
+				if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
 					return;
 				}	
 				
@@ -178,7 +185,7 @@
 		//우측 그리드 저장 콜백
 		this.fnSaveCallBack = function(res) {
 			if(res.success){
-				KpackageOBJ.object.alert("저장되었습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SAVEOK'/>"); //저장되었습니다.
 				FTAINFO_NATION.retrieve_LeftGridData();
 				FTAINFO_NATION.retrieve_RightGridData();
 				FTA_INFO.retrieve_GridData();
@@ -192,7 +199,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTAINFO_NATION.gridIdL);
 			
 			if (data.length <= 0) {
-				KpackageOBJ.object.alert('체크된 내역이 없습니다.');
+				KpackageOBJ.object.alert("<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"); //선택된 데이터가 없습니다
 				return;
 			}
 			
@@ -205,7 +212,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTAINFO_NATION.gridIdR);
 			
 			if (data.length <= 0) {
-				KpackageOBJ.object.alert('체크된 내역이 없습니다.');
+				KpackageOBJ.object.alert("<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"); //선택된 데이터가 없습니다
 				return;
 			}
 			KpackageOBJ.auiGrid.addRow(FTAINFO_NATION.gridIdL, data, "last");
