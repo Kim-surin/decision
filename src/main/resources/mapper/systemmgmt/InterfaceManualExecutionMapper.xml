@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.interfaceManualExecution.InterfaceManualExecutionDao">
+
+    <select id="retrieveScheduleCombo" parameterType="HashMap" resultType="HashMap">
+        SELECT S.SCHEDULE_CODE AS VALUE
+             , S.SCHEDULE_NAME AS NAME
+          FROM INTERFACE_SCHEDULE S
+         WHERE S.COMPANY_CODE = #{company_code}
+           AND S.SYSTEM_BATCH_YN = 'N'
+           AND TO_CHAR(CURRENT_DATE, 'YYYYMMDD') BETWEEN S.APPLY_FROM_DATE
+               AND COALESCE(NULLIF(S.APPLY_TO_DATE, ''), '99991231')
+         ORDER BY S.SCHEDULE_CODE
+    </select>
+
+    <select id="retrieveInterfaceCombo" parameterType="HashMap" resultType="HashMap">
+        SELECT M.IF_CODE AS VALUE
+             , COALESCE(I.IF_NAME, M.IF_CODE) AS NAME
+          FROM INTERFACE_SCHEDULE_MAPPING M
+          LEFT JOIN INTERFACE_ITEM_MST I
+            ON I.IF_CODE = M.IF_CODE
+           AND I.COMPANY_CODE = M.COMPANY_CODE
+         WHERE M.COMPANY_CODE = #{company_code}
+           AND M.SCHEDULE_CODE = #{schedule_code}
+           AND M.AUTO_BATCH_YN = 'Y'
+           AND COALESCE(I.USING_YN, 'Y') = 'Y'
+         ORDER BY M.SCHEDULE_SEQ
+    </select>
+
+    <select id="retrieveExecutionTarget" parameterType="HashMap" resultType="HashMap">
+        SELECT S.EXECUTION_PROGRAM
+             , M.PROCEDURE_ID
+          FROM INTERFACE_SCHEDULE S
+          JOIN INTERFACE_SCHEDULE_MAPPING M
+            ON M.SCHEDULE_CODE = S.SCHEDULE_CODE
+           AND M.COMPANY_CODE = S.COMPANY_CODE
+           AND M.IF_CODE = #{if_code}
+         WHERE S.COMPANY_CODE = #{company_code}
+           AND S.SCHEDULE_CODE = #{schedule_code}
+           AND S.SYSTEM_BATCH_YN = 'N'
+         LIMIT 1
+    </select>
+
+    <select id="retrieveExecutionResultList" parameterType="HashMap" resultType="HashMap">
+        SELECT T.INTG_INTERFACE_TRANS_ID
+             , T.IF_CODE
+             , COALESCE(I.IF_NAME, T.IF_CODE) AS IF_NAME
+             , T.TOTAL_ROWS
+             , TO_CHAR(T.START_TIME, 'YYYY-MM-DD HH24:MI:SS') AS START_TIME
+             , TO_CHAR(T.TRANS_DATE, 'YYYY-MM-DD HH24:MI:SS') AS TRANS_DATE
+             , T.TRANS_STATUS
+             , CASE T.TRANS_STATUS WHEN '0' THEN 'running' WHEN '1' THEN 'succeed'
+                    WHEN '2' THEN 'failed' ELSE T.TRANS_STATUS END AS TRANS_STATUS_NAME
+             , T.IF_PARAM
+             , T.ERROR_YN
+             , T.ERROR_MESSAGE
+          FROM INTG_INTERFACE_TRANS T
+          LEFT JOIN INTERFACE_ITEM_MST I
+            ON I.IF_CODE = T.IF_CODE
+           AND I.COMPANY_CODE = T.COMPANY_CODE
+         WHERE T.COMPANY_CODE = #{company_code}
+        <if test="search_from_date != null and search_from_date != ''">
+           AND T.TRANS_DATE &gt;= TO_DATE(#{search_from_date}, 'YYYYMMDD')
+        </if>
+        <if test="search_to_date != null and search_to_date != ''">
+           AND T.TRANS_DATE &lt; TO_DATE(#{search_to_date}, 'YYYYMMDD') + INTERVAL '1 day'
+        </if>
+        <if test="search_type == 'IF_CODE' and search_keyword != null and search_keyword != ''">
+           AND T.IF_CODE ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_type == 'IF_NAME' and search_keyword != null and search_keyword != ''">
+           AND I.IF_NAME ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+         ORDER BY T.TRANS_DATE DESC, T.INTG_INTERFACE_TRANS_ID DESC
+    </select>
+
+    <select id="retrieveExecutionDetailList" parameterType="HashMap" resultType="HashMap">
+        SELECT D.*
+          FROM INTG_INTERFACE_TRANS_DTL D
+         WHERE D.INTG_INTERFACE_TRANS_ID = CAST(#{intg_interface_trans_id} AS BIGINT)
+           AND D.COMPANY_CODE = #{company_code}
+        <if test="error_yn != null and error_yn != ''">
+           AND D.ERROR_YN = #{error_yn}
+        </if>
+         ORDER BY D.CURRENT_ROW, D.INTG_INTERFACE_ID
+    </select>
+
+    <select id="retrieveExecutionDetailColumns" parameterType="HashMap" resultType="HashMap">
+        SELECT 'attribute' || LPAD(X.RN::VARCHAR, 2, '0') AS DATA_FIELD
+             , COALESCE(NULLIF(X.COLUMN_NAME, ''), X.TARGET_COLUMN) AS HEADER_TEXT
+          FROM (
+                SELECT ROW_NUMBER() OVER (ORDER BY D.INTERFACE_ITEM_DTL_ID) AS RN
+                     , D.COLUMN_NAME
+                     , D.TARGET_COLUMN
+                  FROM INTERFACE_ITEM_DTL D
+                 WHERE D.IF_CODE = #{if_code}
+                   AND D.COMPANY_CODE = #{company_code}
+                   AND D.USING_YN = 'Y'
+               ) X
+         WHERE X.RN &lt;= 50
+         ORDER BY X.RN
+    </select>
+</mapper>

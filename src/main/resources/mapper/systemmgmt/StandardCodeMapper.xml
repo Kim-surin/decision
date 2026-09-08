@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.standardCode.StandardCodeDao">
+
+    <select id="retrieveCategoryList" parameterType="HashMap" resultType="HashMap">
+        SELECT M.CATEGORY
+             , M.CATEGORY_NAME
+             , M.CATEGORY_NAME_ENG
+             , M.CATEGORY_NAME_LOC
+             , M.CODE_LENGTH
+             , M.UPDATE_YN
+          FROM CODE_MST M
+         WHERE M.COMPANY_CODE = #{company_code}
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'CATEGORY'">
+           AND M.CATEGORY ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'CATEGORY_NAME'">
+           AND M.CATEGORY_NAME ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+         ORDER BY M.CATEGORY
+    </select>
+
+    <select id="retrieveCategory" parameterType="HashMap" resultType="HashMap">
+        SELECT M.CATEGORY
+             , M.CATEGORY_NAME
+             , M.CATEGORY_NAME_ENG
+             , M.CATEGORY_NAME_LOC
+             , M.CODE_LENGTH
+             , M.UPDATE_YN
+          FROM CODE_MST M
+         WHERE M.CATEGORY = #{category}
+           AND M.COMPANY_CODE = #{company_code}
+    </select>
+
+    <select id="retrieveCodeList" parameterType="HashMap" resultType="HashMap">
+        SELECT D.CODE
+             , D.CODE_NAME
+             , D.CODE_NAME_ENG
+             , D.CODE_NAME_LOC
+             , D.SORT_NO
+             , D.TXT_VALUE1
+             , D.TXT_VALUE2
+             , D.TXT_VALUE3
+             , D.TXT_VALUE4
+             , D.TXT_VALUE5
+             , D.NUM_VALUE1
+             , D.NUM_VALUE2
+             , D.NUM_VALUE3
+             , D.NUM_VALUE4
+             , D.NUM_VALUE5
+             , D.USING_YN
+          FROM CODE_DTL D
+         WHERE D.CATEGORY = #{category}
+           AND D.COMPANY_CODE = #{company_code}
+           AND D.DELETE_YN = 'N'
+         ORDER BY D.SORT_NO, D.CODE
+    </select>
+
+    <select id="retrieveCategoryCount" parameterType="HashMap" resultType="Integer">
+        SELECT COUNT(*)
+          FROM CODE_MST
+         WHERE CATEGORY = #{category}
+           AND COMPANY_CODE = #{company_code}
+    </select>
+
+    <insert id="insertCategory" parameterType="HashMap">
+        INSERT INTO CODE_MST (
+            CATEGORY, COMPANY_CODE, CATEGORY_NAME, CATEGORY_NAME_ENG, CATEGORY_NAME_LOC,
+            CODE_LENGTH, UPDATE_YN, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        ) VALUES (
+            #{category}, #{company_code}, #{category_name}, NULLIF(#{category_name_eng}, ''),
+            NULLIF(#{category_name_loc}, ''), #{code_length}, #{update_yn},
+            NOW(), #{update_by}, NOW(), #{update_by}
+        )
+    </insert>
+
+    <update id="updateCategory" parameterType="HashMap">
+        UPDATE CODE_MST
+           SET CATEGORY_NAME = #{category_name}
+             , CATEGORY_NAME_ENG = NULLIF(#{category_name_eng}, '')
+             , CATEGORY_NAME_LOC = NULLIF(#{category_name_loc}, '')
+             , CODE_LENGTH = #{code_length}
+             , UPDATE_YN = #{update_yn}
+             , UPDATE_DATE = NOW()
+             , UPDATE_BY = #{update_by}
+         WHERE CATEGORY = #{category}
+           AND COMPANY_CODE = #{company_code}
+    </update>
+
+    <update id="markCodeDetailDeleted" parameterType="HashMap">
+        UPDATE CODE_DTL
+           SET DELETE_YN = 'Y'
+             , USING_YN = 'N'
+             , UPDATE_DATE = NOW()
+             , UPDATE_BY = #{update_by}
+         WHERE CATEGORY = #{category}
+           AND COMPANY_CODE = #{company_code}
+           AND DELETE_YN = 'N'
+    </update>
+
+    <insert id="upsertCodeDetail" parameterType="HashMap">
+        INSERT INTO CODE_DTL (
+            CODE, CATEGORY, COMPANY_CODE, CODE_NAME, CODE_NAME_ENG, CODE_NAME_LOC, SORT_NO,
+            TXT_VALUE1, TXT_VALUE2, TXT_VALUE3, TXT_VALUE4, TXT_VALUE5,
+            NUM_VALUE1, NUM_VALUE2, NUM_VALUE3, NUM_VALUE4, NUM_VALUE5,
+            USING_YN, DELETE_YN, CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        ) VALUES (
+            #{code}, #{category}, #{company_code}, #{code_name}, NULLIF(#{code_name_eng}, ''),
+            NULLIF(#{code_name_loc}, ''), #{sort_no}, NULLIF(#{txt_value1}, ''),
+            NULLIF(#{txt_value2}, ''), NULLIF(#{txt_value3}, ''), NULLIF(#{txt_value4}, ''),
+            NULLIF(#{txt_value5}, ''), CAST(NULLIF(CAST(#{num_value1} AS VARCHAR), '') AS NUMERIC(32,0)),
+            CAST(NULLIF(CAST(#{num_value2} AS VARCHAR), '') AS NUMERIC(32,0)),
+            CAST(NULLIF(CAST(#{num_value3} AS VARCHAR), '') AS NUMERIC(32,0)),
+            CAST(NULLIF(CAST(#{num_value4} AS VARCHAR), '') AS NUMERIC(32,0)),
+            CAST(NULLIF(CAST(#{num_value5} AS VARCHAR), '') AS NUMERIC(32,0)),
+            #{using_yn}, 'N', NOW(), #{update_by}, NOW(), #{update_by}
+        )
+        ON CONFLICT (CODE, CATEGORY, COMPANY_CODE)
+        DO UPDATE SET
+            CODE_NAME = EXCLUDED.CODE_NAME,
+            CODE_NAME_ENG = EXCLUDED.CODE_NAME_ENG,
+            CODE_NAME_LOC = EXCLUDED.CODE_NAME_LOC,
+            SORT_NO = EXCLUDED.SORT_NO,
+            TXT_VALUE1 = EXCLUDED.TXT_VALUE1,
+            TXT_VALUE2 = EXCLUDED.TXT_VALUE2,
+            TXT_VALUE3 = EXCLUDED.TXT_VALUE3,
+            TXT_VALUE4 = EXCLUDED.TXT_VALUE4,
+            TXT_VALUE5 = EXCLUDED.TXT_VALUE5,
+            NUM_VALUE1 = EXCLUDED.NUM_VALUE1,
+            NUM_VALUE2 = EXCLUDED.NUM_VALUE2,
+            NUM_VALUE3 = EXCLUDED.NUM_VALUE3,
+            NUM_VALUE4 = EXCLUDED.NUM_VALUE4,
+            NUM_VALUE5 = EXCLUDED.NUM_VALUE5,
+            USING_YN = EXCLUDED.USING_YN,
+            DELETE_YN = 'N',
+            UPDATE_DATE = NOW(),
+            UPDATE_BY = EXCLUDED.UPDATE_BY
+    </insert>
+
+    <delete id="deleteCodeDetail" parameterType="HashMap">
+        DELETE FROM CODE_DTL
+         WHERE CATEGORY = #{category}
+           AND COMPANY_CODE = #{company_code}
+    </delete>
+
+    <delete id="deleteCategory" parameterType="HashMap">
+        DELETE FROM CODE_MST
+         WHERE CATEGORY = #{category}
+           AND COMPANY_CODE = #{company_code}
+    </delete>
+</mapper>

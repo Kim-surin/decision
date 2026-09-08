@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kpmg.kdb.web.systemmgmt.interfaceItem.InterfaceItemDao">
+    <select id="retrieveInterfaceItemList" parameterType="HashMap" resultType="HashMap">
+        SELECT I.IF_CODE, I.IF_NAME,
+               CASE I.INTERFACE_TYPE WHEN 'I' THEN 'Inbound' WHEN 'O' THEN 'Outbound' ELSE I.INTERFACE_TYPE END AS INTERFACE_TYPE_NAME,
+               I.SOURCE_TABLE, I.TARGET_TABLE, I.HISTORY_TABLE, I.TRANS_PROGRAM_NAME, I.USING_YN
+          FROM INTERFACE_ITEM_MST I
+         WHERE I.COMPANY_CODE = #{company_code}
+        <if test="using_yn != null and using_yn != ''">AND I.USING_YN = #{using_yn}</if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'IF_CODE'">
+           AND I.IF_CODE ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+        <if test="search_keyword != null and search_keyword != '' and search_type == 'IF_NAME'">
+           AND I.IF_NAME ILIKE CONCAT('%', #{search_keyword}, '%')
+        </if>
+         ORDER BY I.IF_CODE
+    </select>
+
+    <select id="retrieveInterfaceItemDetail" parameterType="HashMap" resultType="HashMap">
+        SELECT I.IF_CODE, I.IF_NAME, I.SOURCE_TABLE, I.TARGET_TABLE, I.HISTORY_TABLE,
+               I.VRIFY_PROGRAM_NAME, I.SOURCE_PROGRAM_NAME, I.INTERFACE_TYPE,
+               I.RETURN_COLUMN_NAME, I.RETURN_COLUMN_VALUE, I.RETURN_MSG_COLUMN_NAME,
+               I.REMARK, I.USING_YN, I.TRANS_PROGRAM_NAME,
+               COALESCE(TRIM(I.TRANS_COMPANY_CODE_YN), 'N') AS TRANS_COMPANY_CODE_YN,
+               COALESCE(TRIM(I.TRANS_DIVISION_CODE_YN), 'N') AS TRANS_DIVISION_CODE_YN,
+               COALESCE(TRIM(I.EXCEL_UPLOAD_YN), 'N') AS EXCEL_UPLOAD_YN,
+               I.ATTRIBUTE01, I.ATTRIBUTE02, I.ATTRIBUTE03, I.ATTRIBUTE04, I.ATTRIBUTE05
+          FROM INTERFACE_ITEM_MST I
+         WHERE I.IF_CODE = #{if_code} AND I.COMPANY_CODE = #{company_code}
+    </select>
+
+    <select id="retrieveInterfaceColumnList" parameterType="HashMap" resultType="HashMap">
+        SELECT D.INTERFACE_ITEM_DTL_ID, D.IF_CODE, D.COLUMN_TRANS_TYPE, D.TARGET_COLUMN,
+               D.SOURCE_COLUMN, D.HISTORY_COLUMN, D.COLUMN_NAME, D.COLUMN_TYPE,
+               D.COLUMN_LENGTH, COALESCE(D.COLUMN_DCMLPOINT_LENGTH, 0) AS COLUMN_DCMLPOINT_LENGTH,
+               D.COLUMN_FORMAT_FORM, D.COLUMN_DFLT_VALUE, D.COLUMN_VRIFY_PROGRAM_NAME,
+               D.COLUMN_REQUIRED_YN, D.PK_YN, D.USING_YN, D.SAMPLE_DATA,
+               D.ATTRIBUTE01, D.ATTRIBUTE02, D.ATTRIBUTE03, D.ATTRIBUTE04, D.ATTRIBUTE05
+          FROM INTERFACE_ITEM_DTL D
+         WHERE D.IF_CODE = #{if_code} AND D.COMPANY_CODE = #{company_code}
+         ORDER BY D.COLUMN_TRANS_TYPE, D.INTERFACE_ITEM_DTL_ID
+    </select>
+
+    <select id="retrieveInterfaceItemCount" parameterType="HashMap" resultType="Integer">
+        SELECT COUNT(*) FROM INTERFACE_ITEM_MST WHERE IF_CODE = #{if_code} AND COMPANY_CODE = #{company_code}
+    </select>
+    <!-- MAX 조회와 INSERT 사이의 동시 채번 충돌 방지 -->
+    <update id="lockInterfaceColumnTable">
+        LOCK TABLE INTERFACE_ITEM_DTL IN SHARE ROW EXCLUSIVE MODE
+    </update>
+
+    <!-- 상세 삭제 전에 전체 테이블의 마지막 ID 다음 값 조회 -->
+    <select id="retrieveNextDetailId" parameterType="HashMap" resultType="Long">
+        SELECT COALESCE(MAX(INTERFACE_ITEM_DTL_ID), 0) + 1
+          FROM INTERFACE_ITEM_DTL
+    </select>
+
+    <insert id="insertInterfaceItem" parameterType="HashMap">
+        INSERT INTO INTERFACE_ITEM_MST (
+            IF_CODE, COMPANY_CODE, IF_NAME, SOURCE_TABLE, TARGET_TABLE, HISTORY_TABLE,
+            VRIFY_PROGRAM_NAME, SOURCE_PROGRAM_NAME, INTERFACE_TYPE, RETURN_COLUMN_NAME,
+            RETURN_COLUMN_VALUE, RETURN_MSG_COLUMN_NAME, REMARK, USING_YN,
+            ATTRIBUTE01, ATTRIBUTE02, ATTRIBUTE03, ATTRIBUTE04, ATTRIBUTE05,
+            TRANS_PROGRAM_NAME, TRANS_COMPANY_CODE_YN, TRANS_DIVISION_CODE_YN, EXCEL_UPLOAD_YN,
+            CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        ) VALUES (
+            #{if_code}, #{company_code}, #{if_name}, NULLIF(#{source_table}, ''), NULLIF(#{target_table}, ''),
+            NULLIF(#{history_table}, ''), NULLIF(#{vrify_program_name}, ''), NULLIF(#{source_program_name}, ''),
+            #{interface_type}, NULLIF(#{return_column_name}, ''), NULLIF(#{return_column_value}, ''),
+            NULLIF(#{return_msg_column_name}, ''), NULLIF(#{remark}, ''), #{using_yn},
+            NULLIF(#{attribute01}, ''), NULLIF(#{attribute02}, ''), NULLIF(#{attribute03}, ''),
+            NULLIF(#{attribute04}, ''), NULLIF(#{attribute05}, ''), NULLIF(#{trans_program_name}, ''),
+            #{trans_company_code_yn}, #{trans_division_code_yn}, #{excel_upload_yn},
+            NOW(), #{update_by}, NOW(), #{update_by}
+        )
+    </insert>
+
+    <update id="updateInterfaceItem" parameterType="HashMap">
+        UPDATE INTERFACE_ITEM_MST SET
+               IF_NAME = #{if_name}, SOURCE_TABLE = NULLIF(#{source_table}, ''), TARGET_TABLE = NULLIF(#{target_table}, ''),
+               HISTORY_TABLE = NULLIF(#{history_table}, ''), VRIFY_PROGRAM_NAME = NULLIF(#{vrify_program_name}, ''),
+               SOURCE_PROGRAM_NAME = NULLIF(#{source_program_name}, ''), INTERFACE_TYPE = #{interface_type},
+               RETURN_COLUMN_NAME = NULLIF(#{return_column_name}, ''), RETURN_COLUMN_VALUE = NULLIF(#{return_column_value}, ''),
+               RETURN_MSG_COLUMN_NAME = NULLIF(#{return_msg_column_name}, ''), REMARK = NULLIF(#{remark}, ''), USING_YN = #{using_yn},
+               ATTRIBUTE01 = NULLIF(#{attribute01}, ''), ATTRIBUTE02 = NULLIF(#{attribute02}, ''), ATTRIBUTE03 = NULLIF(#{attribute03}, ''),
+               ATTRIBUTE04 = NULLIF(#{attribute04}, ''), ATTRIBUTE05 = NULLIF(#{attribute05}, ''),
+               TRANS_PROGRAM_NAME = NULLIF(#{trans_program_name}, ''), TRANS_COMPANY_CODE_YN = #{trans_company_code_yn},
+               TRANS_DIVISION_CODE_YN = #{trans_division_code_yn}, EXCEL_UPLOAD_YN = #{excel_upload_yn},
+               UPDATE_DATE = NOW(), UPDATE_BY = #{update_by}
+         WHERE IF_CODE = #{if_code} AND COMPANY_CODE = #{company_code}
+    </update>
+
+    <delete id="deleteInterfaceColumn" parameterType="HashMap">
+        DELETE FROM INTERFACE_ITEM_DTL WHERE IF_CODE = #{if_code} AND COMPANY_CODE = #{company_code}
+    </delete>
+
+    <insert id="insertInterfaceColumn" parameterType="HashMap">
+        INSERT INTO INTERFACE_ITEM_DTL (
+            INTERFACE_ITEM_DTL_ID, IF_CODE, COMPANY_CODE, COLUMN_TRANS_TYPE, TARGET_COLUMN,
+            SOURCE_COLUMN, HISTORY_COLUMN, COLUMN_NAME, COLUMN_TYPE, COLUMN_LENGTH,
+            COLUMN_DCMLPOINT_LENGTH, COLUMN_FORMAT_FORM, COLUMN_DFLT_VALUE,
+            COLUMN_VRIFY_PROGRAM_NAME, COLUMN_REQUIRED_YN, PK_YN, USING_YN,
+            ATTRIBUTE01, ATTRIBUTE02, ATTRIBUTE03, ATTRIBUTE04, ATTRIBUTE05, SAMPLE_DATA,
+            CREATE_DATE, CREATE_BY, UPDATE_DATE, UPDATE_BY
+        ) VALUES (
+            #{interface_item_dtl_id}, #{if_code}, #{company_code}, #{column_trans_type}, #{target_column},
+            NULLIF(#{source_column}, ''), NULLIF(#{history_column}, ''), #{column_name}, CAST(#{column_type} AS SMALLINT),
+            CAST(#{column_length} AS INTEGER), CAST(#{column_dcmlpoint_length} AS INTEGER),
+            NULLIF(#{column_format_form}, ''), NULLIF(#{column_dflt_value}, ''), NULLIF(#{column_vrify_program_name}, ''),
+            #{column_required_yn}, #{pk_yn}, #{using_yn}, NULLIF(#{attribute01}, ''), NULLIF(#{attribute02}, ''),
+            NULLIF(#{attribute03}, ''), NULLIF(#{attribute04}, ''), NULLIF(#{attribute05}, ''), NULLIF(#{sample_data}, ''),
+            NOW(), #{update_by}, NOW(), #{update_by}
+        )
+    </insert>
+</mapper>
