@@ -117,7 +117,7 @@
 								},
 								{
 									headerText: "입고", children: [{
-										dataField: "warehousing_qty", headerText: "수량"
+										dataField: "input_qty", headerText: "수량"
 										, width: 120
 										, editRenderer: {
 											type: "InputEditRenderer",
@@ -127,7 +127,7 @@
 										}
 									},
 									{
-										dataField: "input_qty", headerText: "금액"
+										dataField: "input_amount", headerText: "금액"
 										, width: 120
 										, editRenderer: {
 											type: "InputEditRenderer",
@@ -139,7 +139,7 @@
 								},
 								{
 									headerText: "기타입고", children: [{
-										dataField: "input_amount", headerText: "수량"
+										dataField: "extra_input_qty", headerText: "수량"
 										, width: 120
 										, editRenderer: {
 											type: "InputEditRenderer",
@@ -149,7 +149,7 @@
 										}
 									},
 									{
-										dataField: "input_amount", headerText: "금액"
+										dataField: "extra_input_amount", headerText: "금액"
 										, width: 120
 										, editRenderer: {
 											type: "InputEditRenderer",
