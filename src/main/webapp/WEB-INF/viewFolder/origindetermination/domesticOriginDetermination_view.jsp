@@ -333,12 +333,12 @@
 							    });
 							
 							var request = {
-								datas: datas,
+								datas: JSON.stringify(datas),
 								mode: 'domestic'
 							}
 
 							// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다. 보고 있던 페이지 번호도 유지한다
-							KpackageOBJ.sidepanel.openJson('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
+							KpackageOBJ.sidepanel.open('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request,
 								function() {
 									DOMESTIC_ORIGIN_DETERMINATIONVIEW.retrieve_GridData(true);
 								});
