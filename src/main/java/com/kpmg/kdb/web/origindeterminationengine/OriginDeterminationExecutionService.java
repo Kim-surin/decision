@@ -444,10 +444,6 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		return String.join("|", nz(ftaCode), nz(divisionCode), String.valueOf(salesSeq));
 	}
 
-	private static String itemNationKey(String companyCode, String divisionCode, String itemCode, String hsCode) {
-		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(hsCode));
-	}
-
 	private static String nz(String value) {
 		return value == null ? "" : value;
 	}

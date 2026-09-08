@@ -20,7 +20,7 @@ public class SalesController extends GenericController {
 	protected SalesService salesService;
 
 	@RequestMapping(value = "/origin/compliance/sales/sales")
-	public String poledger_view(Model model, HttpSession session) {
+	public String sales_view(Model model, HttpSession session) {
 		return "sales/sales_view";
 	}
 

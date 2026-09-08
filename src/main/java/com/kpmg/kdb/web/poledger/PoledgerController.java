@@ -21,10 +21,6 @@ public class PoledgerController extends GenericController {
 	
 	@RequestMapping(value = "/origin/compliance/poledger/poledger")
 	public String poledger_view(Model model, HttpSession session) {
-		try {
-		} catch(Exception e) {
-			
-		}
 		return "poledger/poledger_view";
 	}
 
