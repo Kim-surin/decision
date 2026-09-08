@@ -1,6 +1,5 @@
 package com.kpmg.kdb.web.origindetermination;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -19,9 +18,6 @@ import com.kpmg.kdb.core.generic.GenericController;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.MonthlyOriginDeterminationExecuteRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
 
 @Controller
 public class OriginDeterminationController extends GenericController {
@@ -38,11 +34,11 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/domesticOriginDeterminationList")
 	@ResponseBody
-	public Result domesticOriginDetermination_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
+	public Result domesticOriginDetermination_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveDomesticOriginDetermination(param);
+			result = originDeterminationService.retrieveDomesticOriginDetermination(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -50,7 +46,7 @@ public class OriginDeterminationController extends GenericController {
 
 		return result;
 	}
-	
+
 	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDetermination")
 	public String exportOriginDetermination_view(Model model, HttpSession session) {
 		return "origindetermination/exportOriginDetermination_view";
@@ -58,11 +54,11 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/exportOriginDeterminationList")
 	@ResponseBody
-	public Result exportOriginDetermination_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
+	public Result exportOriginDetermination_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveExportOriginDetermination(param);
+			result = originDeterminationService.retrieveExportOriginDetermination(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -78,11 +74,11 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationResultList")
 	@ResponseBody
-	public Result originDeterminationResult_list(@RequestBody OriginDeterminationRequestDto param) throws Exception {
+	public Result originDeterminationResult_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationResult(param);
+			result = originDeterminationService.retrieveOriginDeterminationResult(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -136,12 +132,12 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/conversionStrategyTargetList")
 	@ResponseBody
-	public Result conversionStrategyTargetList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+	public Result conversionStrategyTargetList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = conversionStrategyService.retrieveConversionStrategyTargets(param);
+			result = conversionStrategyService.retrieveConversionStrategyTargets(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -152,12 +148,12 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailList")
 	@ResponseBody
-	public Result originDeterminationDetailList(@RequestBody OriginDeterminationDetailRequestDto param)
+	public Result originDeterminationDetailList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationDetailList(param);
+			result = originDeterminationService.retrieveOriginDeterminationDetailList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -167,15 +163,15 @@ public class OriginDeterminationController extends GenericController {
 	}
 
 	// 원산지 판정 상세 팝업(내수 전용)이 열릴 때/판정 실행 직후에 호출. (매출년월/플랜트/고객사/품번) 그룹
-	// 기준으로 "지금 시점" sales_no/sales_seq를 다시 찾아 판정상태/상품상세와 함께 조회한다 
+	// 기준으로 "지금 시점" sales_no/sales_seq를 다시 찾아 판정상태/상품상세와 함께 조회한다
 	@RequestMapping(value = "/origin/compliance/origindetermination/retrieveDomesticOriginDeterminationDetailList")
 	@ResponseBody
-	public Result retrieveDomesticOriginDeterminationDetailList(@RequestBody DomesticOriginDeterminationExecuteRequestDto param)
+	public Result retrieveDomesticOriginDeterminationDetailList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(param);
+			result = originDeterminationService.retrieveDomesticOriginDeterminationDetailList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -186,12 +182,12 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetailResultList")
 	@ResponseBody
-	public Result originDeterminationDetailResultList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+	public Result originDeterminationDetailResultList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationDetailResultList(param);
+			result = originDeterminationService.retrieveOriginDeterminationDetailResultList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -202,12 +198,12 @@ public class OriginDeterminationController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationFailList")
 	@ResponseBody
-	public Result originDeterminationFailList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+	public Result originDeterminationFailList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationFailList(param);
+			result = originDeterminationService.retrieveOriginDeterminationFailList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
@@ -219,12 +215,12 @@ public class OriginDeterminationController extends GenericController {
 	// BOM 추적 팝업 전용. param.fta_code로 그 협정 1건의 원재료(FCR_DTL)만 조회한다.
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationMaterialList")
 	@ResponseBody
-	public Result originDeterminationMaterialList(@RequestBody OriginDeterminationDetailResultRequestDto param)
+	public Result originDeterminationMaterialList(@RequestBody Map param)
 			throws Exception {
 		Result result;
 
 		try {
-			result = originDeterminationService.retrieveOriginDeterminationMaterialList(param);
+			result = originDeterminationService.retrieveOriginDeterminationMaterialList(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

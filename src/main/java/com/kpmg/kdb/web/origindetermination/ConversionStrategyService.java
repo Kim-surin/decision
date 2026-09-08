@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
 
 /**
  * 역내전환전략 팝업 - 세번변경기준(CTH)/부가가치기준 충족을 위해 원산지확인서 수취가 필요한
@@ -34,7 +33,7 @@ public class ConversionStrategyService extends GeneralService {
 	// 잡혔는데, 사용자가 어느 기준으로 원산지확인서를 받을지 직접 고를 수 있어야 하므로 시도된 룰
 	// 전체(selectConversionStrategyRuleContext가 이제 여러 행을 반환)를 보고 CTH/부가가치 각각
 	// 존재 여부를 독립적으로 판단해야 한다.
-	public Result retrieveConversionStrategyTargets(OriginDeterminationDetailResultRequestDto param) throws Exception {
+	public Result retrieveConversionStrategyTargets(Map param) throws Exception {
 		Result result = new Result();
 
 		try {

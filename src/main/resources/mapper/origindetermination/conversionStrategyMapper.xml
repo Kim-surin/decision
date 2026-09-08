@@ -6,7 +6,7 @@
 		이 협정에서 시도된 FTA_RULE 전체(RULE_SEQ=RULE_ID)를 반환해 채택된 룰 1건만으론 놓치는
 		세번변경/부가가치기준 존재 여부를 각각 판단한다. 
 	-->
-	<select id="selectConversionStrategyRuleContext" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto">
+	<select id="selectConversionStrategyRuleContext" parameterType="HashMap" resultType="com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto">
 		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
 		      ,FM.PRODUCT_CODE                                                AS PRODUCT_CODE
 		      ,IM.ITEM_NAME                                                   AS PRODUCT_NAME
@@ -84,7 +84,7 @@
 		현재 역외(OUTAREA_QTY>0)인 원재료. 같은 호인 비원산지 원재료가 하나라도 있으면 CTH는 원산지확인서로
 		원산지를 인정받는 것 외엔 해결 방법이 없다.
 	-->
-	<select id="selectCthCertifyTargetList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+	<select id="selectCthCertifyTargetList" parameterType="HashMap" resultType="HashMap">
 		SELECT FD.ITEM_CODE                                AS ITEM_CODE
 		      ,IM.ITEM_NAME                                AS ITEM_NAME
 		      ,FD.HS_CODE                                   AS HS_CODE
@@ -114,7 +114,7 @@
 		이 중 실제로 몇 건까지 원산지확인서를 받아야 기준을 넘는지는 ConversionStrategyService에서
 		RvcCriteriaDecisionService와 동일한 BU/BD/NC/MC 산식으로 계산한다.
 	-->
-	<select id="selectValueContentCertifyCandidateList" parameterType="com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto" resultType="HashMap">
+	<select id="selectValueContentCertifyCandidateList" parameterType="HashMap" resultType="HashMap">
 		SELECT FD.ITEM_CODE                                AS ITEM_CODE
 		      ,IM.ITEM_NAME                                AS ITEM_NAME
 		      ,FD.HS_CODE                                   AS HS_CODE
