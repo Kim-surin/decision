@@ -1,17 +1,12 @@
 package com.kpmg.kdb.web.ftabom;
 
 import java.util.List;
-
-import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailRequestDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailResponseDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailVendorRequestDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomMasterRequestDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomMasterResponseDto;
+import java.util.Map;
 
 public interface FtaBomDao {
-	public List<FtaBomMasterResponseDto> retrieveftaBomMaster(FtaBomMasterRequestDto param);
+	public List<Map<String, Object>> retrieveftaBomMaster(Map param);
 
-	public List<FtaBomDetailResponseDto> retrieveftaBomDetail(FtaBomDetailRequestDto param);
-	
-	public List<FtaBomDetailResponseDto> retrieveftaBomDetailVendor(FtaBomDetailVendorRequestDto param);
+	public List<Map<String, Object>> retrieveftaBomDetail(Map param);
+
+	public List<Map<String, Object>> retrieveftaBomDetailVendor(Map param);
 }

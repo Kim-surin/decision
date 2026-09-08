@@ -1,10 +1,8 @@
 package com.kpmg.kdb.web.sales;
 
 import java.util.List;
-
-import com.kpmg.kdb.web.sales.dto.SalesRequestDto;
-import com.kpmg.kdb.web.sales.dto.SalesResponseDto;
+import java.util.Map;
 
 public interface SalesDao {
-	public List<SalesResponseDto> retrieveSales(SalesRequestDto param);
+	public List<Map<String, Object>> retrieveSales(Map param);
 }

@@ -1,6 +1,5 @@
 package com.kpmg.kdb.web.poledger;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
@@ -14,8 +13,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.web.division.DivisionService;
-import com.kpmg.kdb.web.poledger.dto.PoLedgerRequestDto;
 
 @Controller
 public class PoledgerController extends GenericController {
@@ -33,11 +30,11 @@ public class PoledgerController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/poledger/poledgerList")
 	@ResponseBody
-	public Result poledger_list(@RequestBody PoLedgerRequestDto param) throws Exception {
+	public Result poledger_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = poledgerService.retrievePoledger(param);
+			result = poledgerService.retrievePoledger(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

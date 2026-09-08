@@ -1,5 +1,7 @@
 package com.kpmg.kdb.web.materialinv;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +13,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.web.materialinv.dto.MaterialInvRequestDto;
 
 @Controller
 public class MaterialInvController extends GenericController {
@@ -25,11 +26,11 @@ public class MaterialInvController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/materialinv/materialInvList")
 	@ResponseBody
-	public Result materialInv_list(@RequestBody MaterialInvRequestDto param) throws Exception {
+	public Result materialInv_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = materialInvService.retrieveMaterialInv(param);
+			result = materialInvService.retrieveMaterialInv(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

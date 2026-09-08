@@ -1,24 +1,20 @@
 package com.kpmg.kdb.web.ftabom;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailRequestDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailResponseDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomDetailVendorRequestDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomMasterRequestDto;
-import com.kpmg.kdb.web.ftabom.dto.FtaBomMasterResponseDto;
 
 @Service
 public class FtaBomService extends GeneralService {
-	public Result retrieveftaBomMaster(FtaBomMasterRequestDto param) throws Exception {
+	public Result retrieveftaBomMaster(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<FtaBomMasterResponseDto> list = sqlSession.getMapper(FtaBomDao.class).retrieveftaBomMaster(param);
+			List<Map<String, Object>> list = sqlSession.getMapper(FtaBomDao.class).retrieveftaBomMaster(param);
 
 			result.setValue(list);
 			result.setSuccess(true);
@@ -31,11 +27,11 @@ public class FtaBomService extends GeneralService {
 		return result;
 	}
 
-	public Result retrieveftaBomDetail(FtaBomDetailRequestDto param) throws Exception {
+	public Result retrieveftaBomDetail(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<FtaBomDetailResponseDto> list = sqlSession.getMapper(FtaBomDao.class).retrieveftaBomDetail(param);
+			List<Map<String, Object>> list = sqlSession.getMapper(FtaBomDao.class).retrieveftaBomDetail(param);
 
 			result.setValue(list);
 			result.setSuccess(true);
@@ -48,11 +44,11 @@ public class FtaBomService extends GeneralService {
 		return result;
 	}
 	
-	public Result retrieveftaBomDetailVendor(FtaBomDetailVendorRequestDto param) throws Exception {
+	public Result retrieveftaBomDetailVendor(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<FtaBomDetailResponseDto> list = sqlSession.getMapper(FtaBomDao.class).retrieveftaBomDetailVendor(param);
+			List<Map<String, Object>> list = sqlSession.getMapper(FtaBomDao.class).retrieveftaBomDetailVendor(param);
 
 			result.setValue(list);
 			result.setSuccess(true);
