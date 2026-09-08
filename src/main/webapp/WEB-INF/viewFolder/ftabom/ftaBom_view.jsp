@@ -29,12 +29,12 @@
 											<div class="col-4">
 												<div class="mb-3">
 
-													<label class="form-label" for="from_date">기준년월</label>
+													<label class="form-label" for="from_yyyymm">기준년월</label>
 													<div class="d-flex gap-2">
-														<input class="form-control" id="from_date" name="from_date"
-															type="month" value="${from_date}">
-														<input class="form-control" id="to_date" name="to_date"
-															type="month" value="${to_date}">
+														<input class="form-control" id="from_yyyymm" name="from_yyyymm"
+															type="month" value="${from_yyyymm}">
+														<input class="form-control" id="to_yyyymm" name="to_yyyymm"
+															type="month" value="${to_yyyymm}">
 
 													</div>
 												</div>
@@ -167,8 +167,8 @@
 						this.retrieve_GridMstData = function () {
 							var params = {
 								/* 날짜 파라메터 '-' 제거  */
-								"from_date": KpackageOBJ.object.getFormValue("FTABOM-form", "from_date").replace(/-/gi, "")
-								, "to_date": KpackageOBJ.object.getFormValue("FTABOM-form", "to_date").replace(/-/gi, "")
+								"from_yyyymm": KpackageOBJ.object.getFormValue("FTABOM-form", "from_yyyymm").replace(/-/gi, "")
+								, "to_yyyymm": KpackageOBJ.object.getFormValue("FTABOM-form", "to_yyyymm").replace(/-/gi, "")
 								, "product": KpackageOBJ.object.getFormValue("FTABOM-form", "product")
 								, "division_code": KpackageOBJ.object.getFormValue("FTABOM-form", "division_code")
 							}

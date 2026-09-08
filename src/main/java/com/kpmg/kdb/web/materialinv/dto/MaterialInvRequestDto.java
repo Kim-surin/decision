@@ -5,12 +5,12 @@ import com.kpmg.kdb.global.config.aop.dto.BaseRequestDto;
 
 public class MaterialInvRequestDto extends BaseRequestDto {
 	// 기준년월 (from)
-	@JsonProperty("from_date")
-	private String from_date;
+	@JsonProperty("from_yyyymm")
+	private String from_yyyymm;
 
 	// 기준년월 (to)
-	@JsonProperty("to_date")
-	private String to_date;
+	@JsonProperty("to_yyyymm")
+	private String to_yyyymm;
 
 	// 자재
 	@JsonProperty("item")
@@ -20,20 +20,20 @@ public class MaterialInvRequestDto extends BaseRequestDto {
 	@JsonProperty("division_code")
 	private String division_code;
 
-	public String getFrom_date() {
-		return from_date;
+	public String getFrom_yyyymm() {
+		return from_yyyymm;
 	}
 
-	public void setFrom_date(String from_date) {
-		this.from_date = from_date;
+	public void setFrom_yyyymm(String from_yyyymm) {
+		this.from_yyyymm = from_yyyymm;
 	}
 
-	public String getTo_date() {
-		return to_date;
+	public String getTo_yyyymm() {
+		return to_yyyymm;
 	}
 
-	public void setTo_date(String to_date) {
-		this.to_date = to_date;
+	public void setTo_yyyymm(String to_yyyymm) {
+		this.to_yyyymm = to_yyyymm;
 	}
 
 	public String getItem() {
