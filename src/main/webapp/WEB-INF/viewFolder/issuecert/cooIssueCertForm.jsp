@@ -24,9 +24,6 @@
 
     <div class="modal-body">
         <form:form id="COO_ISSUE_CERT_POPUP-form" method="post" action="" novalidate="novalidate">
-            <input type="hidden" id="dialog_id" name="dialog_id" value="${dialog_id}"/>
-            <input type="hidden" id="opener_pgm_id" name="opener_pgm_id" value="${opener_pgm_id}"/>
-            <input type="hidden" id="opener_target_grid_id" name="opener_target_grid_id" value="${opener_target_grid_id}"/>
             <input type="hidden" id="customer_code" name="customer_code" value="${customer_code}"/>
             <!-- 원산지 증명서 기본값 설정 -->
             <input type="hidden" id="issue_type" name="issue_type" value="E"/> <!-- fta_master의 co_issue_flag -->
@@ -158,15 +155,19 @@
 
 	<script>
 	    var COO_ISSUE_CERT_POPUP = new function() {
-	
+
 	        this.grid_COO_ISSUE_CERT_POPUP_01 = null;
 	        //최초 1회 실행용
 	        this.needAutoCheckAfterLoad = false;
-	        
+
 	        //중복체크용
 	        this.isCertifyNoChecked = false;
-	
+
 	        this.Initialize_viewObject = function() {
+	            // opener가 체크한 대상 목록. 서버가 JSON 문자열을 따옴표 없이 스크립트 리터럴로 내려줘
+	            // 이중 이스케이프 문제 없이 그대로 JS 배열이 된다.
+	            this.datas = ${datas};
+
 	            this.bindEvent();
 	            this.createAUIGrid();
 	            this.setDefaultIssueDate();
@@ -191,12 +192,9 @@
 	
 	        this.setDefaultValue = function() {
 	        	var $form = $("#COO_ISSUE_CERT_POPUP-form");
-	        	
-	        	var opener_pgm_id = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_POPUP-form", "opener_pgm_id");
-	        	var opener_target_grid_id = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_POPUP-form", "opener_target_grid_id");
-	        	
-	            /* 부모창 체크된 아이템 ArrayList*/
-	            var checkedArray = KpackageOBJ.auiGrid.getCheckedRowItems(opener_pgm_id + "." + opener_target_grid_id);
+
+	            /* opener가 openJson으로 넘긴 체크 대상 목록 */
+	            var checkedArray = COO_ISSUE_CERT_POPUP.datas;
 	            if (!checkedArray || checkedArray.length === 0) {
 	                $form.find("#customer_name").text("N/A");
 	                $form.find("#officer_name").text("N/A");
@@ -245,10 +243,8 @@
 	            var salesList = [];
 	
 	            for (var i = 0; i < checkedArray.length; i++) {
-	                var row = checkedArray[i].item ? checkedArray[i].item : checkedArray[i];
-	
 	                salesList.push({
-	                    salesNo: row.sales_no
+	                    salesNo: checkedArray[i].sales_no
 	                });
 	            }
 	
@@ -608,12 +604,6 @@
                     		KpackageOBJ.sidepanel.open('cooIssueDetailPopup','/issuecert/cooIssueCertDetail' + getParam, '1300px', true);
                     
                     		alert("원산지 증명서 발급이 완료되었습니다.");
-                    		//부모창 재조회
-                    		var opener_pgm_id = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_POPUP-form", "opener_pgm_id");
-                    		var openerObj = window[opener_pgm_id];
-							if (openerObj && typeof openerObj.retrieve_GridData === "function") {
-							    openerObj.retrieve_GridData();
-							}
 	                	}, 200);
 	                	
 	                }

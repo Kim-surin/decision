@@ -488,13 +488,15 @@ var ISSUE_CERT_TARGET = new function() {
             }
         }
 
-        var getParam = "?dialog_id=" + "cooIssueForm"
-                     + "&opener_pgm_id=" + "ISSUE_CERT_TARGET"
-                     + "&opener_target_grid_id=" + "grid_ISSUE_CERT_TARGET_01"
-                     + "&customer_code=" + encodeURIComponent(baseCustomerCode)
-                     + "&invoice_no=" + encodeURIComponent(baseInvoiceNo);
+        var request = {
+            datas: rowItems,
+            customer_code: baseCustomerCode
+        };
 
-        KpackageOBJ.sidepanel.open("cooIssueCertForm","/issuecert/cooIssueCertForm"+ getParam,"1300px",true);
+        KpackageOBJ.sidepanel.openJson("cooIssueCertForm", "/issuecert/cooIssueCertForm", "1300px", true, request,
+            function() {
+                ISSUE_CERT_TARGET.retrieve_GridData();
+            });
     };
     
     this.retrieve_GridData = function() {

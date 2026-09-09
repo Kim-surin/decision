@@ -461,12 +461,15 @@ var ISSUE_TARGET = new function() {
             }
         }
         
-        var getParam = "?dialog_id="           + "cooIssueForm"
-           + "&opener_pgm_id="    +  "ISSUE_TARGET" 
-           + "&opener_target_grid_id=" + "grid_ISSUE_TARGET_01"
-           + "&customer_code="    +  baseCustomerCode;
-    	
-        KpackageOBJ.sidepanel.open('cooIssueCoverForm','/issuecover/cooIssueCoverForm' + getParam, '1300px', true);
+        var request = {
+            datas: rowItems,
+            customer_code: baseCustomerCode
+        };
+
+        KpackageOBJ.sidepanel.openJson('cooIssueCoverForm', '/issuecover/cooIssueCoverForm', '1300px', true, request,
+            function() {
+                ISSUE_TARGET.retrieve_GridData();
+            });
     }
     
     this.retrieve_GridData = function() {

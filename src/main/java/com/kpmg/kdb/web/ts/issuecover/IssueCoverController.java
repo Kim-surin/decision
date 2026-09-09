@@ -1,6 +1,7 @@
 package com.kpmg.kdb.web.ts.issuecover;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kpmg.kdb.core.form.GridOutputData;
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
@@ -69,13 +71,22 @@ public class IssueCoverController extends GenericController {
 	
 	/**
 	 * FTA C/O 발급 > 확인서 발급 > 확인서 발급버튼 클릭 팝업
-	 * 
+	 *
+	 * 여는 쪽이 체크한 대상 목록(datas)을 JSON 바디로 그대로 받아 뷰에 넘긴다. opener 화면의 전역 그리드를
+	 * 되짚어 읽던 방식(opener_pgm_id/opener_target_grid_id)은 opener 구현에 강결합돼 있어 제거했다.
+	 *
 	 * @author D.Cat
 	 * @return View Path String
 	 */
 	@RequestMapping(value = "/issuecover/cooIssueCoverForm")
-	public String cooIssueCoverForm_view(@RequestParam Map param, Model model, HttpSession session) {
-		model.addAllAttributes(param);
+	public String cooIssueCoverForm_view(@RequestBody(required = false) Map param, Model model, HttpSession session)
+			throws Exception {
+		Object datas = (param != null && param.get("datas") != null) ? param.get("datas") : Collections.emptyList();
+		Object customerCode = param != null ? param.get("customer_code") : null;
+
+		model.addAttribute("datas", new ObjectMapper().writeValueAsString(datas));
+		model.addAttribute("customer_code", customerCode);
+
 		return "issuecover/cooIssueCoverForm";
 	}
 	
