@@ -2,10 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * {@link MaterialCandidatesRequest} 1건(품목 1건)에 대응하는 배치 조회 결과 행. 요청 1건당 0~N 행(BOM
- * 0/1건 + 대체(FUNGIBLE) 0..N건)이 나올 수 있어, 매칭 자재가 없으면 결과에 아예 나타나지 않는다.
- */
+// MaterialCandidatesRequest 1건에 대응하는 배치 조회 결과 행. 요청 1건당 0~N행(BOM 0/1 +
+// 대체 0..N)이 나올 수 있어, 매칭 자재가 없으면 결과에 아예 나타나지 않는다.
 public class MaterialCandidatesBatchResult {
 
 	private String reqDivisionCode;

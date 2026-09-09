@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -29,7 +30,10 @@
 								<div class="col-2">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">기준연도</label>
+											<label class="form-label" for="example-input-border">
+												<!-- 기준연도 -->
+												<spring:message code='TXT.STD_YEAR'/>
+											</label>
 										</div>
 										<div class="col">
 											<div class="year-picker-wrap">
@@ -45,7 +49,7 @@
 								<div class="col">
 									<button type="button"
 											onclick="javascript:FTA_INCOTERMS.retrieve_GridData();"
-											class="btn btn-sm btn-search search-no-more waves-effect waves-themed">Search</button>
+											class="btn btn-sm btn-search search-no-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/> <!--조회--></button>
 								</div>
 							</div>
 						</div>
@@ -58,13 +62,13 @@
 				<div class="d-flex frame-wrap" style="align-items: center;">
 					<div class="demo" style="margin-left: auto;">
 						<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="FTA_INCOTERMS.fnAddRow()">
-							행추가
+							<spring:message code='TXT.ADD_ROW'/> <!--행추가-->
 						</button>
 						<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="FTA_INCOTERMS.fnDelRow()">
-							행삭제
+							<spring:message code='TXT.DELETE_ROW'/> <!--행삭제-->
 						</button>
 						<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="FTA_INCOTERMS.fnSave()">
-							저장
+							<spring:message code='TXT.SAVE'/> <!--저장-->
 						</button>
 					</div>
 				</div>
@@ -128,7 +132,7 @@
 				{
 					dataField: "std_yyyy"
 				  , dataType: "string"
-				  , headerText: "기준연도"
+				  , headerText: "<spring:message code='TXT.STD_YEAR'/>" //기준연도
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -154,7 +158,7 @@
 				},
 				{
 				    dataField: "division_code"
-				  , headerText: "사업장코드"
+				  , headerText:  "<spring:message code='TXT.PLANT_CODE'/>" //플랜트코드
 				  , width: 120
 				  , filter: {showIcon: true}
 				  , renderer: {
@@ -176,7 +180,7 @@
 				},
 				{
 					dataField: "incoterms_type"
-				  , headerText: "내수/수출"
+				  , headerText: "<spring:message code='TXT.DOMESTIC,/,TXT.EXPORT'/>" // 내수/수출  
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -204,7 +208,7 @@
 				},
 				{
 					dataField: "nation_code"
-				  , headerText: "국가코드"
+				  , headerText: "<spring:message code='TXT.NATION_CODE'/>" //국가 코드
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -227,7 +231,7 @@
 				},
 				{
 					dataField: "nation_name"
-				  , headerText: "국가명"
+				  , headerText: "<spring:message code='TXT.NATION_NAME'/>" //국가명
 				  , width: 120
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
@@ -499,7 +503,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTA_INCOTERMS.gridId);
 			
 			if(data.length == 0){
-				KpackageOBJ.object.alert("데이터가 선택되지 않았습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"); //데이터가 선택되지 않았습니다.
 				return false;
 			}
 							
@@ -513,12 +517,12 @@
 			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_INCOTERMS.gridId, ["std_yyyy", "division_code", "incoterms_type","nation_code"], "해당 값은 필수 입력값입니다.")
 							
 			if(data.length === 0){
-				KpackageOBJ.object.alert("저장할 데이터가 없습니다.");
+				KpackageOBJ.object.alert("<spring:message code='NO_DATA_TO_SAVE'/>"); //저장할 데이터가 없습니다.
 				return;
 			}
 
 			if(isValid){
-				if (!confirm("저장하시겠습니까?")) {
+				if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
 	            	return;
 	        	}	
 				
@@ -534,7 +538,7 @@
 		//저장 콜백
 		this.fnSaveCallBack = function(res) {
 			if(res.success){
-				KpackageOBJ.object.alert("저장되었습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SAVEOK'/>"); //저장되었습니다.
 				FTA_INCOTERMS.retrieve_GridData();
 			}else{
 				KpackageOBJ.object.alert(res.message);

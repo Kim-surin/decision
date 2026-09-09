@@ -7,11 +7,8 @@ import java.util.function.Function;
 
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 
-/**
- * 그룹(또는 대상)마다 {@link OriginDecisionPipeline} 을 새로 만들어 실행하고 targets/failedTargets 를
- * 취합하는 공통 루프. 항목 1건에서 예외가 나도 그 항목만 건너뛰고 나머지는 계속 진행한다. 로그 메시지는
- * 호출측이 그대로 갖고, 이 클래스는 순회-실행-취합만 담당한다.
- */
+// 그룹(또는 대상)마다 OriginDecisionPipeline을 새로 만들어 실행하고 targets/failedTargets를 취합하는 공통
+// 루프. 항목 1건에서 예외가 나도 그 항목만 건너뛰고 계속 진행하며, 로그 메시지는 호출측이 그대로 갖는다.
 final class BulkPipelineRunner {
 
 	private BulkPipelineRunner() {

@@ -1,6 +1,5 @@
 package com.kpmg.kdb.global.web.advice;
 
-import java.time.LocalDate;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -36,7 +35,6 @@ public class GlobalJspCacheAdvice {
 				return null;
 			}
 
-			// [TODO] context 생성
 			Map<String, Object> userSession = (Map<String, Object>) session
 					.getAttribute(SystemConstant.session.USER_SESSION_KEY);
 
@@ -52,16 +50,25 @@ public class GlobalJspCacheAdvice {
 		}
 	}
 
-	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-mm-dd");
-
+	// 검색조건 기본값(당해 1월 1일 ~ 당해 12월 31일). 매년 자동으로 갱신되도록 Year.now() 기준으로 계산한다
 	@ModelAttribute("from_date")
-	public String ftomDate(HttpServletRequest request) {
-		return "2026-01-01";
+	public String fromDate(HttpServletRequest request) {
+		return Year.now().atDay(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 	}
 
 	@ModelAttribute("to_date")
 	public String toDate(HttpServletRequest request) {
-		return "2026-12-31";
+		return Year.now().atMonth(12).atEndOfMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+	}
+
+	@ModelAttribute("from_yyyymm")
+	public String fromYyyymm(HttpServletRequest request) {
+		return Year.now() + "-01";
+	}
+
+	@ModelAttribute("to_yyyymm")
+	public String toYyyymm(HttpServletRequest request) {
+		return Year.now() + "-12";
 	}
 
 	@ModelAttribute("warehousing_type")

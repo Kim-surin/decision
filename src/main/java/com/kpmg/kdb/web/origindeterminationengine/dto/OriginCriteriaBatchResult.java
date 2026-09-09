@@ -2,11 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * {@link OriginCriteriaBatchRequest} 1건에 대응하는 배치 조회 결과 행. 요청 키(reqHsCode/reqFtaCode/
- * reqHsCodeSubCategory)를 같이 돌려받아야 한다 — {@link OriginCriteria#getHsCode()} 는 매칭된 룰의
- * HS코드(요청보다 짧은 접두어일 수 있음)라 그룹핑 키로 쓸 수 없다.
- */
+// OriginCriteriaBatchRequest 1건에 대응하는 결과 행. OriginCriteria의 hsCode는 매칭된 룰의
+// HS코드(요청보다 짧은 접두어일 수 있음)라 그룹핑 키로 못 써서 요청 키를 같이 돌려받아야 한다.
 public class OriginCriteriaBatchResult {
 
 	private String reqHsCode;

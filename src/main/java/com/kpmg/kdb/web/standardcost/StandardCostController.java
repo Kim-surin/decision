@@ -1,5 +1,7 @@
 package com.kpmg.kdb.web.standardcost;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +13,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.web.standardcost.dto.StandardCostRequestDto;
 
 @Controller
 public class StandardCostController extends GenericController {
@@ -25,11 +26,11 @@ public class StandardCostController extends GenericController {
 
 	@RequestMapping(value = "/origin/compliance/standardCost/standardCostList")
 	@ResponseBody
-	public Result standardCost_list(@RequestBody StandardCostRequestDto param) throws Exception {
+	public Result standardCost_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = standatdCostService.retrieveStandardCost(param);
+			result = standatdCostService.retrieveStandardCost(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

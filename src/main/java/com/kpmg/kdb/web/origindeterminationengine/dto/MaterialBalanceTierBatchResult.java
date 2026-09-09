@@ -2,10 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * {@link com.kpmg.kdb.web.origindeterminationengine.ItemPriceDao#selectDivisionBalanceForPriceBatch} 배치 조회 1건의
- * 결과. 매칭되는 MATERIAL_INV_BAL 행이 없는 조합도 요청 키만 채워진 채 결과에 포함된다(나머지 필드는 null).
- */
+// selectDivisionBalanceForPriceBatch 배치 조회 1건의 결과. 매칭되는 MATERIAL_INV_BAL 행이 없어도
+// 요청 키만 채워진 채 결과에 포함된다(나머지 필드는 null).
 public class MaterialBalanceTierBatchResult {
 
 	private String reqDivisionCode;

@@ -13,20 +13,9 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationDetailResponseDto;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.MonthlyOriginDeterminationExecuteRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultDetailResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationDetailResultResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailDetailResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailMaterialResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationFailReasonResponseDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationRequestDto;
-import com.kpmg.kdb.web.origindetermination.dto.OriginDeterminationResponseDto;
 import com.kpmg.kdb.web.origindeterminationengine.BulkDecisionResult;
 import com.kpmg.kdb.web.origindeterminationengine.DomesticDecisionService;
 import com.kpmg.kdb.web.origindeterminationengine.ExportDecisionService;
@@ -47,45 +36,11 @@ public class OriginDeterminationService extends GeneralService {
 	@Autowired
 	private MonthlyDecisionService monthlyDecisionService;
 
-	public Result retrieveDomesticOriginDetermination(OriginDeterminationRequestDto param) throws Exception {
+	public Result retrieveDomesticOriginDetermination(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<OriginDeterminationResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveDomesticOriginDetermination(param);
-
-			result.setValue(list);
-			result.setSuccess(true);
-			result.setMessage(DEFAULT_MESSAGE_OK);
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-		}
-
-		return result;
-	}
-	
-	public Result retrieveExportOriginDetermination(OriginDeterminationRequestDto param) throws Exception {
-		Result result = new Result();
-
-		try {
-			List<OriginDeterminationResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveExportOriginDetermination(param);
-
-			result.setValue(list);
-			result.setSuccess(true);
-			result.setMessage(DEFAULT_MESSAGE_OK);
-		} catch (Exception e) {
-			e.printStackTrace();
-			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
-		}
-
-		return result;
-	}
-	
-	public Result retrieveOriginDeterminationResult(OriginDeterminationRequestDto param) throws Exception {
-		Result result = new Result();
-
-		try {
-			List<OriginDeterminationResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveOriginDeterminationResult(param);
+			List<Map<String, Object>> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveDomesticOriginDetermination(param);
 
 			result.setValue(list);
 			result.setSuccess(true);
@@ -98,11 +53,11 @@ public class OriginDeterminationService extends GeneralService {
 		return result;
 	}
 
-	public Result retrieveOriginDeterminationDetailList(OriginDeterminationDetailRequestDto param) throws Exception {
+	public Result retrieveExportOriginDetermination(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<OriginDeterminationDetailResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveOriginDeterminationDetailList(param);
+			List<Map<String, Object>> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveExportOriginDetermination(param);
 
 			result.setValue(list);
 			result.setSuccess(true);
@@ -115,14 +70,48 @@ public class OriginDeterminationService extends GeneralService {
 		return result;
 	}
 
-	
-	public Result retrieveOriginDeterminationDetailResultList(OriginDeterminationDetailResultRequestDto param) throws Exception {
+	public Result retrieveOriginDeterminationResult(Map param) throws Exception {
+		Result result = new Result();
+
+		try {
+			List<Map<String, Object>> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveOriginDeterminationResult(param);
+
+			result.setValue(list);
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+	public Result retrieveOriginDeterminationDetailList(Map param) throws Exception {
+		Result result = new Result();
+
+		try {
+			List<Map<String, Object>> list = sqlSession.getMapper(OriginDeterminationDao.class).retrieveOriginDeterminationDetailList(param);
+
+			result.setValue(list);
+			result.setSuccess(true);
+			result.setMessage(DEFAULT_MESSAGE_OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		return result;
+	}
+
+
+	public Result retrieveOriginDeterminationDetailResultList(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
 			OriginDeterminationDao dao = sqlSession.getMapper(OriginDeterminationDao.class);
-			List<OriginDeterminationDetailResultResponseDto> resultList = dao.retrieveOriginDeterminationDetailResultList(param);
-			List<OriginDeterminationDetailResultDetailResponseDto> detailList = dao.retrieveOriginDeterminationDetailResultDetailList(param);
+			List<Map<String, Object>> resultList = dao.retrieveOriginDeterminationDetailResultList(param);
+			List<Map<String, Object>> detailList = dao.retrieveOriginDeterminationDetailResultDetailList(param);
 
 			Map<String, Object> value = new LinkedHashMap<>();
 			value.put("resultList", resultList);
@@ -143,14 +132,14 @@ public class OriginDeterminationService extends GeneralService {
 	// 목록(HS코드 누락·금액 0 사유일 때 화면에서 보여줌)을 한 번에 조회.
 	// retrieveOriginDeterminationDetailResultList와 동일한 패턴 - 상세내용/원재료 목록은 fta_code마다
 	// 별도 호출하지 않고 화면에서 매핑해 바로 보여준다.
-	public Result retrieveOriginDeterminationFailList(OriginDeterminationDetailResultRequestDto param) throws Exception {
+	public Result retrieveOriginDeterminationFailList(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
 			OriginDeterminationDao dao = sqlSession.getMapper(OriginDeterminationDao.class);
-			List<OriginDeterminationFailReasonResponseDto> reasonList = dao.retrieveOriginDeterminationFailReasonList(param);
-			List<OriginDeterminationFailDetailResponseDto> detailList = dao.retrieveOriginDeterminationFailDetailList(param);
-			List<OriginDeterminationFailMaterialResponseDto> materialList = dao.retrieveOriginDeterminationFailMaterialList(param);
+			List<Map<String, Object>> reasonList = dao.retrieveOriginDeterminationFailReasonList(param);
+			List<Map<String, Object>> detailList = dao.retrieveOriginDeterminationFailDetailList(param);
+			List<Map<String, Object>> materialList = dao.retrieveOriginDeterminationFailMaterialList(param);
 
 			Map<String, Object> value = new LinkedHashMap<>();
 			value.put("reasonList", reasonList);
@@ -171,11 +160,11 @@ public class OriginDeterminationService extends GeneralService {
 	// BOM 추적 팝업 전용 - param.fta_code를 지정해 그 협정 판정 계산에 실제로 쓰인 최종 원재료(FCR_DTL)만 조회.
 	// retrieveOriginDeterminationFailList와 같은 DAO 메서드를 재사용하되, 여기선 reasonList/detailList가
 	// 필요 없어 materialList만 따로 내려준다.
-	public Result retrieveOriginDeterminationMaterialList(OriginDeterminationDetailResultRequestDto param) throws Exception {
+	public Result retrieveOriginDeterminationMaterialList(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<OriginDeterminationFailMaterialResponseDto> materialList = sqlSession
+			List<Map<String, Object>> materialList = sqlSession
 					.getMapper(OriginDeterminationDao.class).retrieveOriginDeterminationFailMaterialList(param);
 
 			result.setValue(materialList);
@@ -193,11 +182,11 @@ public class OriginDeterminationService extends GeneralService {
 	// 리스트 조회 시점에 정해진 sales_no/sales_seq/판정상태는 스냅샷이라 그 이후 가상매출이 새로 생기면
 	// 낡은 값이 되므로, (매출년월/플랜트/고객사/품번) 그룹 기준으로 "지금 시점" sales_no/sales_seq를
 	// 다시 찾아 판정상태/상품상세와 함께 돌려준다.
-	public Result retrieveDomesticOriginDeterminationDetailList(DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
+	public Result retrieveDomesticOriginDeterminationDetailList(Map param) throws Exception {
 		Result result = new Result();
 
 		try {
-			List<DomesticOriginDeterminationDetailResponseDto> list = sqlSession.getMapper(OriginDeterminationDao.class)
+			List<Map<String, Object>> list = sqlSession.getMapper(OriginDeterminationDao.class)
 					.retrieveDomesticOriginDeterminationDetailList(param);
 
 			result.setValue(list);
@@ -297,7 +286,7 @@ public class OriginDeterminationService extends GeneralService {
 
 	/**
 	 * 검색 조건의 매출일자(from_date~to_date) 범위가 걸치는 매출년월마다 {@link MonthlyDecisionService}
-	 * 를 호출해 월 판정을 진행한다. 
+	 * 를 호출해 월 판정을 진행한다.
 	 */
 	public Result executeMonthlyOriginDetermination(MonthlyOriginDeterminationExecuteRequestDto param) throws Exception {
 		Result result = new Result();

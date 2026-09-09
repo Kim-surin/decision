@@ -3,11 +3,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 import java.math.BigDecimal;
 import java.util.function.Function;
 
-/**
- * FTA_INCOTERMS_INFO 한 행. 인코텀즈 조건별 환산율 컬럼을 그대로 보관하고,
- * 어떤 컬럼을 사용할지는 {@link IncotermsCode} 로 Java에서 선택한다.
- * (원본 SQL의 DECODE(P_FROM_INCOTERMS_CODE, 'EXW', ..., 'FOB', ...) 컬럼 피벗을 대체)
- */
+// FTA_INCOTERMS_INFO 한 행. 인코텀즈 조건별 환산율 컬럼을 그대로 보관하고,
+// 어떤 컬럼을 쓸지는 IncotermsCode로 Java에서 선택한다(원본 SQL의 DECODE 컬럼 피벗 대체).
 public class IncotermsRateRow {
 
 	public enum IncotermsCode {

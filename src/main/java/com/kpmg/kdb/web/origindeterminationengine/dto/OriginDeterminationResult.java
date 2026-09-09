@@ -2,11 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * 판정 룰(FTA_RULE) 1건 처리 동안 예외판정/세번변경기준/부가가치기준/RCEP 단계가 이어받아 채워나가는
- * FCR_RESULT 행 하나. {@link com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationContext}
- * 가 판정 1건 단위로 들고 있어 동시성 안전하다.
- */
+// 판정 룰(FTA_RULE) 1건 처리 동안 예외판정/세번변경/부가가치/RCEP 단계가 이어받아 채워나가는
+// FCR_RESULT 행. OriginDeterminationContext가 판정 1건 단위로 들고 있어 동시성 안전하다.
 public class OriginDeterminationResult {
 
 	private String salesNo;

@@ -10,12 +10,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsChangeRateCriteri
 import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsRateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.IncotermsRateRow.IncotermsCode;
 
-/**
- * 레거시 GET_INCOTERMS_CHANGE_RATE(stdYyyy, companyCode, divisionCode, exportFlag,
- * nationCode, fromIncotermsCode, toIncotermsCode) 이관.
- *
- * 원본: 1 - ((FROM_INCOTERMS_RATE - TO_INCOTERMS_RATE) / 100), 값이 없으면 1 반환.
- */
+// 레거시 GET_INCOTERMS_CHANGE_RATE(stdYyyy, companyCode, divisionCode, exportFlag, nationCode,
+// fromIncotermsCode, toIncotermsCode) 이관. 원본: 1 - ((FROM_INCOTERMS_RATE - TO_INCOTERMS_RATE) / 100), 값이 없으면 1 반환.
 @Service
 public class IncotermsRateService extends GeneralService {
 

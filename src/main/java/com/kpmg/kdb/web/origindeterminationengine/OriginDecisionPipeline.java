@@ -12,19 +12,8 @@ import com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationMode;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
-/**
- * 원산지판정 흐름을 메서드 체이닝으로 실행하는 파이프라인. 내수/수출은 사용 단계가 다르다.
- *
- * <pre>
- * 내수) generateVirtualSales(params) > createFcr() > determineOrigin() > updateStatus()
- * 수출) createFcr() > determineOrigin() > updateStatus()
- * </pre>
- *
- * 각 단계는 {@link AggregatedVirtualSalesGenerator}/{@link CreateFcrService}/
- * {@link OriginDeterminationExecutionService}/{@link SalesDecisionStatusUpdater} 가 담당하며,
- * {@link OriginDecisionPipelineFactory} 가 채워준다. 판정 대상 1건에서 예외가 발생하면 그 대상은
- * SALES_MST/SALES_DTL 판정실패('5')로 표시하고 이후 단계에서 제외한 뒤 나머지는 계속 진행한다.
- */
+// 원산지판정 흐름을 메서드 체이닝으로 실행하는 파이프라인. 내수는 generateVirtualSales > createFcr > determineOrigin >
+// updateStatus, 수출은 createFcr부터 시작하며, 판정 대상 1건에서 예외가 나면 그 대상만 판정실패('5')로 표시하고 나머지는 계속 진행한다.
 public class OriginDecisionPipeline {
 
 	private static final Logger logger = LoggerFactory.getLogger(OriginDecisionPipeline.class);

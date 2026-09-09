@@ -9,11 +9,8 @@ import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
-/**
- * 수출 판정 "1. 데이터 가공" 단계. 수출은 가상매출 생성이 필요 없으므로, 
- * 고객사/사업부 그룹 발견 없이 회사+기간(+선택 필터) 조건만으로 대상을 직접
- * 뽑는다({@link ExportDecisionTargetDao#selectPendingExportTargets} 참고).
- */
+// 수출 판정 "1. 데이터 가공" 단계. 수출은 가상매출 생성이 필요 없으므로 고객사/사업부 그룹 발견 없이
+// 회사+기간(+선택 필터) 조건만으로 대상을 직접 뽑는다(selectPendingExportTargets 참고).
 @Service
 public class ExportDecisionTargetService extends GeneralService {
 

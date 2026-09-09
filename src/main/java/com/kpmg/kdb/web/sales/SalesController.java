@@ -1,5 +1,7 @@
 package com.kpmg.kdb.web.sales;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +13,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GenericController;
-import com.kpmg.kdb.web.sales.dto.SalesRequestDto;
 
 @Controller
 public class SalesController extends GenericController {
@@ -19,17 +20,17 @@ public class SalesController extends GenericController {
 	protected SalesService salesService;
 
 	@RequestMapping(value = "/origin/compliance/sales/sales")
-	public String poledger_view(Model model, HttpSession session) {
+	public String sales_view(Model model, HttpSession session) {
 		return "sales/sales_view";
 	}
 
 	@RequestMapping(value = "/origin/compliance/sales/salesList")
 	@ResponseBody
-	public Result sales_list(@RequestBody SalesRequestDto param) throws Exception {
+	public Result sales_list(@RequestBody Map param) throws Exception {
 		Result result;
 
 		try {
-			result = salesService.retrieveSales(param);
+			result = salesService.retrieveSales(super.extendsMap(param));
 		} catch (Exception e) {
 			e.printStackTrace();
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});

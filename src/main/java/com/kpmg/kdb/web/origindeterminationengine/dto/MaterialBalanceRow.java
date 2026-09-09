@@ -2,9 +2,7 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * FC10_GET_ITEM_ORIGIN_RATE 의 C_MAT 커서 한 행(BOM 원재료 또는 대체자재의 수불부 기초정보).
- */
+// FC10_GET_ITEM_ORIGIN_RATE의 C_MAT 커서 한 행(BOM 원재료 또는 대체자재의 수불부 기초정보).
 public class MaterialBalanceRow {
 
 	private String itemCode;

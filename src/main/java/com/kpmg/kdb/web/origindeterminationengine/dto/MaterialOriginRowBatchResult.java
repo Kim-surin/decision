@@ -2,11 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * {@link MaterialOriginRowsRequest} 1건(FM_LIST 행 1건)에 대응하는 배치 조회 결과 행. 요청 1건당 0~N 행
- * (BOM 자재 수만큼)이 나올 수 있어, 매칭 자재가 없으면 그 요청은 결과에 아예 나타나지 않는다(호출자는
- * Map 조회 결과 없으면 빈 리스트로 처리).
- */
+// MaterialOriginRowsRequest 1건에 대응하는 배치 조회 결과 행(BOM 자재 수만큼 0~N행).
+// 매칭 자재가 없으면 결과에 안 나타나며, 호출자는 Map 조회 결과 없으면 빈 리스트로 처리한다.
 public class MaterialOriginRowBatchResult {
 
 	private String reqFtaCode;

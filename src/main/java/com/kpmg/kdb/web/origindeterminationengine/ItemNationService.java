@@ -32,14 +32,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.ItemOriginRateCriteria;
 import com.kpmg.kdb.web.origindeterminationengine.dto.LastInputYyyyMmResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceRow;
 
-/**
- * RCEP 자재별 원산지국가(COO_NATION) 산정 (레거시 FC01_GET_ITEM_NATION).
- *
- * 품목의 BOM 원재료/대체(FUNGIBLE) 자재별로 수불부 기초정보로 구매원장 조회 기간을 산정한 뒤,
- * 그 기간의 구매원장·원산지확인서를 조회해 COO_NATION을 구한다. 자재가 여러 건이면 마지막으로
- * 처리된 건의 결과가 최종 반환값이 된다. 재고회전기간이 음수(계산 불능)면 "0"을 반환한다(국가코드가
- * 아닌 원본의 특이 센티널 값).
- */
+// RCEP 자재별 원산지국가(COO_NATION) 산정(레거시 FC01_GET_ITEM_NATION). 품목의 BOM 원재료/대체 자재별 구매원장 조회
+// 기간을 산정해 COO_NATION을 구하며, 자재가 여럿이면 마지막 처리 건이 최종값, 재고회전기간이 음수면 특이 센티널 "0"을 반환한다.
 @Service
 public class ItemNationService extends GeneralService {
 
@@ -88,12 +82,8 @@ public class ItemNationService extends GeneralService {
 		}
 	}
 
-	/**
-	 * resolveItemNation의 배치 버전. distinct (회사/사업부/품목/HS코드) 조합 전체에 대해 자재 목록/조회구간을
-	 * 먼저 계산하고 COO_NATION 조회만 한 번의 배치로 처리한다.
-	 *
-	 * @return 키(resolveItemNationResultKey) -&gt; COO_NATION(null/""/"0"/실제 국가코드 모두 유효한 값)
-	 */
+	// resolveItemNation의 배치 버전. distinct (회사/사업부/품목/HS코드) 조합 전체의 자재 목록/조회구간을 먼저
+	// 계산하고 COO_NATION 조회만 한 번의 배치로 처리한다. 반환값은 키 -&gt; COO_NATION(null/""/"0"/실제 국가코드 모두 유효).
 	public Map<String, String> prefetchCooNations(List<ItemNationCriteria> criteriaList,
 			Map<String, String> lastInputYyyyMmCache) {
 		if (criteriaList == null || criteriaList.isEmpty()) {
@@ -158,12 +148,8 @@ public class ItemNationService extends GeneralService {
 				criteria.getHsCode());
 	}
 
-	/**
-	 * {@link #resolveItemNationResultKey(ItemNationCriteria)}와 동일한 키를, {@link ItemNationCriteria}를
-	 * 아직 만들기 전(원본이 MaterialOriginRow 등 다른 형태일 때)에도 만들 수 있도록 한 오버로드. 이 키는
-	 * {@link #prefetchCooNations}가 채운 캐시를 조회하는 쪽과 반드시 같은 필드/순서를 써야 하므로 별도로
-	 * 복제하지 말고 이 메서드를 그대로 호출한다.
-	 */
+	// resolveItemNationResultKey(ItemNationCriteria)와 동일한 키를 ItemNationCriteria를 아직 만들기 전에도
+	// 만들 수 있는 오버로드. prefetchCooNations가 채운 캐시 조회 쪽과 반드시 같아야 하므로 복제하지 말고 이 메서드를 그대로 호출한다.
 	public static String resolveItemNationResultKey(String companyCode, String divisionCode, String itemCode, String hsCode) {
 		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(hsCode));
 	}

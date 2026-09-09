@@ -22,15 +22,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 import com.kpmg.kdb.web.origindeterminationengine.ItemNationService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ItemNationCriteria;
 
-/**
- * "PKG99_COO_DECISION.COO_DECISION" 단계 (레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION).
- * {@link OriginDecisionPipeline} 이 사용한다.
- *
- * 매출(SALES_NO) 1건에 대해 판정대상 FTA_CODE 후보를 순회하고, 각 후보마다 적용 가능한 룰을
- * 순회하며 예외판정/세번변경기준/부가가치기준을 검사해 원산지 판정결과를 산출한다. 상품
- * (PRODUCT_ASSETS_TYPE M,R,B)과 제품(P,H)은 판정 방식이 달라 각각 별도 메서드로 처리한다.
- * RCEP(PKRRC)는 최대기여국 산정이 추가로 필요해 별도 처리한다.
- */
+// "PKG99_COO_DECISION.COO_DECISION" 단계(레거시 PKG99_COO_DECISION / PKG99_COO_CTC_DECISION). 매출 1건의 FTA_CODE
+// 후보를 순회하며 예외판정/세번변경/부가가치기준을 검사해 판정결과를 산출한다. 상품(M,R,B)/제품(P,H)은 방식이 달라 별도 처리하고, RCEP는 최대기여국 산정이 추가된다.
 @Service
 public class OriginDeterminationExecutionService extends GeneralService {
 
@@ -49,15 +42,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	@Autowired
 	private ItemNationService itemNationService;
 
-	/**
-	 * 원산지 판정 1건 실행.
-	 *
-	 * <p>예외를 흡수하지 않고 그대로 던진다 — 매출 1건 처리 실패를 배치 전체 중단 없이 넘기면서도
-	 * 그 대상을 판정실패로 표시하는 책임은 호출자({@link OriginDecisionPipeline})에 있다.
-	 *
-	 * @param productCodes 판정 대상 제품 코드. null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면
-	 *                      그 제품들만(개별 판정) 대상으로 한다.
-	 */
+	// 원산지 판정 1건 실행. 예외를 흡수하지 않고 그대로 던진다 — 배치 전체 중단 없이 넘기면서도 그 대상을 판정실패로
+	// 표시하는 책임은 호출자(OriginDecisionPipeline)에 있다. productCodes: null/빈 리스트면 salesNo 전체(월 판정) 대상.
 	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
 		OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
@@ -108,10 +94,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		OriginCriteriaCache originCriteriaCache = OriginCriteriaCache.prefetch(dao, fmListRows, newAptaPsrFlag);
 		Map<String, BufferRates> productLineBufferCache = new HashMap<>();
 
-		// FM_LIST 전체분의 자재 원산지 목록(materialOriginRowsCache)을 한 번에 메모리에 올리면
-		// BOM이 복잡한 매출은 한 그룹에서 수만 건까지도 쌓여(예: 15,104건 확인) GC 부담이 커진다.
-		// fmListRows를 BATCH_CHUNK_SIZE 단위로 나눠, 자재 원산지 캐시/RCEP 캐시는 그 청크분만
-		// 만들었다가 처리 후 버리도록 해서 한 번에 메모리에 남는 양을 제한한다.
+		// FM_LIST 전체분의 자재 원산지 목록을 한 번에 메모리에 올리면 BOM이 복잡한 매출은 수만 건까지도
+		// 쌓여(예: 15,104건 확인) GC 부담이 커져, fmListRows를 청크 단위로 나눠 캐시를 그때그때 버린다.
 		PendingBatch pending = new PendingBatch();
 		for (int from = 0; from < fmListRows.size(); from += BATCH_CHUNK_SIZE) {
 			List<OriginDeterminationTarget> chunk = fmListRows.subList(from,
@@ -458,10 +442,6 @@ public class OriginDeterminationExecutionService extends GeneralService {
 
 	private static String materialOriginRowsKey(String ftaCode, String divisionCode, int salesSeq) {
 		return String.join("|", nz(ftaCode), nz(divisionCode), String.valueOf(salesSeq));
-	}
-
-	private static String itemNationKey(String companyCode, String divisionCode, String itemCode, String hsCode) {
-		return String.join("|", nz(companyCode), nz(divisionCode), nz(itemCode), nz(hsCode));
 	}
 
 	private static String nz(String value) {

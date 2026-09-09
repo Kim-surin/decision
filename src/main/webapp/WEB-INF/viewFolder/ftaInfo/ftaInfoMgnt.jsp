@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -29,7 +30,12 @@
 								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">국가코드/명</label>
+											<label class="form-label" for="example-input-border">
+											<!--국가코드/국가명-->
+											<spring:message code='TXT.NATION_CODE'/> 
+											/
+											<spring:message code='TXT.NATION_NAME'/> 
+											</label>
 										</div>
 										<div class="col">
 											<input type="text" id="searchCountry" class="form-control" >
@@ -43,7 +49,9 @@
 								<div class="col">
 									<button type="button"
 											onclick="javascript:FTA_INFO.retrieve_GridData();"
-											class="btn btn-sm btn-search search-no-more waves-effect waves-themed">Search</button>
+											class="btn btn-sm btn-search search-no-more waves-effect waves-themed">
+											<spring:message code='TXT.SEARCH'/> <!--조회-->
+									</button>
 								</div>
 							</div>
 						</div>
@@ -56,13 +64,13 @@
 				<div class="d-flex frame-wrap" style="align-items: center;">
 					<div class="demo" style="margin-left: auto;">
 						<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="FTA_INFO.fnAddRow()">
-							행추가
+							<spring:message code='TXT.ADD_ROW'/> <!--행추가-->
 						</button>
 						<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="FTA_INFO.fnDelRow()">
-							행삭제
+							<spring:message code='TXT.DELETE_ROW'/> <!--행삭제-->
 						</button>
 						<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="FTA_INFO.fnSave()">
-							저장
+							<spring:message code='TXT.SAVE'/> <!--저장-->
 						</button>
 					</div>
 				</div>
@@ -125,20 +133,20 @@
 			const columnLayout = [
 				{
 					dataField: "fta_code"
-				  , headerText: "FTA 코드"
+				  , headerText: "<spring:message code='TXT.FTA_CODE'/>"  //FTA코드
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 				    dataField: "fta_name"
-				  , headerText: "FTA 명"
+				  , headerText: "<spring:message code='TXT.FTA_NAME'/>"  //FTA코드
 				  , width: 120
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "effect_date"
-				  , headerText: "발효일자"
+				  , headerText: "<spring:message code='TXT.EFFECT_DATE'/>"  //발효일자
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -169,7 +177,7 @@
 				},
 				{
 					dataField: "fta_status"
-				  , headerText: "협정상태"
+				  , headerText: "<spring:message code='TXT.STATUS'/>"  //상태
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -198,15 +206,15 @@
 				},
 				{
 					dataField: "fta_apply_cnt"
-				  , headerText: "협정국수"
-				  , width: 120
+				  , headerText:  "<spring:message code='TXT.AGREEMENT_COUNTRY_COUNT'/>"  //협정국수
+				  , width: 120  
 				  , style: "grid-center-text grid-link-text"
 				  , filter: {showIcon: true}
 				  , editable :false
 				},
 				{
 					dataField: "co_issue_flag"
-				  , headerText: "발급구분"
+				  , headerText: "<spring:message code='TXT.CO_ISSUE_TYPE'/>"  //발급구분  
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -236,8 +244,8 @@
 				},
 				{
 					dataField: "de_minimis_rate"
-				  , headerText: "미소기준비율"
-				  , width: 120
+				  , headerText:"<spring:message code='TXT.DE_MINIMIS_RATE'/>"  //미소기준비율
+				  , width: 120  
 				  , style: "grid-right-text"
 				  , filter: {showIcon: true}
 				  , editRenderer: {
@@ -249,7 +257,7 @@
 				},
 				{
 					dataField: "rvc_rate"
-				  , headerText: "부가가치"
+				  , headerText: "<spring:message code='TXT.RVC_RATE'/>"  //부가가치비율
 				  , width: 120
 				  , style: "grid-right-text"
 				  , filter: {showIcon: true}
@@ -262,7 +270,7 @@
 				},
 				{
 					dataField: "delete_yn"
-				  , headerText: "사용여부"
+				  , headerText: "<spring:message code='TXT.USING_YN'/>"  //사용유무
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -291,7 +299,7 @@
 				},
 				{
 					dataField: "inkoterms_type"
-				  , headerText: "판매가치산정기준"
+				  , headerText: "<spring:message code='TXT.INCOTERMS_TYPE'/>"  //판매가치산정기준 
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -320,7 +328,7 @@
 				},
 				{
 					dataField: "cover_yn"
-				  , headerText: "포괄발행여부"
+				  , headerText: "<spring:message code='TXT.CO_ISSUE_TYPE'/>"  //발급구분
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -374,7 +382,8 @@
 			KpackageOBJ.auiGrid.bind(FTA_INFO.gridId, "cellClick", function(event) {
 				if(event.dataField === "fta_apply_cnt"){
 					KpackageOBJ.object.setFormValue("ftaInfo-form", "popParam", JSON.stringify(event.item));
-					KpackageOBJ.dialog.open('ftaNationPopup','협정별 국가지정 팝업','/origin/ftaInfo/ftaInfoMgnt/ftaNation',1000,700);
+					//협정별 국가지정
+					KpackageOBJ.dialog.open('ftaNationPopup',"<spring:message code='TXT.AGREEMENT_COUNTRY_ASSIGNMENT'/>",'/origin/ftaInfo/ftaInfoMgnt/ftaNation',1000,700);
 				}
 			});
 		}
@@ -399,7 +408,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(FTA_INFO.gridId);
 			
 			if(data.length == 0){
-				KpackageOBJ.object.alert("데이터가 선택되지 않았습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"); //데이터가 선택되지 않았습니다.
 				return false;
 			}
 							
@@ -413,12 +422,12 @@
 			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_INFO.gridId, ["fta_code", "fta_name", "effect_date","fta_status","co_issue_flag","de_minimis_rate","rvc_rate","delete_yn","inkoterms_type","cover_yn"], "해당 값은 필수 입력값입니다.")
 							
 			if(data.length === 0){
-				KpackageOBJ.object.alert("저장할 데이터가 없습니다.");
+				KpackageOBJ.object.alert("<spring:message code='NO_DATA_TO_SAVE'/>"); //저장할 데이터가 없습니다.
 				return;
 			}
 							
 			if(isValid){
-				if (!confirm("저장하시겠습니까?")) {
+				if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
 	            	return;
 	        	}
 				
@@ -433,7 +442,7 @@
 		//저장 콜백
 		this.fnSaveCallBack = function(res) {
 			if(res.success){
-				KpackageOBJ.object.alert("저장되었습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SAVEOK'/>"); //저장되었습니다.
 				FTA_INFO.retrieve_GridData();
 			}else{
 				KpackageOBJ.object.alert(res.message);

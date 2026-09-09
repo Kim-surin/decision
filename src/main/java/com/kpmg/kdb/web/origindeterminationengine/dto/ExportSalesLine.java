@@ -2,10 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * 레거시 CREATE_FCR 3-2(수출) 단계의 SALES×FTA_APPLY_NATION×FTA_MASTER 조인 결과 한 행
- * (FS03_GET_HS_CODE/GET_INCOTERMS_CHANGE_RATE 호출 전 원시 데이터. ftaCode 는 FTA_MASTER 매칭 결과)
- */
+// 레거시 CREATE_FCR 3-2(수출) 단계의 SALES×FTA_APPLY_NATION×FTA_MASTER 조인 결과 한 행
+// (HS코드/인코텀즈 환산 호출 전 원시 데이터, ftaCode는 FTA_MASTER 매칭 결과).
 public class ExportSalesLine {
 
 	private String ftaCode;

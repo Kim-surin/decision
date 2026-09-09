@@ -1,9 +1,6 @@
 package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/**
- * {@link com.kpmg.kdb.web.origindeterminationengine.ProductOriginDeterminationDao#selectApplicableOriginCriteriaBatch} 배치
- * 조회 1건의 입력 키(대상 HS코드/FTA_CODE/HS코드 세부유형/APTA 신규 PSR 적용여부).
- */
+// selectApplicableOriginCriteriaBatch 배치 조회 1건의 입력 키(HS코드/FTA_CODE/HS코드 세부유형/APTA 신규 PSR 적용여부).
 public class OriginCriteriaBatchRequest {
 
 	private final String hsCode;

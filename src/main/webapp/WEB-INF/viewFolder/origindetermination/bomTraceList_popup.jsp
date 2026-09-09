@@ -140,9 +140,8 @@
 			this.grid_BomTrace = KpackageOBJ.auiGrid.create("oAuiGrid_bomTraceList", columnLayout, gridProps, "");
 		};
 
-		// 이 팝업은 KpackageOBJ.sidepanel.open이 부트스트랩 모달을 아직 show() 하기 전에 콘텐츠를 주입하고
-		// 그 안에서 그리드를 생성하므로, 생성 시점엔 모달이 아직 안 보인 상태라 AUIGrid가 실제 너비를 못 잡고 좁게 축소되어 그려진다
-		// show() 이후 (shown.bs.modal) 시점에 다시 resize해준다
+		// 모달이 아직 show()되기 전에 그리드가 생성돼 너비를 못 잡고 좁게 그려진다.
+		// show() 이후(shown.bs.modal) 시점에 다시 resize해준다.
 		this.bindModalShownResize = function() {
 			var self = this;
 			var $modal = $('#oAuiGrid_bomTraceList').closest('.modal');

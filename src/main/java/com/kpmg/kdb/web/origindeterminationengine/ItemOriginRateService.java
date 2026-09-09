@@ -42,14 +42,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary;
 import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummaryRequest;
 
-/**
- * 원재료 역내산 비율 조회 (레거시 FC10_GET_ITEM_ORIGIN_RATE).
- *
- * 품목의 BOM 원재료/대체(FUNGIBLE) 자재별로 구매원장을 조회해 역내산 비율을 계산하고,
- * 역외산(0)이 확인되면 즉시 반환한다. FTA_CODE와 무관한 계산(precheck)과 FTA_CODE에
- * 의존하는 마지막 단계(resolveOriginRate)를 분리해, 같은 품목을 여러 FTA_CODE로 반복
- * 조회할 때 앞단을 재사용할 수 있다.
- */
+// 원재료 역내산 비율 조회(레거시 FC10_GET_ITEM_ORIGIN_RATE). 구매원장을 조회해 역내산 비율을 계산하고 역외산(0)이
+// 확인되면 즉시 반환하며, FTA_CODE 무관 계산(precheck)과 의존 단계(resolveOriginRate)를 분리해 반복 조회 시 앞단을 재사용한다.
 @Service
 public class ItemOriginRateService extends GeneralService {
 
@@ -221,10 +215,8 @@ public class ItemOriginRateService extends GeneralService {
 		}
 	}
 
-	/**
-	 * 비인증 원산지 구매 집계를 (품목,FTA_CODE) 조합 전체에 대해 배치로 미리 조회한다.
-	 * 반환된 맵을 resolveOriginRate에 그대로 넘기면 추가 DB 호출 없이 재사용한다.
-	 */
+	// 비인증 원산지 구매 집계를 (품목,FTA_CODE) 조합 전체에 대해 배치로 미리 조회한다.
+	// 반환된 맵을 resolveOriginRate에 그대로 넘기면 추가 DB 호출 없이 재사용한다.
 	public Map<String, PurchaseLedgerSummary> prefetchNonCertifiedOriginSummaries(
 			List<ItemOriginRateCriteria> criteriaList, Map<String, OriginRatePrecheck> precheckCache) {
 		if (criteriaList == null || criteriaList.isEmpty()) {
@@ -364,11 +356,8 @@ public class ItemOriginRateService extends GeneralService {
 		}
 	}
 
-	/**
-	 * 구매원장 집계를 배치로 미리 조회한다. 자재 순회 도중 역외(0)로 확정되면 이후 자재는 조회하지
-	 * 않는 원본 단락평가를 재현하기 위해, 먼저 조회 없이 계획(필요한 조회 후보)만 세운 뒤 그 후보들을
-	 * 한 번에 배치 조회하고, 마지막에 원본과 동일한 순서로 결과를 조립한다.
-	 */
+	// 구매원장 집계를 배치로 미리 조회한다. 자재 순회 도중 역외(0)로 확정되면 이후 자재는 조회하지 않는 원본
+	// 단락평가를 재현하기 위해, 조회 없이 계획(필요한 조회 후보)만 먼저 세운 뒤 한 번에 배치 조회하고 결과를 조립한다.
 	public void prefetchPurchaseLedgerSummaries(List<ItemOriginRateCriteria> criteriaList,
 			Map<String, String> lastInputYyyyMmCache, Map<String, OriginRatePrecheck> precheckCache) {
 		if (criteriaList == null || criteriaList.isEmpty()) {

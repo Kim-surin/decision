@@ -1,10 +1,7 @@
 package com.kpmg.kdb.web.origindeterminationengine.dto;
 
-/**
- * {@link com.kpmg.kdb.web.origindeterminationengine.ItemOriginRateDao#selectMaterialCandidatesBatch} 배치 조회 1건의
- * 입력 키. companyCode 는 호출 시점에 이미 스코프가 고정돼 있어 별도 파라미터로 넘기고 이 키에는 포함하지
- * 않는다. {@code baseDate} 는 SQL 바인딩에는 쓰이지 않고 캐시 키 복원용 원본값이다.
- */
+// selectMaterialCandidatesBatch 배치 조회 1건의 입력 키. companyCode는 호출 시점에 스코프가
+// 이미 고정돼 있어 이 키엔 포함 안 하고, baseDate는 SQL 바인딩엔 안 쓰고 캐시 키 복원용이다.
 public class MaterialCandidatesRequest {
 
 	private final String divisionCode;

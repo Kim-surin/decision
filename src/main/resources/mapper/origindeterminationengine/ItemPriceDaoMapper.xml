@@ -1,16 +1,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.kpmg.kdb.web.origindeterminationengine.ItemPriceDao">
-	<!--
-		FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 이관. NOTE 는 별도 조회하지 않고
-		ItemPriceService.resolveItemPriceWithNote 가 가격을 찾은 행 데이터로 근거 텍스트를 함께 만든다.
-		단가 계산(우선순위 등)은 SQL이 아닌 Java(MaterialBalanceTierRow)에서 수행한다.
-	-->
+	<!-- FC10_GET_ITEM_PRICE / FC10_GET_ITEM_PRICE_NOTE 이관. NOTE는 별도 조회하지 않고 ItemPriceService.resolveItemPriceWithNote가
+		 가격을 찾은 행 데이터로 근거 텍스트를 함께 만들며, 단가 계산(우선순위 등)은 SQL이 아닌 Java(MaterialBalanceTierRow)에서 수행한다. -->
 
-	<!--
-		자기 사업부(division) 우선/전체 사업부 폴백 2단계 조회를 단일 쿼리로 통합. 자기 사업부에 조회기간
-		내 출고실적이 있으면 그 안에서의 최신월을, 없으면 전체 사업부 통틀은 최신월을 기준으로 삼는다.
-	-->
+	<!-- 자기 사업부(division) 우선/전체 사업부 폴백 2단계 조회를 단일 쿼리로 통합. 자기 사업부에 조회기간 내 출고실적이
+		 있으면 그 안에서의 최신월을, 없으면 전체 사업부 통틀은 최신월을 기준으로 삼는다. -->
 	<select id="selectDivisionBalanceForPrice" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierRow">
 		SELECT ML.YYYYMM          AS yyyymm
 		      ,ML.DIVISION_CODE   AS divisionCode
@@ -51,14 +46,8 @@
 		FETCH FIRST 1 ROW ONLY
 	</select>
 
-	<!--
-		selectDivisionBalanceForPrice 의 배치 버전. (divisionCode,itemCode) 조합만 배치로 받는다.
-		단건 쿼리의 ORDER BY CASE ... FETCH FIRST 형태는 LATERAL 안에서 반복 평가되면 PostgreSQL 플래너를
-		오작동시켜 몇 초~몇 분씩 튀는 사례가 있어(selectOwnOrNonCooFcrResultBatch 등과 동일 계열), 대신
-		"자기 사업부 결과(tier 0)"/"전체 사업부 결과(tier 1)"를 단순 서브쿼리 2개로 분리해 UNION ALL 로
-		묶고 tier 오름차순 1건만 뽑는 방식으로 바꿨다(정렬 대상 최대 2행이라 비용 없음). tier 1의
-		ORDER BY DIVISION_CODE 는 원본의 동점 시 사업부코드 오름차순 타이브레이크를 재현한 것이다.
-	-->
+	<!-- selectDivisionBalanceForPrice의 배치 버전. 단건 쿼리의 ORDER BY CASE...FETCH FIRST 형태는 LATERAL 안에서
+		 반복 평가되면 PostgreSQL 플래너를 오작동시켜(몇 초~몇 분) "자기 사업부(tier 0)"/"전체 사업부(tier 1)" 서브쿼리 2개를 UNION ALL로 묶는 방식으로 바꿨다. -->
 	<select id="selectDivisionBalanceForPriceBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MaterialBalanceTierBatchResult">
 		SELECT V.DIVISION_CODE      AS reqDivisionCode
 		      ,V.ITEM_CODE          AS reqItemCode
@@ -128,11 +117,8 @@
 		FETCH FIRST 1 ROW ONLY
 	</select>
 
-	<!--
-		selectRecentPurchasePrice 의 배치 버전. (divisionCode,itemCode) 조합 전체를 LEFT JOIN LATERAL 로
-		한 번에 조회한다. 매칭 없는 조합도 결과에 포함해(PL.* NULL) 호출자가 불필요한 단건 폴백 조회를
-		다시 하지 않게 한다(ItemPriceService#prefetchRecentPurchasePrices 참고).
-	-->
+	<!-- selectRecentPurchasePrice의 배치 버전. (divisionCode,itemCode) 조합 전체를 LEFT JOIN LATERAL로 한 번에
+		 조회하며, 매칭 없는 조합도 결과에 포함해(PL.* NULL) 불필요한 단건 폴백 조회를 막는다. -->
 	<select id="selectRecentPurchasePriceBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceBatchResult">
 		SELECT V.DIVISION_CODE     AS reqDivisionCode
 		      ,V.ITEM_CODE         AS reqItemCode
@@ -173,11 +159,8 @@
 		FETCH FIRST 1 ROW ONLY
 	</select>
 
-	<!--
-		selectStandardCostByDivision 의 배치 버전. (divisionCode,itemCode) 조합 전체를 LEFT JOIN LATERAL 로
-		조회한다. 매칭 없는 조합도 결과에 포함해(SC.* NULL) 불필요한 단건 폴백 조회를 막는다
-		(ItemPriceService#prefetchStandardCostByDivision 참고).
-	-->
+	<!-- selectStandardCostByDivision의 배치 버전. (divisionCode,itemCode) 조합 전체를 LEFT JOIN LATERAL로 조회하며,
+		 매칭 없는 조합도 결과에 포함해(SC.* NULL) 불필요한 단건 폴백 조회를 막는다. -->
 	<select id="selectStandardCostByDivisionBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostBatchResult">
 		SELECT V.DIVISION_CODE        AS reqDivisionCode
 		      ,V.ITEM_CODE            AS reqItemCode

@@ -2,10 +2,8 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 import java.math.BigDecimal;
 
-/**
- * 레거시 PKG99_COO_DECISION.COO_DECISION 의 커서 변수 FM_LIST(CURSOR C_FCR_MST) 한 행.
- * 판정 대상이 되는 FCR_MST(+SALES_MST/FTA_MASTER 등 조인) 한 건을 표현한다.
- */
+// 레거시 PKG99_COO_DECISION.COO_DECISION의 커서 FM_LIST(C_FCR_MST) 한 행.
+// 판정 대상 FCR_MST(+SALES_MST/FTA_MASTER 등 조인) 한 건.
 public class OriginDeterminationTarget {
 
 	private String ftaCode;

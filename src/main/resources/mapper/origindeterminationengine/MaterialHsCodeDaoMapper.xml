@@ -1,10 +1,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.kpmg.kdb.web.origindeterminationengine.MaterialHsCodeDao">
-	<!--
-		레거시 FS03_GET_HS_CODE 이관.
-		- 우선순위 CASE WHEN 은 제거하고 각 소스별 HS코드를 그대로 반환한다 (우선순위 판정은 Java).
-	-->
+	<!-- 레거시 FS03_GET_HS_CODE 이관. 우선순위 CASE WHEN은 제거하고 각 소스별 HS코드를 그대로 반환한다(우선순위 판정은 Java). -->
 	<select id="selectHsCodeCandidates" parameterType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCriteria"
 		resultType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeCandidateRow">
 		SELECT CM.CUSTOMER_HS_CODE  AS customerHsCode
@@ -35,14 +32,8 @@
 		FETCH FIRST 1 ROW ONLY
 	</select>
 
-	<!--
-		selectHsCodeCandidates 의 배치 버전. FTA_CODE 후보 수만큼 반복 조회되던 것을 요청 조합 전체를
-		UNION ALL 파생 테이블(V)로 던진다. LATERAL 서브쿼리 본문은 단건 쿼리와 동일한 조인 구조를 유지해,
-		동점 시 FETCH FIRST 1 ROW ONLY 로만 끊어내는 동작(DB 실행계획 의존)까지 그대로 보존한다.
-
-		REQ_BASE_DATE(원본 baseDate, null 가능)와 BASE_DATE(치환된 값)를 별도 컬럼으로 나눠 받는다 —
-		BETWEEN 비교엔 치환된 BASE_DATE 가 필요하지만 요청 재매칭 키는 원본 baseDate 그대로여야 한다.
-	-->
+	<!-- selectHsCodeCandidates의 배치 버전. FTA_CODE 후보 수만큼 반복 조회되던 것을 요청 조합 전체를 UNION ALL 파생
+		 테이블(V)로 던진다. REQ_BASE_DATE(원본, null 가능)와 BASE_DATE(치환값)를 분리하는 이유는 BETWEEN 비교엔 치환값이, 요청 재매칭 키는 원본 그대로가 필요해서다. -->
 	<select id="selectHsCodeCandidatesBatch" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.HsCodeBatchResult">
 		SELECT V.COMPANY_CODE   AS reqCompanyCode
 		      ,V.DIVISION_CODE  AS reqDivisionCode
