@@ -28,6 +28,10 @@
 	    <div class="card-body py-2 px-3">
 	        <form:form id="COO_AUDIT_DOC-form" method="post" action="" novalidate="novalidate">
 	            <input type="hidden" id="division_code" name="division_code"/>
+	            <input type="hidden" id="export_flag" name="export_flag"/>
+	            <input type="hidden" id="issue_from_date" name="issue_from_date"/>
+	            <input type="hidden" id="issue_to_date" name="issue_to_date"/>
+	            
 	            <div class="row g-2 align-items-center">
 	                <div class="col-md-2">
 	                    <label for="coo_certify_no" class="form-label fw-semibold small mb-0">원산지증명번호</label>
@@ -49,9 +53,9 @@
 	                </div>
 	                <div class="col-md-6">
 	                    <div class="d-flex justify-content-end gap-2">
-	                        <button type="button" class="btn btn-sm btn-outline-primary">서명대장</button>
-	                        <button type="button" class="btn btn-sm btn-outline-primary">확인서 작성대장</button>
-	                        <button type="button" class="btn btn-sm btn-outline-primary">원산지증명서 &amp; 원산지소명서</button>
+	                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="COO_AUDIT_DOC.downloadFtaDocument('1')">서명대장</button>
+	                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="COO_AUDIT_DOC.downloadFtaDocument('2')">확인서 작성대장</button>
+	                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="COO_AUDIT_DOC.downloadFtaDocument('3')">원산지증명서 &amp; 원산지소명서</button>
 	                    </div>
 	                </div>
 	            </div>
@@ -276,7 +280,7 @@ var COO_AUDIT_DOC = new function() {
 
         AUIGrid.bind(COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01, "ready", function(event) {
             var list = AUIGrid.getGridData(COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01) || [];
-            $("#total_count").text(list.length.toLocaleString());
+            $("#cooAuditDocument_Total_count").text(list.length.toLocaleString());
         });
 
         setTimeout(function() {
@@ -285,19 +289,18 @@ var COO_AUDIT_DOC = new function() {
     };
 
     this.openCooCertifySearchPopup = function() {
-        KpackageOBJ.dialog.open(
-            "dialog_COO_CERT_SEARCH_POPUP",
-            "원산지확인서 작성이력",
-            "/inspection/cooCertifyPopup",
-            1400,
-            700
-        );
+        KpackageOBJ.dialog.open("dialog_COO_CERT_SEARCH_POPUP", "원산지확인서 작성이력", "/inspection/cooCertifyPopup", 1400, 700);
     };
 
     this.returnCheckedRow = function(selectObject) {
     	KpackageOBJ.dialog.close("dialog_COO_CERT_SEARCH_POPUP");  
+    	
         var cooCertifyNo = selectObject && selectObject.coo_certify_no;
         var division_code = selectObject && selectObject.division_code;
+        
+        var export_flag = selectObject && selectObject.export_flag;
+        var issue_from_date = selectObject && selectObject.apply_date;
+        var issue_to_date = selectObject && selectObject.end_date;
 
         if (!cooCertifyNo) {
             alert("선택된 원산지확인서번호가 없습니다.");
@@ -306,6 +309,12 @@ var COO_AUDIT_DOC = new function() {
 
         KpackageOBJ.object.setFormValue("COO_AUDIT_DOC-form", "coo_certify_no", cooCertifyNo);
         KpackageOBJ.object.setFormValue("COO_AUDIT_DOC-form", "division_code", division_code);
+        
+        KpackageOBJ.object.setFormValue("COO_AUDIT_DOC-form", "export_flag", export_flag);
+        KpackageOBJ.object.setFormValue("COO_AUDIT_DOC-form", "issue_from_date", issue_from_date);
+        KpackageOBJ.object.setFormValue("COO_AUDIT_DOC-form", "issue_to_date", issue_to_date);
+        
+        
 
         if (typeof COO_AUDIT_DOC.retrieveMainCooAuditDocumentInfo === "function") {
             COO_AUDIT_DOC.retrieveMainCooAuditDocumentInfo();
@@ -367,12 +376,6 @@ var COO_AUDIT_DOC = new function() {
             $("#view_importer_tel_no").text(data.producer_tel_no || "-");
             $("#view_importer_address").text(data.producer_address || "-");
 
-            // division_code를 이후 그리드 조회에도 사용 가능하도록 hidden에 세팅
-            if (data.division_code) {
-                KpackageOBJ.object.setFormValue("COO_AUDIT_DOC-form", "division_code", data.division_code);
-                params["division_code"] = data.division_code;
-            }
-
             // 2. 그리드 조회
             KpackageOBJ.auiGrid.retrieve(
                 COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01,
@@ -381,6 +384,78 @@ var COO_AUDIT_DOC = new function() {
             );
         });
     };
+    
+    
+    this.downloadFtaDocument = function(docType) {
+    	
+    	var cooCertifyNo = KpackageOBJ.object.getFormValue("COO_AUDIT_DOC-form", "coo_certify_no");
+        var division_code = KpackageOBJ.object.getFormValue("COO_AUDIT_DOC-form", "division_code");
+        if (!cooCertifyNo) {
+            alert("원산지증명번호가 없습니다.");
+            return;
+        }
+        
+        var url = "/ireport/downloadFtaDocument"
+            + "?coo_certify_no=" + encodeURIComponent(cooCertifyNo)
+            + "&division_code=" + encodeURIComponent(division_code)
+            + "&P_DIRECT_DOWNLOAD=Y"
+            + "&report_file_type=" + encodeURIComponent("pdf");
+        
+        
+        var formId= "";
+        var formFileName= "";
+        var downFileName = "";
+        
+        if("1" == docType){
+        	//서명 대장
+        	formId = "DUMMY";
+        	formFileName = "signature.jasper";
+        	downFileName = "signature";
+        	
+        	/* 레포트별 추가 파라메터 */
+        	url = url + "&P_PARAM1=" + "0" + "&P_PARAM2=&P_PARAM3=";
+        }else if("2" == docType){
+        	//확인서 작성대장
+        	formId = "DUMMY";
+        	formFileName = "coo_list_write.jasper";
+        	downFileName = "coo_list_write";
+        	/* 레포트별 추가 파라메터 */
+        	url = url + "&P_PARAM1=" + KpackageOBJ.object.getFormValue("COO_AUDIT_DOC-form", "issue_from_date");
+        	url = url + "&P_PARAM2=" + KpackageOBJ.object.getFormValue("COO_AUDIT_DOC-form", "issue_to_date");
+        	url = url + "&P_PARAM3=SEARCH_COO_CERTIFY_NO";
+        	url = url + "&P_PARAM4=" + encodeURIComponent(cooCertifyNo);
+        }else if("3" == docType){
+        	//원산지증명서 & 원산지소명서
+        	formFileName = "signature.jasper";
+        }else if("4" == docType){
+        	formFileName = "signature.jasper";
+        }else if("5" == docType){
+        	formFileName = "signature.jasper";
+        }
+        
+        
+        url = url + "&form_id=" + encodeURIComponent(formId);
+        url = url + "&form_file_name=" + encodeURIComponent(formFileName);
+        url = url + "&p_download_file_name=" + encodeURIComponent(downFileName+"_"+cooCertifyNo);   // 다운로드할 파일명
+                
+
+        
+        var iframe = document.getElementById("downloadFrame");
+        if (!iframe) {
+            iframe = document.createElement("iframe");
+            iframe.id = "downloadFrame";
+            iframe.style.display = "none";
+            document.body.appendChild(iframe);
+        }
+        iframe.src = url;
+        
+        /* Toast Message*/
+        MAINPAGE.showDownloadToast("다운로드가 시작되었습니다.");
+        
+    	
+        
+    };
+    
 
 };
 

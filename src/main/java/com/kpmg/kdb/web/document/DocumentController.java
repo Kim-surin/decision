@@ -161,6 +161,13 @@ public class DocumentController extends GenericController {
 			parameter.put("P_KEY_PARAM3", StringUtil.null2String(extendsParamMap.get("KEY_PARAM3")));
 			parameter.put("P_KEY_PARAM4", StringUtil.null2String(extendsParamMap.get("KEY_PARAM4")));
 			parameter.put("P_KEY_PARAM5", StringUtil.null2String(extendsParamMap.get("KEY_PARAM5")));
+			
+			parameter.put("P_PARAM1", StringUtil.null2String(extendsParamMap.get("P_PARAM1")));
+			parameter.put("P_PARAM2", StringUtil.null2String(extendsParamMap.get("P_PARAM2")));
+			parameter.put("P_PARAM3", StringUtil.null2String(extendsParamMap.get("P_PARAM3")));
+			parameter.put("P_PARAM4", StringUtil.null2String(extendsParamMap.get("P_PARAM4")));
+			parameter.put("P_PARAM5", StringUtil.null2String(extendsParamMap.get("P_PARAM5")));
+			
 		}
     	
     	return parameter;

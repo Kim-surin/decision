@@ -27,6 +27,7 @@
             <input type="hidden" id="opener_pgm_id" name="opener_pgm_id" value="${opener_pgm_id}"/>
             <input type="hidden" id="customer_code" name="customer_code" value="${customer_code}"/>
             <input type="hidden" id="coo_certify_no" name="coo_certify_no" value="${coo_certify_no}"/>
+            <input type="hidden" id="division_code" name="division_code"/>
             <input type="hidden" id="issue_date" name="issue_date" value="${issue_date}"/>
             <input type="hidden" id="export_flag" name="export_flag" value="${export_flag}"/>
 		    <div class="card-body p-0">
@@ -429,8 +430,9 @@
 	        };
 	        
 	        this.downloadFtaDocument = function(formId, formFileName, formName) {
-	            var cooCertifyNo = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_DETAIL_POPUP-form", "coo_certify_no");
-
+	        	
+	        	var cooCertifyNo = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_DETAIL_POPUP-form", "coo_certify_no");
+	            var division_code = KpackageOBJ.object.getFormValue("COO_ISSUE_CERT_DETAIL_POPUP-form", "division_code");
 	            if (!cooCertifyNo) {
 	                alert("원산지증명번호가 없습니다.");
 	                return;
@@ -439,9 +441,26 @@
 	            var url = "/ireport/downloadFtaDocument"
 	                    + "?coo_certify_no=" + encodeURIComponent(cooCertifyNo)
 	                    + "&form_id=" + encodeURIComponent(formId)
-	                    + "&form_file_name=" + encodeURIComponent(formFileName);
+	                    + "&form_file_name=" + encodeURIComponent(formFileName)
+	                    + "&division_code=" + encodeURIComponent(division_code)
+	                    + "&P_DIRECT_DOWNLOAD=Y"
+	                    + "&p_download_file_name=" + encodeURIComponent(cooCertifyNo)   // 다운로드할 파일명
+	                    + "&report_file_type=" + encodeURIComponent("pdf");
 
-	            window.location.href = url;
+	            
+	            var iframe = document.getElementById("downloadFrame");
+	            if (!iframe) {
+	                iframe = document.createElement("iframe");
+	                iframe.id = "downloadFrame";
+	                iframe.style.display = "none";
+	                document.body.appendChild(iframe);
+	            }
+	            iframe.src = url;
+	            
+	            /* Toast Message*/
+	            MAINPAGE.showDownloadToast("다운로드가 시작되었습니다.");
+	            
+	        	
 	        };
 	        
 	        /* 수정발급 버튼 클릭 */

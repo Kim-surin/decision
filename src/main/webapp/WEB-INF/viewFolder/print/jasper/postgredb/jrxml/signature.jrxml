@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="signature" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="signature" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="694a5bc3-0f22-4cb1-8e2c-bfd0949a6a69">
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
@@ -23,7 +23,7 @@
 			<pen lineWidth="0.5" lineColor="#000000"/>
 		</box>
 	</style>
-	<subDataset name="dataSet1">
+	<subDataset name="dataSet1" uuid="a0cc7481-6d66-47d8-a866-8a46b9b5f964">
 		<parameter name="P_COMPANY_CODE" class="java.lang.String">
 			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 		</parameter>
@@ -40,39 +40,55 @@
 			<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 		</parameter>
 		<queryString>
-			<![CDATA[SELECT DENSE_RANK() OVER(ORDER BY APPOINT_REASON, USER_NAME) AS SEQ
-      ,PRODUCT_LINE
-      ,DEPARTMENT_NAME
-      ,EMP_NO
-      ,USER_NAME
-      ,POSITION_NAME
-      ,START_DATE
-      ,APPOINT_REASON
-      ,END_DATE
-      ,CANCEL_REASON
-      ,SIGN_FULL_FILE
-FROM   (SELECT SI.PRODUCT_LINE
-              ,SI.DEPARTMENT_NAME
-              ,SI.EMP_NO
-              ,SI.SIGNATURE_NAME  USER_NAME
-              ,SI.POSITION        AS POSITION_NAME
-              ,$P{P_SERVER_URL} || MAX(SI.SIGN_FILE_PATH) || MAX(SI.SIGN_FILE_NAME) AS SIGN_FULL_FILE
-              ,TO_CHAR(TO_DATE(MAX(SI.START_DATE), 'YYYYMMDD'), 'YYYY-MM-DD') AS START_DATE
-              ,MAX(SI.REMARK) AS APPOINT_REASON
-              ,TO_CHAR(TO_DATE(MAX(SI.END_DATE), 'YYYYMMDD'), 'YYYY-MM-DD') AS END_DATE
-              ,MAX(SI.REMARK) AS CANCEL_REASON
-        FROM   SIGNATURE SI
-        WHERE  SI.COMPANY_CODE = $P{P_COMPANY_CODE}
-        AND    DECODE($P{P_PARAM1}, 'true', SI.END_DATE, NULL) IS NULL
-        AND    NVL2($P{P_PARAM3}, DECODE($P{P_PARAM2}, 'USER', SI.SIGNATURE_NAME, 'EMP_NO', SI.EMP_NO), 1) LIKE
-               '%' || NVL($P{P_PARAM3}, 1) || '%'
-        GROUP  BY SI.PRODUCT_LINE
-                 ,SI.DEPARTMENT_NAME
-                 ,SI.EMP_NO
-                 ,SI.SIGNATURE_NAME
-                 ,SI.POSITION)
-ORDER  BY APPOINT_REASON
-         ,USER_NAME]]>
+			<![CDATA[SELECT DENSE_RANK() OVER (ORDER BY appoint_reason, user_name) AS seq
+     , product_line
+     , department_name
+     , emp_no
+     , user_name
+     , position_name
+     , start_date
+     , appoint_reason
+     , end_date
+     , cancel_reason
+     , sign_full_file
+FROM (
+    SELECT si.product_line
+         , si.department_name
+         , si.emp_no
+         , si.signature_name AS user_name
+         , si.position AS position_name
+         , $P{P_SERVER_URL} || MAX(si.sign_file_path) || MAX(si.sign_file_name) AS sign_full_file
+         , TO_CHAR(TO_DATE(MAX(si.start_date), 'YYYYMMDD'), 'YYYY-MM-DD') AS start_date
+         , MAX(si.remark) AS appoint_reason
+         , TO_CHAR(TO_DATE(MAX(si.end_date), 'YYYYMMDD'), 'YYYY-MM-DD') AS end_date
+         , MAX(si.remark) AS cancel_reason
+    FROM signature si
+    WHERE si.company_code = $P{P_COMPANY_CODE}
+      AND (
+            CASE
+                WHEN $P{P_PARAM1} = 'true' THEN si.end_date
+                ELSE NULL
+            END
+          ) IS NULL
+      AND (
+            CASE
+                WHEN $P{P_PARAM3} IS NOT NULL THEN
+                    CASE
+                        WHEN $P{P_PARAM2} = 'USER' THEN si.signature_name
+                        WHEN $P{P_PARAM2} = 'EMP_NO' THEN si.emp_no
+                        ELSE '1'
+                    END
+                ELSE '1'
+            END
+          ) LIKE '%' || COALESCE($P{P_PARAM3}, '1') || '%'
+    GROUP BY si.product_line
+           , si.department_name
+           , si.emp_no
+           , si.signature_name
+           , si.position
+) t
+ORDER BY appoint_reason
+       , user_name]]>
 		</queryString>
 		<field name="SEQ" class="java.math.BigDecimal"/>
 		<field name="PRODUCT_LINE" class="java.lang.String"/>
@@ -96,7 +112,7 @@ ORDER  BY APPOINT_REASON
 	<queryString>
 		<![CDATA[SELECT COMPANY_CODE
   FROM SIGNATURE SI
- WHERE ROWNUM = 1]]>
+LIMIT 1]]>
 	</queryString>
 	<field name="COMPANY_CODE" class="java.lang.String"/>
 	<background>
@@ -105,16 +121,16 @@ ORDER  BY APPOINT_REASON
 	<pageHeader>
 		<band height="57" splitType="Stretch">
 			<staticText>
-				<reportElement x="112" y="20" width="334" height="20"/>
+				<reportElement uuid="fa2db299-d463-4757-8e3b-258b3cee63de" x="112" y="20" width="334" height="20"/>
 				<textElement textAlignment="Center">
-					<font fontName="바탕" size="16" isBold="true" isItalic="false" isUnderline="true" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H"/>
+					<font fontName="바탕" size="16" isBold="true" isItalic="false" isUnderline="true" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H"/>
 				</textElement>
 				<text><![CDATA[원산지증명서 서명카드]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="0" y="0" width="100" height="20"/>
+				<reportElement uuid="b64361d1-97af-4063-95d5-68b21206ac37" x="0" y="0" width="100" height="20"/>
 				<textElement textAlignment="Center">
-					<font fontName="바탕" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H"/>
+					<font fontName="바탕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H"/>
 				</textElement>
 				<text><![CDATA[[별지 제3호 서식]]]></text>
 			</staticText>
@@ -123,9 +139,9 @@ ORDER  BY APPOINT_REASON
 	<detail>
 		<band height="50" splitType="Stretch">
 			<componentElement>
-				<reportElement key="table" style="table" x="0" y="0" width="555" height="50"/>
+				<reportElement uuid="89006088-8dee-4d1a-bb2c-8907f695ba90" key="table" style="table" x="0" y="0" width="555" height="50"/>
 				<jr:table xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd" whenNoDataType="AllSectionsNoDetail">
-					<datasetRun subDataset="dataSet1">
+					<datasetRun subDataset="dataSet1" uuid="ae36f26f-4a31-435e-8e33-dc6064ea57e5">
 						<datasetParameter name="P_COMPANY_CODE">
 							<datasetParameterExpression><![CDATA[$P{P_COMPANY_CODE}]]></datasetParameterExpression>
 						</datasetParameter>
@@ -143,152 +159,152 @@ ORDER  BY APPOINT_REASON
 						</datasetParameter>
 						<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
 					</datasetRun>
-					<jr:column width="50">
+					<jr:column width="50" uuid="98a67bb1-34c2-4f51-b3d9-186e282320e3">
 						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="50" height="30"/>
+								<reportElement uuid="997ef8a7-ab8e-4e70-b698-759364dc60e2" x="0" y="0" width="50" height="30"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<text><![CDATA[일련번호]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="50" rowSpan="1">
 							<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-								<reportElement x="0" y="0" width="50" height="50"/>
+								<reportElement uuid="01e32633-1770-498d-8640-015218066924" x="0" y="0" width="50" height="50"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<textFieldExpression><![CDATA[$F{SEQ}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="77">
+					<jr:column width="77" uuid="1de4f8a7-2df4-45a8-99aa-2796da780061">
 						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="77" height="30"/>
+								<reportElement uuid="505f886d-f51f-4bc0-9493-a08b59d31f78" x="0" y="0" width="77" height="30"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<text><![CDATA[서명파일]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="50" rowSpan="1">
 							<image scaleImage="FillFrame" hAlign="Center" vAlign="Middle" onErrorType="Blank">
-								<reportElement x="0" y="0" width="77" height="50"/>
+								<reportElement uuid="9ead0f1b-6eec-47ca-b564-93877b656958" x="0" y="0" width="77" height="50"/>
 								<imageExpression><![CDATA[$F{SIGN_FULL_FILE}]]></imageExpression>
 							</image>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="95">
+					<jr:column width="95" uuid="9de49a88-2354-410d-8d26-28ae32c0e833">
 						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="95" height="30"/>
+								<reportElement uuid="563d91cc-b4e5-452d-bc01-eeae1892cd4a" x="0" y="0" width="95" height="30"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<text><![CDATA[부서명]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="50" rowSpan="1">
 							<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-								<reportElement x="0" y="0" width="95" height="50"/>
+								<reportElement uuid="92cb1b3b-4441-4414-9b93-a33c972e34df" x="0" y="0" width="95" height="50"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<textFieldExpression><![CDATA[$F{DEPARTMENT_NAME}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="65">
+					<jr:column width="65" uuid="4c345937-2bf4-4e6d-92f4-97d330ad84cb">
 						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="65" height="30"/>
+								<reportElement uuid="0360c9bc-2857-4a01-996b-9dd7184bf356" x="0" y="0" width="65" height="30"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<text><![CDATA[직책]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="50" rowSpan="1">
 							<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-								<reportElement x="0" y="0" width="65" height="50"/>
+								<reportElement uuid="3dfa7c3b-7e0d-4807-b829-0fcb85d65c1a" x="0" y="0" width="65" height="50"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<textFieldExpression><![CDATA[$F{POSITION_NAME}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="59">
+					<jr:column width="59" uuid="152609df-d356-4f66-980b-d3a43a3299dd">
 						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="59" height="30"/>
+								<reportElement uuid="ec94ff92-5b46-4553-8626-b7383be12310" x="0" y="0" width="59" height="30"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<text><![CDATA[성명]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="50" rowSpan="1">
 							<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-								<reportElement x="0" y="0" width="59" height="50"/>
+								<reportElement uuid="01fdc383-2350-4f11-be1f-5b52ed405d80" x="0" y="0" width="59" height="50"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<textFieldExpression><![CDATA[$F{USER_NAME}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="102">
+					<jr:column width="102" uuid="5a34bc3d-9baa-4e79-bba9-c2f584ccdd5c">
 						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="102" height="30"/>
+								<reportElement uuid="f9a198be-8a65-4eb7-b8b9-df26f624985c" x="0" y="0" width="102" height="30"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<text><![CDATA[지정일자 및 사유]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="50" rowSpan="1">
 							<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-								<reportElement x="0" y="25" width="102" height="25"/>
+								<reportElement uuid="2af11dc2-2155-42c6-988c-2d9f9994ea1f" x="0" y="25" width="102" height="25"/>
 								<textElement textAlignment="Center" verticalAlignment="Top">
-									<font fontName="바탕" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<textFieldExpression><![CDATA[$F{APPOINT_REASON}]]></textFieldExpression>
 							</textField>
 							<textField isBlankWhenNull="true">
-								<reportElement x="0" y="0" width="102" height="25"/>
+								<reportElement uuid="2e9d01de-d263-4a89-ae99-fc93292d6d5b" x="0" y="0" width="102" height="25"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" pdfFontName="/origin/fonts/batangche.ttf"/>
+									<font fontName="바탕" pdfFontName="/config/font/malgun.ttf"/>
 								</textElement>
 								<textFieldExpression><![CDATA[$F{START_DATE}]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:column width="108">
+					<jr:column width="108" uuid="6e635f7d-30f0-4c84-9911-94ebe8c863ba">
 						<jr:columnHeader style="table_CH" height="30" rowSpan="1">
 							<staticText>
-								<reportElement x="0" y="0" width="108" height="30"/>
+								<reportElement uuid="d52a2361-15d1-4ab4-b719-7409d5655bb6" x="0" y="0" width="108" height="30"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" size="9" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" size="9" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<text><![CDATA[해지일자 및 사유]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="50" rowSpan="1">
 							<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-								<reportElement x="0" y="25" width="108" height="25"/>
+								<reportElement uuid="e8338a88-4f4e-4ddb-a092-ac273fe434a4" x="0" y="25" width="108" height="25"/>
 								<textElement textAlignment="Center" verticalAlignment="Top">
-									<font fontName="바탕" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+									<font fontName="바탕" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 								</textElement>
 								<textFieldExpression><![CDATA[$F{CANCEL_REASON}]]></textFieldExpression>
 							</textField>
 							<textField isBlankWhenNull="true">
-								<reportElement x="0" y="0" width="108" height="25"/>
+								<reportElement uuid="acf92b51-f985-4168-b671-bedf48b66091" x="0" y="0" width="108" height="25"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle">
-									<font fontName="바탕" pdfFontName="/origin/fonts/batangche.ttf"/>
+									<font fontName="바탕" pdfFontName="/config/font/malgun.ttf"/>
 								</textElement>
 								<textFieldExpression><![CDATA[$F{END_DATE}]]></textFieldExpression>
 							</textField>
@@ -301,9 +317,9 @@ ORDER  BY APPOINT_REASON
 	<pageFooter>
 		<band height="20">
 			<textField>
-				<reportElement x="225" y="0" width="100" height="20"/>
+				<reportElement uuid="efe75dda-fcf7-45eb-a287-4b32e2f16f9c" x="225" y="0" width="100" height="20"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H"/>
+					<font pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
@@ -312,9 +328,9 @@ ORDER  BY APPOINT_REASON
 	<noData>
 		<band height="30">
 			<staticText>
-				<reportElement x="0" y="0" width="555" height="29"/>
+				<reportElement uuid="b418d555-ad5b-48a8-8cc3-cf34d9c7c2db" x="0" y="0" width="555" height="29"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="바탕" size="12" isBold="false" pdfFontName="/origin/fonts/batangche.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+					<font fontName="바탕" size="12" isBold="false" pdfFontName="/config/font/malgun.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 				</textElement>
 				<text><![CDATA[출력할 데이터가 없습니다.(No Date)]]></text>
 			</staticText>

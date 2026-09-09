@@ -225,13 +225,12 @@ var COO_CERT_SEARCH_POPUP = new function() {
                 dataField: "origin_coo_certify_no",
                 headerText: "기발급 확인서 번호",
                 width: 160
-            },
-            {
-                dataField: "division_code",
-                headerText: "division_code",
-                width: 160,
-                visible:false
             }
+            
+            ,{dataField: "export_flag", headerText: "export_flag", width: 160, visible:false }
+            ,{dataField: "division_code", headerText: "division_code", width: 160, visible:false }
+            ,{dataField: "apply_date", headerText: "apply_date", width: 160, visible:false }
+            ,{dataField: "end_date", headerText: "end_date", width: 160, visible:false }
         ];
 
         var gridProps = {
