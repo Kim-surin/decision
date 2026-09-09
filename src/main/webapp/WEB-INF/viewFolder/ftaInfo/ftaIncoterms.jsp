@@ -514,13 +514,13 @@
 		//저장
 		this.fnSave = function () {
 			const data = KpackageOBJ.auiGrid.getGridCudData(FTA_INCOTERMS.gridId);
-			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_INCOTERMS.gridId, ["std_yyyy", "division_code", "incoterms_type","nation_code"], "해당 값은 필수 입력값입니다.")
+			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_INCOTERMS.gridId, ["std_yyyy", "division_code", "incoterms_type","nation_code"], "<spring:message code='MSG.REQUIRED_VALUE'/>"); //해당 값은 필수 입력값입니다.
 							
 			if(data.length === 0){
-				KpackageOBJ.object.alert("<spring:message code='NO_DATA_TO_SAVE'/>"); //저장할 데이터가 없습니다.
+				KpackageOBJ.object.alert("<spring:message code='MSG.NO_DATA_TO_SAVE'/>"); //저장할 데이터가 없습니다.
 				return;
 			}
-
+			 
 			if(isValid){
 				if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
 	            	return;
