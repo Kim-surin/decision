@@ -413,7 +413,7 @@
 	      , COALESCE(#{department_code}, '')
 	      , COALESCE(#{bl_no}, '')
 	      , #{invoice_no}
-	      , #{sign_seq}
+	      , #{signature_seq}
 	      , #{fta_category}
 	      , COALESCE(#{origin_coo_certify_no}, '')
 	      , CURRENT_TIMESTAMP
