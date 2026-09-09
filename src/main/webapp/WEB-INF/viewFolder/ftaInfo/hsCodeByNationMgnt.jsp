@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -29,7 +30,9 @@
 								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">자재코드</label>
+											<label class="form-label" for="example-input-border">
+												<spring:message code='TXT.ITEM_CODE'/> <!-- 품목코드  -->
+											</label>
 										</div>
 										<div class="col">
 											<input type="text" id="searchItemCode" class="form-control" >
@@ -39,7 +42,9 @@
 								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">HS코드</label>
+											<label class="form-label" for="example-input-border">
+												<spring:message code='TXT.HS_CODE'/> <!-- HS CODE  -->
+											</label>
 										</div>
 										<div class="col">
 											<input type="text" id="searchHsCode" class="form-control" >
@@ -51,7 +56,9 @@
 								<div class="col">
 									<button type="button"
 										onclick="javascript:HSCODE_BY_NATION.retrieve_leftGridData();"
-										class="btn btn-sm btn-search search-no-more waves-effect waves-themed">Search</button>
+										class="btn btn-sm btn-search search-no-more waves-effect waves-themed">
+											<spring:message code='TXT.SEARCH'/> <!--조회-->
+										</button>
 								</div>
 							</div>
 	
@@ -62,37 +69,37 @@
 		</div>
 		<div class="d-flex col-12 dual-grid-wrap" style="height: calc(100vh - 350px);" >
 			<div class="w-30 left-grid-area h-full" >
-				<div class="grid-title mb-2"><label>국가 목록</label></div>
+				<div class="grid-title mb-2"><label><spring:message code='TXT.NATION_LIST'/> <!--국가 목록--></label></div>
 				<div id="oAuiGrid_hscodeByNation_L" class="w-100 h-95" ></div>
 			</div>
 			<div class="right-grid-area h-full" >
 				<div class="w-100 h-100 d-flex flex-column">
 				    <div class="d-flex subheader-title mb-1">
-				    	<label>국가별 HS코드</label>
+				    	<label><spring:message code='TXT.BY_NATION, TXT.HS_CODE'/> <!--국가별 HS Code-->  </label>
 				    	<span style="margin-left:auto;">
 					    	<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="HSCODE_BY_NATION.fnGridRTAddRow()">
-								행추가
+								<spring:message code='TXT.ADD_ROW'/> <!--행추가-->
 							</button>
 							<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="HSCODE_BY_NATION.fnGridRTDelRow()">
-								행삭제
+								<spring:message code='TXT.DELETE_ROW'/> <!--행삭제-->
 							</button>
 							<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="HSCODE_BY_NATION.fnGridRTSave()">
-								저장
+								<spring:message code='TXT.SAVE'/> <!--저장-->
 							</button>
 						</span>
 				    </div>
 			    	<div id="oAuiGrid_hscodeByNation_RT" class="w-100 h-40"></div>
 			    	<div class="d-flex subheader-title mb-1 mt-5">
-			    		<label>양허표 리스트</label>
+			    		<label><spring:message code='TXT.TARIFF_SCHEDULE, TXT.LIST'/><!-- 양허표 목록 --> </label>
 			    		<span style="margin-left:auto;">
 					    	<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="HSCODE_BY_NATION.fnGridRBAddRow()">
-								행추가
+								<spring:message code='TXT.ADD_ROW'/> <!--행추가-->
 							</button>
 							<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="HSCODE_BY_NATION.fnGridRBDelRow()">
-								행삭제
+								<spring:message code='TXT.DELETE_ROW'/> <!--행삭제-->
 							</button>
 							<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="HSCODE_BY_NATION.fnGridRBSave()">
-								저장
+								<spring:message code='TXT.SAVE'/> <!--저장-->
 							</button>
 						</span>
 			    	</div>
@@ -127,28 +134,28 @@
 			const leftGridColumnLayout = [
 				{
 					dataField: "nation_code"
-				  , headerText: "국가코드"
+				  , headerText: "<spring:message code='TXT.NATION_CODE'/>" //국가 코드
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "nation_name"
-				  , headerText: "국가명"
+				  , headerText: "<spring:message code='TXT.NATION_NAME'/>" //국가명
 				  , width: 150
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "fta_hs_cnt"
-				  , headerText: "국가별 HS코드 수"
+				  , headerText: "<spring:message code='TXT.BY_NATION, TXT.HS_CODE, TXT.COUNT'/>"  //국가별 HS코드 수
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "rcep_cnt"
-				  , headerText: "양허표 수"
+				  , headerText: "<spring:message code='TXT.TARIFF_SCHEDULE, TXT.COUNT'/>" //양허표 수
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -158,7 +165,7 @@
 			const rightTopGridColumnLayout = [
 				{
 					dataField: "item_code"
-				  , headerText: "자재코드"
+				  , headerText: "<spring:message code='TXT.ITEM_CODE'/>" //품목코드
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -181,7 +188,7 @@
 				},
 				{
 					dataField: "item_name"
-				  , headerText: "자재명"
+				  , headerText: "<spring:message code='TXT.ITEM_NAME'/>" //품목명
 				  , width: 180
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
@@ -189,7 +196,7 @@
 				},
 				{
 					dataField: "hs_code"
-				  , headerText: "기존 HS코드"
+				  , headerText: "<spring:message code='TXT.HS_CODE'/>" // HS CODE
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -197,7 +204,7 @@
 				},
 				{
 					dataField: "fta_hs_code"
-				  , headerText: "국가별 HS코드"
+				  , headerText: "<spring:message code='TXT.BY_NATION, TXT.HS_CODE'/>" //국가별 HS코드
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -235,7 +242,7 @@
 			const rightBottomGridColumnLayout = [
 				{
 					dataField: "fta_code"
-				  , headerText: "FTA 코드"
+				  , headerText: "<spring:message code='TXT.FTA_CODE'/>" //FTA 코드
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -258,7 +265,7 @@
 				},
 				{
 					dataField: "fta_name"
-				  , headerText: "FTA 명"
+				  , headerText: "<spring:message code='TXT.FTA_NAME'/>" //협정명
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -266,7 +273,7 @@
 				},
 				{
 					dataField: "hs_code"
-				  , headerText: "HS 코드"
+				  , headerText: "<spring:message code='TXT.HS_CODE'/>" //HS CODE
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -294,7 +301,7 @@
 				},
 				{
 					dataField: "apply_date"
-				  , headerText: "적용일자"
+				  , headerText: "<spring:message code='TXT.APPLY_DATE'/>" //적용일자
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -319,13 +326,13 @@
 							isValid = true;
 						}
 						
-						return { "validate": isValid, "message": "유효한 날짜 형식으로 입력해주세요." };
+						return { "validate": isValid, "message": "<spring:message code='MSG.INVALID_DATE_FORMAT'/>" }; //올바른 날짜 형식으로 입력해 주세요.
 					 }
 					}
 				},
 				{
 					dataField: "end_date"
-				  , headerText: "적용 정지일자"
+				  , headerText: "<spring:message code='TXT.END_DATE'/>" //종료일자
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -350,7 +357,7 @@
 							isValid = true;
 						}
 						
-						return { "validate": isValid, "message": "유효한 날짜 형식으로 입력해주세요." };
+						return { "validate": isValid, "message": "<spring:message code='MSG.INVALID_DATE_FORMAT'/>" }; //올바른 날짜 형식으로 입력해 주세요.
 					  }
 					}
 				},
@@ -579,10 +586,11 @@
 	    this.fnGridRTAddRow = function() {
 	    	
 			if(oUtil.isNull(HSCODE_BY_NATION.state['masterRow']['nation_code'])){
-				KpackageOBJ.object.alert("국가목록을 먼저 선택해주세요.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SELECT_NATION_LIST_FIRST'/>"); //국가목록을 먼저 선택해주세요.
 				return;
 			}
 	    	
+			
 			const item = {"nation_code" : HSCODE_BY_NATION.state['masterRow']['nation_code']};
 			KpackageOBJ.auiGrid.addRow(HSCODE_BY_NATION.gridIdRT, item);
 	    };
@@ -592,7 +600,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(HSCODE_BY_NATION.gridIdRT);
 			
 			if(data.length == 0){
-				KpackageOBJ.object.alert("데이터가 선택되지 않았습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"); //데이터가 선택되지 않았습니다.
 				return false;
 			}
 							
@@ -602,15 +610,15 @@
 	    //상단 저장
 	    this.fnGridRTSave = function() {
 	    	const data = KpackageOBJ.auiGrid.getGridCudData(HSCODE_BY_NATION.gridIdRT);
-			const isValid = KpackageOBJ.auiGrid.validateGridData(HSCODE_BY_NATION.gridIdRT, ["item_code", "hs_code","fta_hs_code"], "해당 값은 필수 입력값입니다.")
+			const isValid = KpackageOBJ.auiGrid.validateGridData(HSCODE_BY_NATION.gridIdRT, ["item_code", "hs_code","fta_hs_code"], "<spring:message code='MSG.REQUIRED_VALUE'/>"); //해당 값은 필수 입력값입니다.
 							
 			if(data.length === 0){
-				KpackageOBJ.object.alert("저장할 데이터가 없습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NO_DATA_TO_SAVE'/>"); //저장할 데이터가 없습니다.
 				return;
 			}
 							
 			if(isValid){
-				if (!confirm("저장하시겠습니까?")) {
+				if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
 	            	return;
 	        	}	
 				
@@ -628,7 +636,7 @@
 	    	console.log(KpackageOBJ.auiGrid.getGridData(HSCODE_BY_NATION.gridIdRT));
 	    	
 			if(res.success){
-				KpackageOBJ.object.alert("저장되었습니다.");
+	    		KpackageOBJ.object.alert("<spring:message code='MSG.SAVEOK'/>"); //저장되었습니다.
 				HSCODE_BY_NATION.retrieve_rightTopGridData()
 				
 				KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdL, selectIndex[0], "fta_hs_cnt", KpackageOBJ.auiGrid.getRowCountWithoutSoftRemove(HSCODE_BY_NATION.gridIdRT));
@@ -641,7 +649,7 @@
 	    //하단 행추가
 	    this.fnGridRBAddRow = function() {
 	    	if(oUtil.isNull(HSCODE_BY_NATION.state['masterRow']['nation_code'])){
-				KpackageOBJ.object.alert("국가목록을 먼저 선택해주세요.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SELECT_NATION_LIST_FIRST'/>"); //국가목록을 먼저 선택해주세요.
 				return;
 			}
 	    	
@@ -655,7 +663,7 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(HSCODE_BY_NATION.gridIdRB);
 			
 			if(data.length == 0){
-				KpackageOBJ.object.alert("데이터가 선택되지 않았습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"); //데이터가 선택되지 않았습니다.
 				return false;
 			}
 							
@@ -665,15 +673,15 @@
 	    //하단 저장
 	    this.fnGridRBSave = function() {
 			const data = KpackageOBJ.auiGrid.getGridCudData(HSCODE_BY_NATION.gridIdRB);
-			const isValid = KpackageOBJ.auiGrid.validateGridData(HSCODE_BY_NATION.gridIdRB, ["hs_code", "apply_date", "end_date"], "해당 값은 필수 입력값입니다.")
+			const isValid = KpackageOBJ.auiGrid.validateGridData(HSCODE_BY_NATION.gridIdRB, ["hs_code", "apply_date", "end_date"], "<spring:message code='MSG.REQUIRED_VALUE'/>"); //해당 값은 필수 입력값입니다.
 							
 			if(data.length === 0){
-				KpackageOBJ.object.alert("저장할 데이터가 없습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NO_DATA_TO_SAVE'/>"); //저장할 데이터가 없습니다.
 				return;
 			}
 
 			if(isValid){
-				if (!confirm("저장하시겠습니까?")) {
+				if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
 	            	return;
 	        	}	
 				
@@ -690,7 +698,7 @@
 	    	const selectIndex = KpackageOBJ.auiGrid.getSelectedIndex(HSCODE_BY_NATION.gridIdL);
 	    	
 	    	if(res.success){
-				KpackageOBJ.object.alert("저장되었습니다.");
+	    		KpackageOBJ.object.alert("<spring:message code='MSG.SAVEOK'/>"); //저장되었습니다.
 				HSCODE_BY_NATION.retrieve_rightBottomGridData()
 				
 				KpackageOBJ.auiGrid.setCellValue(HSCODE_BY_NATION.gridIdL, selectIndex[0], "rcep_cnt", KpackageOBJ.auiGrid.getRowCountWithoutSoftRemove(HSCODE_BY_NATION.gridIdRB));

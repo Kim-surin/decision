@@ -171,7 +171,7 @@
 								isValid = true;
 							}
 							// 리턴값은 Object 이며 validate 의 값이 true 라면 패스, false 라면 message 를 띄움
-							return { "validate": isValid, "message": "유효한 날짜 형식으로 입력해주세요." };
+							return { "validate": isValid, "message": "<spring:message code='MSG.INVALID_DATE_FORMAT'/>" }; //올바른 날짜 형식으로 입력해 주세요.
 						}
 					}
 				},
@@ -419,7 +419,9 @@
 		//저장
 		this.fnSave = function () {
 			const data = KpackageOBJ.auiGrid.getGridCudData(FTA_INFO.gridId);
-			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_INFO.gridId, ["fta_code", "fta_name", "effect_date","fta_status","co_issue_flag","de_minimis_rate","rvc_rate","delete_yn","inkoterms_type","cover_yn"], "해당 값은 필수 입력값입니다.")
+			const isValid = KpackageOBJ.auiGrid.validateGridData(FTA_INFO.gridId
+															  , ["fta_code", "fta_name", "effect_date","fta_status","co_issue_flag","de_minimis_rate","rvc_rate","delete_yn","inkoterms_type","cover_yn"]
+															   , "<spring:message code='MSG.REQUIRED_VALUE'/>"); //해당 값은 필수 입력값입니다.
 							
 			if(data.length === 0){
 				KpackageOBJ.object.alert("<spring:message code='NO_DATA_TO_SAVE'/>"); //저장할 데이터가 없습니다.
