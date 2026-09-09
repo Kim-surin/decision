@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- mapper DTD 선언 -->
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper 자체가 DAO 분리되어 나온 개념이기 때문에 namespace는 DAO 명을 따라가는 경우가 일반적임 -->
+<mapper namespace="com.kpmg.kdb.web.ts.inspection.InspectionResDao">
+	<select id="retrieveCooCertSearchPopupList" parameterType="map" resultType="map">
+	    SELECT
+	          cl.coo_certify_no
+	        , cl.division_code
+	        , di.division_name
+	        , cl.customer_code
+	        , cu.customer_name
+	        , cl.origin_coo_certify_no
+	        , TO_CHAR(TO_DATE(cl.issue_date, 'YYYYMMDD'), 'YYYY-MM-DD') AS issue_date
+	        , TO_CHAR(TO_DATE(cl.apply_date, 'YYYYMMDD'), 'YYYY.MM.DD')
+	          || ' ~ ' ||
+	          TO_CHAR(TO_DATE(cl.end_date, 'YYYYMMDD'), 'YYYY.MM.DD') AS cover_date
+	        , TO_CHAR(TO_DATE(cl.apply_date, 'YYYYMMDD'), 'YYYYMMDD') AS apply_date
+	        , TO_CHAR(TO_DATE(cl.end_date, 'YYYYMMDD'), 'YYYYMMDD') AS end_date
+	        , cl.issue_type
+	        , cl.coo_type
+	        , cl.export_flag
+	        , cd.code_name AS issue_type_name
+	    FROM coo_certify_ledger cl
+	    INNER JOIN division di
+	            ON di.division_code = cl.division_code
+	           AND di.company_code = cl.company_code
+	    INNER JOIN customer cu
+	            ON cu.customer_code = cl.customer_code
+	           AND cu.company_code = cl.company_code
+	    LEFT OUTER JOIN code_dtl cd
+	                 ON cd.company_code = cl.company_code
+	                AND cd.code = cl.issue_type
+	                AND cd.category = 'CD'
+	                AND cd.using_yn = 'Y'
+	    WHERE cl.issue_date BETWEEN REPLACE(#{from_date}, '-', '') AND REPLACE(#{to_date}, '-', '')
+	      AND cl.company_code = #{company_code}
+	
+	      <if test="customer_code != null and customer_code != ''">
+	        AND cl.customer_code = #{customer_code}
+	      </if>
+	
+	      <if test="division_code != null and division_code != ''">
+	        AND cl.division_code = #{division_code}
+	      </if>
+	
+	      <if test="issue_type != null and issue_type != ''">
+	        AND cl.issue_type = #{issue_type}
+	      </if>
+	
+	      <if test="product_keyword != null and product_keyword != ''">
+	        AND EXISTS (
+	            SELECT 1
+	            FROM coo_certify_ledger_dtl cld
+	            WHERE cld.coo_certify_no = cl.coo_certify_no
+	              AND cld.division_code = cl.division_code
+	              AND cld.company_code = cl.company_code
+	              AND cld.product_code LIKE '%' || #{product_keyword} || '%'
+	        )
+	      </if>
+	
+	      <if test="search_keyword != null and search_keyword != ''">
+	        <choose>
+	            <!-- 검색조건 : 증명번호 -->
+	            <when test="search_type == 'COO_CERTIFY_NO'">
+	                AND cl.coo_certify_no LIKE '%' || #{search_keyword} || '%'
+	            </when>
+	
+	            <!-- 검색조건 : 인보이스 번호 -->
+	            <when test="search_type == 'INVOICE_NO'">
+	                AND cl.invoice_no LIKE '%' || #{search_keyword} || '%'
+	            </when>
+	        </choose>
+	      </if>
+	
+	    ORDER BY cl.issue_date, cl.division_code
+	</select>
+	
+	<select id="retrieveCooAuditDocumentInfo" parameterType="map" resultType="map">
+	    SELECT DISTINCT
+	          mst.coo_certify_no
+	        , mst.origin_coo_certify_no
+	        , sa_mst.exporter_name
+	        , sa_mst.exporter_biz_no
+	        , sa_mst.exporter_representative_name
+	        , sa_mst.exporter_tel_no
+	        , sa_mst.exporter_address
+	        , sa_mst.producer_name
+	        , sa_mst.producer_biz_no
+	        , sa_mst.producer_representative_name
+	        , sa_mst.producer_tel_no
+	        , COALESCE(sa_mst.producer_address, co.address) AS producer_address
+	        , TO_CHAR(TO_DATE(mst.apply_date, 'YYYYMMDD'), 'YYYY-MM-DD')
+	          || ' ~ ' ||
+	          TO_CHAR(TO_DATE(mst.end_date, 'YYYYMMDD'), 'YYYY-MM-DD') AS cover_period
+	        , CASE
+	              WHEN #{default_language} = 'KOR' THEN ui.name_kor || ' / ' || ui.position_name || ' / ' || ui.dept_name
+	              WHEN #{default_language} = 'ENG' THEN ui.name_eng || ' / ' || ui.position_name || ' / ' || ui.dept_name
+	              ELSE ui.name_local || ' / ' || ui.position_name || ' / ' || ui.dept_name
+	          END AS signature_name
+	        , TO_CHAR(TO_DATE(mst.issue_date, 'YYYYMMDD'), 'YYYY-MM-DD') AS issue_date
+	        , mst.apply_date
+	        , mst.end_date
+	        , mst.division_code
+	        , d.division_name
+	        , COALESCE(d.certification_no, co.certification_no) AS certification_no
+	    FROM coo_certify_ledger mst
+	    INNER JOIN coo_certify_ledger_dtl cd
+	            ON cd.coo_certify_no = mst.coo_certify_no
+	           AND cd.company_code = mst.company_code
+	           AND cd.division_code = mst.division_code
+	    INNER JOIN sales_mst sa_mst
+	            ON sa_mst.sales_no = cd.sales_no
+	           AND sa_mst.division_code = cd.division_code
+	           AND sa_mst.company_code = cd.company_code
+	    INNER JOIN sales_dtl sa_dtl
+	            ON sa_dtl.sales_no = cd.sales_no
+	           AND sa_dtl.sales_seq = cd.sales_seq
+	           AND sa_dtl.division_code = cd.division_code
+	           AND sa_dtl.company_code = cd.company_code
+	    INNER JOIN division d
+	            ON d.division_code = mst.division_code
+	           AND d.company_code = mst.company_code
+	    INNER JOIN company co
+	            ON co.company_code = mst.company_code
+	    LEFT OUTER JOIN signature sig
+	                 ON sig.seq = mst.sign_seq
+	                AND sig.company_code = mst.company_code
+	    LEFT OUTER JOIN user_info ui
+	                 ON ui.emp_no = sig.emp_no
+	                AND ui.company_code = sig.company_code
+	    WHERE mst.coo_certify_no = #{coo_certify_no}
+	      AND mst.company_code = #{company_code}
+	      <if test="division_code != null and division_code != ''">
+	        AND mst.division_code = #{division_code}
+	      </if>
+	    LIMIT 1
+	</select>
+	
+	<select id="retrieveCooAuditDocumentDetailList" parameterType="map" resultType="map">
+	    SELECT
+	          im.item_name
+	        , fr.hs_code
+	        , fm.fta_name
+	        , fr.rule_contents
+	        , fm.fta_code
+	        , CASE
+	              WHEN fr.company_coo_yn = 'Y' THEN 'KR'
+	              ELSE ''
+	          END AS origin_nation
+	        , fr.fta_coo_yn
+	        , fr.company_coo_yn
+	        , im.item_code
+	        , cld.sales_no
+	        , cld.sales_seq
+	        , sd.delivery_customer_code
+	        , cu.customer_name AS delivery_customer_name
+	        , SUBSTR(sm.invoice_date, 1, 6) AS yyyymm
+	    FROM coo_certify_ledger_dtl cld
+	    INNER JOIN item_mst im
+	            ON im.item_code = cld.product_code
+	           AND im.company_code = cld.company_code
+	    INNER JOIN coo_fcr_mst fr
+	            ON fr.sales_no = cld.sales_no
+	           AND fr.sales_seq = cld.sales_seq
+	           AND fr.division_code = cld.division_code
+	           AND fr.company_code = cld.company_code
+	           AND fr.coo_certify_no = cld.coo_certify_no
+	           AND fr.fta_code = cld.fta_code
+	    LEFT OUTER JOIN sales_dtl sd
+	                 ON sd.sales_no = cld.sales_no
+	                AND sd.sales_seq = cld.sales_seq
+	                AND sd.division_code = cld.division_code
+	                AND sd.company_code = cld.company_code
+	    LEFT OUTER JOIN sales_mst sm
+	                 ON sm.sales_no = sd.sales_no
+	                AND sm.division_code = sd.division_code
+	                AND sm.company_code = sd.company_code
+	    LEFT OUTER JOIN customer cu
+	                 ON cu.company_code = sd.company_code
+	                AND cu.customer_code = sd.delivery_customer_code
+	    INNER JOIN fta_master fm
+	            ON fm.fta_code = fr.fta_code
+	           AND fm.company_code = fr.company_code
+	    WHERE cld.coo_certify_no = #{coo_certify_no}
+	      AND cld.company_code = #{company_code}
+	      <if test="division_code != null and division_code != ''">
+	        AND cld.division_code = #{division_code}
+	      </if>
+	    ORDER BY im.item_code, fr.fta_code
+	</select>
+</mapper>
