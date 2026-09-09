@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -9,12 +10,12 @@
 	<div class="content-wrapper">
 		<div class="row">
 			<div class="content-wrapper col-3">
-				<h1 class="subheader-title mb-1">FTA HSCODE 결정기준</h1>
+				<h1 class="subheader-title mb-1">FTA HS CODE 결정기준</h1>
 				<nav class="app-breadcrumb" aria-label="breadcrumb">
 					<ol class="breadcrumb ms-0 text-muted mb-0">
 						<li class="breadcrumb-item">Home</li>
 						<li class="breadcrumb-item">FTA 정보 관리</li>
-						<li class="breadcrumb-item active" aria-current="page">FTA HSCODE 결정기준</li>
+						<li class="breadcrumb-item active" aria-current="page">FTA HS CODE 결정기준</li>
 					</ol>
 				</nav>
 			</div>
@@ -29,7 +30,9 @@
 								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">HS코드</label>
+											<label class="form-label" for="example-input-border"> 
+												<spring:message code='TXT.HS_CODE'/> <!--HS CODE-->
+											</label>
 										</div>
 										<div class="col">
 											<input type="text" id="searchHsCode" class="form-control" >
@@ -43,7 +46,9 @@
 								<div class="col">
 									<button type="button"
 										onclick="javascript:HSCODE_MGNT.retrieve_leftGridData();"
-										class="btn btn-sm btn-search search-no-more waves-effect waves-themed">Search</button>
+										class="btn btn-sm btn-search search-no-more waves-effect waves-themed">
+										<spring:message code='TXT.SEARCH'/> <!--조회-->
+									</button>
 								</div>
 							</div>
 	
@@ -54,27 +59,39 @@
 		</div>
 		<div class="d-flex col-12 dual-grid-wrap" style="height: calc(100vh - 350px);" >
 			<div class="w-30 left-grid-area h-full" >
-				<div class="grid-title mb-2"><label>HS 코드 목록</label></div>
+				<div class="grid-title mb-2">
+					<label>
+						<spring:message code='TXT.HS_CODE, TXT.LIST'/> <!--HS CODE 목록 -->
+					</label>
+				</div>
 				<div id="oAuiGrid_hsCodeMgnt_L" class="w-100 h-95" ></div>
 			</div>
 			<div class="right-grid-area h-full" >
 				<div class="w-100 h-100 d-flex flex-column">
-			    	<div class="grid-title mb-1">HS 코드 정보</div>
+			    	<div class="grid-title mb-1">
+			    		<spring:message code='TXT.HS_CODE, TXT.INFO'/> <!--HS CODE 정보 -->
+			    	</div>
 			    	<div class="detail-card mb-3">
 			    		<div class="detail-card-row">
-							<div class="detail-card-label">HS 코드</div>
+							<div class="detail-card-label">
+								<spring:message code='TXT.HS_CODE'/> <!--HS CODE-->
+								</div>
 							<div id="selHsCode" class="detail-card-value"></div>
 						</div>
 						<div class="detail-card-row-2">
-							<div class=" detail-card-label">HS 코드명</div>
+							<div class=" detail-card-label">
+								<spring:message code='TXT.HS_CODE, TXT.NAME'/> <!--HS CODE 명 -->
+							</div>
 							<div id="selHsCodeName" class="detail-card-value"></div>
 						</div>
 						<div class="detail-card-row-2">
-							<div class="detail-card-label">HS 설명</div>
+							<div class="detail-card-label">
+								<spring:message code='TXT.DESCRIPTION'/> <!-- 설명 -->
+							</div>
 							<div id="selHsCodeDesc" class="detail-card-value"></div>
 						</div>
 			    	</div>
-			    	<div class="subheader-title mb-1"><label>FTA 원산지 결정기준</label></div>
+			    	<div class="subheader-title mb-1"><label> <spring:message code='TXT.ORIGIN_CRITERIA'/> <!--원산지 결정기준--></label></div>
 			    	<div id="oAuiGrid_hsCodeMgnt_R" class="w-100"  style="flex:1; min-height:0;"></div>
 				</div>
 			</div>
@@ -103,14 +120,14 @@
 			const leftGridColumnLayout = [
 				{
 					dataField: "hs_code"
-				  , headerText: "HS 코드"
+				  , headerText: "<spring:message code='TXT.HS_CODE'/>" // HS CODE
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "hs_code_name"
-				  , headerText: "HS 코드명"
+				  , headerText: "<spring:message code='TXT.HS_CODE, TXT.NAME'/>" // HS CODE 명
 				  , width: 200
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
@@ -120,7 +137,7 @@
 			const rightGridColumnLayout = [
 				{
 					dataField: "fta_name"
-				  , headerText: "FTA 명"
+				  , headerText: "<spring:message code='TXT.FTA_NAME'/>" // 협정명
 				  , width: 30
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -128,20 +145,20 @@
 				},
 				{
 					dataField: "rule_contents"
-				  , headerText: "결정기준 표기"
+				  , headerText: "<spring:message code='TXT.CRITERIA_DISPLAY'/>" //결정기준표기
 				  , width: 30
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "rule_description"
-				  , headerText: "판정 기준"
+				  , headerText: "<spring:message code='TXT.DETERMINATION_CRITERIA'/>"//판정 기준
 				  , width: 100
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "exclusion_description"
-				  , headerText: "예외 기준"
+				  , headerText: "<spring:message code='TXT.EXCEPTION_CRITERIA'/>"//예외 기준
 				  , width: 80
 				  , filter: {showIcon: true}
 				},

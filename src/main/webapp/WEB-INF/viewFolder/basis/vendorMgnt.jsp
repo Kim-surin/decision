@@ -82,7 +82,7 @@
 				<div class="right-grid-area h-full" >
 					<div class="w-100 h-100 d-flex flex-column">
 						<div class="d-flex grid-title">
-							<label>담당자 목록</label>
+							<label>업체 정보</label>
 							<div class="demo" style="margin-left: auto;">
 								<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="VENDOR_MGNT.fnSaveGridTop()">
 									저장
