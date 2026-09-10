@@ -52,7 +52,7 @@
 				                        margin-bottom: 14px;
 				                        white-space: nowrap;
 				                    ">
-				                        총 구매처 수취율
+				                        <spring:message code="TXT.TOTAL_PURCH_RATE"/>
 				                    </div>
 				
 				                    <div style="
@@ -81,7 +81,7 @@
 				                        margin-bottom: 14px;
 				                        white-space: nowrap;
 				                    ">
-				                        비역내 수취 비율
+				                        <spring:message code="TXT.NON_TRANLAB_RATE"/>
 				                    </div>
 				
 				                    <div style="
@@ -110,7 +110,7 @@
 				                        margin-bottom: 14px;
 				                        white-space: nowrap;
 				                    ">
-				                        집중관리 대상 수취율
+				                        <spring:message code="TXT.INTENSIVE_RATE"/>
 				                    </div>
 				
 				                    <div style="
@@ -139,7 +139,7 @@
 				                        margin-bottom: 14px;
 				                        white-space: nowrap;
 				                    ">
-				                        집중관리 대상 비역내 수취율
+				                        <spring:message code="TXT.NON_INTENSIVE_RATE"/>
 				                    </div>
 				
 				                    <div style="
@@ -164,7 +164,7 @@
 						<div class="panel-content">
 				            <div class="row">
 	                             <div class="col-4" style="padding-right: 40px;">
-								    <label class="form-label" for="search_from_date" style="display: block; margin-bottom: 7px;"><spring:message code="입고일자"/></label>
+								    <label class="form-label" for="search_from_date" style="display: block; margin-bottom: 7px;"><spring:message code="TXT.ARRIVAL_DATE"/></label>
 								
 								    <div style="display: flex; align-items: center; gap: 16px;">
 								        <input class="form-control" id="search_from_date" name="search_from_date" type="date" value="<%= java.time.LocalDate.now().minusMonths(1) %>" style="width: calc(50% - 8px);">
@@ -175,7 +175,7 @@
 	                            <div class="col-2" style="width: 250px;">
 	                                <div class="mb-2">
 		                                <div class="row">
-		                                    <label class="form-label" for="example-input-border">고객사 </label>
+		                                    <label class="form-label" for="example-input-border"><spring:message code="TXT.CLIENT_COMPANY"/> </label>
 		                                </div>
 		                                <div class="row mb-2">
 		                                	<div class="col-4" style="width: 180px;">
@@ -192,7 +192,7 @@
 	                            </div>
 	                            <div class="col-lg-4" style="width: 250px;">
 	                            	<div class="row">
-	                            		<label class="form-label" for="example-input-border">플랜트 </label>
+	                            		<label class="form-label" for="example-input-border"><spring:message code="TXT.PLANT"/> </label>
 	                            	</div>
 	                                <div class="row mb-2">
 	                                	<div class="col-4" style="width: 180px;">
@@ -243,8 +243,8 @@
 				            ExcelDownload
 				        </button>
 																													
-				        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.dialog.open('previewPopup','수취율 정보','/cootarget_pop',1000,700);">
-				            상세팝업
+				        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:KpackageOBJ.dialog.open('previewPopup','<spring:message code='TXT.RECEIPT_INFO'/>','/cootarget_pop',1000,700);">
+				            <spring:message code='TXT.DETAILS_POPUP'/> 
 				        </button>
 				    </div>
 				</div>
@@ -284,16 +284,16 @@
 		this.createAUIGrid = function() {
 			// 그리드 칼럼 레이아웃 설정
 			const columnLayout = [ 
-				{ dataField : "division_code",		headerText : "플랜트",          width : 200,		filter: { showIcon: true } ,  style: "aui-center-align"},
-				{ dataField : "vendor_code",		headerText : "구매처 코드",      width : 200,	    filter: { showIcon: true } , style: "aui-right-align"},
-				{ dataField : "vendor_name", 		headerText : "구매처명",     	  width : "auto",	filter: { showIcon: true } ,  style: "aui-center-align" },
-				{ dataField : "total_cnt", 			headerText : "총 품목 수 ",     width : 140,		filter: { showIcon: false } , style: "aui-right-align" },
-				{ dataField : "coo_get_cnt", 		headerText : "수취 품목 수",     width : 140,		filter: { showIcon: false } , style: "aui-right-align"},
-				{ dataField : "coo_get_rate", 		headerText : "수취율",     	  width : 140,		filter: { showIcon: false } , style: "aui-right-align", dataType: "numeric",
+				{ dataField : "division_code",		headerText : "<spring:message code='TXT.PLANT'/>",          width : 200,		filter: { showIcon: true } ,  style: "aui-center-align"},
+				{ dataField : "vendor_code",		headerText : "<spring:message code='TXT.VENDOR_CODE'/>",      width : 200,	    filter: { showIcon: true } , style: "aui-right-align"},
+				{ dataField : "vendor_name", 		headerText : "<spring:message code='TXT.VENDOR_NAME'/>",     	  width : "auto",	filter: { showIcon: true } ,  style: "aui-center-align" },
+				{ dataField : "total_cnt", 			headerText : "<spring:message code='TXT.TOTAL_NUMBER'/>",     width : 140,		filter: { showIcon: false } , style: "aui-right-align" },
+				{ dataField : "coo_get_cnt", 		headerText : "<spring:message code='TXT.RECEIVED_NUMBER'/>",     width : 140,		filter: { showIcon: false } , style: "aui-right-align"},
+				{ dataField : "coo_get_rate", 		headerText : "<spring:message code='TXT.RECEIPT_RATE'/>",     	  width : 140,		filter: { showIcon: false } , style: "aui-right-align", dataType: "numeric",
 				    labelFunction: function(rowIndex, columnIndex, value) {
 				        return value == null ? "" : value + "%";
 				    }},
-				{ dataField : "importance_mgt_yn", 		headerText : "집중관리 대상",     width : 140,		filter: { showIcon: false } , style: "aui-center-align" }
+				{ dataField : "importance_mgt_yn", 		headerText : "<spring:message code='TXT.INTENSIVE_TARGET'/>",     width : 140,		filter: { showIcon: false } , style: "aui-center-align" }
 			];
 
 			// 그리드 속성 설정
@@ -309,17 +309,6 @@
 			// 실제로 #oAuiGrid_CootargetList_01 에 그리드 생성
 			// 파라메터 : Grid Div ID, 컬럼레이아웃, 그리드속성, 그리드타입(없음 : null or "", 행번호 : number ,체크박스 : check ,라디오 : radio)
 			CootargetList.grid_CootargetList_01 = KpackageOBJ.auiGrid.create("oAuiGrid_CootargetList_01", columnLayout, gridProps, "check");
-			
-			
-		/* 	// 클릭 이벤트
-			AUIGrid.bind(CootargetList.grid_CootargetList_01, "cellClick", function( event ) {
-				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " clicked");
-			});
-			
-			// 더블클릭 이벤트 
-			AUIGrid.bind(CootargetList.grid_CootargetList_01, "cellDoubleClick", function( event ) {
-				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " dbl clicked");
-			}); */
 			
 		};
 		
@@ -366,8 +355,8 @@
 		
 		this.excelDownload  = function(){
 			const exportProps = {
-			        fileName: "원산지확인서_수취현황",
-			        sheetName: "수취현황",
+			        fileName: "<spring:message code='TXT.COLLECTION_STATE'/>",
+			        sheetName: "<spring:message code='TXT.RECEIPT_STATUS'/>",
 			        exportWithStyle: true,
 			        progressBar: true,
 			        showRowNumColumn: false

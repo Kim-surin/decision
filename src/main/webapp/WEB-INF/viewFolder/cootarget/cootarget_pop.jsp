@@ -1,5 +1,7 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -36,13 +38,13 @@
 		this.createAUIGrid = function() {
 			// 그리드 칼럼 레이아웃 설정
 			const columnLayout = [ 
-				{ dataField : "division_code",		headerText : "플랜트",          width : 120,		filter: { showIcon: true } ,  style: "aui-center-align"},
-				{ dataField : "vendor_code",		headerText : "구매처 코드",      width : 120,	    filter: { showIcon: true } , style: "aui-right-align"},
-				{ dataField : "vendor_name", 		headerText : "구매처명",     	  width : 120,		filter: { showIcon: false } ,  style: "aui-center-align" },
-				{ dataField : "item_code", 			headerText : "품번",     		  width : 120,		filter: { showIcon: true } , style: "aui-right-align" },
-				{ dataField : "item_name", 			headerText : "품명",     		  width : 120,		filter: { showIcon: false } , style: "aui-right-align"},
-				{ dataField : "coo_get_yn", 		headerText : "수취여부",     	  width : 120,		filter: { showIcon: false } , style: "aui-center-align"},
-				{ dataField : "yyyymmdd", 			headerText : "수취한 포괄기간",   width : "auto",		filter: { showIcon: false } , style: "aui-center-align"}
+				{ dataField : "division_code",		headerText : "<spring:message code='TXT.PLANT'/>",          width : 120,		filter: { showIcon: true } ,  style: "aui-center-align"},
+				{ dataField : "vendor_code",		headerText : "<spring:message code='TXT.VENDOR_CODE'/>",      width : 120,	    filter: { showIcon: true } , style: "aui-right-align"},
+				{ dataField : "vendor_name", 		headerText : "<spring:message code='TXT.VENDOR_NAME'/>",     	  width : 120,		filter: { showIcon: false } ,  style: "aui-center-align" },
+				{ dataField : "item_code", 			headerText : "<spring:message code='TXT.ITEM_NUMBER'/>",     		  width : 120,		filter: { showIcon: true } , style: "aui-right-align" },
+				{ dataField : "item_name", 			headerText : "<spring:message code='TXT.ITEM_NAME2'/>",     		  width : 120,		filter: { showIcon: false } , style: "aui-right-align"},
+				{ dataField : "coo_get_yn", 		headerText : "<spring:message code='TXT.RECEIPT_YN'/>",     	  width : 120,		filter: { showIcon: false } , style: "aui-center-align"},
+				{ dataField : "yyyymmdd", 			headerText : "<spring:message code='TXT.RECEIVED_PERIOD'/>",   width : "auto",		filter: { showIcon: false } , style: "aui-center-align"}
 			];
 
 			// 그리드 속성 설정
@@ -87,7 +89,7 @@
 		        });
 
 		    if (conditionList.length === 0) {
-		        alert("상세 행을 하나 이상 선택해주세요.");
+		        alert("<spring:message code='MSG.SELECT_ONE_ROWS'/>");
 		        return;
 		    }
 
@@ -105,8 +107,8 @@
 		
 		this.excelDownload  = function(){
 			const exportProps = {
-			        fileName: "수취율정보_상세팝업",
-			        sheetName: "수취율정보",
+			        fileName: "<spring:message code='TXT.RECEIVED_DETAILED'/>",
+			        sheetName: "<spring:message code='TXT.RECEIVED_RATE'/>",
 			        exportWithStyle: true,
 			        progressBar: true,
 			        showRowNumColumn: false
