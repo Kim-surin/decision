@@ -6,7 +6,7 @@
        FROM (
                SELECT ML.YYYYMM
                      ,DI.DIVISION_CODE
-                     ,DI.DIVISION_NAME
+                     ,CASE #{default_language} WHEN 'KOR' THEN DI.DIVISION_NAME WHEN 'ENG' THEN DI.DIVISION_NAME_ENG END AS DIVISION_NAME
                      ,IM.ITEM_CODE
                      ,IM.ITEM_NAME
                      ,IM.UNIT
