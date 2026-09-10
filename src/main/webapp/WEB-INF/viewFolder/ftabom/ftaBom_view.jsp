@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 	<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 		<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+			<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 			<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 			<html>
 
@@ -29,7 +30,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 
-													<label class="form-label" for="from_yyyymm">기준년월</label>
+													<label class="form-label" for="from_yyyymm"><spring:message code='TXT.STD_DATE'/></label> <!--기준년월-->
 													<div class="d-flex gap-2">
 														<input class="form-control" id="from_yyyymm" name="from_yyyymm"
 															type="month" value="${from_yyyymm}">
@@ -43,7 +44,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">제품</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.PRODUCT'/></label> <!--제품-->
 													</div>
 													<div class="col">
 														<input type="text" id="product" class="form-control">
@@ -53,9 +54,9 @@
 
 											<div class="col-3">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">플랜트</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.PLANT'/></label> <!--플랜트-->
 													<select class="form-select" id="search_division_code">
-														<option value="">전체</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
 															</option>
@@ -67,7 +68,7 @@
 											<div class="col">
 												<button type="button"
 													onclick="javascript:FTABOMVIEW.retrieve_GridMstData();"
-													class="btn btn-sm btn-search search-more waves-effect waves-themed">Search</button>
+													class="btn btn-sm btn-search search-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/></button> <!--조회-->
 											</div>
 										</div>
 									</div>
@@ -110,11 +111,11 @@
 
 						this.createAUIGrid = function () {
 							const columnLayoutMst = [
-								{dataField: "yyyymm", headerText: "기준년월", width: 150, filter: {showIcon: true}},
-								{dataField: "division_name", headerText: "플랜트", width: 200, filter: {showIcon: true}},
-								{dataField: "product_code", headerText: "제품코드", width: 400, filter: {showIcon: true}},
-								{dataField: "product_name", headerText: "제품명", width: 500, filter: {showIcon: true}},
-								{dataField: "hs_code", headerText: "HS코드", width: 150, filter: {showIcon: true}}
+								{dataField: "yyyymm", headerText: "<spring:message code='TXT.STD_DATE'/>", width: 150, filter: {showIcon: true}}, //기준년월
+								{dataField: "division_name", headerText: "<spring:message code='TXT.PLANT'/>", width: 200, filter: {showIcon: true}}, //플랜트
+								{dataField: "product_code", headerText: "<spring:message code='TXT.PRODUCT_CODE'/>", width: 400, filter: {showIcon: true}}, //제품코드
+								{dataField: "product_name", headerText: "<spring:message code='TXT.MATERIAL_NAME'/>", width: 500, filter: {showIcon: true}}, //제품명
+								{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 150, filter: {showIcon: true}} //HS코드
 							];
 
 							const gridPropsMst = {
@@ -127,12 +128,12 @@
 							FTABOMVIEW.grid_FTABOM_MST = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_MASTER", columnLayoutMst, gridPropsMst, "");
 
 							const columnLayoutDtl = [
-								{dataField: "yyyymm", headerText: "기준년월", width: 0, visible: false},
-								{dataField: "item_code", headerText: "자재코드", width: 300, filter: {showIcon: true}},
-								{dataField: "item_name", headerText: "자재명", width: 350, filter: {showIcon: true}},
-								{dataField: "unit", headerText: "단위", width: 100, filter: {showIcon: true}},
-								{dataField: "hs_code", headerText: "HS코드", width: 150, filter: {showIcon: true}},
-								{dataField: "req_qty", headerText: "사용수량", width: 100}
+								{dataField: "yyyymm", headerText: "<spring:message code='TXT.STD_DATE'/>", width: 0, visible: false}, //기준년월
+								{dataField: "item_code", headerText: "<spring:message code='TXT.RAW_MATERIAL_CODE'/>", width: 300, filter: {showIcon: true}}, //자재코드
+								{dataField: "item_name", headerText: "<spring:message code='TXT.RAW_MATERIAL_NAME'/>", width: 350, filter: {showIcon: true}}, //자재명
+								{dataField: "unit", headerText: "<spring:message code='TXT.UNIT'/>", width: 100, filter: {showIcon: true}}, //단위
+								{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 150, filter: {showIcon: true}}, //HS코드
+								{dataField: "req_qty", headerText: "<spring:message code='TXT.REQ_QUANTITY'/>", width: 100} //사용수량
 							];
 
 							const gridPropsDtl = {
@@ -145,10 +146,10 @@
 							FTABOMVIEW.grid_FTABOM_DTL = KpackageOBJ.auiGrid.create("oAuiGrid_FTABOM_DETAIL", columnLayoutDtl, gridPropsDtl, "");
 
 							const columnLayoutDtlCustomer = [
-								{dataField: "vendor_code", headerText: "공급업체코드", width: 150, filter: {showIcon: true}},
-								{dataField: "vendor_name", headerText: "공급업체명", width: 200, filter: {showIcon: true}},
+								{dataField: "vendor_code", headerText: "<spring:message code='TXT.VENDOR_CODE'/>", width: 150, filter: {showIcon: true}}, //공급업체코드
+								{dataField: "vendor_name", headerText: "<spring:message code='TXT.VENDOR_NAME_GRID'/>", width: 200, filter: {showIcon: true}}, //공급업체명
 								{
-									dataField: "last_warehousing_date", headerText: "마지막 입고일자", width: 120
+									dataField: "last_warehousing_date", headerText: "<spring:message code='TXT.LAST_ARRIVAL_DATE'/>", width: 120 //마지막 입고일자
 									, dataType: "date", dateInputFormat: "yyyymmdd", formatString: "yyyy-mm-dd"
 									, filter: {showIcon: true}
 								},
