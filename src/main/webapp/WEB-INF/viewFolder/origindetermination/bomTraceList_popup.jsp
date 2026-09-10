@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -83,23 +84,23 @@
 	<div class="modal-body">
 		<div class="bom-trace-header">
 			<div class="bom-trace-header-left">
-				<div class="bom-trace-header-row"><span class="bom-trace-header-label">대상 협정</span><span class="bom-trace-header-value" id="bomTraceStat_ftaName">-</span></div>
-				<div class="bom-trace-header-row"><span class="bom-trace-header-label">역내산 재료비</span><span class="bom-trace-header-value" id="bomTraceStat_inarea">0</span></div>
-				<div class="bom-trace-header-row"><span class="bom-trace-header-label">비역내산 재료비</span><span class="bom-trace-header-value" id="bomTraceStat_outarea">0</span></div>
-				<div class="bom-trace-header-row"><span class="bom-trace-header-label">총 재료비</span><span class="bom-trace-header-value" id="bomTraceStat_total">0</span></div>
+				<div class="bom-trace-header-row"><span class="bom-trace-header-label"><spring:message code='TXT.TARGET_FTA'/></span><span class="bom-trace-header-value" id="bomTraceStat_ftaName">-</span></div> <!--대상 협정-->
+				<div class="bom-trace-header-row"><span class="bom-trace-header-label"><spring:message code='TXT.INAREA_MATERIAL_COST'/></span><span class="bom-trace-header-value" id="bomTraceStat_inarea">0</span></div> <!--역내산 재료비-->
+				<div class="bom-trace-header-row"><span class="bom-trace-header-label"><spring:message code='TXT.NON_INAREA_MATERIAL_COST'/></span><span class="bom-trace-header-value" id="bomTraceStat_outarea">0</span></div> <!--비역내산 재료비-->
+				<div class="bom-trace-header-row"><span class="bom-trace-header-label"><spring:message code='TXT.TOTAL_MATERIAL_COST'/></span><span class="bom-trace-header-value" id="bomTraceStat_total">0</span></div> <!--총 재료비-->
 			</div>
 			<div class="bom-trace-header-right">
 				<div class="bom-trace-donut-card" id="bomTraceDonutCard_inarea" onclick="javascript:BOM_TRACE_LIST_POPUP.filterByArea('inarea');">
 					<div class="bom-trace-donut"><canvas id="bomTraceChart_inarea"></canvas></div>
 					<div>
-						<div class="bom-trace-donut-label">역내산 재료비 비율</div>
+						<div class="bom-trace-donut-label"><spring:message code='TXT.INAREA_MATERIAL_COST_RATE'/></div> <!--역내산 재료비 비율-->
 						<div class="bom-trace-donut-value" id="bomTraceStat_inareaRatio">-</div>
 					</div>
 				</div>
 				<div class="bom-trace-donut-card" id="bomTraceDonutCard_outarea" onclick="javascript:BOM_TRACE_LIST_POPUP.filterByArea('outarea');">
 					<div class="bom-trace-donut"><canvas id="bomTraceChart_outarea"></canvas></div>
 					<div>
-						<div class="bom-trace-donut-label">비역내산 재료비 비율</div>
+						<div class="bom-trace-donut-label"><spring:message code='TXT.NON_INAREA_MATERIAL_COST_RATE'/></div> <!--비역내산 재료비 비율-->
 						<div class="bom-trace-donut-value" id="bomTraceStat_outareaRatio">-</div>
 					</div>
 				</div>
@@ -126,15 +127,15 @@
 		this.createAUIGrid = function() {
 			var columnLayout = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
-				{dataField: "item_code", headerText: "품목코드", width: 220, filter: {showIcon: true}},
-				{dataField: "item_name", headerText: "품명", width: 320, filter: {showIcon: true}},
-				{dataField: "hs_code", headerText: "HS CODE", width: 130, filter: {showIcon: true}},
-				{dataField: "requirement_qty", headerText: "소요량", width: 110, dataType: "numeric"},
-				{dataField: "input_amount", headerText: "투입금액", width: 140, dataType: "numeric", formatString: "#,##0"},
-				{dataField: "inarea_qty", headerText: "역내수량", width: 110, dataType: "numeric"},
-				{dataField: "inarea_amount", headerText: "역내금액", width: 140, dataType: "numeric", formatString: "#,##0"},
-				{dataField: "outarea_qty", headerText: "역외수량", width: 110, dataType: "numeric"},
-				{dataField: "outarea_amount", headerText: "역외금액", width: 140, dataType: "numeric", formatString: "#,##0"}
+				{dataField: "item_code", headerText: "<spring:message code='TXT.ITEM_CODE'/>", width: 220, filter: {showIcon: true}}, //품목코드
+				{dataField: "item_name", headerText: "<spring:message code='TXT.ITEM_DESC'/>", width: 320, filter: {showIcon: true}}, //품명
+				{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 130, filter: {showIcon: true}}, //HS CODE
+				{dataField: "requirement_qty", headerText: "<spring:message code='TXT.REQ_QUANTITY'/>", width: 110, dataType: "numeric"}, //소요량
+				{dataField: "input_amount", headerText: "<spring:message code='TXT.INPUT_AMOUNT'/>", width: 140, dataType: "numeric", formatString: "#,##0"}, //투입금액
+				{dataField: "inarea_qty", headerText: "<spring:message code='TXT.INAREA_QTY'/>", width: 110, dataType: "numeric"}, //역내수량
+				{dataField: "inarea_amount", headerText: "<spring:message code='TXT.INAREA_AMOUNT'/>", width: 140, dataType: "numeric", formatString: "#,##0"}, //역내금액
+				{dataField: "outarea_qty", headerText: "<spring:message code='TXT.OUTAREA_QTY'/>", width: 110, dataType: "numeric"}, //역외수량
+				{dataField: "outarea_amount", headerText: "<spring:message code='TXT.OUTAREA_AMOUNT'/>", width: 140, dataType: "numeric", formatString: "#,##0"} //역외금액
 			];
 			var gridProps = { enableFilter: true };
 			this.grid_BomTrace = KpackageOBJ.auiGrid.create("oAuiGrid_bomTraceList", columnLayout, gridProps, "");

@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -69,7 +70,7 @@
 	<div class="modal-header">
 		<h5 class="modal-title h4">원산지 판정 상세</h5>
 		<div class="ms-auto d-flex align-items-center gap-2">
-			<button type="button" class="btn btn-sm btn-primary" onclick="javascript:ORIGIN_DETERMINATION_DETAIL_POPUP.bulkOriginDetermination();">일괄 원산지 판정</button>
+			<button type="button" class="btn btn-sm btn-primary" onclick="javascript:ORIGIN_DETERMINATION_DETAIL_POPUP.bulkOriginDetermination();"><spring:message code='TXT.BULK, TXT.ORIGIN_DETERMINATION'/></button> <!--일괄 원산지 판정-->
 			<button type="button" class="btn btn-system" data-bs-dismiss="modal" aria-label="Close">
 				<svg class="sa-icon sa-icon-2x">
                       <use href="/rcs/ui5x/img/sprite.svg#x"></use>
@@ -83,24 +84,24 @@
 			</div>
 			<div class="origin-detail-main">
 				<div class="d-flex justify-content-between align-items-center mb-3">
-					<h6 class="mb-0">판정 품목</h6>
-					<button type="button" id="originDetermination_popup_individualBtn" class="btn btn-sm btn-primary" onclick="javascript:ORIGIN_DETERMINATION_DETAIL_POPUP.individualOriginDetermination();">개별 원산지 판정</button>
+					<h6 class="mb-0"><spring:message code='TXT.DETERMINATION_ITEM'/></h6> <!--판정 품목-->
+					<button type="button" id="originDetermination_popup_individualBtn" class="btn btn-sm btn-primary" onclick="javascript:ORIGIN_DETERMINATION_DETAIL_POPUP.individualOriginDetermination();"><spring:message code='TXT.INDIVIDUAL, TXT.ORIGIN_DETERMINATION'/></button> <!--개별 원산지 판정-->
 				</div>
 				<div id="oAuiGrid_originDetermination_popup_detail" style="width:100%;height:180px;"></div>
 
 				<div id="originDetermination_popup_resultSection">
-					<h6 class="mt-4 mb-3">판정결과</h6>
+					<h6 class="mt-4 mb-3"><spring:message code='TXT.DETERMINATION_RESULT'/></h6> <!--판정결과-->
 					<div id="oAuiGrid_originDetermination_popup_result" style="width:100%;height:280px;"></div>
 
-					<h6 class="mt-4 mb-3">판정 상세내용</h6>
+					<h6 class="mt-4 mb-3"><spring:message code='TXT.DETERMINATION_DETAIL'/></h6> <!--판정 상세내용-->
 					<div id="oAuiGrid_originDetermination_popup_resultDetail" style="width:100%;height:180px;"></div>
 				</div>
 
 				<div id="originDetermination_popup_failSection">
-					<h6 class="mt-4 mb-3">판정 실패 사유</h6>
+					<h6 class="mt-4 mb-3"><spring:message code='TXT.DETERMINATION_FAIL_REASON'/></h6> <!--판정 실패 사유-->
 					<div id="oAuiGrid_originDetermination_popup_failReason" style="width:100%;height:280px;"></div>
 
-					<h6 class="mt-4 mb-3">판정 실패 상세내용</h6>
+					<h6 class="mt-4 mb-3"><spring:message code='TXT.DETERMINATION_FAIL_DETAIL'/></h6> <!--판정 실패 상세내용-->
 					<div id="oAuiGrid_originDetermination_popup_failDetail" style="width:100%;height:320px;"></div>
 					<!-- TXT_HSCODE_INCLUDE_MISSING/MSG_FAILED_DECISION_QTY_AMOUNT 사유일 때는 위 대신 이 원재료
 					     목록을 보여준다(selectFailReasonRow 참고) -->
@@ -111,6 +112,9 @@
 	</div>
 </body>
 <script>
+	// spring:message로 렌더링한 문구를 JS 문자열 상수로 미리 잡아둔다(그리드 렌더러/동적 DOM 조립에서 재사용)
+	var STR_NOT_FOUND_SELECTED_DATA = "<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"; //선택된 항목이 없습니다.
+
 	var ORIGIN_DETERMINATION_DETAIL_POPUP = new function() {
 		// 체크되어 넘어온 원본 목록. 수출은 송장(SALES_NO) 단위라 좌측/상세 렌더링엔 lineItems를 쓰고,
 		// datas는 판정 실행(executeOriginDetermination) 대상 식별에만 쓴다.
@@ -218,13 +222,13 @@
 			var columnLayoutDetail = [
 				{dataField: "sales_no", headerText: "SALES_NO", width: 0, visible: false},
 				{dataField: "sales_seq", headerText: "SALES_SEQ", width: 0, visible: false},
-				{dataField: "product_code", headerText: "품번", width: 200},
-				{dataField: "product_name", headerText: "품명", width: 250},
-				{dataField: "hs_code", headerText: "HS CODE", width: 150},
-				{dataField: "quantity", headerText: "수량", width: 100, dataType: "numeric", style: ""},
-				{dataField: "unit", headerText: "단위", width: 100},
-				{dataField: "unit_price", headerText: "단가(원)", width: 200, dataType: "numeric", style: "", formatString: "#,##0"},
-				{dataField: "amount", headerText: "금액(원)", width: 200, dataType: "numeric", style: "", formatString: "#,##0"}
+				{dataField: "product_code", headerText: "<spring:message code='TXT.ITEM_NUMBER'/>", width: 200}, //품번
+				{dataField: "product_name", headerText: "<spring:message code='TXT.ITEM_DESC'/>", width: 250}, //품명
+				{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 150}, //HS CODE
+				{dataField: "quantity", headerText: "<spring:message code='TXT.QTY'/>", width: 100, dataType: "numeric", style: ""}, //수량
+				{dataField: "unit", headerText: "<spring:message code='TXT.UNIT'/>", width: 100}, //단위
+				{dataField: "unit_price", headerText: "<spring:message code='TXT.UNIT_PRICE_KRW'/>", width: 200, dataType: "numeric", style: "", formatString: "#,##0"}, //단가(원)
+				{dataField: "amount", headerText: "<spring:message code='TXT.AMOUNT_KRW'/>", width: 200, dataType: "numeric", style: "", formatString: "#,##0"} //금액(원)
 			];
 			var gridPropsDetail = {};
 			this.grid_Detail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_detail", columnLayoutDetail, gridPropsDetail, "");
@@ -235,23 +239,23 @@
 
 			var columnLayoutResult = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
-				{dataField: "hs_code", headerText: "HS CODE", width: 110},
-				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
-				{dataField: "amount", headerText: "단가", width: 120, dataType: "numeric", style: "", formatString: "#,##0"},
-				{dataField: "inkoterms_type", headerText: "단가기준", width: 100},
-				{dataField: "rule_contents", headerText: "결정기준", width: 130, filter: {showIcon: true}},
-				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
-				{dataField: "rvc_rate", headerText: "판정 부가가치 비율", width: 130, dataType: "numeric", style: "",  				
+				{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 110}, //HS CODE
+				{dataField: "fta_name", headerText: "<spring:message code='TXT.FTA_NAME'/>", width: 150, filter: {showIcon: true}}, //협정명
+				{dataField: "amount", headerText: "<spring:message code='TXT.UNIT_PRICE'/>", width: 120, dataType: "numeric", style: "", formatString: "#,##0"}, //단가
+				{dataField: "inkoterms_type", headerText: "<spring:message code='TXT.UNIT_PRICE_STD'/>", width: 100}, //단가기준
+				{dataField: "rule_contents", headerText: "<spring:message code='TXT.RULE_CRITERIA'/>", width: 130, filter: {showIcon: true}}, //결정기준
+				{dataField: "company_coo_yn", headerText: "<spring:message code='TXT.SATISFIED_YN'/>", width: 100}, //충족여부
+				{dataField: "rvc_rate", headerText: "<spring:message code='TXT.DETERMINATION, TXT.RVC_RATE'/>", width: 130, dataType: "numeric", style: "", //판정 부가가치 비율
 					labelFunction: function(rowIndex, columnIndex, value, dataField, gridObject) {
 				        if (value === null || value === undefined || value === "") return "";
-				        return Number(value).toFixed(0) + "%"; 
+				        return Number(value).toFixed(0) + "%";
 				    }},
-				{dataField: "de_minimis_rate", headerText: "미소기준 적용 비율", width: 130, dataType: "numeric", style: "",
+				{dataField: "de_minimis_rate", headerText: "<spring:message code='TXT.DE_MINIMIS_APPLY_RATE'/>", width: 130, dataType: "numeric", style: "", //미소기준 적용 비율
 					labelFunction: function(rowIndex, columnIndex, value, dataField, gridObject) {
 					    if (value === null || value === undefined || value === "") return "";
 					    return Number(value).toFixed(0) + "%"; 
 					}},
-				{dataField: "bom_trace", headerText: "BOM 추적", width: 100, style: "grid-center-text",
+				{dataField: "bom_trace", headerText: "<spring:message code='TXT.BOM_TRACE'/>", width: 100, style: "grid-center-text", //BOM 추적
 					renderer: {
 						type: 'IconRenderer',
 						iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
@@ -261,7 +265,7 @@
 						},
 					}
 				},
-				{dataField: "conversion_strategy", headerText: "역내전환전략", width: 100, style: "grid-center-text",
+				{dataField: "conversion_strategy", headerText: "<spring:message code='TXT.CONVERSION_STRATEGY'/>", width: 100, style: "grid-center-text", //역내전환전략
 					renderer: {
 					    type: 'IconRenderer',
 					    iconWidth: 16, // icon 가로 사이즈, 지정하지 않으면 24로 기본값 적용됨
@@ -290,17 +294,17 @@
 			});
 
 			var columnLayoutResultDetail = [
-				{dataField: "rule_code", headerText: "결정기준", width: 120, filter: {showIcon: true}},
-				{dataField: "de_minimis_amount", headerText: "미소기준 적용금액", width: 100, dataType: "numeric", style: ""},
-				{dataField: "company_coo_yn", headerText: "충족여부", width: 100},
-				{dataField: "amount", headerText: "단가", width: 120, dataType: "numeric", style: "", formatString: "#,##0"},
-				{dataField: "outarea_amount", headerText: "미상 재료비(원)", width: 120, dataType: "numeric", style: "", formatString: "#,##0"},
-				{dataField: "rvc_rate", headerText: "부가가치 비율", width: 130, dataType: "numeric", style: "",
+				{dataField: "rule_code", headerText: "<spring:message code='TXT.RULE_CRITERIA'/>", width: 120, filter: {showIcon: true}}, //결정기준
+				{dataField: "de_minimis_amount", headerText: "<spring:message code='TXT.DE_MINIMIS_APPLY_AMOUNT'/>", width: 100, dataType: "numeric", style: ""}, //미소기준 적용금액
+				{dataField: "company_coo_yn", headerText: "<spring:message code='TXT.SATISFIED_YN'/>", width: 100}, //충족여부
+				{dataField: "amount", headerText: "<spring:message code='TXT.UNIT_PRICE'/>", width: 120, dataType: "numeric", style: "", formatString: "#,##0"}, //단가
+				{dataField: "outarea_amount", headerText: "<spring:message code='TXT.UNKNOWN_MATERIAL_COST_KRW'/>", width: 120, dataType: "numeric", style: "", formatString: "#,##0"}, //미상 재료비(원)
+				{dataField: "rvc_rate", headerText: "<spring:message code='TXT.RVC_RATE'/>", width: 130, dataType: "numeric", style: "", //부가가치 비율
 					labelFunction: function(rowIndex, columnIndex, value, dataField, gridObject) {
 					    if (value === null || value === undefined || value === "") return "";
-					    return Number(value).toFixed(0) + "%"; 
+					    return Number(value).toFixed(0) + "%";
 					}},
-				{dataField: "rule_description", headerText: "결정기준 해설", width: 500}
+				{dataField: "rule_description", headerText: "<spring:message code='TXT.RULE_DESCRIPTION'/>", width: 500} //결정기준 해설
 			];
 			var gridPropsResultDetail = { enableFilter: true };
 			this.grid_ResultDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_resultDetail", columnLayoutResultDetail, gridPropsResultDetail, "");
@@ -308,9 +312,9 @@
 			// 판정 실패 사유: FCR_RESULT 중 STATUS='E'(오류)인 협정별 사유 목록(협정+사유 단위로 중복 제거됨)
 			var columnLayoutFailReason = [
 				{dataField: "fta_code", headerText: "FTA_CODE", width: 0, visible: false},
-				{dataField: "fta_name", headerText: "협정명", width: 150, filter: {showIcon: true}},
-				{dataField: "error_code", headerText: "오류코드", width: 180, visible: false},
-				{dataField: "error_msg", headerText: "실패 사유", width: 400}
+				{dataField: "fta_name", headerText: "<spring:message code='TXT.FTA_NAME'/>", width: 150, filter: {showIcon: true}}, //협정명
+				{dataField: "error_code", headerText: "<spring:message code='TXT.ERROR_CODE'/>", width: 180, visible: false}, //오류코드
+				{dataField: "error_msg", headerText: "<spring:message code='TXT.FAIL_REASON'/>", width: 400} //실패 사유
 			];
 			var gridPropsFailReason = { enableFilter: true };
 			this.grid_FailReason = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failReason", columnLayoutFailReason, gridPropsFailReason, "");
@@ -321,16 +325,19 @@
 
 			// 판정 실패 상세내용: 실패 사유 행 클릭 시 그 협정에 걸린 룰 전체의 처리결과를 보여준다.
 			// 실패 사유가 MATERIAL_DETAIL_ERROR_CODES면 이 그리드 대신 원재료 목록을 보여준다(selectFailReasonRow 참고).
+			var STR_ERROR = "<spring:message code='TXT.ERROR'/>"; //오류
+			var STR_NORMAL = "<spring:message code='TXT.NORMAL'/>"; //정상
+
 			var columnLayoutFailDetail = [
-				{dataField: "rule_seq", headerText: "룰순번", width: 90},
-				{dataField: "rule_code", headerText: "결정기준", width: 150, filter: {showIcon: true}},
-				{dataField: "status", headerText: "처리상태", width: 100,
+				{dataField: "rule_seq", headerText: "<spring:message code='TXT.RULE_SEQ'/>", width: 90}, //룰순번
+				{dataField: "rule_code", headerText: "<spring:message code='TXT.RULE_CRITERIA'/>", width: 150, filter: {showIcon: true}}, //결정기준
+				{dataField: "status", headerText: "<spring:message code='TXT.PROCESS_STATUS'/>", width: 100, //처리상태
 					labelFunction: function(rowIndex, columnIndex, value) {
-						return value === "E" ? "오류" : (value === "N" ? "정상" : (value || ""));
+						return value === "E" ? STR_ERROR : (value === "N" ? STR_NORMAL : (value || ""));
 					}},
-				{dataField: "error_code", headerText: "오류코드", width: 180, visible: false},
-				{dataField: "error_msg", headerText: "실패 사유", width: 300, filter: {showIcon: true}},
-				{dataField: "rule_description", headerText: "결정기준 해설", width: 400}
+				{dataField: "error_code", headerText: "<spring:message code='TXT.ERROR_CODE'/>", width: 180, visible: false}, //오류코드
+				{dataField: "error_msg", headerText: "<spring:message code='TXT.FAIL_REASON'/>", width: 300, filter: {showIcon: true}}, //실패 사유
+				{dataField: "rule_description", headerText: "<spring:message code='TXT.RULE_DESCRIPTION'/>", width: 400} //결정기준 해설
 			];
 			var gridPropsFailDetail = { enableFilter: true };
 			this.grid_FailDetail = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failDetail", columnLayoutFailDetail, gridPropsFailDetail, "");
@@ -338,15 +345,15 @@
 			// 원재료(FCR_DTL) 목록: HS코드 누락(TXT_HSCODE_INCLUDE_MISSING)/금액 0(MSG_FAILED_DECISION_QTY_AMOUNT)
 			// 사유일 때 어떤 원재료가 원인인지 바로 확인할 수 있도록 보여준다
 			var columnLayoutFailMaterial = [
-				{dataField: "item_code", headerText: "품목코드", width: 150},
-				{dataField: "item_name", headerText: "품명", width: 200},
-				{dataField: "hs_code", headerText: "HS CODE", width: 110},
-				{dataField: "requirement_qty", headerText: "소요량", width: 100, dataType: "numeric", style: ""},
-				{dataField: "input_amount", headerText: "투입금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"},
-				{dataField: "inarea_qty", headerText: "역내수량", width: 100, dataType: "numeric", style: ""},
-				{dataField: "inarea_amount", headerText: "역내금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"},
-				{dataField: "outarea_qty", headerText: "역외수량", width: 100, dataType: "numeric", style: ""},
-				{dataField: "outarea_amount", headerText: "역외금액", width: 130, dataType: "numeric", style: "", formatString: "#,##0"}
+				{dataField: "item_code", headerText: "<spring:message code='TXT.ITEM_CODE'/>", width: 150}, //품목코드
+				{dataField: "item_name", headerText: "<spring:message code='TXT.ITEM_DESC'/>", width: 200}, //품명
+				{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 110}, //HS CODE
+				{dataField: "requirement_qty", headerText: "<spring:message code='TXT.REQ_QUANTITY'/>", width: 100, dataType: "numeric", style: ""}, //소요량
+				{dataField: "input_amount", headerText: "<spring:message code='TXT.INPUT_AMOUNT'/>", width: 130, dataType: "numeric", style: "", formatString: "#,##0"}, //투입금액
+				{dataField: "inarea_qty", headerText: "<spring:message code='TXT.INAREA_QTY'/>", width: 100, dataType: "numeric", style: ""}, //역내수량
+				{dataField: "inarea_amount", headerText: "<spring:message code='TXT.INAREA_AMOUNT'/>", width: 130, dataType: "numeric", style: "", formatString: "#,##0"}, //역내금액
+				{dataField: "outarea_qty", headerText: "<spring:message code='TXT.OUTAREA_QTY'/>", width: 100, dataType: "numeric", style: ""}, //역외수량
+				{dataField: "outarea_amount", headerText: "<spring:message code='TXT.OUTAREA_AMOUNT'/>", width: 130, dataType: "numeric", style: "", formatString: "#,##0"} //역외금액
 			];
 			var gridPropsFailMaterial = { enableFilter: true };
 			this.grid_FailMaterial = KpackageOBJ.auiGrid.create("oAuiGrid_originDetermination_popup_failMaterial", columnLayoutFailMaterial, gridPropsFailMaterial, "");
@@ -473,7 +480,7 @@
 			$sidebar.empty();
 
 			if (this.groupedItems.length === 0) {
-				$sidebar.append('<div class="origin-detail-empty">선택된 항목이 없습니다.</div>');
+				$sidebar.append('<div class="origin-detail-empty">' + STR_NOT_FOUND_SELECTED_DATA + '</div>'); //선택된 항목이 없습니다.
 				return;
 			}
 
@@ -847,7 +854,7 @@
 		// 우측의 모든 품목을 대상으로 원산지 판정 진행
 		this.bulkOriginDetermination = function() {
 			if (this.datas.length === 0) {
-				KpackageOBJ.object.alert("판정할 품목이 없습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NO_DETERMINATION_TARGET'/>"); //판정할 품목이 없습니다.
 				return;
 			}
 
@@ -857,7 +864,7 @@
 		// 우측 "판정 품목"에서 선택한 라인 1건만 대상으로 원산지 판정 진행
 		this.individualOriginDetermination = function() {
 			if (!this.selectedLineKey) {
-				KpackageOBJ.object.alert("판정할 품목을 선택하세요.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SELECT_DETERMINATION_TARGET'/>"); //판정할 품목을 선택하세요.
 				return;
 			}
 
