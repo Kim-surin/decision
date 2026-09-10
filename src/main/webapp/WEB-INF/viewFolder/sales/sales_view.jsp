@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 	<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 		<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+			<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 			<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 			<html>
 
@@ -28,7 +29,7 @@
 										<div class="row">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="from_date">매출일자</label>
+													<label class="form-label" for="from_date"><spring:message code='TXT.INVOICE_DATE'/></label> <!--매출일자-->
 													<div class="d-flex gap-2">
 														<input class="form-control" id="from_date" name="from_date"
 															type="date" value="${from_date}">
@@ -41,7 +42,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">제품</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.PRODUCT'/></label> <!--제품-->
 													</div>
 													<div class="col">
 														<input type="text" id="product" class="form-control">
@@ -52,7 +53,7 @@
 											<div class="col-3">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">고객사</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.CLIENT_COMPANY'/></label> <!--고객사-->
 													</div>
 													<div class="col">
 														<input type="text" id="customer" class="form-control">
@@ -63,10 +64,10 @@
 											<div class="col">
 												<button type="button"
 													onclick="javascript:SALESVIEW.retrieve_GridData();"
-													class="btn btn-sm btn-search search-more waves-effect waves-themed">Search</button>
+													class="btn btn-sm btn-search search-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/></button> <!--조회-->
 												<button type="button"
 													onclick="javascript:toggleSearchMore(this,'SALES_SEARCHMORE');"
-													class="btn btn-xs btn-search-more waves-effect waves-themed">More</button>
+													class="btn btn-xs btn-search-more waves-effect waves-themed"><spring:message code='TXT.MORE'/></button> <!--더보기-->
 											</div>
 										</div>
 
@@ -74,9 +75,9 @@
 										<div class="row" id="SALES_SEARCHMORE" style="display: none;">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">플랜트</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.PLANT'/></label> <!--플랜트-->
 													<select class="form-select" id="search_division_code">
-														<option value="">전체</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
 															</option>
@@ -86,11 +87,11 @@
 											</div>
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">판매구분</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.SALES_TYPE'/></label> <!--판매구분-->
 													<select class="form-select" id="export_flag">
-														<option value="">전체</option>
-														<option value="D">내수</option>
-														<option value="E">수출</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
+														<option value="D"><spring:message code='TXT.DOMESTIC'/></option> <!--내수-->
+														<option value="E"><spring:message code='TXT.EXPORT'/></option> <!--수출-->
 													</select>
 												</div>
 											</div>
@@ -121,15 +122,15 @@
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
-								{dataField: "invoice_no", headerText: "인보이스번호", width: 120},
-								{dataField: "division_name", headerText: "플랜트", width: 120, filter: {showIcon: true}},
-								{dataField: "product_code", headerText: "제품코드", width: 200, filter: {showIcon: true}},
-								{dataField: "product_name", headerText: "제품명", width: 250, filter: {showIcon: true}},
-								{dataField: "customer_code", headerText: "고객사코드", width: 200, filter: {showIcon: true}},
-								{dataField: "customer_name", headerText: "고객사명", width: 200, filter: {showIcon: true}},
-								{dataField: "customer_item_code", headerText: "고객사 품번", width: 200, filter: {showIcon: true}},
+								{dataField: "invoice_no", headerText: "<spring:message code='TXT.INVOICE_NO'/>", width: 120}, //인보이스번호
+								{dataField: "division_name", headerText: "<spring:message code='TXT.PLANT'/>", width: 120, filter: {showIcon: true}}, //플랜트
+								{dataField: "product_code", headerText: "<spring:message code='TXT.PRODUCT_CODE'/>", width: 200, filter: {showIcon: true}}, //제품코드
+								{dataField: "product_name", headerText: "<spring:message code='TXT.MATERIAL_NAME'/>", width: 250, filter: {showIcon: true}}, //제품명
+								{dataField: "customer_code", headerText: "<spring:message code='TXT.CUSTOMER_CODE'/>", width: 200, filter: {showIcon: true}}, //고객사코드
+								{dataField: "customer_name", headerText: "<spring:message code='TXT.CUSTOMER_NAME'/>", width: 200, filter: {showIcon: true}}, //고객사명
+								{dataField: "customer_item_code", headerText: "<spring:message code='TXT.CUSTOMER_ITEM_NO'/>", width: 200, filter: {showIcon: true}}, //고객사 품번
 								{
-									dataField: "unit_price", headerText: "단가", width: 100
+									dataField: "unit_price", headerText: "<spring:message code='TXT.UNIT_PRICE'/>", width: 100 //단가
 									, dataType: "numeric", style: ""
 									, editRenderer: {
 										type: "InputEditRenderer",
@@ -139,7 +140,7 @@
 									}
 								},
 								{
-									dataField: "quantity", headerText: "수량", width: 100
+									dataField: "quantity", headerText: "<spring:message code='TXT.QTY'/>", width: 100 //수량
 									, dataType: "numeric", style: ""
 									, editRenderer: {
 										type: "InputEditRenderer",
@@ -149,7 +150,7 @@
 									}
 								},
 								{
-									dataField: "amount", headerText: "총 금액", width: 100
+									dataField: "amount", headerText: "<spring:message code='TXT.TOTAL_AMOUNT'/>", width: 100 //총 금액
 									, dataType: "numeric", style: ""
 									, editRenderer: {
 										type: "InputEditRenderer",
@@ -159,11 +160,11 @@
 									}
 								},
 								{
-									dataField: "invoice_date", headerText: "매출일", width: 100
+									dataField: "invoice_date", headerText: "<spring:message code='TXT.INVOICE_DATE'/>", width: 100 //매출일
 									, dataType: "date", dateInputFormat: "yyyymmdd", formatString: "yyyy-mm-dd"
 									, filter: {showIcon: true}
 								},
-								{dataField: "export_flag_name", headerText: "판매구분", filter: {showIcon: true}}
+								{dataField: "export_flag_name", headerText: "<spring:message code='TXT.SALES_TYPE'/>", filter: {showIcon: true}} //판매구분
 							];
 
 							const gridProps = {

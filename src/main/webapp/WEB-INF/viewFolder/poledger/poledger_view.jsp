@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 	<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 		<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+			<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 			<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 			<html>
 
@@ -28,7 +29,7 @@
 										<div class="row">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="from_date">입고일자</label>
+													<label class="form-label" for="from_date"><spring:message code='TXT.ARRIVAL_DATE'/></label> <!--입고일자-->
 													<div class="d-flex gap-2">
 														<input class="form-control" id="from_date" name="from_date"
 															type="date" value="${from_date}">
@@ -41,7 +42,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">자재</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.MATERIAL'/></label> <!--자재-->
 													</div>
 													<div class="col">
 														<input type="text" id="item" class="form-control">
@@ -51,11 +52,11 @@
 
 											<div class="col-3">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">확인서 수취여부</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.COVER_RECEIPT_YN'/></label> <!--확인서 수취여부-->
 													<select class="form-select" id="coo_certify_yn">
-														<option value="">전체</option>
-														<option value="Y">수취</option>
-														<option value="N">미수취</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
+														<option value="Y"><spring:message code='TXT.RECEIPT'/></option> <!--수취-->
+														<option value="N"><spring:message code='TXT.NOT_RECEIVED'/></option> <!--미수취-->
 													</select>
 												</div>
 											</div>
@@ -63,10 +64,10 @@
 											<div class="col">
 												<button type="button"
 													onclick="javascript:POLEDGERVIEW.retrieve_GridData();"
-													class="btn btn-sm btn-search search-more waves-effect waves-themed">Search</button>
+													class="btn btn-sm btn-search search-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/></button> <!--조회-->
 												<button type="button"
 													onclick="javascript:toggleSearchMore(this,'POLEDGER_SEARCHMORE');"
-													class="btn btn-xs btn-search-more waves-effect waves-themed">More</button>
+													class="btn btn-xs btn-search-more waves-effect waves-themed"><spring:message code='TXT.MORE'/></button> <!--더보기-->
 											</div>
 										</div>
 
@@ -74,9 +75,9 @@
 										<div class="row" id="POLEDGER_SEARCHMORE" style="display: none;">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">플랜트</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.PLANT'/></label> <!--플랜트-->
 													<select class="form-select" id="search_division_code">
-														<option value="">전체</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
 															</option>
@@ -87,7 +88,7 @@
 											</div>
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">입고구분</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.WAREHOUSING_TYPE'/></label> <!--입고구분-->
 													<select class="form-select" id="warehousing_type">
 														<c:forEach items="${warehousing_type}" var="item">
 															<option value="${item.code}">${item.name}
@@ -98,11 +99,11 @@
 											</div>
 											<div class="col-3">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">집중관리 협력사</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.INTENSIVE_VENDOR'/></label> <!--집중관리 협력사-->
 													<select class="form-select" id="mail_send_yn">
-														<option value="">전체</option>
-														<option value="Y">관리</option>
-														<option value="N">미관리</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
+														<option value="Y"><spring:message code='TXT.MANAGED'/></option> <!--관리-->
+														<option value="N"><spring:message code='TXT.NOT_MANAGED'/></option> <!--미관리-->
 													</select>
 												</div>
 											</div>
@@ -132,15 +133,15 @@
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
-								{dataField: "division_name", headerText: "플랜트", width: 120, filter: {showIcon: true}},
-								{dataField: "warehousing_no", headerText: "입고번호", width: 140, filter: {showIcon: true}},
-								{dataField: "order_no", headerText: "발주번호", width: 140},
-								{dataField: "vendor_code", headerText: "협력사코드", width: 150, filter: {showIcon: true}},
-								{dataField: "vendor_name", headerText: "협력사명", width: 150, filter: {showIcon: true}},
-								{dataField: "item_code", headerText: "자재코드", width: 250, filter: {showIcon: true}},
-								{dataField: "item_name", headerText: "자재명", width: 250, filter: {showIcon: true}},
+								{dataField: "division_name", headerText: "<spring:message code='TXT.PLANT'/>", width: 120, filter: {showIcon: true}}, //플랜트
+								{dataField: "warehousing_no", headerText: "<spring:message code='TXT.WAREHOUSING_NO'/>", width: 140, filter: {showIcon: true}}, //입고번호
+								{dataField: "order_no", headerText: "<spring:message code='TXT.ORDER_NO'/>", width: 140}, //발주번호
+								{dataField: "vendor_code", headerText: "<spring:message code='TXT.VENDOR_CODE'/>", width: 150, filter: {showIcon: true}}, //협력사코드
+								{dataField: "vendor_name", headerText: "<spring:message code='TXT.VENDOR_NAME_GRID'/>", width: 150, filter: {showIcon: true}}, //협력사명
+								{dataField: "item_code", headerText: "<spring:message code='TXT.RAW_MATERIAL_CODE'/>", width: 250, filter: {showIcon: true}}, //자재코드
+								{dataField: "item_name", headerText: "<spring:message code='TXT.RAW_MATERIAL_NAME'/>", width: 250, filter: {showIcon: true}}, //자재명
 								{
-									dataField: "warehousing_amount", headerText: "입고금액", width: 150
+									dataField: "warehousing_amount", headerText: "<spring:message code='TXT.WAREHOUSING_AMOUNT'/>", width: 150 //입고금액
 									, dataType: "numeric", style: ""
 									, editRenderer: {
 										type: "InputEditRenderer",
@@ -149,9 +150,9 @@
 										autoThousandSeparator: true // 천단위 구분자 삽입 여부
 									}
 								},
-								{dataField: "warehousing_type_name", headerText: "입고구분", width: 100},
+								{dataField: "warehousing_type_name", headerText: "<spring:message code='TXT.WAREHOUSING_TYPE'/>", width: 100}, //입고구분
 								{
-									dataField: "warehousing_qty", headerText: "수량"
+									dataField: "warehousing_qty", headerText: "<spring:message code='TXT.QTY'/>" //수량
 									, editRenderer: {
 										type: "InputEditRenderer",
 										onlyNumeric: true, // 0~9만 입력가능
@@ -160,7 +161,7 @@
 									}
 								},
 								{
-									dataField: "unit_price", headerText: "단가"
+									dataField: "unit_price", headerText: "<spring:message code='TXT.UNIT_PRICE'/>" //단가
 									, editRenderer: {
 										type: "InputEditRenderer",
 										onlyNumeric: true, // 0~9만 입력가능
@@ -168,7 +169,7 @@
 										autoThousandSeparator: true // 천단위 구분자 삽입 여부
 									}
 								},
-								{dataField: "coo_certify_yn", headerText: "확인서 수취 여부", style: "aui-grid-renderer-center"}
+								{dataField: "coo_certify_yn", headerText: "<spring:message code='TXT.COVER_RECEIPT_YN'/>", style: "aui-grid-renderer-center"} //확인서 수취 여부
 							];
 
 							const gridProps = {

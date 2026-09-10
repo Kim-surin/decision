@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 	<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 		<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+			<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 			<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 			<html>
 
@@ -29,7 +30,7 @@
 										<div class="row">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="search_date">적용일자</label>
+													<label class="form-label" for="search_date"><spring:message code='TXT.APPLY_DATE'/></label> <!--적용일자-->
 													<div class="d-flex gap-2">
 														<input class="form-control" id="search_date" name="from_date"
 															type="date" value="${from_date}">
@@ -40,7 +41,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">자재</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.MATERIAL'/></label> <!--자재-->
 													</div>
 													<div class="col">
 														<input type="text" id="item" class="form-control">
@@ -50,9 +51,9 @@
 
 											<div class="col-3">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">플랜트</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.PLANT'/></label> <!--플랜트-->
 													<select class="form-select" id="search_division_code">
-														<option value="">전체</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
 															</option>
@@ -64,7 +65,7 @@
 											<div class="col">
 												<button type="button"
 													onclick="javascript:STANDARDCOSTVIEW.retrieve_GridData();"
-													class="btn btn-sm btn-search search-more waves-effect waves-themed">Search</button>
+													class="btn btn-sm btn-search search-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/></button> <!--조회-->
 											</div>
 										</div>
 									</div>
@@ -91,21 +92,21 @@
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
-								{dataField: "item_code", headerText: "자재코드", width: 250, filter: {showIcon: true}},
-								{dataField: "item_name", headerText: "자재명", width: 250, filter: {showIcon: true}},
-								{dataField: "division_name", headerText: "플랜트", width: 150, filter: {showIcon: true}},
+								{dataField: "item_code", headerText: "<spring:message code='TXT.RAW_MATERIAL_CODE'/>", width: 250, filter: {showIcon: true}}, //자재코드
+								{dataField: "item_name", headerText: "<spring:message code='TXT.RAW_MATERIAL_NAME'/>", width: 250, filter: {showIcon: true}}, //자재명
+								{dataField: "division_name", headerText: "<spring:message code='TXT.PLANT'/>", width: 150, filter: {showIcon: true}}, //플랜트
 								{
-									dataField: "apply_date", headerText: "적용 시작일자", width: 250
+									dataField: "apply_date", headerText: "<spring:message code='TXT.APPLY_START_DATE'/>", width: 250 //적용 시작일자
 									, dataType: "date", dateInputFormat: "yyyymmdd", formatString: "yyyy-mm-dd"
 									, filter: {showIcon: true}
 								},
 								{
-									dataField: "end_date", headerText: "적용 만료일자", width: 250
+									dataField: "end_date", headerText: "<spring:message code='TXT.APPLY_END_DATE'/>", width: 250 //적용 만료일자
 									, dataType: "date", dateInputFormat: "yyyymmdd", formatString: "yyyy-mm-dd"
 									, filter: {showIcon: true}
 								},
 								{
-									dataField: "standard_cost_amount", headerText: "표준단가", width: 300
+									dataField: "standard_cost_amount", headerText: "<spring:message code='TXT.STD_PRICE'/>", width: 300 //표준단가
 									, dataType: "numeric", style: ""
 									, editRenderer: {
 										type: "InputEditRenderer",
