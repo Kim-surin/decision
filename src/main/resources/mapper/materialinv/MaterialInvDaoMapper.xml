@@ -8,7 +8,7 @@
                      ,DI.DIVISION_CODE
                      ,CASE #{default_language} WHEN 'KOR' THEN DI.DIVISION_NAME WHEN 'ENG' THEN DI.DIVISION_NAME_ENG END AS DIVISION_NAME
                      ,IM.ITEM_CODE
-                     ,IM.ITEM_NAME
+                     ,CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN IM.ITEM_NAME_ENG END AS ITEM_NAME
                      ,IM.UNIT
                      ,ML.AGING_PERIOD
                      ,ML.INITIAL_QTY 			-- 기초수량

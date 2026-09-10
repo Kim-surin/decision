@@ -9,7 +9,7 @@
 		       , V.VENDOR_CODE
 		       , V.VENDOR_NAME
 		       , IM.ITEM_CODE
-		       , IM.ITEM_NAME
+		       , CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN IM.ITEM_NAME_ENG END AS ITEM_NAME
 		       , PL.WAREHOUSING_DATE
 		       , PL.WAREHOUSING_AMOUNT
 		       , PL.WAREHOUSING_QTY

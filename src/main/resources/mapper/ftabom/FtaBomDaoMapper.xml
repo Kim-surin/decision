@@ -8,7 +8,7 @@
 	       		, DV.DIVISION_CODE
 				, CASE #{default_language} WHEN 'KOR' THEN DV.DIVISION_NAME WHEN 'ENG' THEN DV.DIVISION_NAME_ENG END AS DIVISION_NAME
 				, IM.ITEM_CODE 		AS PRODUCT_CODE
-				, IM.ITEM_NAME 		AS PRODUCT_NAME
+				, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN IM.ITEM_NAME_ENG END AS PRODUCT_NAME
 				, FBM.HS_CODE
 	       FROM FTA_BOM_MST FBM
 	       INNER JOIN DIVISION DV
@@ -38,7 +38,7 @@
     <select id="retrieveftaBomDetail" parameterType="HashMap" resultType="HashMap">
        SELECT FBD.YYYYMM
        		, IM.ITEM_CODE
-			, IM.ITEM_NAME
+			, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN IM.ITEM_NAME_ENG END AS ITEM_NAME
 			, IM.UNIT
 			, FBD.HS_CODE
 			, FBD.REQ_QTY
