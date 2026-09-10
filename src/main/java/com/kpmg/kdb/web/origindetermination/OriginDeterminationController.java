@@ -93,9 +93,17 @@ public class OriginDeterminationController extends GenericController {
 	@RequestMapping(value = "/origin/compliance/origindetermination/originDeterminationDetail_popup")
 	public String originDeterminationDetail_popup(@RequestBody(required = false) Map param, Model model, HttpSession session)
 			throws Exception {
-		Object datas = (param != null && param.get("datas") != null) ? param.get("datas") : Collections.emptyList();
-		Object mode = param != null ? param.get("mode") : null;
-
+		Object datas = Collections.emptyList();
+		Object mode = null;
+			
+		if(param != null) {
+			if(param.get("datas") != null) {
+				datas = param.get("datas");
+			}
+			
+			mode = param.get("mode");
+		}
+		
 		model.addAttribute("datas", new ObjectMapper().writeValueAsString(datas));
 		model.addAttribute("mode", mode);
 

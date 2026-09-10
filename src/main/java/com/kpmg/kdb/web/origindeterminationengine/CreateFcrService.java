@@ -300,9 +300,9 @@ public class CreateFcrService extends GeneralService {
 			row.setNetCostAmount(BigDecimal.ZERO);
 
 			BigDecimal exworkRate = resolveIncotermsRateCached(incotermsCache, stdYyyy, sales.getCompanyCode(),
-					sales.getDivisionCode(), sales.getExportFlag(), sales.getFtaCode(), sales.getInkoterms(), "EXW");
+					sales.getDivisionCode(), sales.getExportFlag(), sales.getArrivalNation(), sales.getInkoterms(), "EXW");
 			BigDecimal fobRate = resolveIncotermsRateCached(incotermsCache, stdYyyy, sales.getCompanyCode(),
-					sales.getDivisionCode(), sales.getExportFlag(), sales.getFtaCode(), sales.getInkoterms(), "FOB");
+					sales.getDivisionCode(), sales.getExportFlag(), sales.getArrivalNation(), sales.getInkoterms(), "FOB");
 			row.setExworkAmount(nvl(exworkRate).multiply(nvl(sales.getAmount())));
 			row.setFobAmount(nvl(fobRate).multiply(nvl(sales.getAmount())));
 			row.setSpCooYn(sales.getSpCooYn());
@@ -590,11 +590,11 @@ public class CreateFcrService extends GeneralService {
 	}
 
 	private BigDecimal resolveIncotermsRateCached(Map<String, BigDecimal> cache, String stdYyyy, String companyCode,
-			String divisionCode, String exportFlag, String ftaCode, String fromIncoterms, String toIncoterms) {
-		String key = String.join("|", nz(stdYyyy), nz(companyCode), nz(divisionCode), nz(exportFlag), nz(ftaCode),
+			String divisionCode, String exportFlag, String nationCode, String fromIncoterms, String toIncoterms) {
+		String key = String.join("|", nz(stdYyyy), nz(companyCode), nz(divisionCode), nz(exportFlag), nz(nationCode),
 				nz(fromIncoterms), nz(toIncoterms));
 		return cache.computeIfAbsent(key, k -> incotermsRateService.calculateChangeRate(new IncotermsChangeRateCriteria(
-				stdYyyy, companyCode, divisionCode, exportFlag, ftaCode, fromIncoterms, toIncoterms)));
+				stdYyyy, companyCode, divisionCode, exportFlag, nationCode, fromIncoterms, toIncoterms)));
 	}
 
 	/** ftaCode는 실제 조회 조건에 쓰이지 않아 캐시 키에서 제외한다(같은 품목이 협정 수만큼 반복 등장하므로). */
