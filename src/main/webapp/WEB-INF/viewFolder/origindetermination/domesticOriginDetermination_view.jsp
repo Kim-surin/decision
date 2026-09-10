@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 	<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 		<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+			<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 			<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 			<html>
 
@@ -56,19 +57,19 @@
 						</div>
 						<div class="row col-9">
 							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
-								<label class="origin-stat-label mb-0">총 건수</label>
+								<label class="origin-stat-label mb-0"><spring:message code='TXT.TOTAL_COUNT'/></label> <!--총 건수-->
 								<h4 class="origin-stat-value mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_total">0</h4>
 							</div>
 							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
-								<label class="origin-stat-label mb-0">판정완료</label>
+								<label class="origin-stat-label mb-0"><spring:message code='TXT.DETERMINATION_DONE'/></label> <!--판정완료-->
 								<h4 class="origin-stat-value origin-stat-done mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_done">0</h4>
 							</div>
 							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
-								<label class="origin-stat-label origin-stat-fail-label mb-0">판정실패</label>
+								<label class="origin-stat-label origin-stat-fail-label mb-0"><spring:message code='TXT.DETERMINATION_FAIL'/></label> <!--판정실패-->
 								<h4 class="origin-stat-value origin-stat-fail mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_fail">0</h4>
 							</div>
 							<div class="col-2 d-flex flex-column justify-content-center origin-stat-box">
-								<label class="origin-stat-label origin-stat-non-label mb-0">미판정</label>
+								<label class="origin-stat-label origin-stat-non-label mb-0"><spring:message code='TXT.NOT_DETERMINED'/></label> <!--미판정-->
 								<h4 class="origin-stat-value origin-stat-non mb-0" id="DOMESTIC_ORIGIN_DETERMINATION_stat_non">0</h4>
 							</div>
 						</div>
@@ -81,7 +82,7 @@
 										<div class="row">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="from_date">매출일자</label>
+													<label class="form-label" for="from_date"><spring:message code='TXT.INVOICE_DATE'/></label> <!--매출일자-->
 													<div class="d-flex gap-2">
 														<input class="form-control" id="from_date" name="from_date"
 															type="date" value="${from_date}">
@@ -94,7 +95,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">고객사</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.CLIENT_COMPANY'/></label> <!--고객사-->
 													</div>
 													<div class="col">
 														<input type="text" id="customer" class="form-control">
@@ -105,7 +106,7 @@
 											<div class="col-3">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">품번</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.ITEM_NUMBER'/></label> <!--품번-->
 													</div>
 													<div class="col">
 														<input type="text" id="product" class="form-control">
@@ -116,10 +117,10 @@
 											<div class="col">
 												<button type="button"
 													onclick="javascript:DOMESTIC_ORIGIN_DETERMINATIONVIEW.retrieve_GridData();"
-													class="btn btn-sm btn-search search-more waves-effect waves-themed">Search</button>
+													class="btn btn-sm btn-search search-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/></button> <!--조회-->
 												<button type="button"
 													onclick="javascript:toggleSearchMore(this,'DOMESTIC_ORIGIN_DETERMINATION_SEARCHMORE');"
-													class="btn btn-xs btn-search-more waves-effect waves-themed">More</button>
+													class="btn btn-xs btn-search-more waves-effect waves-themed"><spring:message code='TXT.MORE'/></button> <!--더보기-->
 											</div>
 										</div>
 										
@@ -127,9 +128,9 @@
 										<div class="row" id="DOMESTIC_ORIGIN_DETERMINATION_SEARCHMORE" style="display: none;">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">플랜트</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.PLANT'/></label> <!--플랜트-->
 													<select class="form-select" id="search_division_code">
-														<option value="">전체</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
 															</option>
@@ -139,12 +140,12 @@
 											</div>
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">판정상태</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.DETERMINATION_STATUS'/></label> <!--판정상태-->
 													<select class="form-select" id="status">
-														<option value="">전체</option>
-														<option value="0">미판정</option>
-														<option value="4">판정완료</option>
-														<option value="5">판정에러</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
+														<option value="0"><spring:message code='TXT.NOT_DETERMINED'/></option> <!--미판정-->
+														<option value="4"><spring:message code='TXT.DETERMINATION_DONE'/></option> <!--판정완료-->
+														<option value="5"><spring:message code='TXT.DETERMINATION_ERROR'/></option> <!--판정에러-->
 													</select>
 												</div>
 											</div>
@@ -160,7 +161,7 @@
 									<div class="frame-wrap">
 									    <div class="demo" style="text-align: right;">
 									        <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="javascript:DOMESTIC_ORIGIN_DETERMINATIONVIEW.individual_domestic_origin_determination()">
-									            원산지 판정
+									            <spring:message code='TXT.ORIGIN_DETERMINATION'/> <!--원산지 판정-->
 									        </button>
 									    </div>
 									</div>
@@ -194,20 +195,20 @@
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
-								{dataField: "sales_no", headerText: "매출번호", width: 130, visible: false},
-								{dataField: "sales_seq", headerText: "매출순번", width: 100, visible: false},
-								{dataField: "division_code", headerText: "플랜트코드", width: 120, visible: false},
-								{dataField: "customer_code", headerText: "고객사코드", width: 120, visible: false},
-								{dataField: "invoice_month", headerText: "매출년월", width: 100, filter: {showIcon: true}},
-								{dataField: "division_name", headerText: "플랜트", width: 200, filter: {showIcon: true}},
-								{dataField: "customer_name", headerText: "고객사", width: 200, filter: {showIcon: true}},
-								{dataField: "product_code", headerText: "품번", width: 250, filter: {showIcon: true}},
-								{dataField: "product_name", headerText: "품명", width: 250, filter: {showIcon: true}},
-								{dataField: "hs_code", headerText: "HS CODE", width: 130, filter: {showIcon: true}},
-								{dataField: "product_assets_type_name", headerText: "자산구분", width: 130, filter: {showIcon: true}},
-								{dataField: "coo_certify_no", headerText: "원산지확인서 발급번호", width: 200, filter: {showIcon: true}},
-								{dataField: "status", headerText: "판정상태", width: 130, visible: false},
-								{dataField: "status_name", headerText: "판정상태", width: 130, filter: {showIcon: true}, 
+								{dataField: "sales_no", headerText: "<spring:message code='TXT.SALES_NO'/>", width: 130, visible: false}, //매출번호
+								{dataField: "sales_seq", headerText: "<spring:message code='TXT.SALES_SEQ'/>", width: 100, visible: false}, //매출순번
+								{dataField: "division_code", headerText: "<spring:message code='TXT.PLANT_CODE'/>", width: 120, visible: false}, //플랜트코드
+								{dataField: "customer_code", headerText: "<spring:message code='TXT.CUSTOMER_CODE'/>", width: 120, visible: false}, //고객사코드
+								{dataField: "invoice_month", headerText: "<spring:message code='TXT.INVOICE_YM'/>", width: 100, filter: {showIcon: true}}, //매출년월
+								{dataField: "division_name", headerText: "<spring:message code='TXT.PLANT'/>", width: 200, filter: {showIcon: true}}, //플랜트
+								{dataField: "customer_name", headerText: "<spring:message code='TXT.CLIENT_COMPANY'/>", width: 200, filter: {showIcon: true}}, //고객사
+								{dataField: "product_code", headerText: "<spring:message code='TXT.ITEM_NUMBER'/>", width: 250, filter: {showIcon: true}}, //품번
+								{dataField: "product_name", headerText: "<spring:message code='TXT.ITEM_DESC'/>", width: 250, filter: {showIcon: true}}, //품명
+								{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 130, filter: {showIcon: true}}, //HS CODE
+								{dataField: "product_assets_type_name", headerText: "<spring:message code='TXT.ASSET_TYPE'/>", width: 130, filter: {showIcon: true}}, //자산구분
+								{dataField: "coo_certify_no", headerText: "<spring:message code='TXT.COO_CERT_NO'/>", width: 200, filter: {showIcon: true}}, //원산지확인서 발급번호
+								{dataField: "status", headerText: "<spring:message code='TXT.DETERMINATION_STATUS'/>", width: 130, visible: false}, //판정상태
+								{dataField: "status_name", headerText: "<spring:message code='TXT.DETERMINATION_STATUS'/>", width: 130, filter: {showIcon: true}, //판정상태
 									styleFunction: function(rowIndex, columnIndex, value, headerText, item, dataField){
 										if(Object.hasOwn(DOMESTIC_ORIGIN_DETERMINATIONVIEW.STATUS_NAME_STYLE, item.status)){
 											return DOMESTIC_ORIGIN_DETERMINATIONVIEW.STATUS_NAME_STYLE[item.status];
@@ -318,7 +319,7 @@
 							var checkItems = AUIGrid.getCheckedRowItems(DOMESTIC_ORIGIN_DETERMINATIONVIEW.grid_DOMESTIC_ORIGIN_DETERMINATION);
 
 							if (checkItems.length === 0) {
-								alert("선택된 항목이 없습니다.");
+								alert("<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"); //선택된 항목이 없습니다.
 								return;
 							}
 

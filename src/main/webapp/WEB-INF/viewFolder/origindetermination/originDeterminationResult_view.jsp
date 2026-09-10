@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 	<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 		<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+			<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 			<!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 			<html>
 			<head>
@@ -72,28 +73,28 @@
 								<div class="origin-stat-card" id="originStatCard1" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(1);">
 									<div class="origin-stat-donut"><canvas id="originStatChart1"></canvas></div>
 									<div>
-										<div class="origin-stat-label">역내산 비율</div>
+										<div class="origin-stat-label"><spring:message code='TXT.ORIGIN_RATE'/></div> <!--역내산 비율-->
 										<div class="origin-stat-value" id="originStatValue1">-</div>
 									</div>
 								</div>
 								<div class="origin-stat-card" id="originStatCard2" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(2);">
 									<div class="origin-stat-donut"><canvas id="originStatChart2"></canvas></div>
 									<div>
-										<div class="origin-stat-label">비역내산 비율</div>
+										<div class="origin-stat-label"><spring:message code='TXT.NON_ORIGIN_RATE'/></div> <!--비역내산 비율-->
 										<div class="origin-stat-value" id="originStatValue2">-</div>
 									</div>
 								</div>
 								<div class="origin-stat-card" id="originStatCard3" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(3);">
 									<div class="origin-stat-donut"><canvas id="originStatChart3"></canvas></div>
 									<div>
-										<div class="origin-stat-label">판정 실패 비율</div>
+										<div class="origin-stat-label"><spring:message code='TXT.DETERMINATION_FAIL_RATE'/></div> <!--판정 실패 비율-->
 										<div class="origin-stat-value" id="originStatValue3">-</div>
 									</div>
 								</div>
 								<div class="origin-stat-card" id="originStatCard4" onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.filterByStat(4);">
 									<div class="origin-stat-donut"><canvas id="originStatChart4"></canvas></div>
 									<div>
-										<div class="origin-stat-label">내수 비율</div>
+										<div class="origin-stat-label"><spring:message code='TXT.DOMESTIC_RATE'/></div> <!--내수 비율-->
 										<div class="origin-stat-value" id="originStatValue4">-</div>
 									</div>
 								</div>
@@ -109,7 +110,7 @@
 										<div class="row">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="from_date">매출일자</label>
+													<label class="form-label" for="from_date"><spring:message code='TXT.INVOICE_DATE'/></label> <!--매출일자-->
 													<div class="d-flex gap-2">
 														<input class="form-control" id="from_date" name="from_date"
 															type="date" value="${from_date}">
@@ -122,7 +123,7 @@
 											<div class="col-4">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">고객사</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.CLIENT_COMPANY'/></label> <!--고객사-->
 													</div>
 													<div class="col">
 														<input type="text" id="customer" class="form-control">
@@ -133,7 +134,7 @@
 											<div class="col-3">
 												<div class="mb-3">
 													<div class="row">
-														<label class="form-label" for="example-input-border">품번</label>
+														<label class="form-label" for="example-input-border"><spring:message code='TXT.ITEM_NUMBER'/></label> <!--품번-->
 													</div>
 													<div class="col">
 														<input type="text" id="product" class="form-control">
@@ -144,10 +145,10 @@
 											<div class="col">
 												<button type="button"
 													onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.retrieve_GridData();"
-													class="btn btn-sm btn-search search-more waves-effect waves-themed">Search</button>
+													class="btn btn-sm btn-search search-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/></button> <!--조회-->
 												<button type="button"
 													onclick="javascript:toggleSearchMore(this,'ORIGIN_DETERMINATION_RESULT_SEARCHMORE');"
-													class="btn btn-xs btn-search-more waves-effect waves-themed">More</button>
+													class="btn btn-xs btn-search-more waves-effect waves-themed"><spring:message code='TXT.MORE'/></button> <!--더보기-->
 											</div>
 										</div>
 										
@@ -155,9 +156,9 @@
 										<div class="row" id="ORIGIN_DETERMINATION_RESULT_SEARCHMORE" style="display: none;">
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">플랜트</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.PLANT'/></label> <!--플랜트-->
 													<select class="form-select" id="search_division_code">
-														<option value="">전체</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
 														<c:forEach items="${division}" var="item">
 															<option value="${item.division_code}">${item.division_name}
 															</option>
@@ -167,22 +168,22 @@
 											</div>
 											<div class="col-4">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">판정상태</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.DETERMINATION_STATUS'/></label> <!--판정상태-->
 													<select class="form-select" id="status">
-														<option value="">전체</option>
-														<option value="0">미판정</option>
-														<option value="4">판정완료</option>
-														<option value="5">판정에러</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
+														<option value="0"><spring:message code='TXT.NOT_DETERMINED'/></option> <!--미판정-->
+														<option value="4"><spring:message code='TXT.DETERMINATION_DONE'/></option> <!--판정완료-->
+														<option value="5"><spring:message code='TXT.DETERMINATION_ERROR'/></option> <!--판정에러-->
 													</select>
 												</div>
 											</div>
 											<div class="col-3">
 												<div class="mb-3">
-													<label class="form-label" for="example-select">판매구분</label>
+													<label class="form-label" for="example-select"><spring:message code='TXT.SALES_TYPE'/></label> <!--판매구분-->
 													<select class="form-select" id="export_flag">
-														<option value="">전체</option>
-														<option value="D">내수</option>
-														<option value="E">수출</option>
+														<option value=""><spring:message code='TXT.ALL'/></option> <!--전체-->
+														<option value="D"><spring:message code='TXT.DOMESTIC'/></option> <!--내수-->
+														<option value="E"><spring:message code='TXT.EXPORT'/></option> <!--수출-->
 													</select>
 												</div>
 											</div>
@@ -200,11 +201,11 @@
 								<div class="demo" style="text-align: right;">
 									<button type="button" class="btn btn-sm btn-primary waves-effect waves-themed"
 										onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.executeMonthlyOriginDetermination();">
-										월판정
+										<spring:message code='TXT.MONTHLY_DETERMINATION'/> <!--월판정-->
 									</button>
 									<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed"
 										onclick="javascript:ORIGIN_DETERMINATION_RESULTVIEW.excelDownload();">
-										엑셀 다운로드
+										<spring:message code='TXT.EXCEL_DOWNLOAD'/> <!--엑셀 다운로드-->
 									</button>
 								</div>
 							</div>
@@ -243,18 +244,18 @@
 
 						this.createAUIGrid = function () {
 							const columnLayout = [
-								{dataField: "invoice_date", headerText: "매출일", width: 120, filter: {showIcon: true}},
-								{dataField: "division_name", headerText: "플랜트", width: 120, filter: {showIcon: true}},
-								{dataField: "export_flag", headerText: "판매구분", width: 130, visible: false},
-								{dataField: "export_flag_name", headerText: "판매구분", width: 120, filter: {showIcon: true}},
-								{dataField: "customer_name", headerText: "고객사", width: 140, filter: {showIcon: true}},
-								{dataField: "product_code", headerText: "품번", width: 250, filter: {showIcon: true}},
-								{dataField: "product_name", headerText: "품명", width: 250, filter: {showIcon: true}},
-								{dataField: "hs_code", headerText: "HS CODE", width: 130, filter: {showIcon: true}},
-								{dataField: "fta_name", headerText: "협정", width: 130, filter: {showIcon: true}},
-								{dataField: "origin_status", headerText: "원산지 지위", width: 100, filter: {showIcon: true}},
-								{dataField: "status", headerText: "판정상태", width: 130, visible: false},
-								{dataField: "status_name", headerText: "판정상태", width: 130, filter: {showIcon: true}, 
+								{dataField: "invoice_date", headerText: "<spring:message code='TXT.INVOICE_DATE'/>", width: 120, filter: {showIcon: true}}, //매출일
+								{dataField: "division_name", headerText: "<spring:message code='TXT.PLANT'/>", width: 120, filter: {showIcon: true}}, //플랜트
+								{dataField: "export_flag", headerText: "<spring:message code='TXT.SALES_TYPE'/>", width: 130, visible: false}, //판매구분
+								{dataField: "export_flag_name", headerText: "<spring:message code='TXT.SALES_TYPE'/>", width: 120, filter: {showIcon: true}}, //판매구분
+								{dataField: "customer_name", headerText: "<spring:message code='TXT.CLIENT_COMPANY'/>", width: 140, filter: {showIcon: true}}, //고객사
+								{dataField: "product_code", headerText: "<spring:message code='TXT.ITEM_NUMBER'/>", width: 250, filter: {showIcon: true}}, //품번
+								{dataField: "product_name", headerText: "<spring:message code='TXT.ITEM_DESC'/>", width: 250, filter: {showIcon: true}}, //품명
+								{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 130, filter: {showIcon: true}}, //HS CODE
+								{dataField: "fta_name", headerText: "<spring:message code='TXT.FTA'/>", width: 130, filter: {showIcon: true}}, //협정
+								{dataField: "origin_status", headerText: "<spring:message code='TXT.ORIGIN_STATUS'/>", width: 100, filter: {showIcon: true}}, //원산지 지위
+								{dataField: "status", headerText: "<spring:message code='TXT.DETERMINATION_STATUS'/>", width: 130, visible: false}, //판정상태
+								{dataField: "status_name", headerText: "<spring:message code='TXT.DETERMINATION_STATUS'/>", width: 130, filter: {showIcon: true}, //판정상태
 									styleFunction: function(rowIndex, columnIndex, value, headerText, item, dataField){
 										if(item.status === 5){
 											return "origin-determination-fail";
@@ -406,7 +407,7 @@
 						var toDate = KpackageOBJ.object.getFormValue("ORIGIN_DETERMINATION_RESULT-form", "to_date").replace(/-/gi, "");
 
 						if (!fromDate || !toDate) {
-							KpackageOBJ.object.alert("매출일자(From/To)를 입력하세요.");
+							KpackageOBJ.object.alert("<spring:message code='MSG.REQUIRED_INVOICE_DATE_RANGE'/>"); //매출일자(From/To)를 입력하세요.
 							return;
 						}
 
@@ -424,7 +425,7 @@
 
 					this.executeMonthlyOriginDetermination_CallBack = function (res) {
 						if (!res || !res.success) {
-							KpackageOBJ.object.alert("월 판정 실행 중 오류가 발생했습니다.");
+							KpackageOBJ.object.alert("<spring:message code='MSG.MONTHLY_DETERMINATION_FAIL'/>"); //월 판정 실행 중 오류가 발생했습니다.
 							return;
 						}
 
