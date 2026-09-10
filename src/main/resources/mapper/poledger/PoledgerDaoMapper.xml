@@ -10,6 +10,7 @@
 		       , V.VENDOR_NAME
 		       , IM.ITEM_CODE
 		       , CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS ITEM_NAME
+		       , IM.ITEM_NAME_ENG
 		       , PL.WAREHOUSING_DATE
 		       , PL.WAREHOUSING_AMOUNT
 		       , PL.WAREHOUSING_QTY
@@ -50,7 +51,7 @@
 				</if>
 		</if>	
 		<if test="item != null">
-				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' )
+				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' OR ITEM_NAME_ENG ILIKE '%' || #{item} || '%' )
 		</if>
 		<if test="coo_certify_yn != null">
 				AND COO_CERTIFY_YN = #{coo_certify_yn}

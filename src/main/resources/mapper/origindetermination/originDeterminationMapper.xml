@@ -91,10 +91,10 @@
 				AND D.DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="customer != null">
-				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME_ENG ILIKE '%' || #{customer} || '%' )
 		</if>
 		<if test="product != null">
-				AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
+				AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME_ENG ILIKE '%' || #{product} || '%' )
 		</if>
 		<if test="status != null">
 				AND SM.STATUS = #{status}
@@ -307,7 +307,7 @@
 				</if>
 			</if>		
 			<if test="product != null">
-				AND (SD.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
+				AND (SD.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME_ENG ILIKE '%' || #{product} || '%' )
 			</if>		
 			<if test="status != null">
 					AND SM.STATUS = #{status}
@@ -342,7 +342,7 @@
 				AND D.DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="customer != null">
-				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME_ENG ILIKE '%' || #{customer} || '%' )
 		</if>	
 		ORDER BY SM.INVOICE_DATE, C.CUSTOMER_CODE, D.DIVISION_CODE
     </select>
@@ -412,13 +412,13 @@
 			</if>
 		</if>		
 		<if test="product != null">
-			AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
+			AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME_ENG ILIKE '%' || #{product} || '%' )
 		</if>	
 		<if test="search_division_code != null">
 			AND D.DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="customer != null">
-				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME_ENG ILIKE '%' || #{customer} || '%' )
 		</if>	
 		<if test="status != null">
 				AND SD.STATUS = #{status}

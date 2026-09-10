@@ -9,8 +9,10 @@
 				, CASE #{default_language} WHEN 'KOR' THEN DV.DIVISION_NAME WHEN 'ENG' THEN COALESCE(DV.DIVISION_NAME_ENG, DV.DIVISION_NAME) END AS DIVISION_NAME
 				, IM.ITEM_CODE 		AS PRODUCT_CODE
 				, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS PRODUCT_NAME
+				, IM.ITEM_NAME_ENG AS PRODUCT_NAME_ENG
 				, C.CUSTOMER_CODE
 				, CASE #{default_language} WHEN 'KOR' THEN C.CUSTOMER_NAME WHEN 'ENG' THEN COALESCE(C.CUSTOMER_NAME_ENG, C.CUSTOMER_NAME) END AS CUSTOMER_NAME
+				, C.CUSTOMER_NAME_ENG
 				, NVL(CM.CUSTOMER_ITEM_NAME, SD.CUSTOMER_ITEM_CODE) AS CUSTOMER_ITEM_CODE
 				, SD.UNIT_PRICE
 				, SD.QUANTITY
@@ -47,13 +49,13 @@
 				</if>
 		</if>	
 		<if test="product != null">
-				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' )
+				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' OR PRODUCT_NAME_ENG ILIKE '%' || #{product} || '%' )
 		</if>
 		<if test="search_division_code != null">
 				AND DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="customer != null">
-				AND (CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+				AND (CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR CUSTOMER_NAME ILIKE '%' || #{customer} || '%' OR CUSTOMER_NAME_ENG ILIKE '%' || #{customer} || '%' )
 		</if>
 		<if test="export_flag != null">
 				AND EXPORT_FLAG = #{export_flag}

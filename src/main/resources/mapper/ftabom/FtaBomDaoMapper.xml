@@ -9,6 +9,7 @@
 				, CASE #{default_language} WHEN 'KOR' THEN DV.DIVISION_NAME WHEN 'ENG' THEN COALESCE(DV.DIVISION_NAME_ENG, DV.DIVISION_NAME) END AS DIVISION_NAME
 				, IM.ITEM_CODE 		AS PRODUCT_CODE
 				, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS PRODUCT_NAME
+				, IM.ITEM_NAME_ENG AS PRODUCT_NAME_ENG
 				, FBM.HS_CODE
 	       FROM FTA_BOM_MST FBM
 	       INNER JOIN DIVISION DV
@@ -27,7 +28,7 @@
 				</if>
 		</if>
 		<if test="product != null">
-				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' )
+				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' OR PRODUCT_NAME_ENG ILIKE '%' || #{product} || '%' )
 		</if>
 		<if test="search_division_code != null">
 				AND DIVISION_CODE = #{search_division_code}

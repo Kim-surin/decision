@@ -6,6 +6,7 @@
        FROM (
 	       SELECT IM.ITEM_CODE
 		       , CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS ITEM_NAME
+		       , IM.ITEM_NAME_ENG
 		       , DV.DIVISION_CODE
 		       , CASE #{default_language} WHEN 'KOR' THEN DV.DIVISION_NAME WHEN 'ENG' THEN COALESCE(DV.DIVISION_NAME_ENG, DV.DIVISION_NAME) END AS DIVISION_NAME
 		       , SC.APPLY_DATE
@@ -26,7 +27,7 @@
 				AND #{search_date} BETWEEN APPLY_DATE AND END_DATE
 		</if>	
 		<if test="item != null">
-				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' )
+				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' OR ITEM_NAME_ENG ILIKE '%' || #{item} || '%' )
 		</if>	
 		<if test="search_division_code != null">
 				AND DIVISION_CODE = #{search_division_code}
