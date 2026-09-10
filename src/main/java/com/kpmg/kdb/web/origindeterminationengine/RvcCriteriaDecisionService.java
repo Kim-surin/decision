@@ -60,10 +60,25 @@ public class RvcCriteriaDecisionService {
 			return;
 		}
 
-		// 원본은 이 블록에서 예외가 발생해도 로그만 남기고 조용히 넘어간다(상위 RVC ERROR 처리로
-		// 전파하지 않음) - 판정결과가 부분적으로 미설정된 채로 다음 단계로 넘어갈 수 있다.
+		boolean mcRule = positive(frData.getMcRule());
+		boolean ncRule = positive(frData.getNcRule());
+		BigDecimal ratioBase = nvl(ncRule ? ctx.getNetCostAmount() : ctx.getInkotermsAmount());
+
+		if ((positive(frData.getBuRule()) || positive(frData.getBdRule()) || ncRule || mcRule)
+				&& ratioBase.signum() <= 0) {
+			// FOB/EXW 금액(또는 NC 기준의 순원가 금액)이 0 이하이면 비율을 계산할 수 없다.
+			// 원본(PL/SQL)은 이 경우 0으로 나누기 예외가 나서 WHEN OTHERS에 조용히 삼켜지고
+			// FTA_RVC_YN/COMPANY_RVC_YN이 미설정(NULL)인 채로 남아, 최종 판정에서 NVL(..., 'Y')로
+			// "충족"처럼 오인되는 버그가 있었다. 판정불가 상태를 명시적인 오류로 남긴다.
+			rec.setFtaRvcYn("N");
+			rec.setCompanyRvcYn("N");
+			rec.setStatus("E");
+			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
+			rec.setErrorMsg("RVC 판정 기준금액(FOB/EXW 또는 순원가)이 0 이하여서 비율을 계산할 수 없습니다.");
+			return;
+		}
+
 		try {
-			boolean mcRule = positive(frData.getMcRule());
 			BigDecimal rvcRate;
 			BigDecimal ftaRvcRate;
 			BigDecimal companyRvcRate;
@@ -78,7 +93,7 @@ public class RvcCriteriaDecisionService {
 						: ratio(ctx.getInkotermsAmount().subtract(nonOriginatingAmount), ctx.getInkotermsAmount());
 				ftaRvcRate = frData.getBdRule();
 				companyRvcRate = ftaRvcRate.add(nvl(ctx.getCompanyRvcRate()));
-			} else if (positive(frData.getNcRule())) {
+			} else if (ncRule) {
 				rvcRate = ratio(inputAmount.subtract(nonOriginatingAmount), ctx.getNetCostAmount());
 				ftaRvcRate = frData.getNcRule();
 				companyRvcRate = ftaRvcRate.add(nvl(ctx.getCompanyRvcRate()));
@@ -103,7 +118,14 @@ public class RvcCriteriaDecisionService {
 			rec.setFtaRvcYn(compareBySide(rvcRate, ftaRvcRate, mcRule));
 			rec.setCompanyRvcYn(compareBySide(rvcRate, companyRvcRate, mcRule));
 		} catch (Exception e) {
-			logger.warn("COO_DECISION_FOR_RVC 비율 계산 실패(무시하고 계속 진행). "
+			// 예상치 못한 예외도 명시적인 판정오류로 남긴다 - NULL로 남겨 최종 판정에서 "충족"으로
+			// 오인되지 않도록 한다(위 원본 버그와 동일한 이유).
+			rec.setFtaRvcYn("N");
+			rec.setCompanyRvcYn("N");
+			rec.setStatus("E");
+			rec.setErrorCode("RVC ERROR");
+			rec.setErrorMsg(String.valueOf(e.getMessage()));
+			logger.warn("COO_DECISION_FOR_RVC 비율 계산 실패. "
 					+ "BU={}, BD={}, NC={}, MC={}, 역내금액={}, 역외금액={}, FOB/EX={}", frData.getBuRule(),
 					frData.getBdRule(), frData.getNcRule(), frData.getMcRule(), originatingAmount, nonOriginatingAmount,
 					ctx.getInkotermsAmount(), e);
@@ -133,7 +155,7 @@ public class RvcCriteriaDecisionService {
 	}
 
 	private static BigDecimal ratio(BigDecimal numerator, BigDecimal denominator) {
-		// denominator 가 0 이면 원본과 동일하게 예외 전파(ArithmeticException, 위 inner try/catch가 흡수)
+		// denominator(FOB/EXW 또는 순원가 금액)는 decideRvc()에서 0 이하이면 이미 걸러진다.
 		return numerator.divide(denominator, 10, RoundingMode.HALF_UP).multiply(HUNDRED);
 	}
 }
