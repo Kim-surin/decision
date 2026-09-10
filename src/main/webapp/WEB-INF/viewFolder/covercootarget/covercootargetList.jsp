@@ -38,28 +38,28 @@
 				            <div class="row" style="margin: 0; min-height: 110px;">
 				            
 				                <div class="col-3" style="padding: 16px 18px 18px; display: flex; flex-direction: column;">
-								    <div style="font-size: 15px; font-weight: 600; color: #777; text-align: left; line-height: 1.4; margin-bottom: 14px; white-space: nowrap;">미등록 자재</div>
+								    <div style="font-size: 15px; font-weight: 600; color: #777; text-align: left; line-height: 1.4; margin-bottom: 14px; white-space: nowrap;"><spring:message code="TXT.UNREG_MATERIAL"/></div>
 								    <div style="font-size: 45px; font-weight: 700; color: #6c4cff; text-align: center; line-height: 1.2;">
 								        <span id="unregisteredItemCount"></span>
 								    </div>
 								</div>
 								
 								<div class="col-3" style="padding: 16px 18px 18px; display: flex; flex-direction: column;">
-								    <div style="font-size: 15px; font-weight: 600; color: #777; text-align: left; line-height: 1.4; margin-bottom: 14px; white-space: nowrap;">제출완료 자재</div>
+								    <div style="font-size: 15px; font-weight: 600; color: #777; text-align: left; line-height: 1.4; margin-bottom: 14px; white-space: nowrap;"><spring:message code="TXT.SUBMITTED_MATERIALS"/></div>
 								    <div style="font-size: 45px; font-weight: 700; color: #252525; text-align: center; line-height: 1.2;">
 								        <span id="submittedItemCount"></span>
 								    </div>
 								</div>
 								
 								<div class="col-3" style="padding: 16px 18px 18px; display: flex; flex-direction: column;">
-								    <div style="font-size: 15px; font-weight: 600; color: #777; text-align: left; line-height: 1.4; margin-bottom: 14px; white-space: nowrap;">30일 내 만료 자재</div>
+								    <div style="font-size: 15px; font-weight: 600; color: #777; text-align: left; line-height: 1.4; margin-bottom: 14px; white-space: nowrap;"><spring:message code="TXT.EXPIRING_WHITHIN30"/></div>
 								    <div style="font-size: 45px; font-weight: 700; color: #252525; text-align: center; line-height: 1.2;">
 								        <span id="expiringWithin30DaysItemCount"></span>
 								    </div>
 								</div>
 								
 								<div class="col-3" style="padding: 16px 18px 18px; display: flex; flex-direction: column;">
-								    <div style="font-size: 15px; font-weight: 600; color: #777; text-align: left; line-height: 1.4; margin-bottom: 14px; white-space: nowrap;">Total 자재내역</div>
+								    <div style="font-size: 15px; font-weight: 600; color: #777; text-align: left; line-height: 1.4; margin-bottom: 14px; white-space: nowrap;">Total <spring:message code="TXT.MATERIAL_DETAILS"/></div>
 								    <div style="font-size: 45px; font-weight: 700; color: #6c4cff; text-align: center; line-height: 1.2;">
 								        <span id="totalItemCount"></span>
 								    </div>
@@ -76,22 +76,22 @@
 				        <div class="modal-content" style="height: 450px;">
 				
 				            <div class="modal-header">
-				                <h5 class="modal-title">자재코드 입력</h5>
+				                <h5 class="modal-title"><spring:message code="TXT.ENTER_MAT_CODE"/></h5>
 				                <button type="button" class="btn-close" onclick="coverCootargetList.closeItemCodePopup();"></button>
 				            </div>
 				
 				            <div class="modal-body">
-				                <label class="form-label" for="itemCodeInput" >자재코드</label>
-				                <textarea style="height:220px" class="form-control" id="itemCodeInput" rows="8" placeholder="쉼표 또는 줄바꿈으로 구분해 입력하세요.&#10;예시:&#10;A001,A002,A003&#10;또는&#10;A001&#10;A002&#10;A003"></textarea>
+				                <label class="form-label" for="itemCodeInput" ><spring:message code="TXT.ITEM_CODE "/></label>
+				                <textarea style="height:220px" class="form-control" id="itemCodeInput" rows="8" placeholder="<spring:message code="MSG.SEPARATE_THEM "/>&#10;<spring:message code="TXT.EXAMPLE"/>:&#10;A001,A002,A003&#10;<spring:message code="TXT.OR"/>&#10;A001&#10;A002&#10;A003"></textarea>
 				
 				                <div style="margin-top: 8px; font-size: 12px; color: #777;">
-				                    쉼표, 공백, 줄바꿈으로 여러 자재코드를 구분할 수 있습니다.
+				                    <spring:message code="MSG.SEPARATE_THEM2"/>
 				                </div>
 				            </div>
 				
 				            <div class="modal-footer">
-				                <button type="button" class="btn btn-secondary" onclick="coverCootargetList.clearItemCodes();" style="width: 80px;">초기화</button>
-				                <button type="button" class="btn btn-primary" onclick="coverCootargetList.applyItemCodes();" style="width: 80px;">적용</button>
+				                <button type="button" class="btn btn-secondary" onclick="coverCootargetList.clearItemCodes();" style="width: 80px;"><spring:message code="TXT.INITIALIZATION"/></button>
+				                <button type="button" class="btn btn-primary" onclick="coverCootargetList.applyItemCodes();" style="width: 80px;"><spring:message code="TXT.APPLICATION"/></button>
 				            </div>
 				
 				        </div>
@@ -107,12 +107,12 @@
 				
 								<!-- 자재코드 -->
 								<div>
-								    <label class="form-label" for="itemCodeDisplay" style="display: block; margin-bottom: 8px;">자재코드</label>
+								    <label class="form-label" for="itemCodeDisplay" style="display: block; margin-bottom: 8px;"><spring:message code="TXT.MATERIAL_CODE"/></label>
 								
 								    <div style="position: relative; width: 200px;">
-								        <input class="form-control" id="itemCodeDisplay" name="itemCodeDisplay" type="text" placeholder="자재 선택" readonly onclick="coverCootargetList.openItemCodePopup();" style="width: 100%; height: 38px; padding-right: 44px; background-color: #fff; cursor: pointer;">
+								        <input class="form-control" id="itemCodeDisplay" name="itemCodeDisplay" type="text" placeholder="<spring:message code="TXT.MATERIAL_SELECTION"/>" readonly onclick="coverCootargetList.openItemCodePopup();" style="width: 100%; height: 38px; padding-right: 44px; background-color: #fff; cursor: pointer;">
 								
-								        <button type="button" onclick="coverCootargetList.openItemCodePopup();" aria-label="자재 검색" style="position: absolute; top: 0; right: 0; width: 42px; height: 38px; display: flex; align-items: center; justify-content: center; padding: 0; color: #66717d; background-color: transparent; border: 0; border-left: 1px solid #d7dce1; border-radius: 0 4px 4px 0; cursor: pointer;">
+								        <button type="button" onclick="coverCootargetList.openItemCodePopup();" aria-label="<spring:message code="TXT.MATERIAL_SEARCH"/>" style="position: absolute; top: 0; right: 0; width: 42px; height: 38px; display: flex; align-items: center; justify-content: center; padding: 0; color: #66717d; background-color: transparent; border: 0; border-left: 1px solid #d7dce1; border-radius: 0 4px 4px 0; cursor: pointer;">
 								            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 								                <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"></circle>
 								                <path d="M16 16L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
@@ -125,13 +125,13 @@
 				
 				                <!-- 협력사명 -->
 				                <div>
-								    <label class="form-label" for="vendor" style="display: block; margin-bottom: 8px;">협력사명</label>
+								    <label class="form-label" for="vendor" style="display: block; margin-bottom: 8px;"><spring:message code="TXT.VENDOR_NAME_GRID"/></label>
 								    <input class="form-control" id="vendor" name="vendor" type="text" style="width: 200px;">
 								</div>
 				
 				                <!-- 입고일자 -->
 				                <div>
-				                    <label class="form-label" for="search_from_date" style="display: block; margin-bottom: 8px;">입고일자</label>
+				                    <label class="form-label" for="search_from_date" style="display: block; margin-bottom: 8px;"><spring:message code="TXT.ARRIVAL_DATE"/></label>
 				                    <div style="display: flex; align-items: center; gap: 10px;">
 				                        <input class="form-control" id="search_from_date" name="search_from_date" type="date" value="<%= java.time.LocalDate.now().minusMonths(1) %>" style="width: 140px;">
 				                        <span style="display: inline-block; min-width: 6px; text-align: center;">~</span>
@@ -153,7 +153,7 @@
 				
 				                    <!-- 집중관리 여부 -->
 									<div>
-									    <label class="form-label" for="importanceYn" style="display: block; margin-bottom: 8px;">집중관리 여부</label>
+									    <label class="form-label" for="importanceYn" style="display: block; margin-bottom: 8px;"><spring:message code="TXT.INTENSIVE_TARGET"/></label>
 									    <select class="form-select" id="importanceYn" name="importanceYn" style="width: 200px;">
 									        <option value="">All</option>
 									        <option value="Y">Y</option>
@@ -163,22 +163,22 @@
 									
 									<!-- 기등록확인서 포함 -->
 									<div>
-									    <label class="form-label" for="includeRegisteredYn" style="display: block; margin-bottom: 8px;">기등록확인서 포함</label>
+									    <label class="form-label" for="includeRegisteredYn" style="display: block; margin-bottom: 8px;"><spring:message code="TXT.INCLUDING_PRE_REG"/></label>
 									    <div style="display: flex; align-items: center; height: 38px;">
 									        <input class="form-check-input" id="includeRegisteredYn" name="includeRegisteredYn" type="checkbox" value="Y" style="margin: 0;">
-									        <label class="form-check-label" for="includeRegisteredYn" style="margin-left: 8px;">포함</label>
+									        <label class="form-check-label" for="includeRegisteredYn" style="margin-left: 8px;"><spring:message code="TXT.CONTAINS"/></label>
 									    </div>
 									</div>
 									
 									<!-- 포괄기간 만료일자 -->
 									<div>
-									    <label class="form-label" for="blanketExpiryDays" style="display: block; margin-bottom: 8px;">포괄기간 만료일자</label>
+									    <label class="form-label" for="blanketExpiryDays" style="display: block; margin-bottom: 8px;"><spring:message code="TXT.COMPREHENSIVE_EXPIRATION"/></label>
 									    <select class="form-select" id="blanketExpiryDays" name="blanketExpiryDays" style="width: 200px;">
-									        <option value="0">0일</option>
-									        <option value="10">10일</option>
-									        <option value="15">15일</option>
-									        <option value="30">30일</option>
-									        <option value="45">45일</option>
+									        <option value="0">0<spring:message code="TXT.DAY"/></option>
+									        <option value="10">10<spring:message code="TXT.DAY"/></option>
+									        <option value="15">15<spring:message code="TXT.DAY"/></option>
+									        <option value="30">30<spring:message code="TXT.DAY"/></option>
+									        <option value="45">45<spring:message code="TXT.DAY"/></option>
 									    </select>
 									</div>
 				
@@ -196,16 +196,16 @@
 	    	<div class="col-7">
 				<div class="frame-wrap">
 				    <div class="demo" style="display: inline-flex; align-items: center; margin-left: 10px;">
-					    <span style="font-size: 13px; color: #666; margin-right: 10px;">총 건수</span>
+					    <span style="font-size: 13px; color: #666; margin-right: 10px;"><spring:message code="TXT.TOTAL_NUM"/></span>
 					    <span id="totalCount" style="font-size: 16px; font-weight: 700; color: #333;">0</span>
-					    <span style="font-size: 13px; color: #666; margin-left: 3px;">건</span>
+					    <span style="font-size: 13px; color: #666; margin-left: 3px;"><spring:message code="TXT.CASE"/></span>
 					</div>
 				</div>
 	    	</div>
 	    	<div class="col-5">
 			    <div class="frame-wrap">
 			        <div class="demo" style="display: flex; justify-content: flex-end; align-items: center; gap: 3px;">
-			            <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="coverCootargetList.openWritePopup();" style="width: 110px;color: #fff; background-color: #526d82; border: 1px solid #526d82;">확인서 작성</button>
+			            <button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="coverCootargetList.openWritePopup();" style="width: 110px;color: #fff; background-color: #526d82; border: 1px solid #526d82;"><spring:message code="TXT.FILL_CONFIRMATION"/></button>
 			        </div>
 			    </div>
 			</div>
@@ -244,14 +244,14 @@
 		this.createAUIGrid = function() {
 			// 그리드 칼럼 레이아웃 설정
 			const columnLayout = [ 
-				{ dataField : "VENDOR_NAME",		headerText : "협력사명",          width : 200,		filter: { showIcon: true } ,  style: "aui-center-align"},
-				{ dataField : "ITEM_CODE",		headerText : "자재코드",      width : 200,	    filter: { showIcon: true } , style: "aui-right-align"},
-				{ dataField : "ITEM_SPEC", 		headerText : "자재내역",     	  width : "auto",	filter: { showIcon: true } ,  style: "aui-center-align" },
+				{ dataField : "VENDOR_NAME",		headerText : "<spring:message code="TXT.VENDOR_NAME_GRID"/>",          width : 200,		filter: { showIcon: true } ,  style: "aui-center-align"},
+				{ dataField : "ITEM_CODE",		headerText : "<spring:message code="TXT.ITEM_CODE2"/>",      width : 200,	    filter: { showIcon: true } , style: "aui-right-align"},
+				{ dataField : "ITEM_SPEC", 		headerText : "<spring:message code="TXT.MATERIAL_DETAILS"/>",     	  width : "auto",	filter: { showIcon: true } ,  style: "aui-center-align" },
 				{ dataField : "HS_CODE", 			headerText : "HSCode ",     width : 140,		filter: { showIcon: false } , style: "aui-right-align" },
-				{ dataField : "ISSUE_DATE", 		headerText : "발행일자",     width : 140,		filter: { showIcon: false } , style: "aui-right-align"},
-				{ dataField : "APPLY_DATE", 		headerText : "포괄적용일",     width : 140,		filter: { showIcon: false } , style: "aui-right-align"},
-				{ dataField : "END_DATE", 		headerText : "포괄만료일",     width : 140,		filter: { showIcon: false } , style: "aui-right-align"},
-				{ dataField : "SUBMIT_STATUS", 	headerText : "상태",     width : 140,		filter: { showIcon: false } , style: "aui-center-align" }
+				{ dataField : "ISSUE_DATE", 		headerText : "<spring:message code="TXT.PUBLICATION_DATE"/>",     width : 140,		filter: { showIcon: false } , style: "aui-right-align"},
+				{ dataField : "APPLY_DATE", 		headerText : "<spring:message code="TXT.COVER_DATE"/>",     width : 140,		filter: { showIcon: false } , style: "aui-right-align"},
+				{ dataField : "END_DATE", 		headerText : "<spring:message code="TXT.COMPREHENSIVE_EXPIRATION"/>",     width : 140,		filter: { showIcon: false } , style: "aui-right-align"},
+				{ dataField : "SUBMIT_STATUS", 	headerText : "<spring:message code="TXT.STATUS"/>",     width : 140,		filter: { showIcon: false } , style: "aui-center-align" }
 			];
 
 			// 그리드 속성 설정
@@ -267,17 +267,6 @@
 			// 실제로 #oAuiGrid_covercootargetList_01 에 그리드 생성
 			// 파라메터 : Grid Div ID, 컬럼레이아웃, 그리드속성, 그리드타입(없음 : null or "", 행번호 : number ,체크박스 : check ,라디오 : radio)
 			coverCootargetList.grid_coverCootargetList_01 = KpackageOBJ.auiGrid.create("oAuiGrid_coverCootargetList_01", columnLayout, gridProps, "check");
-			
-			
-		/* 	// 클릭 이벤트
-			AUIGrid.bind(covercootargetList.grid_covercootargetList_01, "cellClick", function( event ) {
-				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " clicked");
-			});
-			
-			// 더블클릭 이벤트 
-			AUIGrid.bind(covercootargetList.grid_covercootargetList_01, "cellDoubleClick", function( event ) {
-				console.log("rowIndex : " + event.rowIndex + ", columnIndex : " + event.columnIndex + " dbl clicked");
-			}); */
 			
 		};
 		
@@ -356,7 +345,7 @@
 		    } else if (codes.length === 1) {
 		        $("#itemCodeDisplay").val(codes[0]);
 		    } else {
-		        $("#itemCodeDisplay").val(codes[0] + " 외 " + (codes.length - 1) + "건");
+		        $("#itemCodeDisplay").val(codes[0] + " <spring:message code="TXT.ADDITION"/> " + (codes.length - 1) + "<spring:message code="TXT.CASE"/>");
 		    }
 
 		    coverCootargetList.closeItemCodePopup();
@@ -375,8 +364,8 @@
 		
 		this.excelDownload  = function(){
 			const exportProps = {
-			        fileName: "원산지확인서등록",
-			        sheetName: "원산지확인서등록",
+			        fileName: "<spring:message code="TXT.REGISTRATION_CERTIFICATE"/> ",
+			        sheetName: "<spring:message code="TXT.REGISTRATION_CERTIFICATE"/>",
 			        exportWithStyle: true,
 			        progressBar: true,
 			        showRowNumColumn: false
@@ -392,7 +381,7 @@
 		    var checkedRows = AUIGrid.getCheckedRowItems(coverCootargetList.grid_coverCootargetList_01);
 
 		    if (!checkedRows || checkedRows.length === 0) {
-		        alert("하나 이상의 자재를 선택해주세요.");
+		        alert("<spring:message code="MSG.SELECT_MATERIALS"/>");
 		        return;
 		    }
 
@@ -418,7 +407,7 @@
 		    itemCodeList = [...new Set(itemCodeList)];
 
 		    if (hsCodeList.length === 0) {
-		        alert("선택한 자재에 HS CODE가 없습니다.");
+		        alert("<spring:message code="MSG.CHECK_HSCODE"/>");
 		        return;
 		    }
 
@@ -437,7 +426,7 @@
 
 		    KpackageOBJ.dialog.open(
 		        "previewPopup",
-		        "확인서 작성",
+		        "<spring:message code="TXT.FILL_CONFIRMATION"/>",
 		        popupUrl,
 		        1200,
 		        1000
