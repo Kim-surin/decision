@@ -64,7 +64,7 @@
     </select>
     
     <select id="retrieveftaBomDetailVendor" parameterType="HashMap" resultType="HashMap">
-    SELECT PL.*, V.VENDOR_NAME
+    SELECT PL.*, CASE #{default_language} WHEN 'KOR' THEN V.VENDOR_NAME WHEN 'ENG' THEN COALESCE(V.VENDOR_NAME_ENG, V.VENDOR_NAME) END AS VENDOR_NAME
     FROM (
 	    SELECT PL.VENDOR_CODE
 	    	, PL.COMPANY_CODE
