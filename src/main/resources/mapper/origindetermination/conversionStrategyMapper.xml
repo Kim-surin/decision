@@ -9,7 +9,7 @@
 	<select id="selectConversionStrategyRuleContext" parameterType="HashMap" resultType="com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto">
 		SELECT DISTINCT FM.FTA_CODE                                           AS FTA_CODE
 		      ,FM.PRODUCT_CODE                                                AS PRODUCT_CODE
-		      ,IM.ITEM_NAME                                                   AS PRODUCT_NAME
+		      ,CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS PRODUCT_NAME
 		      ,FM.HS_CODE                                                     AS HS_CODE
 		      ,FM.AMOUNT                                                      AS AMOUNT
 		      ,FR.RULE_ID                                                     AS RULE_ID
@@ -86,11 +86,11 @@
 	-->
 	<select id="selectCthCertifyTargetList" parameterType="HashMap" resultType="HashMap">
 		SELECT FD.ITEM_CODE                                AS ITEM_CODE
-		      ,IM.ITEM_NAME                                AS ITEM_NAME
+		      ,CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS ITEM_NAME
 		      ,FD.HS_CODE                                   AS HS_CODE
 		      ,FD.OUTAREA_AMOUNT                             AS OUTAREA_AMOUNT
 		      ,V.VENDOR_CODE                                AS VENDOR_CODE
-		      ,VE.VENDOR_NAME                               AS VENDOR_NAME
+		      ,CASE #{default_language} WHEN 'KOR' THEN VE.VENDOR_NAME WHEN 'ENG' THEN COALESCE(VE.VENDOR_NAME_ENG, VE.VENDOR_NAME) END AS VENDOR_NAME
 		      ,V.FROM_DATE                                  AS FROM_DATE
 		      ,V.TO_DATE                                    AS TO_DATE
 		FROM   FCR_DTL FD
@@ -116,11 +116,11 @@
 	-->
 	<select id="selectValueContentCertifyCandidateList" parameterType="HashMap" resultType="HashMap">
 		SELECT FD.ITEM_CODE                                AS ITEM_CODE
-		      ,IM.ITEM_NAME                                AS ITEM_NAME
+		      ,CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS ITEM_NAME
 		      ,FD.HS_CODE                                   AS HS_CODE
 		      ,FD.OUTAREA_AMOUNT                             AS OUTAREA_AMOUNT
 		      ,V.VENDOR_CODE                                AS VENDOR_CODE
-		      ,VE.VENDOR_NAME                               AS VENDOR_NAME
+		      ,CASE #{default_language} WHEN 'KOR' THEN VE.VENDOR_NAME WHEN 'ENG' THEN COALESCE(VE.VENDOR_NAME_ENG, VE.VENDOR_NAME) END AS VENDOR_NAME
 		      ,V.FROM_DATE                                  AS FROM_DATE
 		      ,V.TO_DATE                                    AS TO_DATE
 		FROM   FCR_DTL FD

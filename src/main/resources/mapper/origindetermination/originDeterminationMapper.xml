@@ -65,15 +65,15 @@
        		, SM.SALES_SEQ
        		, SM.INVOICE_MONTH
        		, SM.DIVISION_CODE
-       		, D.DIVISION_NAME
+       		, CASE #{default_language} WHEN 'KOR' THEN D.DIVISION_NAME WHEN 'ENG' THEN COALESCE(D.DIVISION_NAME_ENG, D.DIVISION_NAME) END AS DIVISION_NAME
        		, SM.CUSTOMER_CODE
-       		, C.CUSTOMER_NAME
+       		, CASE #{default_language} WHEN 'KOR' THEN C.CUSTOMER_NAME WHEN 'ENG' THEN COALESCE(C.CUSTOMER_NAME_ENG, C.CUSTOMER_NAME) END AS CUSTOMER_NAME
        		, SM.PRODUCT_CODE
-       		, IM.ITEM_NAME AS PRODUCT_NAME
+       		, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS PRODUCT_NAME
        		, IM.HS_CODE
        		, SM.STATUS AS STATUS
-       		, GET_CODE_NAME(SM.STATUS, 'DS', SM.COMPANY_CODE, 'KOR') AS STATUS_NAME
-       		, GET_CODE_NAME(SM.PRODUCT_ASSETS_TYPE, 'AT', SM.COMPANY_CODE, 'KOR') AS PRODUCT_ASSETS_TYPE_NAME
+       		, GET_CODE_NAME(SM.STATUS, 'DS', SM.COMPANY_CODE, #{default_language}) AS STATUS_NAME
+       		, GET_CODE_NAME(SM.PRODUCT_ASSETS_TYPE, 'AT', SM.COMPANY_CODE, #{default_language}) AS PRODUCT_ASSETS_TYPE_NAME
        		, SM.COO_CERTIFY_NO
 		FROM AGG SM
 			INNER JOIN ITEM_MST IM
@@ -91,10 +91,10 @@
 				AND D.DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="customer != null">
-				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME_ENG ILIKE '%' || #{customer} || '%' )
 		</if>
 		<if test="product != null">
-				AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
+				AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME_ENG ILIKE '%' || #{product} || '%' )
 		</if>
 		<if test="status != null">
 				AND SM.STATUS = #{status}
@@ -109,7 +109,7 @@
        SELECT DISTINCT SM.SALES_NO
        		, SD.SALES_SEQ
        		, SD.PRODUCT_CODE
-       		, IM.ITEM_NAME AS PRODUCT_NAME
+       		, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS PRODUCT_NAME
        		, IM.HS_CODE
        		, SD.QUANTITY
        		, IM.UNIT
@@ -211,7 +211,7 @@
        SELECT FR.FTA_CODE
        		, FTA.FTA_NAME
        		, FR.ERROR_CODE
-       		, COALESCE(NULLIF(GET_CODE_NAME(FR.ERROR_CODE, 'ODER', FR.COMPANY_CODE, 'KOR'), ''), FR.ERROR_MSG) AS ERROR_MSG
+       		, COALESCE(NULLIF(GET_CODE_NAME(FR.ERROR_CODE, 'ODER', FR.COMPANY_CODE, #{default_language}), ''), FR.ERROR_MSG) AS ERROR_MSG
        FROM FCR_RESULT FR
        INNER JOIN FTA_MASTER FTA
        		ON FR.COMPANY_CODE = FTA.COMPANY_CODE
@@ -253,7 +253,7 @@
     <select id="retrieveOriginDeterminationFailMaterialList" parameterType="HashMap" resultType="HashMap">
        SELECT FD.FTA_CODE
        		, FD.ITEM_CODE
-       		, IM.ITEM_NAME
+       		, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS ITEM_NAME
        		, FD.HS_CODE
        		, FD.REQUIREMENT_QTY
        		, FD.INPUT_AMOUNT
@@ -278,12 +278,12 @@
        SELECT SM.SALES_NO
        		, SM.INVOICE_DATE
        		, D.DIVISION_CODE
-       		, D.DIVISION_NAME
+       		, CASE #{default_language} WHEN 'KOR' THEN D.DIVISION_NAME WHEN 'ENG' THEN COALESCE(D.DIVISION_NAME_ENG, D.DIVISION_NAME) END AS DIVISION_NAME
        		, C.CUSTOMER_CODE
-       		, C.CUSTOMER_NAME
+       		, CASE #{default_language} WHEN 'KOR' THEN C.CUSTOMER_NAME WHEN 'ENG' THEN COALESCE(C.CUSTOMER_NAME_ENG, C.CUSTOMER_NAME) END AS CUSTOMER_NAME
        		, SM.INVOICE_NO
        		, SM.STATUS
-       		, GET_CODE_NAME(SM.STATUS, 'DS', SM.COMPANY_CODE, 'KOR') AS STATUS_NAME
+       		, GET_CODE_NAME(SM.STATUS, 'DS', SM.COMPANY_CODE, #{default_language}) AS STATUS_NAME
        		, FTA.EXPORT_NATION
        		, FTA.TARGET_FTA_CNT
        		, FTA.TARGET_FTA_NAME
@@ -307,7 +307,7 @@
 				</if>
 			</if>		
 			<if test="product != null">
-				AND (SD.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
+				AND (SD.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME_ENG ILIKE '%' || #{product} || '%' )
 			</if>		
 			<if test="status != null">
 					AND SM.STATUS = #{status}
@@ -325,7 +325,7 @@
 				ON C.COMPANY_CODE = SM.COMPANY_CODE
 				AND C.CUSTOMER_CODE = SM.CUSTOMER_CODE
 			LEFT JOIN LATERAL (
-				SELECT GET_CODE_NAME(MIN(FAN.NATION_CODE), 'NA', SM.COMPANY_CODE, 'KOR') AS EXPORT_NATION
+				SELECT GET_CODE_NAME(MIN(FAN.NATION_CODE), 'NA', SM.COMPANY_CODE, #{default_language}) AS EXPORT_NATION
 				     , COUNT(*) AS TARGET_FTA_CNT
 				     , STRING_AGG(FM.FTA_NAME, '|' ORDER BY FM.FTA_NAME) AS TARGET_FTA_NAME
 				FROM FTA_APPLY_NATION FAN
@@ -342,7 +342,7 @@
 				AND D.DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="customer != null">
-				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME_ENG ILIKE '%' || #{customer} || '%' )
 		</if>	
 		ORDER BY SM.INVOICE_DATE, C.CUSTOMER_CODE, D.DIVISION_CODE
     </select>
@@ -353,18 +353,18 @@
     	SELECT SM.INVOICE_DATE
     		, SUBSTR(SM.INVOICE_DATE, 1, 6) AS INVOICE_MONTH
     		, SM.DIVISION_CODE
-    		, D.DIVISION_NAME
+    		, CASE #{default_language} WHEN 'KOR' THEN D.DIVISION_NAME WHEN 'ENG' THEN COALESCE(D.DIVISION_NAME_ENG, D.DIVISION_NAME) END AS DIVISION_NAME
     		, SM.EXPORT_FLAG
-			, GET_CODE_NAME(SM.EXPORT_FLAG, 'EF', SM.COMPANY_CODE, 'KOR') AS EXPORT_FLAG_NAME
+			, GET_CODE_NAME(SM.EXPORT_FLAG, 'EF', SM.COMPANY_CODE, #{default_language}) AS EXPORT_FLAG_NAME
 			, SM.CUSTOMER_CODE
-			, C.CUSTOMER_NAME
+			, CASE #{default_language} WHEN 'KOR' THEN C.CUSTOMER_NAME WHEN 'ENG' THEN COALESCE(C.CUSTOMER_NAME_ENG, C.CUSTOMER_NAME) END AS CUSTOMER_NAME
 			, SD.PRODUCT_CODE
-			, IM.ITEM_NAME AS PRODUCT_NAME
+			, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS PRODUCT_NAME
 			, COALESCE(FM.HS_CODE, IM.HS_CODE) AS HS_CODE 
 			, F.FTA_NAME
 			, FM.COMPANY_COO_YN AS ORIGIN_STATUS
 			, SD.STATUS AS STATUS
-			, GET_CODE_NAME(SD.STATUS, 'DS', SD.COMPANY_CODE, 'KOR') AS STATUS_NAME
+			, GET_CODE_NAME(SD.STATUS, 'DS', SD.COMPANY_CODE, #{default_language}) AS STATUS_NAME
 			, SM.SALES_NO
 			, SD.SALES_SEQ
     	FROM SALES_MST SM
@@ -412,13 +412,13 @@
 			</if>
 		</if>		
 		<if test="product != null">
-			AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' )
+			AND (SM.PRODUCT_CODE ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME ILIKE '%' || #{product} || '%' OR IM.ITEM_NAME_ENG ILIKE '%' || #{product} || '%' )
 		</if>	
 		<if test="search_division_code != null">
 			AND D.DIVISION_CODE = #{search_division_code}
 		</if>
 		<if test="customer != null">
-				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' )
+				AND (C.CUSTOMER_CODE ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME ILIKE '%' || #{customer} || '%' OR C.CUSTOMER_NAME_ENG ILIKE '%' || #{customer} || '%' )
 		</if>	
 		<if test="status != null">
 				AND SD.STATUS = #{status}
@@ -496,7 +496,7 @@
     		, KEYS.CUSTOMER_CODE
     		, KEYS.INVOICE_MONTH
     		, SD.PRODUCT_CODE
-    		, IM.ITEM_NAME AS PRODUCT_NAME
+    		, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS PRODUCT_NAME
     		, IM.HS_CODE
     		, SD.QUANTITY
     		, IM.UNIT
@@ -512,7 +512,7 @@
     		     , AGG.SALES_NO
     		     , AGG.SALES_SEQ
     		     , AGG.STATUS
-    		     , GET_CODE_NAME(AGG.STATUS, 'DS', #{company_code}, 'KOR') AS STATUS_NAME
+    		     , GET_CODE_NAME(AGG.STATUS, 'DS', #{company_code}, #{default_language}) AS STATUS_NAME
     		FROM AGG
     		WHERE AGG.RN = 1
     	) KEYS

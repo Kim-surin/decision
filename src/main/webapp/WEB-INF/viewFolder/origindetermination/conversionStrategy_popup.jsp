@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -63,26 +64,26 @@
 	<div class="modal-body">
 		<div class="conversion-strategy-header">
 			<div class="conversion-strategy-header-left">
-				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">품번</span><span class="conversion-strategy-header-value" id="conversionStrategy_productCode">-</span></div>
-				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">품명</span><span class="conversion-strategy-header-value" id="conversionStrategy_productName">-</span></div>
-				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">협정명</span><span class="conversion-strategy-header-value" id="conversionStrategy_ftaName">-</span></div>
-				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">HS CODE</span><span class="conversion-strategy-header-value" id="conversionStrategy_hsCode">-</span></div>
-				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label">판매가격</span><span class="conversion-strategy-header-value" id="conversionStrategy_amount">-</span></div>
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label"><spring:message code='TXT.ITEM_NUMBER'/></span><span class="conversion-strategy-header-value" id="conversionStrategy_productCode">-</span></div> <!--품번-->
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label"><spring:message code='TXT.ITEM_DESC'/></span><span class="conversion-strategy-header-value" id="conversionStrategy_productName">-</span></div> <!--품명-->
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label"><spring:message code='TXT.FTA_NAME'/></span><span class="conversion-strategy-header-value" id="conversionStrategy_ftaName">-</span></div> <!--협정명-->
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label"><spring:message code='TXT.HS_CODE'/></span><span class="conversion-strategy-header-value" id="conversionStrategy_hsCode">-</span></div> <!--HS CODE-->
+				<div class="conversion-strategy-header-row"><span class="conversion-strategy-header-label"><spring:message code='TXT.SELLING_PRICE'/></span><span class="conversion-strategy-header-value" id="conversionStrategy_amount">-</span></div> <!--판매가격-->
 			</div>
 			<div class="conversion-strategy-header-right">
-				<div class="conversion-strategy-header-right-label">PSR</div>
+				<div class="conversion-strategy-header-right-label"><spring:message code='TXT.PSR'/></div> <!--PSR-->
 				<div id="oAuiGrid_conversionStrategy_psr" style="width:100%;height:150px;"></div>
 			</div>
 		</div>
 		<div id="conversionStrategy_cthSection">
-			<div class="conversion-strategy-section-title">세번변경기준 충족을 위해 원산지확인서 수취가 필요한 대상은 아래와 같습니다.</div>
+			<div class="conversion-strategy-section-title"><spring:message code='MSG.CTH_CONVERSION_GUIDE'/></div> <!--세번변경기준 충족을 위해 원산지확인서 수취가 필요한 대상은 아래와 같습니다.-->
 			<div id="oAuiGrid_conversionStrategy_cth" style="width:100%;height:220px;"></div>
 		</div>
 		<div id="conversionStrategy_valueSection">
-			<div class="conversion-strategy-section-title">부가가치기준 충족을 위해 원산지확인서 수취가 필요한 대상은 아래와 같습니다.</div>
+			<div class="conversion-strategy-section-title"><spring:message code='MSG.RVC_CONVERSION_GUIDE'/></div> <!--부가가치기준 충족을 위해 원산지확인서 수취가 필요한 대상은 아래와 같습니다.-->
 			<div id="oAuiGrid_conversionStrategy_value" style="width:100%;height:220px;"></div>
 		</div>
-		<div id="conversionStrategy_emptyMessage" class="conversion-strategy-empty" hidden>원산지확인서 수취로 전환 가능한 원재료가 없습니다.</div>
+		<div id="conversionStrategy_emptyMessage" class="conversion-strategy-empty" hidden><spring:message code='MSG.NO_CONVERSION_MATERIAL'/></div> <!--원산지확인서 수취로 전환 가능한 원재료가 없습니다.-->
 	</div>
 </body>
 <script>
@@ -94,37 +95,40 @@
 		this.createAUIGrid = function() {
 			var self = this;
 
+			var STR_MATERIAL_COST = "<spring:message code='TXT.MATERIAL_COST'/>"; //재료비
+			var STR_SELLING_PRICE_RATIO = "<spring:message code='TXT.SELLING_PRICE_RATIO'/>"; //판매가격 대비 비중
+
 			var CTHColumns = [
-				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
-				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}, tooltip: {show: false}},
-				{dataField: "hs_code", headerText: "HS CODE", width: 120, filter: {showIcon: true}, tooltip: {show: false}},
-				{dataField: "vendor_name", headerText: "구매처", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
-				{dataField: "from_date", headerText: "수취 필요 포괄기간(시작)", width: 160, dataType: "date", tooltip: {show: false}},
-				{dataField: "to_date", headerText: "수취 필요 포괄기간(종료)", width: 160, dataType: "date", tooltip: {show: false}}
+				{dataField: "item_code", headerText: "<spring:message code='TXT.MATERIAL_ITEM_NO'/>", width: 160, filter: {showIcon: true}, tooltip: {show: false}}, //원재료 품번
+				{dataField: "item_name", headerText: "<spring:message code='TXT.ITEM_DESC'/>", width: 220, filter: {showIcon: true}, tooltip: {show: false}}, //품명
+				{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 120, filter: {showIcon: true}, tooltip: {show: false}}, //HS CODE
+				{dataField: "vendor_name", headerText: "<spring:message code='TXT.VENDOR'/>", width: 160, filter: {showIcon: true}, tooltip: {show: false}}, //구매처
+				{dataField: "from_date", headerText: "<spring:message code='TXT.RECEIPT_COVER_START'/>", width: 160, dataType: "date", tooltip: {show: false}}, //수취 필요 포괄기간(시작)
+				{dataField: "to_date", headerText: "<spring:message code='TXT.RECEIPT_COVER_END'/>", width: 160, dataType: "date", tooltip: {show: false}} //수취 필요 포괄기간(종료)
 			];
 
 			var RVCColumns = [
-				{dataField: "item_code", headerText: "원재료 품번", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
-				{dataField: "item_name", headerText: "품명", width: 220, filter: {showIcon: true}, tooltip: {show: false}},
-				{dataField: "hs_code", headerText: "HS CODE", width: 120, filter: {showIcon: true}, tooltip: {show: false}},
-				{dataField: "vendor_name", headerText: "구매처", width: 160, filter: {showIcon: true}, tooltip: {show: false}},
-				{dataField: "from_date", headerText: "수취 필요 포괄기간(시작)", width: 160, dataType: "date", tooltip: {show: false}},
-				{dataField: "to_date", headerText: "수취 필요 포괄기간(종료)", width: 160, dataType: "date", tooltip: {show: false}},
-				{dataField: "rank", headerText: "재료비 비중 순위", width: 120, dataType: "numeric", style: "grid-center-text",
+				{dataField: "item_code", headerText: "<spring:message code='TXT.MATERIAL_ITEM_NO'/>", width: 160, filter: {showIcon: true}, tooltip: {show: false}}, //원재료 품번
+				{dataField: "item_name", headerText: "<spring:message code='TXT.ITEM_DESC'/>", width: 220, filter: {showIcon: true}, tooltip: {show: false}}, //품명
+				{dataField: "hs_code", headerText: "<spring:message code='TXT.HS_CODE'/>", width: 120, filter: {showIcon: true}, tooltip: {show: false}}, //HS CODE
+				{dataField: "vendor_name", headerText: "<spring:message code='TXT.VENDOR'/>", width: 160, filter: {showIcon: true}, tooltip: {show: false}}, //구매처
+				{dataField: "from_date", headerText: "<spring:message code='TXT.RECEIPT_COVER_START'/>", width: 160, dataType: "date", tooltip: {show: false}}, //수취 필요 포괄기간(시작)
+				{dataField: "to_date", headerText: "<spring:message code='TXT.RECEIPT_COVER_END'/>", width: 160, dataType: "date", tooltip: {show: false}}, //수취 필요 포괄기간(종료)
+				{dataField: "rank", headerText: "<spring:message code='TXT.MATERIAL_COST_RANK'/>", width: 120, dataType: "numeric", style: "grid-center-text", //재료비 비중 순위
 					tooltip: {
 						tooltipFunction: function (rowIndex, columnIndex, value, headerText, item, dataField) {
 							var materialCost = Number(item.outarea_amount) || 0;
 							var sellingPrice = self.headerAmount || 0;
 							var ratio = sellingPrice > 0 ? (materialCost / sellingPrice * 100) : 0;
-							return "재료비 : " + KpackageOBJ.formatter.commas(Math.round(materialCost)) + "원<br>"
-								+ "판매가격 대비 비중 : " + ratio.toFixed(2) + "%";
+							return STR_MATERIAL_COST + " : " + KpackageOBJ.formatter.commas(Math.round(materialCost)) + "원<br>"
+								+ STR_SELLING_PRICE_RATIO + " : " + ratio.toFixed(2) + "%";
 						}
 					}
 				}
 			];
 
 			var PsrColumns = [
-				{dataField: "rule_code", headerText: "결정기준", width: 500, style: "grid-center-text"}
+				{dataField: "rule_code", headerText: "<spring:message code='TXT.RULE_CRITERIA'/>", width: 500, style: "grid-center-text"} //결정기준
 			];
 
 			var gridProps = { enableFilter: true, showTooltip: true, tooltipSensitivity: 150 };

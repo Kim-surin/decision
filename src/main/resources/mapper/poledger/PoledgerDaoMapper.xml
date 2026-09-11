@@ -7,9 +7,10 @@
 	       SELECT PL.WAREHOUSING_NO
 		       , PL.ORDER_NO
 		       , V.VENDOR_CODE
-		       , V.VENDOR_NAME
+		       , CASE #{default_language} WHEN 'KOR' THEN V.VENDOR_NAME WHEN 'ENG' THEN COALESCE(V.VENDOR_NAME_ENG, V.VENDOR_NAME) END AS VENDOR_NAME
 		       , IM.ITEM_CODE
-		       , IM.ITEM_NAME
+		       , CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS ITEM_NAME
+		       , IM.ITEM_NAME_ENG
 		       , PL.WAREHOUSING_DATE
 		       , PL.WAREHOUSING_AMOUNT
 		       , PL.WAREHOUSING_QTY
@@ -17,7 +18,7 @@
 		       , PL.WAREHOUSING_TYPE
 		       , GET_CODE_NAME(PL.WAREHOUSING_TYPE, 'WT', PL.COMPANY_CODE, #{default_language}) AS  WAREHOUSING_TYPE_NAME
 		       , COALESCE(COO_CERTIFY_YN, 'N') AS COO_CERTIFY_YN
-		       , DV.DIVISION_NAME
+		       , CASE #{default_language} WHEN 'KOR' THEN DV.DIVISION_NAME WHEN 'ENG' THEN COALESCE(DV.DIVISION_NAME_ENG, DV.DIVISION_NAME) END AS DIVISION_NAME
 		       , DV.DIVISION_CODE
 		       , V.MAIL_SEND_YN
 	       FROM PO_LEDGER PL
@@ -50,7 +51,7 @@
 				</if>
 		</if>	
 		<if test="item != null">
-				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' )
+				AND (ITEM_CODE ILIKE '%' || #{item} || '%' OR ITEM_NAME ILIKE '%' || #{item} || '%' OR ITEM_NAME_ENG ILIKE '%' || #{item} || '%' )
 		</if>
 		<if test="coo_certify_yn != null">
 				AND COO_CERTIFY_YN = #{coo_certify_yn}

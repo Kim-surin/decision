@@ -6,9 +6,10 @@
        FROM (
 	       SELECT FBM.YYYYMM
 	       		, DV.DIVISION_CODE
-				, DV.DIVISION_NAME
+				, CASE #{default_language} WHEN 'KOR' THEN DV.DIVISION_NAME WHEN 'ENG' THEN COALESCE(DV.DIVISION_NAME_ENG, DV.DIVISION_NAME) END AS DIVISION_NAME
 				, IM.ITEM_CODE 		AS PRODUCT_CODE
-				, IM.ITEM_NAME 		AS PRODUCT_NAME
+				, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS PRODUCT_NAME
+				, IM.ITEM_NAME_ENG AS PRODUCT_NAME_ENG
 				, FBM.HS_CODE
 	       FROM FTA_BOM_MST FBM
 	       INNER JOIN DIVISION DV
@@ -27,7 +28,7 @@
 				</if>
 		</if>
 		<if test="product != null">
-				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' )
+				AND (PRODUCT_CODE ILIKE '%' || #{product} || '%' OR PRODUCT_NAME ILIKE '%' || #{product} || '%' OR PRODUCT_NAME_ENG ILIKE '%' || #{product} || '%' )
 		</if>
 		<if test="search_division_code != null">
 				AND DIVISION_CODE = #{search_division_code}
@@ -38,7 +39,7 @@
     <select id="retrieveftaBomDetail" parameterType="HashMap" resultType="HashMap">
        SELECT FBD.YYYYMM
        		, IM.ITEM_CODE
-			, IM.ITEM_NAME
+			, CASE #{default_language} WHEN 'KOR' THEN IM.ITEM_NAME WHEN 'ENG' THEN COALESCE(IM.ITEM_NAME_ENG, IM.ITEM_NAME) END AS ITEM_NAME
 			, IM.UNIT
 			, FBD.HS_CODE
 			, FBD.REQ_QTY
@@ -63,7 +64,7 @@
     </select>
     
     <select id="retrieveftaBomDetailVendor" parameterType="HashMap" resultType="HashMap">
-    SELECT PL.*, V.VENDOR_NAME
+    SELECT PL.*, CASE #{default_language} WHEN 'KOR' THEN V.VENDOR_NAME WHEN 'ENG' THEN COALESCE(V.VENDOR_NAME_ENG, V.VENDOR_NAME) END AS VENDOR_NAME
     FROM (
 	    SELECT PL.VENDOR_CODE
 	    	, PL.COMPANY_CODE
