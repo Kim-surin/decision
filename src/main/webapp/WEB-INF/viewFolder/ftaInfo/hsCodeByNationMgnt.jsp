@@ -232,7 +232,7 @@
 				},
 				{
 					dataField: "remarks"
-				  , headerText: "비고"
+				  , headerText:  "<spring:message code='TXT.REMARK'/>" //비고 
 				  , width: 80
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}

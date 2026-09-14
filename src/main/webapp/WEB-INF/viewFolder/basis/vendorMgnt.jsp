@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -29,7 +30,7 @@
 								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">업체코드/명</label>
+											<label class="form-label" for="example-input-border"> <spring:message code='TXT.BUSINESS_PARTNER_CODE,/,TXT.NAME'/><!-- 업체코드/명 --> </label>
 										</div>
 										<div class="col">
 											<input type="text" id="searchCode" class="form-control"   onkeydown="if(event.key==='Enter'){VENDOR_MGNT.retrieve_Data(); return false;}">
@@ -39,7 +40,7 @@
 								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">집중관리 여부</label>
+											<label class="form-label" for="example-input-border"><spring:message code='TXT.INTENSIVE_STATUS'/> <!--집중관리 여부-->   </label>
 										</div>
 										<div class="col">
 											<select class="form-control w-full" id="searchMgtYn" name="searchMgtYn" style="width:110px"></select>        
@@ -51,7 +52,7 @@
 								<div class="col">
 									<button type="button"
 										onclick="javascript:VENDOR_MGNT.retrieve_Data();"
-										class="btn btn-sm btn-search search-no-more waves-effect waves-themed">Search</button>
+										class="btn btn-sm btn-search search-no-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/> <!--조회--></button>
 								</div>
 							</div>
 	
@@ -62,18 +63,20 @@
 			<div class="d-flex col-12 dual-grid-wrap mt-2" style="height: calc(100vh - 350px);" >
 				<div class="w-45 left-grid-area h-full" >
 					<div class="d-flex grid-title mb-1">
-						<div>업체 목록</div>
+						<div><spring:message code='TXT.BUSINESS_PARTNER, TXT.LIST'/><!-- 업체 목록 -->  </div>
 						<div class="radio-group" style="margin-left:auto; padding-right:30px;">
 							<label class="radio-item">
 								<input type="radio" id="searchGubn" name="searchGubn" value="V" onchange="VENDOR_MGNT.fnChangeSearchGubn(this)" checked>
 								<span class="radio-circle"></span>
-								<span>협력업체</span>
+								<span><spring:message code='TXT.VENDOR_PARTNER'/> <!--협력사--></span>
 							</label>
 						
 							<label class="radio-item">
 								<input type="radio" id="searchGubn" name="searchGubn" value="C" onchange="VENDOR_MGNT.fnChangeSearchGubn(this)">
 								<span class="radio-circle"></span>
-								<span>거래처</span>
+								<span>
+									<spring:message code='TXT.CUSTOMER'/> <!--거래처-->
+								</span>
 							</label>
 						</div>
 					</div>
@@ -82,36 +85,36 @@
 				<div class="right-grid-area h-full" >
 					<div class="w-100 h-100 d-flex flex-column">
 						<div class="d-flex grid-title">
-							<label>업체 정보</label>
+							<label><spring:message code='TXT.BUSINESS_PARTNER, TXT.INFO'/><!-- 업체 정보 -->  </label>
 							<div class="demo" style="margin-left: auto;">
 								<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="VENDOR_MGNT.fnSaveGridTop()">
-									저장
+									<spring:message code='TXT.SAVE'/> <!--저장-->
 								</button>
 							</div>	
 						</div>
 				    	<div class="detail-card mb-3">
 				    		<div class="detail-card-row">
-								<div class="detail-card-label">업체명</div>
+								<div class="detail-card-label"><spring:message code='TXT.BUSINESS_PARTNER_NAME'/><!-- 업체명 --></div>
 								<div id="selVcName" class="detail-card-value"></div>
-								<div class=" detail-card-label">업체영문명</div>
+								<div class=" detail-card-label"><spring:message code='TXT.BUSINESS_PARTNER_NAME_ENG'/><!--업체영문명  --></div>
 								<div id="selVcNameEng" class="detail-card-value"></div>
 							</div>
 							<div class="detail-card-row">
-								<div class="detail-card-label">주소</div>
+								<div class="detail-card-label"><spring:message code='TXT.ADDR'/> <!--주소--></div>
 								<div id="selAddress" class="detail-card-value"></div>
 							</div>
 							<div class="detail-card-row">
-								<div class="detail-card-label">영문주소</div>
+								<div class="detail-card-label"><spring:message code='TXT.ADDR_ENG'/> <!--영문주소--></div>
 								<div id="selAddressEng" class="detail-card-value"></div>
 							</div>
 							<div class="detail-card-row-2">
-								<div class="detail-card-label">국가명</div>
+								<div class="detail-card-label"><spring:message code='TXT.NATION_NAME'/> <!--국가명--></div>
 								<select class="detail-card-value" id="selNation" name="selNation" disabled></select>   
-								<div class="detail-card-label">팩스번호</div>
-								<div id="selFaxNo" class="detail-card-value"></div>
+								<div class="detail-card-label"><spring:message code='TXT.FAX_NO'/> <!--팩스번호--> </div>
+								<div id="selFaxNo" class="detail-card-value"></div> 
 							</div>
 							<div class="detail-card-row-2">
-								<div class="detail-card-label">집중관리여부</div>
+								<div class="detail-card-label"><spring:message code='TXT.INTENSIVE_STATUS'/> <!--집중관리 여부--></div>
 								<select class="detail-card-value" id="selMgtYn" name="selMgtYn"></select>        
 								<div class="detail-card-label">비고</div>
 								<input class="detail-card-value detail-input h-full" type="text" id="selRemark" class="form-control">
@@ -119,16 +122,16 @@
 				    	</div>
 				    	<div id="vndorInChargeDiv" style="flex:1; min-height:0;">
 					    	<div class="d-flex subheader-title">
-					    		<label>담당자 목록</label>
+					    		<label> <spring:message code='TXT.OFFICER_LIST'/> <!--담당자 목록-->    </label>
 					    		<div class="demo" style="margin-left: auto;">
 									<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="VENDOR_MGNT.fnAddRowGridBottom()">
-										행추가
+										<spring:message code='TXT.ADD_ROW'/> <!--행추가-->
 									</button>
 									<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="VENDOR_MGNT.fnDelRowGridBottom()">
-										행삭제
+										<spring:message code='TXT.DELETE_ROW'/> <!--행삭제-->
 									</button>
 									<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="VENDOR_MGNT.fnSaveGridBottom()">
-										저장
+										<spring:message code='TXT.SAVE'/> <!--저장-->
 									</button>
 								</div>
 					    	</div>
@@ -151,42 +154,42 @@
 			vendorLeftGridColumnLayout : [
 				{
 					dataField: "vc_code"
-				  , headerText: "업체코드"
+				  , headerText: "<spring:message code='TXT.BUSINESS_PARTNER_CODE'/>" //업체코드
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "vc_name"
-				  , headerText: "업체명"
+				  , headerText: "<spring:message code='TXT.BUSINESS_PARTNER_NAME'/>" //업체명
 				  , width: 150
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "business_no"
-				  , headerText: "사업자등록번호"
+				  , headerText: "<spring:message code='TXT.BIZ_NO'/>" //사업자등록번호
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "officer_name"
-				  , headerText: "대표자명"
+				  , headerText:  "<spring:message code='TXT.CEO_NAME'/>" // 대표자명  
 				  , width: 80
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "tel_no"
-				  , headerText: "전화번호"
+				  , headerText: "<spring:message code='TXT.TEL_NO'/>" //전화번호
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "delete_yn"
-				  , headerText: "삭제여부"
+				  , headerText: "<spring:message code='TXT.DELETE_YN'/>" //삭제여부
 				  , width: 70
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -195,42 +198,42 @@
 			vendorRightGridColumnLayout : [
 				{
 					dataField: "name_kor"
-				  , headerText: "담당자명"
+				  , headerText: "<spring:message code='TXT.OFFICER_NAME'/>" //담당자명
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "name_eng"
-				  , headerText: "영문 담당자명"
+				  , headerText: "<spring:message code='TXT.OFFICER_NAME_ENG'/>" //영문 담당자명
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "position"
-				  , headerText: "직급"
+				  , headerText: "<spring:message code='TXT.POSITION_NAME'/>" //직급
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "email"
-				  , headerText: "이메일"
+				  , headerText: "<spring:message code='TXT.EMAIL'/>" //이메일   
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "tel_no"
-				  , headerText: "전화번호"
+				  , headerText: "<spring:message code='TXT.TEL_NO'/>" //전화번호
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 					dataField: "remark"
-				  , headerText: "비고"
+				  , headerText: "<spring:message code='TXT.REMARK'/>" //비고 
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -240,7 +243,7 @@
 		
 		//View Object Init
 		this.Initialize_viewObject = function () {
-			KpackageOBJ.selectbox.create("VENDOR_MGNT-form", "searchMgtYn",  "/common/retrieveComCdList", {"CATEGORY":"YN", "OPTION_ALL":"Y", "OPTION_ALL_NAME": "전체"}, "code", "code_name");  
+			KpackageOBJ.selectbox.create("VENDOR_MGNT-form", "searchMgtYn",  "/common/retrieveComCdList", {"CATEGORY":"YN", "OPTION_ALL":"Y", "OPTION_ALL_NAME": "<spring:message code='TXT.ALL'/>"}, "code", "code_name");  
 			KpackageOBJ.selectbox.create("VENDOR_MGNT-form", "selNation",  "/common/retrieveComCdList", {"CATEGORY":"NA", "OPTION_ALL":"Y", "OPTION_ALL_NAME": ""}, "code", "code_name");  
 			KpackageOBJ.selectbox.create("VENDOR_MGNT-form", "selMgtYn",  "/common/retrieveComCdList", {"CATEGORY":"YN", "OPTION_ALL":"N"}, "code", "code_name");  
 			
@@ -347,11 +350,11 @@
 		//우측 상단 저장버튼
 		this.fnSaveGridTop = function () {
 		  	if(oUtil.isNull(VENDOR_MGNT.state['masterRow']['vc_code'])){
-				KpackageOBJ.object.alert("업체를 먼저 선택해주세요.");
+		  		KpackageOBJ.object.alert("<spring:message code='MSG.SELECT_BUSINESS_PARTNER_FIRST'/>"); //업체를 먼저 선택해주세요.
 				return;
 			}
 	    	
-			if (!confirm("저장하시겠습니까?")) {
+			if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
 	        	return;
 	        }	
 				
@@ -389,7 +392,7 @@
 				KpackageOBJ.auiGrid.setCellValue(VENDOR_MGNT.gridIdL, selectIndex[0], "remark",  KpackageOBJ.object.getFormValue("VENDOR_MGNT-form", "selRemark"));
 				
 				
-				KpackageOBJ.object.alert("저장되었습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SAVEOK'/>"); //저장되었습니다.
 			}else{
 				KpackageOBJ.object.alert(res.message);
 			}
@@ -400,7 +403,7 @@
 		//우측 하단 그리드 행추가
 		this.fnAddRowGridBottom = function () {
 	    	if(oUtil.isNull(VENDOR_MGNT.state['masterRow']['vc_code'])){
-				KpackageOBJ.object.alert("업체를 먼저 선택해주세요.");
+	    		KpackageOBJ.object.alert("<spring:message code='MSG.SELECT_BUSINESS_PARTNER_FIRST'/>"); //업체를 먼저 선택해주세요.
 				return;
 			}
 	    	
@@ -413,12 +416,12 @@
 			const data = KpackageOBJ.auiGrid.getCheckedRowItemsAll(VENDOR_MGNT.gridIdR);
 			
 	    	if(oUtil.isNull(VENDOR_MGNT.state['masterRow']['vc_code'])){
-				KpackageOBJ.object.alert("업체를 먼저 선택해주세요.");
+	    		KpackageOBJ.object.alert("<spring:message code='MSG.SELECT_BUSINESS_PARTNER_FIRST'/>"); //업체를 먼저 선택해주세요.
 				return;
 			}
 	    	
 			if(data.length == 0){
-				KpackageOBJ.object.alert("데이터가 선택되지 않았습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NOT_FOUND_SELECTED_DATA'/>"); //데이터가 선택되지 않았습니다.
 				return false;
 			}
 							
@@ -429,20 +432,20 @@
 		//우측 하단 그리드 담당자 저장
 		this.fnSaveGridBottom = function () {
 			if(oUtil.isNull(VENDOR_MGNT.state['masterRow']['vc_code'])){
-				KpackageOBJ.object.alert("업체를 먼저 선택해주세요.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SELECT_BUSINESS_PARTNER_FIRST'/>"); //업체를 먼저 선택해주세요.  
 				return;
 			}
 			
 			const data = KpackageOBJ.auiGrid.getGridCudData(VENDOR_MGNT.gridIdR);
-			const isValid = KpackageOBJ.auiGrid.validateGridData(VENDOR_MGNT.gridIdR, ["name_kor"], "해당 값은 필수 입력값입니다.")
+			const isValid = KpackageOBJ.auiGrid.validateGridData(VENDOR_MGNT.gridIdR, ["name_kor"],  "<spring:message code='MSG.REQUIRED_VALUE'/>"); //해당 값은 필수 입력값입니다.
 							
 			if(data.length === 0){
-				KpackageOBJ.object.alert("저장할 데이터가 없습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.NO_DATA_TO_SAVE'/>"); //저장할 데이터가 없습니다.
 				return;
 			}
 
 			if(isValid){
-				if (!confirm("저장하시겠습니까?")) {
+				if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
 	            	return;
 	        	}	
 				
@@ -457,7 +460,7 @@
 		
 		this.fnSaveGridBottomCallBack = function(res) {
 			if(res.success){
-				KpackageOBJ.object.alert("저장되었습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SAVEOK'/>"); //저장되었습니다.
 				VENDOR_MGNT.retrieve_rightVendorGridData();
 			}else{
 				KpackageOBJ.object.alert(res.message);

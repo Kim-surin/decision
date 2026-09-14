@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -11,41 +12,45 @@
 	<form:form id="boadrDetailPop-form" class="s4-form h-full" novalidate="novalidate" onsubmit="return false;">
 		<div class="modal-header h-10">
 			<div class="d-flex justify-content-end align-items-center w-100">
-				<button id="btnReply" type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" style="margin-right:5px" onclick="BOARD_DETAIL.fnReply()">답글등록하기</button>
-				<button id="btnSave" type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="BOARD_DETAIL.fnSave()">저장</button>
+				<button id="btnReply" type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" style="margin-right:5px" onclick="BOARD_DETAIL.fnReply()">
+					<spring:message code='TXT.REG_REPLY'/> <!--답글등록-->   
+				</button>
+				<button id="btnSave" type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="BOARD_DETAIL.fnSave()">
+					<spring:message code='TXT.SAVE'/> <!--저장-->
+				</button>
 			</div>
 		</div>
 		<div class="modal-body h-90">
 			<div class="detail-card mb-3"  style="height:100%; display:flex; flex-direction:column;">
-				<div class="detail-card-row">
-					<div class="detail-card-label">게시물 번호</div>
+				<div class="detail-card-row">   
+					<div class="detail-card-label"><spring:message code='TXT.BOARD_NO'/> <!-- 게시물 번호  --> </div>
 					<input class="detail-card-value detail-input h-full" type="number" id="boardNo" class="form-control" disabled>
 				</div>
 				<div class="detail-card-row">
-					<div class="detail-card-label">제목</div>
+					<div class="detail-card-label"><spring:message code='TXT.SUBJECT'/> <!-- 제목  --></div>
 					<input class="detail-card-value detail-input h-full" type="text" id="subject" class="form-control">
 				</div>
 				<div class="detail-card-row">
-					<div class="detail-card-label">게시글 유형</div>
+					<div class="detail-card-label"><spring:message code='TXT.BOARD_TYPE'/> <!-- 게시글 유형-  --></div>
 					<select class="detail-card-value" id="boardType" name="boardType"></select>   
-					<div class="detail-card-label">팝업표시 여부</div>
+					<div class="detail-card-label"><spring:message code='TXT.POPUP_DISPLAY_YN'/> <!-- 팝업표시여부 -->  </div>
 					<select class="detail-card-value" id="mainPopupYn" name="mainPopupYn"></select>        
 				</div>
 				<div class="detail-card-row-2">
-					<div class="detail-card-label">게시기간</div>
+					<div class="detail-card-label"><spring:message code='TXT.POSTING_PERIOD'/> <!-- 게시기간 -->   </div>
 					<div class="d-flex gap-2" style="align-items:center; margin-left:10px">
 						<input class="form-control" id="startDate" name="startDate" type="date">
 						<input class="form-control" id="endDate" name="endDate" type="date">
 					</div>
 				</div>
 				<div class="detail-card-row-2" style="flex:1; min-height:0; overflow-y:auto;">
-					<div class="detail-card-label">내용</div>
+					<div class="detail-card-label"><spring:message code='TXT.CONTENTS'/> <!-- 내용  --></div>
 					<textarea id="contents"
 							  class="detail-card-value detail-input form-control"
 							  style="height:100%; resize:none;"></textarea>
 				</div>
-				<div class="detail-card-row-2" style="height:100px">
-					<div id="boardFileAreaLabel" class="detail-card-label">첨부파일</div>
+				<div class="detail-card-row-2" style="height:100px">  
+					<div id="boardFileAreaLabel" class="detail-card-label"> <spring:message code='TXT.ATTACHMENT_FILE'/> <!-- 첨부파일  --> </div>
 					<div id="boardFileArea" class="detail-card-value" style="display:block;"></div>
 				</div>
 			</div>
@@ -63,7 +68,7 @@
 	
 		// VIEW OBJECT INIT
 		this.Initialize_viewObject = function() {
-			KpackageOBJ.selectbox.create("boadrDetailPop-form", "boardType",  "/common/retrieveComCdList", {"CATEGORY":"BT", "OPTION_ALL":"Y", "OPTION_ALL_NAME": "선택"}, "code", "code_name");  
+			KpackageOBJ.selectbox.create("boadrDetailPop-form", "boardType",  "/common/retrieveComCdList", {"CATEGORY":"BT", "OPTION_ALL":"Y", "OPTION_ALL_NAME": "<spring:message code='TXT.SELECT'/>"}, "code", "code_name");  
 			KpackageOBJ.selectbox.create("boadrDetailPop-form", "mainPopupYn",  "/common/retrieveComCdList", {"CATEGORY":"YN", "OPTION_ALL":"N"}, "code", "code_name");  
 			
 			const fileTableInfo =  { downloadUrl: "/origin/board/boardMgnt/downloadBoardFile" , fileNameField: "origin_file_name", keyFields: ["company_code","board_no", "file_seq"]};
@@ -121,8 +126,8 @@
 			endDate = oUtil.isNull(endDate) ? endDate : endDate.replace(/-/gi, "");
 			
 			const validTarget = [
-				  {"targetId" : "subject" , "validMsg" : "제목을 입력해주세요."}
-				, {"targetId" : "boardType" , "validMsg" : "게시글 유형을 선택해주세요."}
+				  {"targetId" : "subject" , "validMsg" : "<spring:message code='MSG.PLZ_INPUT_SUBJECT'/>"} //제목을 입력해주세요.
+				, {"targetId" : "boardType" , "validMsg" : "<spring:message code='MSG.SELECT_BOARD_TYPE'/>"} //게시글 유형을 선택해주세요.
 			];
 			
 			for(var i = 0; i< validTarget.length; i++){
@@ -137,7 +142,8 @@
 				(oUtil.isNull(startDate) && !oUtil.isNull(endDate)) ||
 				(!oUtil.isNull(startDate) && oUtil.isNull(endDate))
 			) {
-				alert("게시기간의 시작일자와 종료일자를 모두 입력해주세요.");
+				
+				KpackageOBJ.object.alert("<spring:message code='MSG.ENTER_POSTING_START_END_DATE'/>"); //게시기간의 시작일자와 종료일자를 모두 입력해주세요.
 				return false;
 			}
 			
@@ -145,12 +151,12 @@
 			if (
 				!oUtil.isNull(startDate) &&	!oUtil.isNull(endDate) && startDate > endDate
 			) {
-				alert("시작일자는 종료일자보다 클 수 없습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.START_DATE_CANNOT_EXCEED_END_DATE'/>"); //시작일자는 종료일자보다 클 수 없습니다.
 				return false;
 			}
 			
 			
-			if (!confirm("저장하시겠습니까?")) {
+			if (!confirm("<spring:message code='MSG.CONFIRM_SAVE'/>")) { //저장하시겠습니까?
             	return;
         	}	
 			
@@ -180,7 +186,7 @@
 
 		this.fnSaveCallBack = function(res) {
 			if(res.success){
-				KpackageOBJ.object.alert("저장되었습니다.");
+				KpackageOBJ.object.alert("<spring:message code='MSG.SAVEOK'/>"); //저장되었습니다.
 				
 				BOARD_DETAIL.state['params']['board_no'] = res.value;
 				BOARD_DETAIL.state['params']['input_type'] = "U";

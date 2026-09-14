@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
 <!DOCTYPE html PUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -29,7 +30,7 @@
 								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">제목/내용</label>
+											<label class="form-label" for="example-input-border"><spring:message code='TXT.SUBJECT,/,TXT.CONTENTS'/> <!--  제목/내용 --></label>
 										</div>
 										<div class="col">
 											<input type="text" id="searchText" class="form-control" >
@@ -39,7 +40,7 @@
 								<div class="col-3">
 									<div class="mb-3">
 										<div class="row">
-											<label class="form-label" for="example-input-border">게시글 유형</label>
+											<label class="form-label" for="example-input-border"><spring:message code='TXT.BOARD_TYPE'/> <!-- 게시글 유형-  --> </label>
 										</div>
 										<div class="col">
 											<select class="form-control w-full" id="searchBoadrType" name="searchBoadrType" style="width:110px"></select>        
@@ -51,7 +52,7 @@
 								<div class="col">
 									<button type="button"
 											onclick="javascript:BOARD_LIST.retrieve_GridData();"
-											class="btn btn-sm btn-search search-no-more waves-effect waves-themed">Search</button>
+											class="btn btn-sm btn-search search-no-more waves-effect waves-themed"><spring:message code='TXT.SEARCH'/> <!--조회--></button>
 								</div>
 							</div>
 						</div>
@@ -64,7 +65,7 @@
 				<div class="d-flex frame-wrap" style="align-items: center;">
 					<div class="demo" style="margin-left: auto;">
 						<button type="button" class="btn btn-sm btn-secondary waves-effect waves-themed" onclick="BOARD_LIST.fnWrite()">
-							글쓰기
+							<spring:message code='TXT.WRITE'/> <!--작성하기-->  
 						</button>
 					</div>
 				</div>
@@ -112,10 +113,10 @@
 				BOARD_LIST.Initialize_viewObject();
 			}
 		};
-					
+		
 		//View Obejct Init
 		this.Initialize_viewObject = function () {
-			KpackageOBJ.selectbox.create("boardList-form", "searchBoadrType",  "/common/retrieveComCdList", {"CATEGORY":"BT", "OPTION_ALL":"Y", "OPTION_ALL_NAME": "전체"}, "code", "code_name");  
+			KpackageOBJ.selectbox.create("boardList-form", "searchBoadrType",  "/common/retrieveComCdList", {"CATEGORY":"BT", "OPTION_ALL":"Y", "OPTION_ALL_NAME": "<spring:message code='TXT.ALL'/>"}, "code", "code_name");  
 			
 			BOARD_LIST.createAUIGrid();
 			BOARD_LIST.retrieve_GridData();
@@ -133,14 +134,14 @@
 				},
 				{
 					dataField: "board_type_name"
-				  , headerText: "게시글 유형"
+				  , headerText: "<spring:message code='TXT.BOARD_TYPE'/>"  //게시글 유형
 				  , width: 100
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 				    dataField: "subject"
-				  , headerText: "제목"
+				  , headerText: "<spring:message code='TXT.SUBJECT'/>" //  제목
 				  , width: 350
 				  , style: "grid-left-text"
 				  , filter: {showIcon: true}
@@ -154,21 +155,21 @@
 				},
 				{
 				    dataField: "create_by"
-				  , headerText: "작성자"
+				  , headerText: "<spring:message code='TXT.CREATE_BY'/>" //  작성자
 				  , width: 120
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 				    dataField: "create_date"
-				  , headerText: "작성일"
+				  , headerText: "<spring:message code='TXT.CREATE_DATE'/>" //  작성일"
 				  , width: 150
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
 				},
 				{
 				    dataField: "read_count"
-				  , headerText: "조회수"
+				  , headerText: "<spring:message code='TXT.VIEW_COUNT'/>" //  조회수
 				  , width: 80
 				  , style: "grid-center-text"
 				  , filter: {showIcon: true}
@@ -204,8 +205,9 @@
 					  input_type : "U"	
 					, board_no : event.item["board_no"]
 				};
-				
-				KpackageOBJ.dialog.open('ftaNationPopup','게시판 상세','/origin/board/boardMgnt/boardMgntDetail', 1000, 700, true, JSON.stringify(params));
+
+				//게시판 상세
+				KpackageOBJ.dialog.open('ftaNationPopup',"<spring:message code='TXT.BOARD_DETAIL'/>",'/origin/board/boardMgnt/boardMgntDetail', 1000, 700, true, JSON.stringify(params));
 				
 			});
 			
@@ -222,13 +224,15 @@
 			KpackageOBJ.auiGrid.retrieve(BOARD_LIST.gridId, "/origin/board/boardMgnt/retrieveBoardMgntList", params);
 		};
 		
+		
 		//글쓰기
 		this.fnWrite = function () {
 			var params = {
 				  input_type : "I"	
 			};
 			
-			KpackageOBJ.dialog.open('ftaNationPopup','게시판 상세','/origin/board/boardMgnt/boardMgntDetail', 1000, 700, true, JSON.stringify(params));
+			//게시판 상세
+			KpackageOBJ.dialog.open('ftaNationPopup',"<spring:message code='TXT.BOARD_DETAIL'/>",'/origin/board/boardMgnt/boardMgntDetail', 1000, 700, true, JSON.stringify(params));
 		};
 		
 		
