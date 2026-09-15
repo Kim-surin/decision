@@ -1,5 +1,8 @@
 package com.kpmg.kdb.web.ts.inspection;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -158,4 +161,120 @@ public class InspectionResController extends GenericController {
 		
 		return result;
 	}
+	
+	
+	/**
+	 * 실사 대응 서류 > 소요량 명세서 다운로드
+	 * @param param
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/inspection/downloadBillOfMaterials", method = RequestMethod.POST)
+	public ResponseEntity<byte[]> retrieveBillOfMaterials(@RequestParam Map<String, Object> param) throws Exception {
+
+	    List<Map<String, Object>> list = service.retrieveBillOfMaterials(super.extendsMap(param));
+	    byte[] excelBytes = service.createBomExcel(list);
+
+	    	    String timestamp = new java.text.SimpleDateFormat("yyyyMMddHHmmssSSS").format(new java.util.Date());
+
+	    String fileName = "BillOfMaterial_" + timestamp + ".xlsx";
+	    String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+	    headers.set(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename*=UTF-8''" + encodedFileName);
+
+	    return ResponseEntity.ok().headers(headers).body(excelBytes);
+	}
+	
+	
+	
+	
+	/**
+	 * 실사 대응 서류 > 협력사확인서 목록 팝업
+	 * 
+	 * @author D.Cat
+	 * @return View Path String
+	 */
+	@RequestMapping("/inspection/cooAuditVendorCertifyDocumentPopup")
+	public String cooAuditVendorCertifyDocumentPopup(@RequestParam Map param, Model model, HttpSession session) {
+		
+		model.addAllAttributes(param);
+		return "inspection/cooAuditVendorCertifyDocumentPopup";
+	}
+	
+	/**
+	 * 실사 대응 서류 > 협력사확인서 목록 > 데이터 조회
+	 * 
+	 * @param param
+	 * @return
+	 */
+	@RequestMapping(value="/inspection/retrieveVendorCertFileList")
+	@ResponseBody
+	public Result retrieveVendorCertFileList(@RequestBody Map param) {
+		logger.debug("##### Request Type result Class : " + "retrieveVendorCertFileList ");
+		Result result = new Result();
+		try {
+			
+			result = service.retrieveVendorCertFileList(super.extendsMap(param));
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
+		}
+
+		logger.debug("##### Request Type result Class : " + "retrieveVendorCertFileList END");
+		
+		return result;
+	}
+	
+	/**
+	 * 실사 대응 서류 > 협력사확인서 목록 > 확인서 다운로드 
+	 * @param cooCertifyNo
+	 * @param vendorCode
+	 * @param divisionCode
+	 * @param companyCode
+	 * @param fileSeq
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
+    @RequestMapping(value = "/inspection/retrieveVendorCertFile")
+    public ResponseEntity<byte[]> retrieveVendorCertFile(@RequestParam Map<String, Object> param) throws UnsupportedEncodingException {
+
+        
+        Map<String, Object> resultMap = service.retrieveVendorCertFile(super.extendsMap(param));
+        
+        
+        // ext_coo_file 데이터 추출
+        byte[] fileData = (byte[]) resultMap.get("ext_coo_file");
+
+        // 파일 데이터 없을 경우
+        if (fileData == null || fileData.length == 0) {
+            return ResponseEntity.noContent().build();
+        }
+
+        // 원본 파일명 추출 (origin_file_name 우선, 없으면 file_name)
+        String originFileName = (String) resultMap.get("origin_file_name");
+        String fileName       = (String) resultMap.get("file_name");
+        String downloadName   = (originFileName != null && !originFileName.isEmpty()) ? originFileName : fileName;
+
+        // 한글 파일명 인코딩
+        String encodedFileName;
+        try {
+        	
+            encodedFileName = URLEncoder.encode(downloadName, StandardCharsets.UTF_8).replace("+", "%20");
+            
+        } catch (Exception e) {
+            encodedFileName = "download_file";
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", encodedFileName);
+        headers.setContentLength(fileData.length);
+
+        return ResponseEntity.ok().headers(headers).body(fileData);
+    }
+	
 }

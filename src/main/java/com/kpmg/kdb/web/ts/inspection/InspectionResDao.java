@@ -31,6 +31,23 @@ public interface InspectionResDao {
 	 * @return
 	 */
 	public List retrieveCooAuditDocumentDetailList(Map param);
+	
+	/**
+	 * 실사 대응 서류 > 소요량 명세서 데이터 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveBillOfMaterials(Map param);
+	
+	/**
+	 * 실사 대응 서류 > 협력사확인서 목록 > 데이터 조회
+	 * @param param
+	 * @return
+	 */
+	public List retrieveVendorCertFileList(Map param);
+	
+	
+	public Map retrieveVendorCertFile(Map param);
 }
 
 

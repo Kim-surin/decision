@@ -159,9 +159,9 @@
             <span id="cooAuditDocument_Total_count">0</span>
         </div>
 	 	<div class="d-flex justify-content-end gap-2 mb-2">
-	        <button type="button" class="btn btn-sm btn-outline-primary">판정결과 상세</button>
-	        <button type="button" class="btn btn-sm btn-outline-primary">소요부품 명세서</button>
-	        <button type="button" class="btn btn-sm btn-outline-primary">협력사 원산지 확인서</button>
+	        <button type="button" class="btn btn-sm btn-outline-primary" onclick="COO_AUDIT_DOC.determinationResultPopup()">판정결과 상세</button>
+	        <button type="button" class="btn btn-sm btn-outline-primary" onclick="COO_AUDIT_DOC.downloadBillOfMaterials()">소요부품 명세서</button>
+	        <button type="button" class="btn btn-sm btn-outline-primary" onclick="COO_AUDIT_DOC.openVendorCertifyPopup()">협력사 원산지 확인서</button>
 	    </div>
     </div>
 
@@ -185,19 +185,6 @@ var COO_AUDIT_DOC = new function() {
 
     this.createAUIGrid = function() {
         var columnLayout = [
-            {
-                dataField: "checked",
-                headerText: "선택",
-                width: 60,
-                renderer: {
-                    type: "CheckBoxEditRenderer",
-                    editable: true,
-                    checkValue: "Y",
-                    unCheckValue: "N"
-                },
-                style: "aui-center",
-                headerStyle: "aui-center"
-            },
             {
                 dataField: "yyyymm",
                 headerText: "전기월(매출)",
@@ -264,6 +251,15 @@ var COO_AUDIT_DOC = new function() {
                 style: "aui-center",
                 headerStyle: "aui-center"
             }
+            ,{dataField: "sales_no", headerText: "sales_no", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
+            ,{dataField: "sales_seq", headerText: "sales_seq", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
+            ,{dataField: "division_code", headerText: "division_code", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
+            ,{dataField: "invoice_date", headerText: "invoice_date", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
+            ,{dataField: "invoice_month", headerText: "invoice_month", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
+            ,{dataField: "customer_code", headerText: "customer_code", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
+            ,{dataField: "product_code", headerText: "product_code", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
+            ,{dataField: "fta_code", headerText: "fta_code", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
+            ,{dataField: "coo_certify_no", headerText: "coo_certify_no", width: 80, style: "aui-center", headerStyle: "aui-center", visible:false }
         ];
 
         var gridProps = {
@@ -276,7 +272,7 @@ var COO_AUDIT_DOC = new function() {
         };
 
         COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01 =
-            KpackageOBJ.auiGrid.create("oAuiGrid_COO_AUDIT_DOC_01", columnLayout, gridProps);
+            KpackageOBJ.auiGrid.create("oAuiGrid_COO_AUDIT_DOC_01", columnLayout, gridProps, "check");
 
         AUIGrid.bind(COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01, "ready", function(event) {
             var list = AUIGrid.getGridData(COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01) || [];
@@ -456,7 +452,99 @@ var COO_AUDIT_DOC = new function() {
         
     };
     
+    this.determinationResultPopup = function (){
+    	var checkItems = AUIGrid.getCheckedRowItems(COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01);
+    	
+    	if (checkItems.length === 0) {
+			alert("선택된 항목이 없습니다.");
+			return;
+		}
 
+    	var exportFlag = KpackageOBJ.object.getFormValue("COO_AUDIT_DOC-form", "export_flag");
+    	
+    	if("D" == exportFlag){
+    		COO_AUDIT_DOC.individual_domestic_origin_determination();
+    	}else{
+    		COO_AUDIT_DOC.individual_export_origin_determination();
+    	}
+    }
+    
+    
+    this.individual_export_origin_determination = function () {
+    	
+    }
+    
+    this.individual_domestic_origin_determination = function () {
+		var checkItems = AUIGrid.getCheckedRowItems(COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01);
+
+		
+		var datas = checkItems.map(function(row) {
+		        return row.item;
+		    });
+		
+		
+		var request = {
+			datas: datas,
+			mode: "domestic"
+		}
+
+		// 팝업이 닫히는 시점(onClose)에 리스트를 다시 조회한다. 보고 있던 페이지 번호도 유지한다
+		KpackageOBJ.sidepanel.openJson('aaaa', '/origin/compliance/origindetermination/originDeterminationDetail_popup', '1700px', false, request);
+	}
+    
+    <% /* 소요부품 명세서 다운로드 */%>
+    this.downloadBillOfMaterials = function (){
+    	var checkItems = AUIGrid.getCheckedRowItems(COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01);
+		
+    	if (checkItems.length === 0) {
+			alert("선택된 항목이 없습니다.");
+			return;
+		}
+    	
+    	
+    	var datas = checkItems.map(function(row) {
+	        return row.item;
+	    });
+    	
+    	var params = datas[0];
+    	params = Object.keys(params).map(function(key) {
+		             return encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+		         }).join("&");
+    	/* Toast Message*/
+        MAINPAGE.showDownloadToast("다운로드가 시작되었습니다.");
+		KpackageOBJ.ajax.doFileDownload("COO_AUDIT_DOC-form","/inspection/downloadBillOfMaterials",params);
+	    
+	}
+    
+    
+    this.openVendorCertifyPopup = function() {
+    	
+		var checkItems = AUIGrid.getCheckedRowItems(COO_AUDIT_DOC.grid_COO_AUDIT_DOC_01);
+		
+    	if (checkItems.length === 0) {
+			alert("선택된 항목이 없습니다.");
+			return;
+		}
+    	
+    	var datas = checkItems.map(function(row) {
+	        return row.item;
+	    });
+    	
+    	var params = datas[0];
+    	var sendParam = {
+    			coo_certify_no : params.coo_certify_no
+			    ,division_code : params.division_code
+			    ,company_code : params.company_code
+			    ,sales_no : params.sales_no
+			    ,sales_seq : params.sales_seq
+			    ,fta_code : params.fta_code		
+    	};
+    	
+    	sendParam = Object.keys(sendParam).map(function(key) {
+		             return encodeURIComponent(key) + "=" + encodeURIComponent(sendParam[key]);
+		         }).join("&");
+        KpackageOBJ.dialog.open("dialog_COO_AUDIT_VENDOR_CERTIFY_DOCUMENT_POPUP", "협력사 원산지 확인서", "/inspection/cooAuditVendorCertifyDocumentPopup?"+sendParam, 800, 470);
+    };
 };
 
 $(document).ready(function() {

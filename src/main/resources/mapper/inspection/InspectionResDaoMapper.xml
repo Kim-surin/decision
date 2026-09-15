@@ -156,6 +156,13 @@
 	        , sd.delivery_customer_code
 	        , cu.customer_name AS delivery_customer_name
 	        , SUBSTR(sm.invoice_date, 1, 6) AS yyyymm
+	        , cld.division_code
+	        , cld.company_code
+	        , sm.invoice_date
+	        , SUBSTR(sm.invoice_date, 1, 6) AS invoice_month
+			, sm.customer_code
+			, sd.product_code
+			, cld.coo_certify_no
 	    FROM coo_certify_ledger_dtl cld
 	    INNER JOIN item_mst im
 	            ON im.item_code = cld.product_code
@@ -189,4 +196,381 @@
 	      </if>
 	    ORDER BY im.item_code, fr.fta_code
 	</select>
+	
+	
+	<select id="retrieveBillOfMaterials" parameterType="map" resultType="map">
+		SELECT ccld.customer_product_code
+		     , ccld.product_code
+		     , im.item_name AS product_name
+		     , ccld.product_hs_code
+		     , fm.fta_name
+		     , ccld.item_code
+		     , im2.item_name AS item_name
+		     , ccld.item_hs_code
+		     , ccld.origin
+		     , im2.unit
+		     , ccld.item_requirement_qty
+		     , ccld.item_input_price
+		     , ccld.item_input_amount
+		     , ccld.prod_input_amount
+		     , CASE
+		           WHEN ccld.prod_input_amount = 0 THEN NULL
+		           ELSE ccld.item_input_amount / ccld.prod_input_amount
+		       END AS item_rate
+		     , ccld.prod_origin_amount
+		     , ccld.prod_nonorigin_amount
+		     , ccld.exwork_amount
+		     , ccld.fob_amount
+		     , LTRIM(SUBSTR(ccld.ext_coo_key, 1, 50)) AS ext_coo_certify_no
+		     , LTRIM(SUBSTR(ccld.ext_coo_key, 51, 20)) AS vendor_code
+		     , v.vendor_name
+		     , v.tel_no
+		     , LTRIM(SUBSTR(ccld.ext_coo_key, 71, 50)) AS division_code
+		     , d.division_name
+		FROM (
+		    SELECT ccld.company_code
+		         , ccld.fta_code
+		         , COALESCE(sd.customer_item_code, ccld.product_code) AS customer_product_code
+		         , ccld.product_code
+		         , cfm.hs_code AS product_hs_code
+		         , cfm.exwork_amount
+		         , cfm.fob_amount
+		         , cfm.inarea_amount + cfm.outarea_amount AS prod_input_amount
+		         , cfm.inarea_amount AS prod_origin_amount
+		         , cfm.outarea_amount AS prod_nonorigin_amount
+		         , cfd.item_code
+		         , COALESCE(cfd.hs_code, '') AS item_hs_code
+		         , CASE
+		               WHEN cfd.outarea_qty = 0 AND cfd.inarea_qty > 0 THEN 'KR'
+		               ELSE 'NON-KR'
+		           END AS origin
+		         , cfd.requirement_qty AS item_requirement_qty
+		         , CASE
+		               WHEN cfd.requirement_qty = 0 THEN NULL
+		               ELSE cfd.input_amount / cfd.requirement_qty
+		           END AS item_input_price
+		         , cfd.input_amount AS item_input_amount
+		         , CASE
+		               WHEN cfd.inarea_qty > 0 THEN
+		                    COALESCE(
+		                        (
+		                            SELECT LPAD(eccm.coo_certify_no, 50, ' ')
+		                                 || LPAD(eccm.vendor_code, 20, ' ')
+		                                 || LPAD(eccm.division_code, 20, ' ')
+		                            FROM ext_coo_certify_dtl eccd
+		                            INNER JOIN ext_coo_certify_mst eccm
+		                                    ON eccm.coo_certify_no = eccd.coo_certify_no
+		                                   AND eccm.vendor_code = eccd.vendor_code
+		                                   AND eccm.division_code = eccd.division_code
+		                                   AND eccm.company_code = eccd.company_code
+		                                   AND eccm.submit_status = '4'
+		                            INNER JOIN coo_division_v cd
+		                                    ON cd.division_code = eccd.division_code
+		                                   AND cd.company_code = eccd.company_code
+		                            LEFT OUTER JOIN po_ledger pl
+		                                         ON pl.vendor_code = eccd.vendor_code
+		                                        AND pl.division_code = CASE
+		                                                                   WHEN eccd.apply_type = 'M' THEN cd.coo_receipt_division_code
+		                                                                   WHEN eccd.apply_type = 'A' THEN pl.division_code
+		                                                                   ELSE pl.division_code
+		                                                               END
+		                                        AND pl.company_code = cd.company_code
+		                                        AND pl.item_code = eccd.item_code
+		                                        AND 1 = CASE
+		                                                    WHEN eccm.coo_certify_type = 'N'
+		                                                     AND eccd.warehousing_no = pl.warehousing_no
+		                                                     AND eccd.warehousing_seq = pl.seq THEN 1
+		                                                    WHEN eccm.coo_certify_type = 'C'
+		                                                     AND eccd.apply_date <![CDATA[<=]]> pl.warehousing_date
+		                                                     AND eccd.end_date <![CDATA[>=]]> pl.warehousing_date THEN 1
+		                                                    ELSE 0
+		                                                END
+		                            WHERE eccd.coo_yn = 'Y'
+		                              AND eccd.item_code = cfd.item_code
+		                              AND eccd.company_code = cfd.company_code
+		                              AND eccd.division_code = cfd.division_code
+		                              AND eccd.fta_code = cfd.fta_code
+		                              AND 1 = CASE
+		                                          WHEN eccm.coo_certify_type = 'C'
+		                                           AND ccld.issue_date <![CDATA[>=]]> eccd.apply_date
+		                                           AND ccld.issue_date <![CDATA[<=]]> eccd.end_date THEN 1
+		                                          WHEN eccm.coo_certify_type = 'N'
+		                                           AND pl.warehousing_no IS NOT NULL THEN 1
+		                                          ELSE 0
+		                                      END
+		                            LIMIT 1
+		                        ),
+		                        (
+		                            SELECT LPAD(eccm.coo_certify_no, 50, ' ')
+		                                 || LPAD(eccm.vendor_code, 20, ' ')
+		                                 || LPAD(eccm.division_code, 20, ' ')
+		                            FROM ext_coo_certify_dtl eccd
+		                            INNER JOIN ext_coo_certify_mst eccm
+		                                    ON eccm.coo_certify_no = eccd.coo_certify_no
+		                                   AND eccm.vendor_code = eccd.vendor_code
+		                                   AND eccm.division_code = eccd.division_code
+		                                   AND eccm.company_code = eccd.company_code
+		                                   AND eccm.submit_status = '4'
+		                            INNER JOIN coo_division_v cd
+		                                    ON cd.division_code = eccd.division_code
+		                                   AND cd.company_code = eccd.company_code
+		                            LEFT OUTER JOIN po_ledger pl
+		                                         ON pl.vendor_code = eccd.vendor_code
+		                                        AND pl.division_code = CASE
+		                                                                   WHEN eccd.apply_type = 'M' THEN cd.coo_receipt_division_code
+		                                                                   WHEN eccd.apply_type = 'A' THEN pl.division_code
+		                                                                   ELSE pl.division_code
+		                                                               END
+		                                        AND pl.company_code = cd.company_code
+		                                        AND pl.item_code = eccd.item_code
+		                                        AND 1 = CASE
+		                                                    WHEN eccm.coo_certify_type = 'N'
+		                                                     AND eccd.warehousing_no = pl.warehousing_no
+		                                                     AND eccd.warehousing_seq = pl.seq THEN 1
+		                                                    WHEN eccm.coo_certify_type = 'C'
+		                                                     AND eccd.apply_date <![CDATA[<=]]> pl.warehousing_date
+		                                                     AND eccd.end_date <![CDATA[>=]]> pl.warehousing_date THEN 1
+		                                                    ELSE 0
+		                                                END
+		                            WHERE eccd.coo_yn = 'Y'
+		                              AND eccd.item_code = cfd.item_code
+		                              AND eccd.company_code = cfd.company_code
+		                              AND eccd.fta_code = cfd.fta_code
+		                              AND 1 = CASE
+		                                          WHEN eccm.coo_certify_type = 'C'
+		                                           AND ccld.issue_date <![CDATA[>=]]> eccd.apply_date
+		                                           AND ccld.issue_date <![CDATA[<=]]> eccd.end_date THEN 1
+		                                          WHEN eccm.coo_certify_type = 'N'
+		                                           AND pl.warehousing_no IS NOT NULL THEN 1
+		                                          ELSE 0
+		                                      END
+		                            LIMIT 1
+		                        )
+		                    )
+		               ELSE
+		                    COALESCE(
+		                        (
+		                            SELECT LPAD('', 50, ' ')
+		                                 || LPAD(pl.vendor_code, 20, ' ')
+		                                 || LPAD(pl.division_code, 20, ' ')
+		                            FROM po_ledger pl
+		                            WHERE pl.warehousing_date <![CDATA[<=]]> ccld.issue_date
+		                              AND pl.company_code = cfd.company_code
+		                              AND pl.item_code = cfd.item_code
+		                            ORDER BY pl.warehousing_date DESC
+		                            LIMIT 1
+		                        ),
+		                        (
+		                            SELECT LPAD('', 50, ' ')
+		                                 || LPAD(pl.vendor_code, 20, ' ')
+		                                 || LPAD(pl.division_code, 20, ' ')
+		                            FROM po_ledger pl
+		                            WHERE pl.warehousing_date BETWEEN ccld.apply_date AND ccld.end_date
+		                              AND pl.company_code = cfd.company_code
+		                              AND pl.item_code = cfd.item_code
+		                            ORDER BY pl.warehousing_date DESC
+		                            LIMIT 1
+		                        )
+		                    )
+		           END AS ext_coo_key
+		    FROM coo_certify_ledger ccl
+		    INNER JOIN coo_certify_ledger_dtl ccld
+		            ON ccld.coo_certify_no = ccl.coo_certify_no
+		           AND ccld.division_code = ccl.division_code
+		           AND ccld.company_code = ccl.company_code
+		    INNER JOIN coo_fcr_mst cfm
+		            ON cfm.coo_certify_no = ccld.coo_certify_no
+		           AND cfm.sales_no = ccld.sales_no
+		           AND cfm.sales_seq = ccld.sales_seq
+		           AND cfm.fta_code = ccld.fta_code
+		           AND cfm.division_code = ccld.division_code
+		           AND cfm.company_code = ccld.company_code
+		    INNER JOIN coo_fcr_dtl cfd
+		            ON cfd.coo_certify_no = cfm.coo_certify_no
+		           AND cfd.sales_no = cfm.sales_no
+		           AND cfd.sales_seq = cfm.sales_seq
+		           AND cfd.fta_code = cfm.fta_code
+		           AND cfd.division_code = cfm.division_code
+		           AND cfd.company_code = cfm.company_code
+		    INNER JOIN sales_dtl sd
+		            ON sd.sales_no = ccld.sales_no
+		           AND sd.sales_seq = ccld.sales_seq
+		           AND sd.division_code = ccld.division_code
+		           AND sd.company_code = ccld.company_code
+		    WHERE ccl.coo_certify_no = #{coo_certify_no}
+		      AND ccl.division_code = #{division_code}
+		      AND ccld.product_code = #{product_code}
+		      AND ccld.fta_code = #{fta_code}
+		      AND ccld.sales_no = #{sales_no}
+		      AND ccld.sales_seq = #{sales_seq}::bigint
+		) ccld
+		LEFT OUTER JOIN item_mst im
+		             ON im.item_code = ccld.product_code
+		            AND im.company_code = ccld.company_code
+		LEFT OUTER JOIN item_mst im2
+		             ON im2.item_code = ccld.item_code
+		            AND im2.company_code = ccld.company_code
+		LEFT OUTER JOIN vendor v
+		             ON v.vendor_code = LTRIM(SUBSTR(ccld.ext_coo_key, 51, 20))
+		            AND v.company_code = ccld.company_code
+		LEFT OUTER JOIN division d
+		             ON d.division_code = LTRIM(SUBSTR(ccld.ext_coo_key, 71, 50))
+		            AND d.company_code = ccld.company_code
+		INNER JOIN fta_master fm
+		        ON fm.fta_code = ccld.fta_code
+		       AND fm.company_code = ccld.company_code
+		       AND fm.delete_yn <![CDATA[ <> ]]> 'Y'
+		ORDER BY ccld.item_input_amount DESC
+	</select>
+	
+	<select id="retrieveVendorCertFileList" parameterType="map" resultType="map">
+    <![CDATA[
+	    SELECT im.item_code AS item_code
+	         , im.item_name AS item_name
+	         , v.vendor_code AS vendor_code
+	         , v.vendor_name AS vendor_name
+	         , ecm.coo_certify_no AS coo_certify_no
+	         , ecf.file_name AS file_name
+	         , ecf.origin_file_name AS origin_file_name
+	         , ecf.file_path AS file_path
+	         , ecf.file_seq AS file_seq
+	         , ecm.division_code AS division_code
+	         , ecm.submit_status AS submit_status
+	    FROM coo_certify_ledger ccl
+	    INNER JOIN coo_certify_ledger_dtl cld
+	        ON cld.coo_certify_no = ccl.coo_certify_no
+	       AND cld.division_code = ccl.division_code
+	       AND cld.company_code = ccl.company_code
+	    INNER JOIN sales_mst sm
+	        ON sm.sales_no = cld.sales_no
+	       AND sm.division_code = cld.division_code
+	       AND sm.company_code = cld.company_code
+	    INNER JOIN coo_fcr_mst fm
+	        ON fm.coo_certify_no = cld.coo_certify_no
+	       AND fm.sales_no = cld.sales_no
+	       AND fm.sales_seq = cld.sales_seq
+	       AND fm.division_code = cld.division_code
+	       AND fm.company_code = cld.company_code
+	       AND fm.fta_code = cld.fta_code
+	    INNER JOIN coo_fcr_dtl fd
+	        ON fd.coo_certify_no = fm.coo_certify_no
+	       AND fd.sales_no = fm.sales_no
+	       AND fd.sales_seq = fm.sales_seq
+	       AND fd.division_code = fm.division_code
+	       AND fd.company_code = fm.company_code
+	       AND fd.fta_code = fm.fta_code
+	    INNER JOIN material_inv_bal mib
+	        ON mib.item_code = fd.item_code
+	       AND mib.company_code = fm.company_code
+	       AND mib.yyyymm = (
+	            SELECT MAX(mib2.yyyymm)
+	            FROM material_inv_bal mib2
+	            WHERE mib2.item_code = fd.item_code
+	              AND mib2.division_code = mib.division_code
+	              AND mib2.company_code = fm.company_code
+	              AND mib2.yyyymm <= substring(sm.invoice_date, 1, 6)
+	              AND (mib2.issue_qty + mib2.extra_issue_qty) > 0
+	       )
+	    INNER JOIN po_ledger pl
+	        ON pl.item_code = mib.item_code
+	       AND pl.company_code = mib.company_code
+	       AND pl.warehousing_date BETWEEN
+	            CASE
+	                WHEN (coalesce(mib.initial_qty, 0) = 0 AND coalesce(mib.input_qty, 0) > 0)
+	                  OR (coalesce(mib.initial_qty, 0) > 0 AND coalesce(mib.input_qty, 0) > 0)
+	                THEN to_char(to_date(mib.yyyymm, 'yyyymm'), 'yyyymm') || '01'
+	                WHEN coalesce(mib.initial_qty, 0) > 0 AND coalesce(mib.input_qty, 0) = 0
+	                THEN to_char(
+	                        to_date(mib.yyyymm, 'yyyymm')
+	                        - (interval '1 month' * greatest(coalesce(mib.aging_period, 0), 0)),
+	                        'yyyymmdd'
+	                     )
+	            END
+	        AND
+	            CASE
+	                WHEN (coalesce(mib.initial_qty, 0) = 0 AND coalesce(mib.input_qty, 0) > 0)
+	                  OR (coalesce(mib.initial_qty, 0) > 0 AND coalesce(mib.input_qty, 0) > 0)
+	                THEN to_char(
+	                        (date_trunc('month', to_date(mib.yyyymm, 'yyyymm')) + interval '1 month - 1 day')::date,
+	                        'yyyymmdd'
+	                     )
+	                WHEN coalesce(mib.initial_qty, 0) > 0 AND coalesce(mib.input_qty, 0) = 0
+	                THEN to_char(
+	                        (date_trunc(
+	                            'month',
+	                            to_date(mib.yyyymm, 'yyyymm')
+	                            - (interval '1 month' * greatest(coalesce(mib.aging_period, 0), 0))
+	                        ) + interval '1 month - 1 day')::date,
+	                        'yyyymmdd'
+	                     )
+	            END
+	    INNER JOIN coo_division_v d
+	        ON d.division_code = pl.division_code
+	       AND d.company_code = pl.company_code
+	    INNER JOIN ext_coo_certify_dtl ecd
+	        ON ecd.item_code = pl.item_code
+	       AND ecd.company_code = pl.company_code
+	       AND ecd.vendor_code = pl.vendor_code
+	       AND ecd.division_code = CASE
+	                                   WHEN ecd.apply_type = 'A' THEN ecd.division_code
+	                                   ELSE d.coo_receipt_division_code
+	                               END
+	    INNER JOIN ext_coo_certify_mst ecm
+	        ON ecm.coo_certify_no = ecd.coo_certify_no
+	       AND ecm.vendor_code = ecd.vendor_code
+	       AND ecm.company_code = ecd.company_code
+	       AND ecm.division_code = ecd.division_code
+	       AND ecm.submit_status = '4'
+	       AND (
+	            (ecm.coo_certify_type = 'C' AND pl.warehousing_date BETWEEN ecd.apply_date AND ecd.end_date)
+	            OR
+	            (ecm.coo_certify_type = 'N' AND pl.warehousing_no = ecd.warehousing_no AND pl.seq = ecd.warehousing_seq)
+	       )
+	    INNER JOIN ext_coo_certify_file ecf
+	        ON ecf.coo_certify_no = ecm.coo_certify_no
+	       AND ecf.vendor_code = ecm.vendor_code
+	       AND ecf.division_code = ecm.division_code
+	       AND ecf.company_code = ecm.company_code
+	    INNER JOIN vendor v
+	        ON v.vendor_code = ecm.vendor_code
+	       AND v.company_code = ecm.company_code
+	    INNER JOIN item_mst im
+	        ON im.item_code = pl.item_code
+	       AND im.company_code = pl.company_code
+	    WHERE ccl.coo_certify_no = #{coo_certify_no}
+	      AND ccl.division_code = #{division_code}
+	      AND ccl.company_code = #{company_code}
+	      AND cld.sales_no = #{sales_no}
+	      AND cld.sales_seq = CAST(#{sales_seq} AS bigint)
+	      AND cld.fta_code = #{fta_code}
+	    GROUP BY im.item_code
+	           , im.item_name
+	           , v.vendor_code
+	           , v.vendor_name
+	           , ecm.coo_certify_no
+	           , ecf.file_name
+	           , ecf.origin_file_name
+	           , ecf.file_path
+	           , ecf.file_seq
+	           , ecm.division_code
+	           , ecm.submit_status
+	    ]]>
+	</select>
+	
+	<select id="retrieveVendorCertFile" parameterType="map" resultType="map">
+    	<![CDATA[
+			SELECT file_name
+			      ,file_path
+			      ,origin_file_name
+			      ,file_seq
+			      ,ext_coo_file
+			  FROM ext_coo_certify_file
+			 WHERE file_seq       = CAST(#{file_seq} AS smallint)
+			   AND company_code   = #{company_code}
+			   AND division_code  = #{division_code}
+			   AND vendor_code    = #{vendor_code}
+			   AND coo_certify_no = #{coo_certify_no}
+    	]]>
+    </select>
+    
 </mapper>
