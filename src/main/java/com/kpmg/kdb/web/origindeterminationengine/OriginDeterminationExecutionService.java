@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.core.procedurelog.ProcedureLogService;
 import com.kpmg.kdb.web.origindeterminationengine.CreateFcrService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstDecisionUpdateRow;
@@ -42,25 +43,41 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	@Autowired
 	private ItemNationService itemNationService;
 
+	@Autowired
+	private ProcedureLogService procedureLogService;
+
 	// 원산지 판정 1건 실행. 예외를 흡수하지 않고 그대로 던진다 — 배치 전체 중단 없이 넘기면서도 그 대상을 판정실패로
 	// 표시하는 책임은 호출자(OriginDecisionPipeline)에 있다. productCodes: null/빈 리스트면 salesNo 전체(월 판정) 대상.
+	// AS-IS PKG99_COO_DECISION/PKG99_COO_CTC_DECISION은 이 메서드가 호출될 때마다(파이프라인 내 SALES_NO 1건마다)
+	// 자체 BATCH_LOG를 새로 열었다 — procedure_id는 mode.getProcedureName()으로 두 프로시저를 그대로 구분한다.
 	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
 		OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
 
-		List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
-				productCodes);
-		boolean hasCommodity = containsAny(assetTypes, "M", "R", "B");
-		boolean hasProduct = containsAny(assetTypes, "P", "H");
+		long logId = procedureLogService.start(mode.getProcedureName(), companyCode,
+				"companyCode=" + companyCode + ", divisionCode=" + divisionCode + ", salesNo=" + salesNo);
+		try {
+			List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
+					productCodes);
+			boolean hasCommodity = containsAny(assetTypes, "M", "R", "B");
+			boolean hasProduct = containsAny(assetTypes, "P", "H");
 
-		String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
+			String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
 
-		if (hasCommodity) {
-			decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
-		}
+			if (hasCommodity) {
+				decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+				procedureLogService.detail(logId, "상품(M,R,B) 원산지 판정 완료");
+			}
 
-		if (hasProduct) {
-			decideProductOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+			if (hasProduct) {
+				decideProductOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+				procedureLogService.detail(logId, "제품(P,H) 원산지 판정 완료");
+			}
+
+			procedureLogService.success(logId, "정상 종료");
+		} catch (RuntimeException e) {
+			procedureLogService.error(logId, "DBMS ERROR", e.getMessage());
+			throw e;
 		}
 	}
 

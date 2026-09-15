@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.form.Result;
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.core.procedurelog.ProcedureLogService;
 import com.kpmg.kdb.web.origindetermination.dto.DomesticOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.ExportOriginDeterminationExecuteRequestDto;
 import com.kpmg.kdb.web.origindetermination.dto.MonthlyOriginDeterminationExecuteRequestDto;
@@ -35,6 +36,12 @@ public class OriginDeterminationService extends GeneralService {
 
 	@Autowired
 	private MonthlyDecisionService monthlyDecisionService;
+
+	@Autowired
+	private ProcedureLogService procedureLogService;
+
+	/** AS-IS MONTHLY_DECISION_PROC의 PROCEDURE_ID. 내수/수출/월 판정 모두 이 하나의 프로시저로 처리됐다. */
+	private static final String PROCEDURE_ID_MONTHLY_DECISION_PROC = "MONTHLY_DECISION_PROC";
 
 	public Result retrieveDomesticOriginDetermination(Map param) throws Exception {
 		Result result = new Result();
@@ -209,6 +216,9 @@ public class OriginDeterminationService extends GeneralService {
 	public Result executeDomesticOriginDetermination(DomesticOriginDeterminationExecuteRequestDto param) throws Exception {
 		Result result = new Result();
 
+		long logId = procedureLogService.start(PROCEDURE_ID_MONTHLY_DECISION_PROC, param.getCompany_code(),
+				"내수 원산지 판정. companyCode=" + param.getCompany_code() + ", lineCount="
+						+ (param.getDatas() == null ? 0 : param.getDatas().size()));
 		try {
 			Map<String, VirtualSalesGenerationParams> groupsByKey = new LinkedHashMap<>();
 
@@ -246,8 +256,12 @@ public class OriginDeterminationService extends GeneralService {
 			result.setValue(new BulkDecisionResult(groupCount, targets, failedTargets));
 			result.setSuccess(true);
 			result.setMessage(DEFAULT_MESSAGE_OK);
+			procedureLogService.detail(logId, "그룹 " + groupCount + "건 처리. 대상 " + targets.size() + "건, 실패 "
+					+ failedTargets.size() + "건");
+			procedureLogService.success(logId, "정상 종료");
 		} catch (Exception e) {
 			e.printStackTrace();
+			procedureLogService.error(logId, "DBMS ERROR", e.getMessage());
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
 		}
 
@@ -263,6 +277,9 @@ public class OriginDeterminationService extends GeneralService {
 	public Result executeExportOriginDetermination(ExportOriginDeterminationExecuteRequestDto param) throws Exception {
 		Result result = new Result();
 
+		long logId = procedureLogService.start(PROCEDURE_ID_MONTHLY_DECISION_PROC, param.getCompany_code(),
+				"수출 원산지 판정. companyCode=" + param.getCompany_code() + ", lineCount="
+						+ (param.getDatas() == null ? 0 : param.getDatas().size()));
 		try {
 			List<ExportDecisionTarget> targets = new ArrayList<>();
 
@@ -276,8 +293,12 @@ public class OriginDeterminationService extends GeneralService {
 			result.setValue(bulkResult);
 			result.setSuccess(true);
 			result.setMessage(DEFAULT_MESSAGE_OK);
+			procedureLogService.detail(logId, "대상 " + bulkResult.getTargets().size() + "건, 실패 "
+					+ bulkResult.getFailedTargets().size() + "건");
+			procedureLogService.success(logId, "정상 종료");
 		} catch (Exception e) {
 			e.printStackTrace();
+			procedureLogService.error(logId, "DBMS ERROR", e.getMessage());
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
 		}
 
@@ -291,6 +312,9 @@ public class OriginDeterminationService extends GeneralService {
 	public Result executeMonthlyOriginDetermination(MonthlyOriginDeterminationExecuteRequestDto param) throws Exception {
 		Result result = new Result();
 
+		long logId = procedureLogService.start(PROCEDURE_ID_MONTHLY_DECISION_PROC, param.getCompany_code(),
+				"월 원산지 판정. companyCode=" + param.getCompany_code() + ", fromDate=" + param.getFrom_date()
+						+ ", toDate=" + param.getTo_date());
 		try {
 			int groupCount = 0;
 			List<SalesTarget> targets = new ArrayList<>();
@@ -306,13 +330,19 @@ public class OriginDeterminationService extends GeneralService {
 				groupCount += monthResult.getGroupCount();
 				targets.addAll(monthResult.getTargets());
 				failedTargets.addAll(monthResult.getFailedTargets());
+
+				procedureLogService.detail(logId, "매출년월 " + yyyymm + " 처리. 그룹 " + monthResult.getGroupCount()
+						+ "건, 대상 " + monthResult.getTargets().size() + "건, 실패 "
+						+ monthResult.getFailedTargets().size() + "건");
 			}
 
 			result.setValue(new BulkDecisionResult(groupCount, targets, failedTargets));
 			result.setSuccess(true);
 			result.setMessage(DEFAULT_MESSAGE_OK);
+			procedureLogService.success(logId, "정상 종료");
 		} catch (Exception e) {
 			e.printStackTrace();
+			procedureLogService.error(logId, "DBMS ERROR", e.getMessage());
 			result = super.getResult(false, "MSG_UNSPECIFIED_ERROR", new Object[] {});
 		}
 

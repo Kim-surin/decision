@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.core.procedurelog.ProcedureLogService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityRequest;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
@@ -64,88 +65,114 @@ public class CreateFcrService extends GeneralService {
 	@Autowired
 	private CreateFcrReferenceDataService referenceDataService;
 
+	@Autowired
+	private ProcedureLogService procedureLogService;
+
+	private static final String PROCEDURE_ID_CREATE_FCR = "CREATE_FCR";
+
 	// productCodes: null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상.
 	// 반환값 "semisuccess"는 BOM 없는 제품이 있어 나머지만 진행하고 해당 제품은 FCR_RESULT에 BOM_NOT_FOUND로 명시 기록했다는 뜻.
+	// AS-IS CREATE_FCR은 이 메서드가 호출될 때마다(파이프라인 내 SALES_NO 1건마다) 자체 BATCH_LOG를 새로 열었다 —
+	// 그 granularity를 그대로 따라 호출마다 procedure_log_mst 1건을 생성한다. 예외는 로그만 남기고 그대로
+	// 다시 던진다(호출자인 OriginDecisionPipeline.forEachTarget이 판정실패 처리 책임을 갖는다).
 	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam,
 			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);
 
-		SalesInvoiceHeader header = dao.selectSalesInvoiceHeader(companyCode, divisionCode, salesNo);
-		String exportFlag = header.getExportFlag();
-		String invoiceDate = header.getInvoiceDate();
-		String yyyymm = invoiceDate.substring(0, 6);
-		String bomPreviousYyyymm = minusMonthsYyyymm(invoiceDate, 60);
+		long logId = procedureLogService.start(PROCEDURE_ID_CREATE_FCR, companyCode,
+				"companyCode=" + companyCode + ", divisionCode=" + divisionCode + ", salesNo=" + salesNo
+						+ ", bomType=" + bomTypeParam);
+		try {
+			SalesInvoiceHeader header = dao.selectSalesInvoiceHeader(companyCode, divisionCode, salesNo);
+			String exportFlag = header.getExportFlag();
+			String invoiceDate = header.getInvoiceDate();
+			String yyyymm = invoiceDate.substring(0, 6);
+			String bomPreviousYyyymm = minusMonthsYyyymm(invoiceDate, 60);
 
-		String bomType;
-		if ("X".equals(bomTypeParam)) {
-			long mfCnt = dao.countIntermediateApplyFcrMst(companyCode, divisionCode, salesNo);
-			bomType = mfCnt > 0 ? "MF" : "F";
-		} else {
-			bomType = bomTypeParam;
-		}
-
-		List<SalesDtlBomTarget> missingBomTargets = checkBomAvailability(dao, companyCode, divisionCode, salesNo,
-				bomType, bomPreviousYyyymm, yyyymm, productCodes);
-
-		dao.deleteFcrDtl(salesNo, divisionCode, companyCode, productCodes);
-		dao.deleteFcrResult(salesNo, divisionCode, companyCode, productCodes);
-		dao.deleteFcrMst(salesNo, divisionCode, companyCode, productCodes);
-
-		Map<String, String> hsCodeCache = new LinkedHashMap<>();
-		Map<String, BigDecimal> incotermsCache = new LinkedHashMap<>();
-
-		// BOM이 있는 제품만 selectDomesticSalesLines/selectExportSalesLines(BOM_STATUS<>'1')를 통해
-		// 정상적으로 FCR_MST/FCR_DTL이 생성된다. BOM이 없는 제품은 아래에서 별도로 BOM_NOT_FOUND 오류를 남긴다.
-		if ("D".equals(exportFlag)) {
-			createDomesticFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
-					hsCodeCache, incotermsCache);
-		} else {
-			createExportFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
-					hsCodeCache, incotermsCache);
-		}
-
-		if (!missingBomTargets.isEmpty()) {
-			insertBomNotFoundResults(dao, companyCode, divisionCode, salesNo, exportFlag, bomType, missingBomTargets,
-					hsCodeCache);
-		}
-
-		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
-		List<ProductFcrDtlSourceRow> productRows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode,
-				productCodes);
-
-		List<ItemOriginRateCriteria> combinedOriginRateLookups = new ArrayList<>(leafRows.size() + productRows.size());
-		for (BomLeafRow leaf : leafRows) {
-			combinedOriginRateLookups.add(new ItemOriginRateCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(),
-					leaf.getItemCode(), leaf.getFtaCode(), invoiceDate));
-		}
-		for (ProductFcrDtlSourceRow src : productRows) {
-			// 부산물(B)은 원산지비율 조회가 필요 없다(항상 100%)
-			if (!"B".equals(src.getProductAssetsType())) {
-				combinedOriginRateLookups.add(new ItemOriginRateCriteria(src.getCompanyCode(), src.getProdDivisionCode(),
-						src.getProductCode(), src.getFtaCode(), invoiceDate));
+			String bomType;
+			if ("X".equals(bomTypeParam)) {
+				long mfCnt = dao.countIntermediateApplyFcrMst(companyCode, divisionCode, salesNo);
+				bomType = mfCnt > 0 ? "MF" : "F";
+			} else {
+				bomType = bomTypeParam;
 			}
+
+			List<SalesDtlBomTarget> missingBomTargets = checkBomAvailability(dao, companyCode, divisionCode, salesNo,
+					bomType, bomPreviousYyyymm, yyyymm, productCodes);
+			procedureLogService.detail(logId, "1. BOM 존재여부 확인 완료. BOM없음 " + missingBomTargets.size() + "건");
+
+			dao.deleteFcrDtl(salesNo, divisionCode, companyCode, productCodes);
+			dao.deleteFcrResult(salesNo, divisionCode, companyCode, productCodes);
+			dao.deleteFcrMst(salesNo, divisionCode, companyCode, productCodes);
+			procedureLogService.detail(logId, "2. 기존 FCR_DTL/FCR_RESULT/FCR_MST 삭제 완료");
+
+			Map<String, String> hsCodeCache = new LinkedHashMap<>();
+			Map<String, BigDecimal> incotermsCache = new LinkedHashMap<>();
+
+			// BOM이 있는 제품만 selectDomesticSalesLines/selectExportSalesLines(BOM_STATUS<>'1')를 통해
+			// 정상적으로 FCR_MST/FCR_DTL이 생성된다. BOM이 없는 제품은 아래에서 별도로 BOM_NOT_FOUND 오류를 남긴다.
+			if ("D".equals(exportFlag)) {
+				createDomesticFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
+						hsCodeCache, incotermsCache);
+			} else {
+				createExportFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
+						hsCodeCache, incotermsCache);
+			}
+			procedureLogService.detail(logId, "3. FCR_MST 생성 완료 (exportFlag=" + exportFlag + ")");
+
+			if (!missingBomTargets.isEmpty()) {
+				insertBomNotFoundResults(dao, companyCode, divisionCode, salesNo, exportFlag, bomType, missingBomTargets,
+						hsCodeCache);
+				procedureLogService.detail(logId,
+						"3-1. BOM 미존재 대상 FCR_RESULT(BOM_NOT_FOUND) 기록 완료. " + missingBomTargets.size() + "건");
+			}
+
+			List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
+			List<ProductFcrDtlSourceRow> productRows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode,
+					productCodes);
+
+			List<ItemOriginRateCriteria> combinedOriginRateLookups = new ArrayList<>(leafRows.size() + productRows.size());
+			for (BomLeafRow leaf : leafRows) {
+				combinedOriginRateLookups.add(new ItemOriginRateCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(),
+						leaf.getItemCode(), leaf.getFtaCode(), invoiceDate));
+			}
+			for (ProductFcrDtlSourceRow src : productRows) {
+				// 부산물(B)은 원산지비율 조회가 필요 없다(항상 100%)
+				if (!"B".equals(src.getProductAssetsType())) {
+					combinedOriginRateLookups.add(new ItemOriginRateCriteria(src.getCompanyCode(), src.getProdDivisionCode(),
+							src.getProductCode(), src.getFtaCode(), invoiceDate));
+				}
+			}
+			Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
+			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache = itemOriginRateService
+					.prefetchNonCertifiedOriginSummaries(combinedOriginRateLookups, originRatePrecheckCache);
+
+			List<ItemPriceCriteria> priceLookups = new ArrayList<>(leafRows.size());
+			for (BomLeafRow leaf : leafRows) {
+				priceLookups.add(new ItemPriceCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
+						leaf.getFtaCode(), invoiceDate));
+			}
+			Map<String, PoLedgerPriceRow> purchasePriceCache = itemPriceService.prefetchRecentPurchasePrices(priceLookups);
+			Map<String, StandardCostRow> standardCostCache = itemPriceService.prefetchStandardCostByDivision(priceLookups);
+			Map<String, MaterialBalanceTierRow> divisionBalanceCache = itemPriceService
+					.prefetchDivisionBalanceForPrice(priceLookups);
+
+			createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache,
+					divisionBalanceCache, purchasePriceCache, standardCostCache);
+			createProductFcrDtl(dao, productRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
+			procedureLogService.detail(logId, "3-2~3-6. FCR_DTL 생성 완료. BOM자재 " + leafRows.size() + "건, 제품/부산물 "
+					+ productRows.size() + "건");
+
+			dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
+			procedureLogService.detail(logId, "3-7. FCR_MST 역내/역외 산재료비금액 UPDATE 완료");
+
+			String resultStatus = missingBomTargets.isEmpty() ? "successed" : "semisuccess";
+			procedureLogService.success(logId, resultStatus);
+			return resultStatus;
+		} catch (RuntimeException e) {
+			procedureLogService.error(logId, "DBMS ERROR", e.getMessage());
+			throw e;
 		}
-		Map<String, OriginRatePrecheck> originRatePrecheckCache = new LinkedHashMap<>();
-		Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache = itemOriginRateService
-				.prefetchNonCertifiedOriginSummaries(combinedOriginRateLookups, originRatePrecheckCache);
-
-		List<ItemPriceCriteria> priceLookups = new ArrayList<>(leafRows.size());
-		for (BomLeafRow leaf : leafRows) {
-			priceLookups.add(new ItemPriceCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
-					leaf.getFtaCode(), invoiceDate));
-		}
-		Map<String, PoLedgerPriceRow> purchasePriceCache = itemPriceService.prefetchRecentPurchasePrices(priceLookups);
-		Map<String, StandardCostRow> standardCostCache = itemPriceService.prefetchStandardCostByDivision(priceLookups);
-		Map<String, MaterialBalanceTierRow> divisionBalanceCache = itemPriceService
-				.prefetchDivisionBalanceForPrice(priceLookups);
-
-		createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache,
-				divisionBalanceCache, purchasePriceCache, standardCostCache);
-		createProductFcrDtl(dao, productRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
-
-		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
-
-		return missingBomTargets.isEmpty() ? "successed" : "semisuccess";
 	}
 
 	// 제품별 실적/표준 BOM 존재 여부를 확인하고 SALES_DTL.BOM_STATUS를 갱신한다.
