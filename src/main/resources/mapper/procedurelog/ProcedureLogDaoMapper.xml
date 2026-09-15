@@ -40,6 +40,11 @@
 		 WHERE log_id = #{logId}
 	</update>
 
+	<!-- insertDtl과 같은 트랜잭션에서 먼저 호출해 MAX(seq)+1 채번을 log_id 단위로 직렬화한다(FOR UPDATE). -->
+	<select id="lockMstForUpdate" parameterType="HashMap" resultType="java.lang.Long">
+		SELECT log_id FROM procedure_log_mst WHERE log_id = #{logId} FOR UPDATE
+	</select>
+
 	<!-- AS-IS PKG00_PROCEDURE_LOG.BATCH_LOG_DTL 대응. seq는 log_id별로 순차 채번한다. -->
 	<insert id="insertDtl" parameterType="HashMap">
 		INSERT INTO procedure_log_dtl (

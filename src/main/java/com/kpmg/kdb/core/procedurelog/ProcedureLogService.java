@@ -5,19 +5,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.ibatis.session.SqlSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 // AS-IS PKG00_PROCEDURE_LOG(BATCH_LOG/BATCH_LOG_DTL/BATCH_LOG_LAST)를 대체한다. AS-IS가
 // PRAGMA AUTONOMOUS_TRANSACTION으로 로그를 별도 트랜잭션에 남겨 상위 트랜잭션 롤백과 무관하게 로그가
-// 남도록 한 것처럼, 여기서도 REQUIRES_NEW로 별도 물리 트랜잭션을 열어 즉시 커밋한다. 로그 기록 자체의
-// 실패가 본 업무 트랜잭션에 영향을 주면 안 되므로 예외는 흡수하고 경고만 남긴다.
+// 남도록 한 것처럼, 실제 기록은 REQUIRES_NEW로 별도 물리 트랜잭션을 여는 ProcedureLogTransactionalWriter가
+// 담당한다. 이 클래스 자신은 @Transactional이 아닌 순수 파사드로, writer 호출(트랜잭션 시작/커밋 실패 포함)을
+// 통째로 try/catch로 감싸 로그 기록 실패가 어떤 경우에도 호출자(원산지판정 업무 로직)에 전파되지 않게 한다.
 @Service
 public class ProcedureLogService {
 
@@ -32,11 +29,9 @@ public class ProcedureLogService {
 	private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
 
 	@Autowired
-	@Qualifier("sqlSessionTemplate")
-	private SqlSession sqlSession;
+	private ProcedureLogTransactionalWriter writer;
 
 	/** AS-IS BATCH_LOG 대응. procedure_log_mst 1건을 새로 만들고 log_id를 반환한다. 실패 시 -1을 반환한다. */
-	@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
 	public long start(String procedureId, String companyCode, String inputParameter) {
 		Map<String, Object> param = new HashMap<>();
 		param.put("applyDate", LocalDate.now().format(YYYYMMDD));
@@ -47,8 +42,7 @@ public class ProcedureLogService {
 		param.put("status", STATUS_START);
 
 		try {
-			sqlSession.getMapper(ProcedureLogDao.class).insertMst(param);
-			return ((Number) param.get("logId")).longValue();
+			return writer.insertMst(param);
 		} catch (Exception e) {
 			logger.error("procedure_log_mst 기록 실패. procedureId={}", procedureId, e);
 			return -1L;
@@ -56,7 +50,6 @@ public class ProcedureLogService {
 	}
 
 	/** AS-IS BATCH_LOG_DTL 대응. */
-	@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
 	public void detail(long logId, String message) {
 		if (logId < 0) {
 			return;
@@ -65,20 +58,18 @@ public class ProcedureLogService {
 		param.put("logId", logId);
 		param.put("logContents", truncate(message, 4000));
 		try {
-			sqlSession.getMapper(ProcedureLogDao.class).insertDtl(param);
+			writer.insertDtl(param);
 		} catch (Exception e) {
 			logger.error("procedure_log_dtl 기록 실패. logId={}", logId, e);
 		}
 	}
 
 	/** AS-IS BATCH_LOG_LAST(정상) 대응. */
-	@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
 	public void success(long logId, String resultMessage) {
 		end(logId, STATUS_SUCCESS, null, resultMessage);
 	}
 
 	/** AS-IS BATCH_LOG_LAST(오류) 대응. */
-	@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
 	public void error(long logId, String resultCode, String resultMessage) {
 		end(logId, STATUS_ERROR, resultCode, resultMessage);
 	}
@@ -93,7 +84,7 @@ public class ProcedureLogService {
 		param.put("resultCode", truncate(resultCode, 40));
 		param.put("resultMessage", truncate(resultMessage, 500));
 		try {
-			sqlSession.getMapper(ProcedureLogDao.class).updateMstEnd(param);
+			writer.updateMstEnd(param);
 		} catch (Exception e) {
 			logger.error("procedure_log_mst 종료처리 실패. logId={}", logId, e);
 		}
