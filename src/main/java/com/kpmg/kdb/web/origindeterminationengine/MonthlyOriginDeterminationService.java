@@ -11,13 +11,8 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyOriginDetermination
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
-// 월판정 전체 진입점. 내수+수출을 함께 판정하기 위해 DomesticOriginDeterminationService(내수)와
-// ExportOriginDeterminationService(수출)를 순서대로 호출해 결과를 하나로 합친다.
-// AS-IS MONTHLY_DECISION_PROC은 COMPANY.MATERIAL_USE_YN='Y'인 회사에 한해 원재료수불부(자동생성)를
-// 프로시저 진입 시 1회 로드했다(PKG01_IF_LOAD.AUTO_MATERIAL_INV_BAL_PROC) — 이 단계는 MONTHLY_DECISION_PROC
-// 몸체에만 있고, 그 프로시저를 거치지 않던 개별판정(CREATE_FCR/COO_DECISION 직접 호출)에는 없었다. 그래서 이
-// 클래스(월판정 진입점)에서만 1회 수행하고, DomesticOriginDeterminationService/ExportOriginDeterminationService는 개별판정과
-// 공유하므로 이 단계를 몰라야 한다.
+// 월판정 진입점 - 내수+수출을 순서대로 호출해 결과를 합친다. 개별판정에는 없던 원재료수불부 자동생성
+// (AUTO_MATERIAL_INV_BAL_PROC)을 여기서만 1회 수행하고, 공유 서비스인 도메스틱/수출 서비스는 이 단계를 모른다.
 @Service
 public class MonthlyOriginDeterminationService extends GeneralService
 		implements BulkOriginDeterminationService<VirtualSalesGenerationParams> {

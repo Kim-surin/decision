@@ -11,12 +11,8 @@ import com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationMode;
 import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyOriginDeterminationFlags;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 
-// OriginDeterminationPipeline을 만들어주는 진입점. COMPANY.CTC_DECISION_ONLY_YN으로 판정 모드(RVC_CTC/CTC_ONLY)를 정해
-// 기본 부품을 채운 파이프라인을 돌려준다. AS-IS MONTHLY_DECISION_PROC의 V_CTC_DECISION_ONLY_YN 분기는 그 프로시저를
-// 거치지 않고 CREATE_FCR/PKG99_COO_DECISION을 직접 호출하던 개별판정에서도 동일하게 존재했으므로(레거시 트레이스 확인)
-// forDomestic/forExport 양쪽 다 그대로 적용한다. 반면 MATERIAL_USE_YN 원재료수불부 자동생성(PKG01_IF_LOAD.
-// AUTO_MATERIAL_INV_BAL_PROC)은 MONTHLY_DECISION_PROC 프로시저 몸체에만 있던 단계라 여기서는 다루지 않는다
-// (MonthlyOriginDeterminationService.run()이 월판정 진입 시 1회만 처리한다).
+// OriginDeterminationPipeline 생성. COMPANY.CTC_DECISION_ONLY_YN으로 판정 모드를 정해 forDomestic/forExport
+// 양쪽(개별판정 포함, 레거시 트레이스로 확인)에 동일 적용한다. AUTO_MATERIAL_INV_BAL_PROC은 여기서 다루지 않는다.
 @Service
 public class OriginDeterminationPipelineFactory extends GeneralService {
 
