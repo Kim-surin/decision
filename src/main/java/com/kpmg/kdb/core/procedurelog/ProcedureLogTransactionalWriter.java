@@ -9,10 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-// procedure_log_mst/dtl에 대한 실제 DB 기록. ProcedureLogService(별도 빈)가 이 빈의 메서드를 프록시를 통해
-// 호출하므로, 트랜잭션 시작/커밋 단계에서 나는 예외(예: 커넥션풀 고갈에 의한 CannotCreateTransactionException)까지도
-// 호출자 쪽 try/catch로 잡힌다 — 같은 클래스 안에서 @Transactional 메서드를 호출(self-invocation)했다면 이 경계를
-// try/catch로 감싸도 트랜잭션 시작/커밋 실패 자체는 잡을 수 없었다.
+// procedure_log_mst/dtl 실제 기록. 별도 빈이라 ProcedureLogService가 프록시로 호출 — 트랜잭션 시작/커밋
+// 실패까지 호출자 try/catch로 잡힌다(같은 클래스 self-invocation이었다면 이 경계를 못 잡았을 것).
 @Service
 class ProcedureLogTransactionalWriter {
 

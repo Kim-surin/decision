@@ -10,11 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-// AS-IS PKG00_PROCEDURE_LOG(BATCH_LOG/BATCH_LOG_DTL/BATCH_LOG_LAST)를 대체한다. AS-IS가
-// PRAGMA AUTONOMOUS_TRANSACTION으로 로그를 별도 트랜잭션에 남겨 상위 트랜잭션 롤백과 무관하게 로그가
-// 남도록 한 것처럼, 실제 기록은 REQUIRES_NEW로 별도 물리 트랜잭션을 여는 ProcedureLogTransactionalWriter가
-// 담당한다. 이 클래스 자신은 @Transactional이 아닌 순수 파사드로, writer 호출(트랜잭션 시작/커밋 실패 포함)을
-// 통째로 try/catch로 감싸 로그 기록 실패가 어떤 경우에도 호출자(원산지판정 업무 로직)에 전파되지 않게 한다.
+// AS-IS PKG00_PROCEDURE_LOG 대체. 실제 기록은 REQUIRES_NEW로 여는 ProcedureLogTransactionalWriter가 하고,
+// 이 클래스는 그 호출(트랜잭션 시작/커밋 실패 포함)을 통째로 try/catch로 감싸 실패가 호출자에 전파되지 않게 한다.
 @Service
 public class ProcedureLogService {
 

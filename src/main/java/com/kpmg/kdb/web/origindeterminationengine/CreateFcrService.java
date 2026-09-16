@@ -72,9 +72,8 @@ public class CreateFcrService extends GeneralService {
 
 	// productCodes: null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상.
 	// 반환값 "semisuccess"는 BOM 없는 제품이 있어 나머지만 진행하고 해당 제품은 FCR_RESULT에 BOM_NOT_FOUND로 명시 기록했다는 뜻.
-	// AS-IS CREATE_FCR은 이 메서드가 호출될 때마다(파이프라인 내 SALES_NO 1건마다) 자체 BATCH_LOG를 새로 열었다 —
-	// 그 granularity를 그대로 따라 호출마다 procedure_log_mst 1건을 생성한다. 예외는 로그만 남기고 그대로
-	// 다시 던진다(호출자인 OriginDecisionPipeline.forEachTarget이 판정실패 처리 책임을 갖는다).
+	// AS-IS CREATE_FCR처럼 호출마다(SALES_NO 1건마다) procedure_log_mst 1건을 생성한다. 예외는 로그만 남기고
+	// 그대로 다시 던진다(호출자인 OriginDecisionPipeline.forEachTarget이 판정실패 처리 책임을 갖는다).
 	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam,
 			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);
