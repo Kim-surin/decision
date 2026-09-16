@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
-import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstDecisionUpdateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstOriginDeterminationUpdateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
@@ -34,7 +34,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 	private static final int BATCH_CHUNK_SIZE = 500;
 
 	@Autowired
-	private CooDecisionReferenceDataService referenceDataService;
+	private OriginDeterminationReferenceDataService referenceDataService;
 
 	// COMPANY_OPTION(OPTION_CODE='BF') 산정기준에 따라 회사/사업부/제품군/FTA 중 하나에서 버퍼율을 조회해 컨텍스트에 채운다.
 	// 반환값은 조회 성공 여부 — 실패 시 호출자가 이 FTA_CODE 후보를 판정오류로 처리해야 한다(과거엔 조용히 null로 남아 버퍼 없는 것처럼 처리되는 문제가 있었다).
@@ -162,7 +162,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 	}
 
 	// 판정결과 1건을 저장 대기열에 담고 다음 룰 판정을 위해 레코드를 초기화한다(실제 INSERT는 flushPendingResultsBatch가
-	// 배치로 처리). 예외를 흡수하지 않고 그대로 던져 OriginDecisionPipeline까지 전파시켜 이 대상 전체를 판정실패로 표시하게 한다.
+	// 배치로 처리). 예외를 흡수하지 않고 그대로 던져 OriginDeterminationPipeline까지 전파시켜 이 대상 전체를 판정실패로 표시하게 한다.
 	public void insertFrdAndReset(OriginDeterminationContext ctx, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 
@@ -198,7 +198,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 	// "룰 없음"/"재료비 0원" 오류를 검사해 즉시 확정하거나, 그 외에는 판정결과 재조회가 필요한 행으로 deferredTargets에
 	// 등록한다(실제 재조회는 resolveDeferredUpdateFrm이 배치 처리). mode가 RVC_CTC일 때만 "재료비 0원" 오류를 검사한다.
 	public void prepareUpdateFrm(OriginDeterminationContext ctx, OriginDeterminationMode mode,
-			List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates, List<OriginDeterminationTarget> deferredTargets) {
+			List<FcrMstOriginDeterminationUpdateRow> pendingFcrMstUpdates, List<OriginDeterminationTarget> deferredTargets) {
 		OriginDeterminationTarget fm = ctx.getFmData();
 		try {
 			if (ctx.getRuleCount() < 1) {
@@ -223,7 +223,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 
 	/** deferredTargets 전체(역내산 우선, 없으면 역외산만 존재 재조회)를 배치로 처리해 FCR_MST 갱신 행을 확정한다. */
 	public void resolveDeferredUpdateFrm(List<OriginDeterminationTarget> deferredTargets,
-			List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates) {
+			List<FcrMstOriginDeterminationUpdateRow> pendingFcrMstUpdates) {
 		if (deferredTargets.isEmpty()) {
 			return;
 		}
@@ -290,8 +290,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 		return rec;
 	}
 
-	private static FcrMstDecisionUpdateRow buildFcrMstUpdateRow(OriginDeterminationTarget fm, OriginDeterminationResult rec) {
-		return new FcrMstDecisionUpdateRow(fm.getSalesNo(), fm.getSalesSeq(), fm.getFtaCode(), fm.getDivisionCode(),
+	private static FcrMstOriginDeterminationUpdateRow buildFcrMstUpdateRow(OriginDeterminationTarget fm, OriginDeterminationResult rec) {
+		return new FcrMstOriginDeterminationUpdateRow(fm.getSalesNo(), fm.getSalesSeq(), fm.getFtaCode(), fm.getDivisionCode(),
 				fm.getCompanyCode(), rec.getRuleCode(), rec.getFtaCooYn(), rec.getCompanyCooYn(), rec.getRcepCooNation());
 	}
 
@@ -304,8 +304,8 @@ public class OriginDeterminationSupportService extends GeneralService {
 	}
 
 	// 대기 중인 FCR_MST 갱신을 배치 UPDATE로 반영한다. 실패 시 예외를 그대로 던져
-	// 호출자(OriginDecisionPipeline)가 이 대상을 판정실패로 표시할 수 있게 한다.
-	public void flushFcrMstUpdates(List<FcrMstDecisionUpdateRow> pendingFcrMstUpdates) {
+	// 호출자(OriginDeterminationPipeline)가 이 대상을 판정실패로 표시할 수 있게 한다.
+	public void flushFcrMstUpdates(List<FcrMstOriginDeterminationUpdateRow> pendingFcrMstUpdates) {
 		if (pendingFcrMstUpdates.isEmpty()) {
 			return;
 		}

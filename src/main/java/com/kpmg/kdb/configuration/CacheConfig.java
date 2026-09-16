@@ -13,7 +13,7 @@ public class CacheConfig {
 	public CacheManager cacheManager() {
 		CaffeineCacheManager cacheManager = new CaffeineCacheManager("division", "companySetting",
 				"bufferOptionValue", "companyBuffer", "divisionBuffer", "ftaBuffer", "ftaApplyNations",
-				"companyDecisionFlags", "activeFtaMasters", "incotermsInfo");
+				"companyOriginDeterminationFlags", "activeFtaMasters", "incotermsInfo");
 		return cacheManager;
 	}
 }

@@ -16,9 +16,9 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 // 부가가치기준(RVC) 원산지 판정(레거시 COO_DECISION_FOR_RVC). CTC_ONLY 모드는 부가가치기준을 쓰지 않아
 // FTA_RVC_YN/COMPANY_RVC_YN을 무조건 'N'으로 설정한다.
 @Service
-public class RvcCriteriaDecisionService {
+public class RvcCriteriaOriginDeterminationService {
 
-	private static final Logger logger = LoggerFactory.getLogger(RvcCriteriaDecisionService.class);
+	private static final Logger logger = LoggerFactory.getLogger(RvcCriteriaOriginDeterminationService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
 	/** @return 판정 성공 여부. 실패(예외 발생) 시 false — 호출자가 이 대상을 판정오류로 처리해야 한다. */
@@ -137,7 +137,7 @@ public class RvcCriteriaDecisionService {
 	}
 
 	private static BigDecimal sum(List<MaterialOriginRow> rows, Function<MaterialOriginRow, BigDecimal> extractor) {
-		return rows.stream().map(extractor).map(RvcCriteriaDecisionService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
+		return rows.stream().map(extractor).map(RvcCriteriaOriginDeterminationService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	private static boolean positive(BigDecimal v) {

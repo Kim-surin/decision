@@ -19,7 +19,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 // 예외판정(레거시 EXCLUTION_RULE_DECISION). 판정 대상 룰에 걸린 예외타입(1~17)을 순서대로 평가해
 // EXCLUSION_YN/EXCLUSION_CONDITION을 결정한다.
 @Service
-public class ExclusionRuleDecisionService extends GeneralService {
+public class ExclusionRuleOriginDeterminationService extends GeneralService {
 
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 	/** CTC 전용 모드에서는 값기준(RVC성) 예외타입을 평가할 수 없어 무조건 'N' 처리한다. */
@@ -184,7 +184,7 @@ public class ExclusionRuleDecisionService extends GeneralService {
 		BigDecimal numerator = evaluateNonOriginatingCandidates(rows).stream()
 				.filter(r -> matches(r, details))
 				.map(MaterialOriginRow::getNonOriginatingAmount)
-				.map(ExclusionRuleDecisionService::nvl)
+				.map(ExclusionRuleOriginDeterminationService::nvl)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
 		BigDecimal maxRate = details.stream().map(ExclusionRuleDetail::getExclusionRate).filter(Objects::nonNull)
@@ -201,7 +201,7 @@ public class ExclusionRuleDecisionService extends GeneralService {
 		BigDecimal sum = evaluateNonOriginatingCandidates(rows).stream()
 				.filter(r -> matches(r, details))
 				.map(MaterialOriginRow::getNonOriginatingQty)
-				.map(ExclusionRuleDecisionService::nvl)
+				.map(ExclusionRuleOriginDeterminationService::nvl)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 		return sum.signum() <= 0 ? "Y" : "N";
 	}
@@ -219,9 +219,9 @@ public class ExclusionRuleDecisionService extends GeneralService {
 
 	// ===== TYPE 13 =====
 	private String evaluateType13(List<MaterialOriginRow> rows) {
-		BigDecimal nonOriginatingSum = rows.stream().map(MaterialOriginRow::getNonOriginatingAmount).map(ExclusionRuleDecisionService::nvl)
+		BigDecimal nonOriginatingSum = rows.stream().map(MaterialOriginRow::getNonOriginatingAmount).map(ExclusionRuleOriginDeterminationService::nvl)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
-		BigDecimal originatingSum = rows.stream().map(MaterialOriginRow::getOriginatingAmount).map(ExclusionRuleDecisionService::nvl)
+		BigDecimal originatingSum = rows.stream().map(MaterialOriginRow::getOriginatingAmount).map(ExclusionRuleOriginDeterminationService::nvl)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 		return nonOriginatingSum.compareTo(originatingSum) <= 0 ? "Y" : "N";
 	}

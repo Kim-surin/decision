@@ -43,7 +43,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.PoLedgerPriceRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.PurchaseLedgerSummary;
 import com.kpmg.kdb.web.origindeterminationengine.dto.StandardCostRow;
 
-// "CREATE_FCR" 단계(레거시 CREATE_FCR 프로시저). OriginDecisionPipeline이 사용한다. 매출(SALES_NO) 1건에 대해
+// "CREATE_FCR" 단계(레거시 CREATE_FCR 프로시저). OriginDeterminationPipeline이 사용한다. 매출(SALES_NO) 1건에 대해
 // BOM/표준 BOM 존재를 확인해 FCR_MST를 생성한 뒤 자재를 집계해 FCR_DTL을 만든다. 예외를 흡수하지 않아 배치 중단 없이 넘기는 책임은 BulkPipelineRunner에 있다.
 @Service
 public class CreateFcrService extends GeneralService {

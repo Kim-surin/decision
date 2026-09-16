@@ -2,7 +2,7 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 
 // UPDATE_FRM_PROCEDURE 말미의 FCR_MST 갱신 1건. FTA 후보마다 즉시 UPDATE 하는 대신
 // determineOrigin() 1회 호출 범위에서 모았다가 한 번의 배치 UPDATE로 반영한다.
-public class FcrMstDecisionUpdateRow {
+public class FcrMstOriginDeterminationUpdateRow {
 
 	private final String salesNo;
 	private final int salesSeq;
@@ -14,7 +14,7 @@ public class FcrMstDecisionUpdateRow {
 	private final String companyCooYn;
 	private final String rcepCooNation;
 
-	public FcrMstDecisionUpdateRow(String salesNo, int salesSeq, String ftaCode, String divisionCode,
+	public FcrMstOriginDeterminationUpdateRow(String salesNo, int salesSeq, String ftaCode, String divisionCode,
 			String companyCode, String ruleContents, String ftaCooYn, String companyCooYn, String rcepCooNation) {
 		this.salesNo = salesNo;
 		this.salesSeq = salesSeq;

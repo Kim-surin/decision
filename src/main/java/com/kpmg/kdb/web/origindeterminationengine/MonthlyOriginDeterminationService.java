@@ -7,38 +7,38 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
-import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyDecisionFlags;
+import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyOriginDeterminationFlags;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
 
-// 월판정 전체 진입점. 내수+수출을 함께 판정하기 위해 DomesticDecisionService(내수)와
-// ExportDecisionService(수출)를 순서대로 호출해 결과를 하나로 합친다.
+// 월판정 전체 진입점. 내수+수출을 함께 판정하기 위해 DomesticOriginDeterminationService(내수)와
+// ExportOriginDeterminationService(수출)를 순서대로 호출해 결과를 하나로 합친다.
 // AS-IS MONTHLY_DECISION_PROC은 COMPANY.MATERIAL_USE_YN='Y'인 회사에 한해 원재료수불부(자동생성)를
 // 프로시저 진입 시 1회 로드했다(PKG01_IF_LOAD.AUTO_MATERIAL_INV_BAL_PROC) — 이 단계는 MONTHLY_DECISION_PROC
 // 몸체에만 있고, 그 프로시저를 거치지 않던 개별판정(CREATE_FCR/COO_DECISION 직접 호출)에는 없었다. 그래서 이
-// 클래스(월판정 진입점)에서만 1회 수행하고, DomesticDecisionService/ExportDecisionService는 개별판정과
+// 클래스(월판정 진입점)에서만 1회 수행하고, DomesticOriginDeterminationService/ExportOriginDeterminationService는 개별판정과
 // 공유하므로 이 단계를 몰라야 한다.
 @Service
-public class MonthlyDecisionService extends GeneralService
-		implements BulkDecisionService<VirtualSalesGenerationParams> {
+public class MonthlyOriginDeterminationService extends GeneralService
+		implements BulkOriginDeterminationService<VirtualSalesGenerationParams> {
 
 	@Autowired
-	private DomesticDecisionService domesticDecisionService;
+	private DomesticOriginDeterminationService domesticOriginDeterminationService;
 	@Autowired
-	private ExportDecisionTargetService exportDecisionTargetService;
+	private ExportOriginDeterminationTargetService exportOriginDeterminationTargetService;
 	@Autowired
-	private ExportDecisionService exportDecisionService;
+	private ExportOriginDeterminationService exportOriginDeterminationService;
 	@Autowired
-	private CompanyDecisionFlagsService companyDecisionFlagsService;
+	private CompanyOriginDeterminationFlagsService companyOriginDeterminationFlagsService;
 
 	@Override
-	public BulkDecisionResult run(VirtualSalesGenerationParams filter) {
+	public BulkOriginDeterminationResult run(VirtualSalesGenerationParams filter) {
 		runMaterialInvBalIfNeeded(filter.getCompanyCode());
 
-		BulkDecisionResult domesticResult = domesticDecisionService.run(filter);
+		BulkOriginDeterminationResult domesticResult = domesticOriginDeterminationService.run(filter);
 
-		List<ExportDecisionTarget> exportTargets = exportDecisionTargetService.prepare(filter);
-		BulkDecisionResult exportResult = exportDecisionService.run(exportTargets);
+		List<ExportOriginDeterminationTarget> exportTargets = exportOriginDeterminationTargetService.prepare(filter);
+		BulkOriginDeterminationResult exportResult = exportOriginDeterminationService.run(exportTargets);
 
 		List<SalesTarget> allTargets = new ArrayList<>(domesticResult.getTargets());
 		allTargets.addAll(exportResult.getTargets());
@@ -49,13 +49,13 @@ public class MonthlyDecisionService extends GeneralService
 				domesticResult.getGroupCount(), exportResult.getGroupCount(), allTargets.size(),
 				allFailedTargets.size());
 
-		return new BulkDecisionResult(domesticResult.getGroupCount() + exportResult.getGroupCount(), allTargets,
+		return new BulkOriginDeterminationResult(domesticResult.getGroupCount() + exportResult.getGroupCount(), allTargets,
 				allFailedTargets);
 	}
 
 	/** AS-IS PKG01_IF_LOAD.AUTO_MATERIAL_INV_BAL_PROC 대응. 아직 이관 대상이 아니라 경고 로그만 남긴다. */
 	private void runMaterialInvBalIfNeeded(String companyCode) {
-		CompanyDecisionFlags flags = companyDecisionFlagsService.getDecisionFlags(companyCode);
+		CompanyOriginDeterminationFlags flags = companyOriginDeterminationFlagsService.getDecisionFlags(companyCode);
 		if ("Y".equals(flags.getMaterialUseYn())) {
 			logger.warn(
 					"PKG01_IF_LOAD.AUTO_MATERIAL_INV_BAL_PROC 미이관: 원재료수불부(자동생성) 로드 단계를 건너뜁니다. companyCode={}",

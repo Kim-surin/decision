@@ -17,7 +17,7 @@ import com.kpmg.kdb.web.origindetermination.dto.ConversionStrategyRuleContextDto
 
 /**
  * 역내전환전략 팝업 - 세번변경기준(CTH)/부가가치기준 충족을 위해 원산지확인서 수취가 필요한
- * 원재료 목록을 계산한다. 부가가치기준 컷오프는 RvcCriteriaDecisionService.decideRvc와 동일한
+ * 원재료 목록을 계산한다. 부가가치기준 컷오프는 RvcCriteriaOriginDeterminationService.decideRvc와 동일한
  * BU/BD/NC/MC 산식·우선순위로 재계산해, 여기서 보여주는 목록이 실제 판정 재실행 결과와
  * 어긋나지 않도록 한다.
  */
@@ -127,7 +127,7 @@ public class ConversionStrategyService extends GeneralService {
 
 	/**
 	 * 역외 원재료를 재료비(outarea_amount) 비중이 큰 순서로 하나씩 역내로 전환한다고 가정하고,
-	 * RvcCriteriaDecisionService.decideRvc와 동일한 산식(BU>BD>NC>MC 우선순위)으로 재계산해
+	 * RvcCriteriaOriginDeterminationService.decideRvc와 동일한 산식(BU>BD>NC>MC 우선순위)으로 재계산해
 	 * 기준을 충족하는 시점까지 필요한 원재료만 반환한다.
 	 */
 	private List<Map<String, Object>> resolveValueContentTargets(ConversionStrategyRuleContextDto ctx, List<Map<String, Object>> candidates) {
@@ -164,7 +164,7 @@ public class ConversionStrategyService extends GeneralService {
 		return needed;
 	}
 
-	/** RvcCriteriaDecisionService.decideRvc와 동일한 산식/우선순위(BU>BD>NC>MC)로 충족 여부를 계산한다. */
+	/** RvcCriteriaOriginDeterminationService.decideRvc와 동일한 산식/우선순위(BU>BD>NC>MC)로 충족 여부를 계산한다. */
 	private boolean isSatisfied(BigDecimal buRule, BigDecimal bdRule, BigDecimal ncRule, BigDecimal mcRule,
 			BigDecimal originatingAmount, BigDecimal nonOriginatingAmount, BigDecimal inputAmount,
 			BigDecimal inkotermsAmount, BigDecimal netCostAmount) {

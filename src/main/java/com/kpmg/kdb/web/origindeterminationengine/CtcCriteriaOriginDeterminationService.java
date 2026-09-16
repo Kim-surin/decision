@@ -15,9 +15,9 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 // 세번변경기준 + 미소기준 판정(레거시 COO_DECISION_FOR_CTC). RVC_CTC 모드와 CTC_ONLY 모드는 계산 로직이
 // 상당히 달라(미소기준/버퍼 계산이 CTC_ONLY엔 없음) 모드별로 분리했고, HS코드 누락 체크만 두 모드에 동일하다.
 @Service
-public class CtcCriteriaDecisionService {
+public class CtcCriteriaOriginDeterminationService {
 
-	private static final Logger logger = LoggerFactory.getLogger(CtcCriteriaDecisionService.class);
+	private static final Logger logger = LoggerFactory.getLogger(CtcCriteriaOriginDeterminationService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
 	/** @return 판정 성공 여부. 실패(예외 발생) 시 false — 호출자가 이 대상을 판정오류로 처리해야 한다. */
@@ -65,7 +65,7 @@ public class CtcCriteriaDecisionService {
 		long totalCount = nonOriginatingCandidates.size(); // 원본 OFI.CNT
 		long zeroAmountCnt = scoped.stream().filter(r -> isZero(r.getInputAmount())).count();
 		BigDecimal totalNonOriginatingAmount = scoped.stream().map(MaterialOriginRow::getNonOriginatingAmount)
-				.map(CtcCriteriaDecisionService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
+				.map(CtcCriteriaOriginDeterminationService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
 		long matchCount = scoped.stream()
 				.filter(r -> positive(r.getNonOriginatingAmount()) && prefixEquals(r.getHsCode(), r.getParentHsCode(), 6))
 				.count();

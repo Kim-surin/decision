@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.CreateFcrService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
-import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstDecisionUpdateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstOriginDeterminationUpdateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowsRequest;
@@ -34,16 +34,16 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	@Autowired
 	private OriginDeterminationSupportService supportService;
 	@Autowired
-	private ExclusionRuleDecisionService exclusionRuleDecisionService;
+	private ExclusionRuleOriginDeterminationService exclusionRuleOriginDeterminationService;
 	@Autowired
-	private CtcCriteriaDecisionService ctcService;
+	private CtcCriteriaOriginDeterminationService ctcService;
 	@Autowired
-	private RvcCriteriaDecisionService rvcService;
+	private RvcCriteriaOriginDeterminationService rvcService;
 	@Autowired
 	private ItemNationService itemNationService;
 
 	// 원산지 판정 1건 실행. 예외를 흡수하지 않고 그대로 던진다 — 배치 전체 중단 없이 넘기면서도 그 대상을 판정실패로
-	// 표시하는 책임은 호출자(OriginDecisionPipeline)에 있다. productCodes: null/빈 리스트면 salesNo 전체(월 판정) 대상.
+	// 표시하는 책임은 호출자(OriginDeterminationPipeline)에 있다. productCodes: null/빈 리스트면 salesNo 전체(월 판정) 대상.
 	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
 		OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
@@ -237,7 +237,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		boolean stop = false;
 
 		if ("Y".equals(frData.getExclusionRuleYn())) {
-			if (!exclusionRuleDecisionService.decide(ctx, frData, mode, exclusionRuleCache)) {
+			if (!exclusionRuleOriginDeterminationService.decide(ctx, frData, mode, exclusionRuleCache)) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);
 				stop = true;
@@ -494,7 +494,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	private static final class PendingBatch {
 		final List<OriginDeterminationResult> results = new ArrayList<>();
 		final List<OriginDeterminationTarget> deferredUpdateFrmTargets = new ArrayList<>();
-		final List<FcrMstDecisionUpdateRow> fcrMstUpdateBatch = new ArrayList<>();
+		final List<FcrMstOriginDeterminationUpdateRow> fcrMstUpdateBatch = new ArrayList<>();
 	}
 
 	private static boolean ynOrDefaultY(String value) {
