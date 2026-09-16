@@ -12,7 +12,11 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyDecisionFlags;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 
 // OriginDecisionPipeline을 만들어주는 진입점. COMPANY.CTC_DECISION_ONLY_YN으로 판정 모드(RVC_CTC/CTC_ONLY)를 정해
-// 기본 부품을 채운 파이프라인을 돌려주며, MATERIAL_USE_YN='Y'인 회사의 원재료수불부 자동생성은 이관 대상이 아니라 경고 로그만 남긴다.
+// 기본 부품을 채운 파이프라인을 돌려준다. AS-IS MONTHLY_DECISION_PROC의 V_CTC_DECISION_ONLY_YN 분기는 그 프로시저를
+// 거치지 않고 CREATE_FCR/PKG99_COO_DECISION을 직접 호출하던 개별판정에서도 동일하게 존재했으므로(레거시 트레이스 확인)
+// forDomestic/forExport 양쪽 다 그대로 적용한다. 반면 MATERIAL_USE_YN 원재료수불부 자동생성(PKG01_IF_LOAD.
+// AUTO_MATERIAL_INV_BAL_PROC)은 MONTHLY_DECISION_PROC 프로시저 몸체에만 있던 단계라 여기서는 다루지 않는다
+// (MonthlyDecisionService.run()이 월판정 진입 시 1회만 처리한다).
 @Service
 public class OriginDecisionPipelineFactory extends GeneralService {
 
@@ -49,13 +53,6 @@ public class OriginDecisionPipelineFactory extends GeneralService {
 
 	private OriginDeterminationMode resolveMode(String companyCode) {
 		CompanyDecisionFlags flags = companyDecisionFlagsService.getDecisionFlags(companyCode);
-
-		if ("Y".equals(flags.getMaterialUseYn())) {
-			logger.warn(
-					"PKG01_IF_LOAD.AUTO_MATERIAL_INV_BAL_PROC 미이관: 원재료수불부(자동생성) 로드 단계를 건너뜁니다. companyCode={}",
-					companyCode);
-		}
-
 		return "Y".equals(flags.getCtcDecisionOnlyYn()) ? OriginDeterminationMode.CTC_ONLY
 				: OriginDeterminationMode.RVC_CTC;
 	}
