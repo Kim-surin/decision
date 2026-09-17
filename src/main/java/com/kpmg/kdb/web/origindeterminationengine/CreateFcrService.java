@@ -70,8 +70,41 @@ public class CreateFcrService extends GeneralService {
 			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);
 
+		// 1. 파라미터 셋업 작업
+		FcrCreationParams params = setupParameters(dao, companyCode, divisionCode, salesNo, bomTypeParam);
+
+		// 2. 실적 BOM 및 표준 BOM 확인 작업
+		List<SalesDtlBomTarget> missingBomTargets = checkBomAvailability(dao, companyCode, divisionCode, salesNo,
+				params.bomType, params.bomPreviousYyyymm, params.yyyymm, productCodes);
+
+		// 3. 전 처리 작업(기존 FCR_DTL/FCR_RESULT/FCR_MST 삭제)
+		deleteExistingFcrRows(dao, salesNo, divisionCode, companyCode, productCodes);
+
+		// 4. FCR_MST 생성
+		Map<String, String> hsCodeCache = new LinkedHashMap<>();
+		Map<String, BigDecimal> incotermsCache = new LinkedHashMap<>();
+		createFcrMst(dao, companyCode, divisionCode, salesNo, params.bomType, params.exportFlag, params.invoiceDate,
+				productCodes, hsCodeCache, incotermsCache);
+
+		// 4-1. BOM 없는 대상 FCR_RESULT(BOM_NOT_FOUND) 기록
+		if (!missingBomTargets.isEmpty()) {
+			insertBomNotFoundResults(dao, companyCode, divisionCode, salesNo, params.exportFlag, params.bomType,
+					missingBomTargets, hsCodeCache);
+		}
+
+		// 5. FCR_DTL 생성(자재/제품 원가·원산지비율 사전조회 포함)
+		createFcrDtl(dao, salesNo, divisionCode, companyCode, params.bomType, params.invoiceDate, productCodes);
+
+		// 6. FCR_MST 역내/역외 산재료비금액 합계 UPDATE
+		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
+
+		return missingBomTargets.isEmpty() ? "successed" : "semisuccess";
+	}
+
+	/** "1. 파라미터 셋업 작업". SalesInvoiceHeader 조회 + bomType 자동판별("X"면 MF/F 결정)까지 포함한다. */
+	private FcrCreationParams setupParameters(CreateFcrDao dao, String companyCode, String divisionCode,
+			String salesNo, String bomTypeParam) {
 		SalesInvoiceHeader header = dao.selectSalesInvoiceHeader(companyCode, divisionCode, salesNo);
-		String exportFlag = header.getExportFlag();
 		String invoiceDate = header.getInvoiceDate();
 		String yyyymm = invoiceDate.substring(0, 6);
 		String bomPreviousYyyymm = minusMonthsYyyymm(invoiceDate, 60);
@@ -82,18 +115,22 @@ public class CreateFcrService extends GeneralService {
 			bomType = mfCnt > 0 ? "MF" : "F";
 		}
 
-		List<SalesDtlBomTarget> missingBomTargets = checkBomAvailability(dao, companyCode, divisionCode, salesNo,
-				bomType, bomPreviousYyyymm, yyyymm, productCodes);
+		return new FcrCreationParams(header.getExportFlag(), invoiceDate, yyyymm, bomPreviousYyyymm, bomType);
+	}
 
+	/** "전 처리 작업": 재계산 전 기존 FCR_DTL/FCR_RESULT/FCR_MST를 지운다. */
+	private void deleteExistingFcrRows(CreateFcrDao dao, String salesNo, String divisionCode, String companyCode,
+			List<String> productCodes) {
 		dao.deleteFcrDtl(salesNo, divisionCode, companyCode, productCodes);
 		dao.deleteFcrResult(salesNo, divisionCode, companyCode, productCodes);
 		dao.deleteFcrMst(salesNo, divisionCode, companyCode, productCodes);
+	}
 
-		Map<String, String> hsCodeCache = new LinkedHashMap<>();
-		Map<String, BigDecimal> incotermsCache = new LinkedHashMap<>();
-
-		// BOM이 있는 제품만 selectDomesticSalesLines/selectExportSalesLines(BOM_STATUS<>'1')를 통해
-		// 정상적으로 FCR_MST/FCR_DTL이 생성된다. BOM이 없는 제품은 아래에서 별도로 BOM_NOT_FOUND 오류를 남긴다.
+	// "4. FCR_MST 생성". BOM이 있는 제품만 selectDomesticSalesLines/selectExportSalesLines(BOM_STATUS<>'1')를 통해
+	// 정상적으로 생성된다. BOM이 없는 제품은 호출부가 insertBomNotFoundResults로 별도 처리한다.
+	private void createFcrMst(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
+			String bomType, String exportFlag, String invoiceDate, List<String> productCodes,
+			Map<String, String> hsCodeCache, Map<String, BigDecimal> incotermsCache) {
 		if ("D".equals(exportFlag)) {
 			createDomesticFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
 					hsCodeCache, incotermsCache);
@@ -101,12 +138,12 @@ public class CreateFcrService extends GeneralService {
 			createExportFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
 					hsCodeCache, incotermsCache);
 		}
+	}
 
-		if (!missingBomTargets.isEmpty()) {
-			insertBomNotFoundResults(dao, companyCode, divisionCode, salesNo, exportFlag, bomType, missingBomTargets,
-					hsCodeCache);
-		}
-
+	// "5. FCR_DTL 생성". BOM 최말단 자재(leafRows)/제품·부산물(productRows)의 원가·원산지비율을 배치로
+	// 미리 캐시해둔 뒤 FCR_DTL을 생성한다.
+	private void createFcrDtl(CreateFcrDao dao, String salesNo, String divisionCode, String companyCode,
+			String bomType, String invoiceDate, List<String> productCodes) {
 		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
 		List<ProductFcrDtlSourceRow> productRows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode,
 				productCodes);
@@ -140,10 +177,24 @@ public class CreateFcrService extends GeneralService {
 		createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache,
 				divisionBalanceCache, purchasePriceCache, standardCostCache);
 		createProductFcrDtl(dao, productRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
+	}
 
-		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
+	/** setupParameters() 반환값. SalesInvoiceHeader 조회 결과 + 파생값(yyyymm 등) + 판별된 bomType을 묶는다. */
+	private static final class FcrCreationParams {
+		final String exportFlag;
+		final String invoiceDate;
+		final String yyyymm;
+		final String bomPreviousYyyymm;
+		final String bomType;
 
-		return missingBomTargets.isEmpty() ? "successed" : "semisuccess";
+		FcrCreationParams(String exportFlag, String invoiceDate, String yyyymm, String bomPreviousYyyymm,
+				String bomType) {
+			this.exportFlag = exportFlag;
+			this.invoiceDate = invoiceDate;
+			this.yyyymm = yyyymm;
+			this.bomPreviousYyyymm = bomPreviousYyyymm;
+			this.bomType = bomType;
+		}
 	}
 
 	// 제품별 실적/표준 BOM 존재 여부를 확인하고 SALES_DTL.BOM_STATUS를 갱신한다.
