@@ -76,12 +76,10 @@ public class CreateFcrService extends GeneralService {
 		String yyyymm = invoiceDate.substring(0, 6);
 		String bomPreviousYyyymm = minusMonthsYyyymm(invoiceDate, 60);
 
-		String bomType;
+		String bomType = bomTypeParam;
 		if ("X".equals(bomTypeParam)) {
 			long mfCnt = dao.countIntermediateApplyFcrMst(companyCode, divisionCode, salesNo);
 			bomType = mfCnt > 0 ? "MF" : "F";
-		} else {
-			bomType = bomTypeParam;
 		}
 
 		List<SalesDtlBomTarget> missingBomTargets = checkBomAvailability(dao, companyCode, divisionCode, salesNo,
