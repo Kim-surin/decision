@@ -60,7 +60,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 			}
 			return true;
 		} catch (Exception e) {
-			ctx.setErrorCode("MSG_FAILED_LOAD_BUFFER_RATE");
+			ctx.setErrorCode(FcrResultError.FAILED_LOAD_BUFFER_RATE.code());
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			logger.error("버퍼율 조회 실패. companyCode={}", companyCode, e);
 			return false;
@@ -205,13 +205,13 @@ public class OriginDeterminationSupportService extends GeneralService {
 				OriginDeterminationResult rec = new OriginDeterminationResult();
 				markAllNo(rec);
 				rec.setStatus("E");
-				rec.setErrorMsg("협정에 해당하는 HS RULE이 없습니다!!");
+				rec.setErrorMsg(FcrResultError.NO_HS_RULE.message());
 				pendingFcrMstUpdates.add(buildFcrMstUpdateRow(fm, rec));
 			} else if (mode == OriginDeterminationMode.RVC_CTC && fm.hasNoMaterialAmount()) {
 				OriginDeterminationResult rec = new OriginDeterminationResult();
 				markAllNo(rec);
 				rec.setStatus("E");
-				rec.setErrorMsg("재료비가 없는 자재가 존재합니다.");
+				rec.setErrorMsg(FcrResultError.NO_MATERIAL_AMOUNT.message());
 				pendingFcrMstUpdates.add(buildFcrMstUpdateRow(fm, rec));
 			} else {
 				deferredTargets.add(fm);
@@ -257,7 +257,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 						rec = new OriginDeterminationResult();
 						markAllNo(rec);
 						rec.setStatus("E");
-						rec.setErrorCode("ALL-ERROR");
+						rec.setErrorCode(FcrResultError.ALL_ERROR.code());
 					} else {
 						rec = r;
 					}
@@ -286,7 +286,7 @@ public class OriginDeterminationSupportService extends GeneralService {
 		OriginDeterminationResult rec = new OriginDeterminationResult();
 		markAllNo(rec);
 		rec.setStatus("E");
-		rec.setErrorCode("ALL-ERROR");
+		rec.setErrorCode(FcrResultError.ALL_ERROR.code());
 		return rec;
 	}
 

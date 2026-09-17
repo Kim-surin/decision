@@ -170,8 +170,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		rec.setStatus("E");
 		rec.setCompanyCooYn("N");
 		rec.setFtaCooYn("N");
-		rec.setErrorCode("MSG_DECISION_STANDARD_NOT_EXIST");
-		rec.setErrorMsg("판정기준이 미 존재 합니다.");
+		FcrResultError.STANDARD_NOT_EXIST.applyTo(rec);
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
@@ -214,8 +213,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 			rec.setCompanyCooYn("N");
 			rec.setFtaCooYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("금액이 0 인 것이 존재합니다.");
+			FcrResultError.QTY_AMOUNT_ZERO.applyTo(rec);
 			supportService.insertFrdAndReset(ctx, mode);
 			return;
 		}

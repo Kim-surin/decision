@@ -26,8 +26,7 @@ public class CtcCriteriaOriginDeterminationService {
 			if (hasMissingHsCode(ctx.getMaterialOriginRows())) {
 				OriginDeterminationResult rec = ctx.getFrdRec();
 				rec.setStatus("E");
-				rec.setErrorCode("TXT_HSCODE_INCLUDE_MISSING");
-				rec.setErrorMsg("HS 코드 누락 포함");
+				FcrResultError.HSCODE_INCLUDE_MISSING.applyTo(rec);
 				return true;
 			}
 
@@ -38,7 +37,7 @@ public class CtcCriteriaOriginDeterminationService {
 			}
 			return true;
 		} catch (Exception e) {
-			ctx.setErrorCode("CTC ERROR");
+			ctx.setErrorCode(FcrResultError.CTC_ERROR.code());
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			logger.error("COO_DECISION_FOR_CTC 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
 			return false;
@@ -81,8 +80,7 @@ public class CtcCriteriaOriginDeterminationService {
 			rec.setCompanyDeMinimisYn("N");
 			rec.setCtcYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("금액이 0 인 것이 존재합니다.");
+			FcrResultError.QTY_AMOUNT_ZERO.applyTo(rec);
 			return;
 		}
 
@@ -120,8 +118,7 @@ public class CtcCriteriaOriginDeterminationService {
 				rec.setFtaDeMinimisYn("N");
 				rec.setCompanyDeMinimisYn("N");
 				rec.setStatus("E");
-				rec.setErrorCode("MSG_PRODUCT_WEIGHT_NOT_FOUND");
-				rec.setErrorMsg("Product Weight Not found!!");
+				FcrResultError.PRODUCT_WEIGHT_NOT_FOUND.applyTo(rec);
 			} else {
 				applyDeMinimisResult(ctx, rec, weightRate, frData);
 			}

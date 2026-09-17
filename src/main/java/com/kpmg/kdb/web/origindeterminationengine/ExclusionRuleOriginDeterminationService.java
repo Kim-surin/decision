@@ -55,7 +55,7 @@ public class ExclusionRuleOriginDeterminationService extends GeneralService {
 			ctx.getFrdRec().setExclusionYn(accumulator.resolve());
 			return true;
 		} catch (Exception e) {
-			ctx.setErrorCode("EXCLUSION99");
+			ctx.setErrorCode(FcrResultError.EXCLUSION_ERROR.code());
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			logger.error("EXCLUTION_RULE_DECISION 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
 			return false;

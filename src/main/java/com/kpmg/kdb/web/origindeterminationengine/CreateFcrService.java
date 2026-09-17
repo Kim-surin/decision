@@ -50,8 +50,6 @@ public class CreateFcrService extends GeneralService {
 
 	private static final int INSERT_CHUNK_SIZE = 500;
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
-	private static final String BOM_NOT_FOUND_ERROR_CODE = "BOM_NOT_FOUND";
-	private static final String BOM_NOT_FOUND_ERROR_MSG = "BOM이 존재하지 않습니다.";
 
 	@Autowired
 	private MaterialHsCodeService hsCodeService;
@@ -423,7 +421,8 @@ public class CreateFcrService extends GeneralService {
 			dao.insertFcrMstRows(mstRows);
 		}
 		if (!resultRows.isEmpty()) {
-			dao.insertFcrResultsForBomNotFound(resultRows, BOM_NOT_FOUND_ERROR_CODE, BOM_NOT_FOUND_ERROR_MSG);
+			dao.insertFcrResultsForBomNotFound(resultRows, FcrResultError.BOM_NOT_FOUND.code(),
+					FcrResultError.BOM_NOT_FOUND.message());
 		}
 	}
 

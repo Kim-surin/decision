@@ -34,7 +34,7 @@ public class RvcCriteriaOriginDeterminationService {
 			decideRvc(ctx, frData);
 			return true;
 		} catch (Exception e) {
-			ctx.setErrorCode("RVC ERROR");
+			ctx.setErrorCode(FcrResultError.RVC_ERROR.code());
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			logger.error("COO_DECISION_FOR_RVC 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
 			return false;
@@ -55,8 +55,7 @@ public class RvcCriteriaOriginDeterminationService {
 			rec.setFtaRvcYn("N");
 			rec.setCompanyRvcYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("금액이 0 인 것이 존재합니다.");
+			FcrResultError.QTY_AMOUNT_ZERO.applyTo(rec);
 			return;
 		}
 
@@ -72,8 +71,7 @@ public class RvcCriteriaOriginDeterminationService {
 			rec.setFtaRvcYn("N");
 			rec.setCompanyRvcYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("RVC 판정 기준금액(FOB/EXW 또는 순원가)이 0 이하여서 비율을 계산할 수 없습니다.");
+			FcrResultError.RVC_BASE_AMOUNT_NOT_POSITIVE.applyTo(rec);
 			return;
 		}
 
@@ -121,7 +119,7 @@ public class RvcCriteriaOriginDeterminationService {
 			rec.setFtaRvcYn("N");
 			rec.setCompanyRvcYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("RVC ERROR");
+			rec.setErrorCode(FcrResultError.RVC_ERROR.code());
 			rec.setErrorMsg(String.valueOf(e.getMessage()));
 			logger.warn("COO_DECISION_FOR_RVC 비율 계산 실패. "
 					+ "BU={}, BD={}, NC={}, MC={}, 역내금액={}, 역외금액={}, FOB/EX={}", frData.getBuRule(),
