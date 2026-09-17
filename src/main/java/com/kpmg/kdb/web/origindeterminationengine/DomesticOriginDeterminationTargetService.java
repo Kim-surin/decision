@@ -12,10 +12,10 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
 // 내수 판정 "1. 데이터 가공" 단계. selectPendingDomesticGroups로 그룹을 뽑아 그룹마다 VirtualSalesGenerationParams
 // 1건을 만든다("그룹마다 파이프라인 1개"). filter의 companyCode/yyyymmdd는 필수, 나머지는 선택값(지정 시 범위를 좁힌다).
 @Service
-public class DomesticDecisionTargetService extends GeneralService {
+public class DomesticOriginDeterminationTargetService extends GeneralService {
 
 	public List<VirtualSalesGenerationParams> prepare(VirtualSalesGenerationParams filter) {
-		DomesticDecisionGroupingDao dao = sqlSession.getMapper(DomesticDecisionGroupingDao.class);
+		DomesticOriginDeterminationGroupingDao dao = sqlSession.getMapper(DomesticOriginDeterminationGroupingDao.class);
 		List<PendingDomesticGroup> groups = dao.selectPendingDomesticGroups(filter);
 
 		List<VirtualSalesGenerationParams> result = new ArrayList<>(groups.size());

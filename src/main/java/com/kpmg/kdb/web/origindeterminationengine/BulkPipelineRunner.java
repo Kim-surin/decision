@@ -7,21 +7,21 @@ import java.util.function.Function;
 
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 
-// 그룹(또는 대상)마다 OriginDecisionPipeline을 새로 만들어 실행하고 targets/failedTargets를 취합하는 공통
+// 그룹(또는 대상)마다 OriginDeterminationPipeline을 새로 만들어 실행하고 targets/failedTargets를 취합하는 공통
 // 루프. 항목 1건에서 예외가 나도 그 항목만 건너뛰고 계속 진행하며, 로그 메시지는 호출측이 그대로 갖는다.
 final class BulkPipelineRunner {
 
 	private BulkPipelineRunner() {
 	}
 
-	static <T> BulkDecisionResult run(List<T> items, Function<T, OriginDecisionPipeline> execute,
+	static <T> BulkOriginDeterminationResult run(List<T> items, Function<T, OriginDeterminationPipeline> execute,
 			BiConsumer<T, Exception> onFailure) {
 		List<SalesTarget> allTargets = new ArrayList<>();
 		List<SalesTarget> allFailedTargets = new ArrayList<>();
 
 		for (T item : items) {
 			try {
-				OriginDecisionPipeline pipeline = execute.apply(item);
+				OriginDeterminationPipeline pipeline = execute.apply(item);
 				allTargets.addAll(pipeline.targets());
 				allFailedTargets.addAll(pipeline.failedTargets());
 			} catch (Exception e) {
@@ -29,6 +29,6 @@ final class BulkPipelineRunner {
 			}
 		}
 
-		return new BulkDecisionResult(items.size(), allTargets, allFailedTargets);
+		return new BulkOriginDeterminationResult(items.size(), allTargets, allFailedTargets);
 	}
 }

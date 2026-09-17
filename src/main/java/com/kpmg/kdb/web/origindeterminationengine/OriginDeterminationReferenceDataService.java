@@ -10,7 +10,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
 
 /** 버퍼율(법인/회사/사업부/FTA)/FTA 적용대상국 등 저카디널리티 기준정보 캐시. */
 @Service
-public class CooDecisionReferenceDataService extends GeneralService {
+public class OriginDeterminationReferenceDataService extends GeneralService {
 
 	@Cacheable(cacheNames = "bufferOptionValue", key = "#companyCode")
 	public String getBufferOptionValue(String companyCode) {

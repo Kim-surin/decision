@@ -112,7 +112,7 @@
 	<!--
 		부가가치기준 충족 후보: 역외(OUTAREA_QTY>0) 원재료를 재료비(OUTAREA_AMOUNT) 비중이 큰 순으로 정렬한다.
 		이 중 실제로 몇 건까지 원산지확인서를 받아야 기준을 넘는지는 ConversionStrategyService에서
-		RvcCriteriaDecisionService와 동일한 BU/BD/NC/MC 산식으로 계산한다.
+		RvcCriteriaOriginDeterminationService와 동일한 BU/BD/NC/MC 산식으로 계산한다.
 	-->
 	<select id="selectValueContentCertifyCandidateList" parameterType="HashMap" resultType="HashMap">
 		SELECT FD.ITEM_CODE                                AS ITEM_CODE

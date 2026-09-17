@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.CreateFcrService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
-import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstDecisionUpdateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstOriginDeterminationUpdateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.MaterialOriginRowsRequest;
@@ -34,29 +34,29 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	@Autowired
 	private OriginDeterminationSupportService supportService;
 	@Autowired
-	private ExclusionRuleDecisionService exclusionRuleDecisionService;
+	private ExclusionRuleOriginDeterminationService exclusionRuleOriginDeterminationService;
 	@Autowired
-	private CtcCriteriaDecisionService ctcService;
+	private CtcCriteriaOriginDeterminationService ctcService;
 	@Autowired
-	private RvcCriteriaDecisionService rvcService;
+	private RvcCriteriaOriginDeterminationService rvcService;
 	@Autowired
 	private ItemNationService itemNationService;
 
 	// 원산지 판정 1건 실행. 예외를 흡수하지 않고 그대로 던진다 — 배치 전체 중단 없이 넘기면서도 그 대상을 판정실패로
-	// 표시하는 책임은 호출자(OriginDecisionPipeline)에 있다. productCodes: null/빈 리스트면 salesNo 전체(월 판정) 대상.
+	// 표시하는 책임은 호출자(OriginDeterminationPipeline)에 있다. productCodes: null/빈 리스트면 salesNo 전체(월 판정) 대상.
 	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
 		OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
 
 		List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
 				productCodes);
-		boolean hasCommodity = containsAny(assetTypes, "M", "R", "B");
+		boolean hasMerchandise = containsAny(assetTypes, "M", "R", "B");
 		boolean hasProduct = containsAny(assetTypes, "P", "H");
 
 		String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
 
-		if (hasCommodity) {
-			decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+		if (hasMerchandise) {
+			decideMerchandiseOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
 		}
 
 		if (hasProduct) {
@@ -74,11 +74,11 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	}
 
 	/** 상품(M,R,B) 원산지 판정. 구매처 원산지확인서/FTA_RULE 조회 결과를 FCR_MST/FCR_RESULT에 반영하는 집합 연산 2단계. */
-	private void decideCommodityOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
+	private void decideMerchandiseOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
 			List<String> productCodes, OriginDeterminationMode mode) {
-		CommodityOriginDeterminationDao dao = sqlSession.getMapper(CommodityOriginDeterminationDao.class);
+		MerchandiseOriginDeterminationDao dao = sqlSession.getMapper(MerchandiseOriginDeterminationDao.class);
 		dao.mergeFcrMstOriginDetermination(salesNo, divisionCode, companyCode, invoiceDate, productCodes);
-		dao.insertFcrResultForCommodities(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
+		dao.insertFcrResultForMerchandise(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
 	}
 	
 	/** 제품(P,H) 원산지 판정 */
@@ -94,8 +94,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		OriginCriteriaCache originCriteriaCache = OriginCriteriaCache.prefetch(dao, fmListRows, newAptaPsrFlag);
 		Map<String, BufferRates> productLineBufferCache = new HashMap<>();
 
-		// FM_LIST 전체분의 자재 원산지 목록을 한 번에 메모리에 올리면 BOM이 복잡한 매출은 수만 건까지도
-		// 쌓여(예: 15,104건 확인) GC 부담이 커져, fmListRows를 청크 단위로 나눠 캐시를 그때그때 버린다.
+		// FM_LIST 전체분의 자재 원산지 목록을 한 번에 메모리에 올리면 BOM이 복잡한 매출은 수만 건까지도 존재
+		// GC 부담이 커져, fmListRows를 청크 단위로 나눠 캐시를 그때그때 버린다.
 		PendingBatch pending = new PendingBatch();
 		for (int from = 0; from < fmListRows.size(); from += BATCH_CHUNK_SIZE) {
 			List<OriginDeterminationTarget> chunk = fmListRows.subList(from,
@@ -170,8 +170,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		rec.setStatus("E");
 		rec.setCompanyCooYn("N");
 		rec.setFtaCooYn("N");
-		rec.setErrorCode("MSG_DECISION_STANDARD_NOT_EXIST");
-		rec.setErrorMsg("판정기준이 미 존재 합니다.");
+		FcrResultError.STANDARD_NOT_EXIST.applyTo(rec);
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
@@ -214,8 +213,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 			rec.setCompanyCooYn("N");
 			rec.setFtaCooYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("금액이 0 인 것이 존재합니다.");
+			FcrResultError.QTY_AMOUNT_ZERO.applyTo(rec);
 			supportService.insertFrdAndReset(ctx, mode);
 			return;
 		}
@@ -237,7 +235,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		boolean stop = false;
 
 		if ("Y".equals(frData.getExclusionRuleYn())) {
-			if (!exclusionRuleDecisionService.decide(ctx, frData, mode, exclusionRuleCache)) {
+			if (!exclusionRuleOriginDeterminationService.decide(ctx, frData, mode, exclusionRuleCache)) {
 				supportService.markError(ctx);
 				supportService.insertFrdAndReset(ctx, mode);
 				stop = true;
@@ -494,7 +492,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	private static final class PendingBatch {
 		final List<OriginDeterminationResult> results = new ArrayList<>();
 		final List<OriginDeterminationTarget> deferredUpdateFrmTargets = new ArrayList<>();
-		final List<FcrMstDecisionUpdateRow> fcrMstUpdateBatch = new ArrayList<>();
+		final List<FcrMstOriginDeterminationUpdateRow> fcrMstUpdateBatch = new ArrayList<>();
 	}
 
 	private static boolean ynOrDefaultY(String value) {

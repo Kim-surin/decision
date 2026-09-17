@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
-import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstDecisionUpdateRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstOriginDeterminationUpdateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.UpdateFrmLookupRequest;
@@ -52,5 +52,5 @@ public interface OriginDeterminationSupportDao {
 			@Param("salesNo") String salesNo, @Param("requests") List<UpdateFrmLookupRequest> requests);
 
 	/** FCR_MST 최종 판정결과(FTA_COO_YN/COMPANY_COO_YN 등) 배치 UPDATE */
-	void updateFcrMstDecisionResults(@Param("rows") List<FcrMstDecisionUpdateRow> rows);
+	void updateFcrMstDecisionResults(@Param("rows") List<FcrMstOriginDeterminationUpdateRow> rows);
 }

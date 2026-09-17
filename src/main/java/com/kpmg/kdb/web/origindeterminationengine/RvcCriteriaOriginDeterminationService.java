@@ -16,9 +16,9 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteria;
 // 부가가치기준(RVC) 원산지 판정(레거시 COO_DECISION_FOR_RVC). CTC_ONLY 모드는 부가가치기준을 쓰지 않아
 // FTA_RVC_YN/COMPANY_RVC_YN을 무조건 'N'으로 설정한다.
 @Service
-public class RvcCriteriaDecisionService {
+public class RvcCriteriaOriginDeterminationService {
 
-	private static final Logger logger = LoggerFactory.getLogger(RvcCriteriaDecisionService.class);
+	private static final Logger logger = LoggerFactory.getLogger(RvcCriteriaOriginDeterminationService.class);
 	private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
 	/** @return 판정 성공 여부. 실패(예외 발생) 시 false — 호출자가 이 대상을 판정오류로 처리해야 한다. */
@@ -34,7 +34,7 @@ public class RvcCriteriaDecisionService {
 			decideRvc(ctx, frData);
 			return true;
 		} catch (Exception e) {
-			ctx.setErrorCode("RVC ERROR");
+			ctx.setErrorCode(FcrResultError.RVC_ERROR.code());
 			ctx.setErrorMsg(String.valueOf(e.getMessage()));
 			logger.error("COO_DECISION_FOR_RVC 실패. ftaCode={}, hsCode={}", frData.getFtaCode(), frData.getHsCode(), e);
 			return false;
@@ -55,8 +55,7 @@ public class RvcCriteriaDecisionService {
 			rec.setFtaRvcYn("N");
 			rec.setCompanyRvcYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("금액이 0 인 것이 존재합니다.");
+			FcrResultError.QTY_AMOUNT_ZERO.applyTo(rec);
 			return;
 		}
 
@@ -72,8 +71,7 @@ public class RvcCriteriaDecisionService {
 			rec.setFtaRvcYn("N");
 			rec.setCompanyRvcYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("MSG_FAILED_DECISION_QTY_AMOUNT");
-			rec.setErrorMsg("RVC 판정 기준금액(FOB/EXW 또는 순원가)이 0 이하여서 비율을 계산할 수 없습니다.");
+			FcrResultError.RVC_BASE_AMOUNT_NOT_POSITIVE.applyTo(rec);
 			return;
 		}
 
@@ -121,7 +119,7 @@ public class RvcCriteriaDecisionService {
 			rec.setFtaRvcYn("N");
 			rec.setCompanyRvcYn("N");
 			rec.setStatus("E");
-			rec.setErrorCode("RVC ERROR");
+			rec.setErrorCode(FcrResultError.RVC_ERROR.code());
 			rec.setErrorMsg(String.valueOf(e.getMessage()));
 			logger.warn("COO_DECISION_FOR_RVC 비율 계산 실패. "
 					+ "BU={}, BD={}, NC={}, MC={}, 역내금액={}, 역외금액={}, FOB/EX={}", frData.getBuRule(),
@@ -137,7 +135,7 @@ public class RvcCriteriaDecisionService {
 	}
 
 	private static BigDecimal sum(List<MaterialOriginRow> rows, Function<MaterialOriginRow, BigDecimal> extractor) {
-		return rows.stream().map(extractor).map(RvcCriteriaDecisionService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
+		return rows.stream().map(extractor).map(RvcCriteriaOriginDeterminationService::nvl).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	private static boolean positive(BigDecimal v) {

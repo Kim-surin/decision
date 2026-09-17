@@ -14,9 +14,9 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationPara
 
 // 원산지판정 흐름을 메서드 체이닝으로 실행하는 파이프라인. 내수는 generateVirtualSales > createFcr > determineOrigin >
 // updateStatus, 수출은 createFcr부터 시작하며, 판정 대상 1건에서 예외가 나면 그 대상만 판정실패('5')로 표시하고 나머지는 계속 진행한다.
-public class OriginDecisionPipeline {
+public class OriginDeterminationPipeline {
 
-	private static final Logger logger = LoggerFactory.getLogger(OriginDecisionPipeline.class);
+	private static final Logger logger = LoggerFactory.getLogger(OriginDeterminationPipeline.class);
 
 	/** CREATE_FCR 의 P_BOM_TYPE. 원본 MONTHLY_DECISION_PROC 호출부와 동일하게 항상 "F"를 쓴다. */
 	private static final String BOM_TYPE = "F";
@@ -28,14 +28,14 @@ public class OriginDecisionPipeline {
 	private final AggregatedVirtualSalesGenerator virtualSalesGenerator;
 	private final CreateFcrService fcrCreator;
 	private final OriginDeterminationExecutionService originDecider;
-	private final SalesDecisionStatusUpdater statusUpdater;
+	private final SalesOriginDeterminationStatusUpdater statusUpdater;
 
 	private List<SalesTarget> targets;
 
-	public OriginDecisionPipeline(List<SalesTarget> initialTargets, OriginDeterminationMode mode,
+	public OriginDeterminationPipeline(List<SalesTarget> initialTargets, OriginDeterminationMode mode,
 			List<String> productCodes, AggregatedVirtualSalesGenerator virtualSalesGenerator,
 			CreateFcrService fcrCreator, OriginDeterminationExecutionService originDecider,
-			SalesDecisionStatusUpdater statusUpdater) {
+			SalesOriginDeterminationStatusUpdater statusUpdater) {
 		this.targets = initialTargets;
 		this.mode = mode;
 		this.productCodes = productCodes;
@@ -48,27 +48,27 @@ public class OriginDecisionPipeline {
 	// ==================== 단계 ====================
 
 	/** "1. 가상매출 생성"(내수 전용). SALES_MST/SALES_DTL 가상매출을 만들고 판정 대상 목록을 갱신한다. */
-	public OriginDecisionPipeline generateVirtualSales(VirtualSalesGenerationParams params) {
+	public OriginDeterminationPipeline generateVirtualSales(VirtualSalesGenerationParams params) {
 		this.targets = virtualSalesGenerator.generate(params);
 		this.failedTargets.clear();
 		return this;
 	}
 
 	/** "3. CREATE_FCR". 현재 판정 대상 각각에 대해 FCR_MST/FCR_DTL 을 생성한다. */
-	public OriginDecisionPipeline createFcr() {
+	public OriginDeterminationPipeline createFcr() {
 		return forEachTarget("CREATE_FCR",
 				t -> fcrCreator.createFcr(t.getCompanyCode(), t.getDivisionCode(), t.getSalesNo(), BOM_TYPE,
 						productCodes));
 	}
 
 	/** "4. PKG99_COO_DECISION.COO_DECISION". 현재 판정 대상 각각에 대해 원산지를 판정한다(제품+상품). */
-	public OriginDecisionPipeline determineOrigin() {
+	public OriginDeterminationPipeline determineOrigin() {
 		return forEachTarget("COO_DECISION", t -> originDecider.determineOrigin(t.getCompanyCode(),
 				t.getDivisionCode(), t.getSalesNo(), mode, productCodes));
 	}
 
 	/** "5. SALES_DTL STATUS 업데이트". 현재 판정 대상 각각의 상태값을 판정완료로 갱신한다. */
-	public OriginDecisionPipeline updateStatus() {
+	public OriginDeterminationPipeline updateStatus() {
 		return forEachTarget("STATUS 업데이트",
 				t -> statusUpdater.updateStatus(t.getCompanyCode(), t.getDivisionCode(), t.getSalesNo(), productCodes));
 	}
@@ -83,7 +83,7 @@ public class OriginDecisionPipeline {
 		return failedTargets;
 	}
 
-	private OriginDecisionPipeline forEachTarget(String stepName, Consumer<SalesTarget> step) {
+	private OriginDeterminationPipeline forEachTarget(String stepName, Consumer<SalesTarget> step) {
 		for (SalesTarget target : targets) {
 			if (failedTargets.contains(target)) {
 				continue;

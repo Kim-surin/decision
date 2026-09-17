@@ -1,0 +1,8 @@
+package com.kpmg.kdb.web.origindeterminationengine;
+
+// 벌크 판정(내수 개별판정/월판정/수출 개별판정) 서비스 공통 인터페이스. 그룹(또는 대상)마다 OriginDeterminationPipeline을
+// 새로 만들어 실행하고 결과를 BulkOriginDeterminationResult로 취합하는 흐름은 동일하지만 입력 타입은 제네릭으로 흡수한다.
+public interface BulkOriginDeterminationService<T> {
+
+	BulkOriginDeterminationResult run(T request);
+}
