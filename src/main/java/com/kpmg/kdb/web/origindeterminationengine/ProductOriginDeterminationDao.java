@@ -13,7 +13,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchRequest
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginCriteriaBatchResult;
 
 // 제품(P,H) 원산지판정 전용 조회: FTA 후보(FCR_MST)/룰(FTA_RULE)/자재원산지(FCR_DTL). "상품"(M,R,B)은
-// CommodityOriginDeterminationDao, 오케스트레이션은 OriginDeterminationExecutionService 참고.
+// MerchandiseOriginDeterminationDao, 오케스트레이션은 OriginDeterminationExecutionService 참고.
 public interface ProductOriginDeterminationDao {
 
 	// 판정대상 매출(SALES_NO) 1건에 존재하는 FTA_CODE 후보 전체를 조회한다. productCodes가 null/빈 리스트면

@@ -3,7 +3,7 @@ package com.kpmg.kdb.web.origindeterminationengine.dto;
 import java.math.BigDecimal;
 
 /** 레거시 CREATE_FCR 3-4(상품/부산물 FCR_DTL) 단계의 원시 행(FC10_GET_ITEM_ORIGIN_RATE 호출 전) */
-public class ProductFcrDtlSourceRow {
+public class MerchandiseFcrDtlSourceRow {
 
 	private String productCode;
 	private String ftaCode;

@@ -50,13 +50,13 @@ public class OriginDeterminationExecutionService extends GeneralService {
 
 		List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
 				productCodes);
-		boolean hasCommodity = containsAny(assetTypes, "M", "R", "B");
+		boolean hasMerchandise = containsAny(assetTypes, "M", "R", "B");
 		boolean hasProduct = containsAny(assetTypes, "P", "H");
 
 		String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
 
-		if (hasCommodity) {
-			decideCommodityOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+		if (hasMerchandise) {
+			decideMerchandiseOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
 		}
 
 		if (hasProduct) {
@@ -74,11 +74,11 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	}
 
 	/** 상품(M,R,B) 원산지 판정. 구매처 원산지확인서/FTA_RULE 조회 결과를 FCR_MST/FCR_RESULT에 반영하는 집합 연산 2단계. */
-	private void decideCommodityOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
+	private void decideMerchandiseOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
 			List<String> productCodes, OriginDeterminationMode mode) {
-		CommodityOriginDeterminationDao dao = sqlSession.getMapper(CommodityOriginDeterminationDao.class);
+		MerchandiseOriginDeterminationDao dao = sqlSession.getMapper(MerchandiseOriginDeterminationDao.class);
 		dao.mergeFcrMstOriginDetermination(salesNo, divisionCode, companyCode, invoiceDate, productCodes);
-		dao.insertFcrResultForCommodities(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
+		dao.insertFcrResultForMerchandise(salesNo, divisionCode, companyCode, productCodes, mode.getProcedureName());
 	}
 	
 	/** 제품(P,H) 원산지 판정 */

@@ -24,7 +24,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrDtlInsertRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstInsertRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive;
-import com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MerchandiseFcrDtlSourceRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomStatusUpdateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader;
@@ -138,20 +138,20 @@ public class CreateFcrService extends GeneralService {
 		}
 	}
 
-	// "5. FCR_DTL 생성". BOM 최말단 자재(leafRows)/제품·부산물(productRows)의 원가·원산지비율을 배치로
+	// "5. FCR_DTL 생성". BOM 최말단 자재(leafRows)/상품·부산물(merchandiseRows)의 원가·원산지비율을 배치로
 	// 미리 캐시해둔 뒤 FCR_DTL을 생성한다.
 	private void createFcrDtl(CreateFcrDao dao, String salesNo, String divisionCode, String companyCode,
 			String bomType, String invoiceDate, List<String> productCodes) {
 		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
-		List<ProductFcrDtlSourceRow> productRows = dao.selectProductFcrDtlSourceRows(salesNo, divisionCode, companyCode,
-				productCodes);
+		List<MerchandiseFcrDtlSourceRow> merchandiseRows = dao.selectMerchandiseFcrDtlSourceRows(salesNo, divisionCode,
+				companyCode, productCodes);
 
-		List<ItemOriginRateCriteria> combinedOriginRateLookups = new ArrayList<>(leafRows.size() + productRows.size());
+		List<ItemOriginRateCriteria> combinedOriginRateLookups = new ArrayList<>(leafRows.size() + merchandiseRows.size());
 		for (BomLeafRow leaf : leafRows) {
 			combinedOriginRateLookups.add(new ItemOriginRateCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(),
 					leaf.getItemCode(), leaf.getFtaCode(), invoiceDate));
 		}
-		for (ProductFcrDtlSourceRow src : productRows) {
+		for (MerchandiseFcrDtlSourceRow src : merchandiseRows) {
 			// 부산물(B)은 원산지비율 조회가 필요 없다(항상 100%)
 			if (!"B".equals(src.getProductAssetsType())) {
 				combinedOriginRateLookups.add(new ItemOriginRateCriteria(src.getCompanyCode(), src.getProdDivisionCode(),
@@ -174,7 +174,7 @@ public class CreateFcrService extends GeneralService {
 
 		createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache,
 				divisionBalanceCache, purchasePriceCache, standardCostCache);
-		createProductFcrDtl(dao, productRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
+		createMerchandiseFcrDtl(dao, merchandiseRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
 	}
 
 	/** setupParameters() 반환값. SalesInvoiceHeader 조회 결과 + 파생값(yyyymm 등) + 판별된 bomType을 묶는다. */
@@ -581,13 +581,13 @@ public class CreateFcrService extends GeneralService {
 	}
 
 	/** 상품/부산물을 자재 1건처럼 취급해 FCR_DTL 생성. 부산물(B)은 원산지비율을 항상 100%로 본다. */
-	private void createProductFcrDtl(CreateFcrDao dao, List<ProductFcrDtlSourceRow> rows, String invoiceDate,
+	private void createMerchandiseFcrDtl(CreateFcrDao dao, List<MerchandiseFcrDtlSourceRow> rows, String invoiceDate,
 			Map<String, OriginRatePrecheck> originRatePrecheckCache,
 			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache) {
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
 
 		List<FcrDtlInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
-		for (ProductFcrDtlSourceRow src : rows) {
+		for (MerchandiseFcrDtlSourceRow src : rows) {
 			BigDecimal originRate = "B".equals(src.getProductAssetsType()) ? BigDecimal.ONE
 					: nvl(resolveOriginRateCached(originRateCache, originRatePrecheckCache, nonCertifiedSummaryCache,
 							src.getCompanyCode(), src.getProdDivisionCode(), src.getProductCode(), src.getFtaCode(),

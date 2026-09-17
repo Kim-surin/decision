@@ -478,7 +478,7 @@
 
 	<!-- ===================== 3-4. 상품/부산물 FCR_DTL ===================== -->
 
-	<select id="selectProductFcrDtlSourceRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow">
+	<select id="selectMerchandiseFcrDtlSourceRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.MerchandiseFcrDtlSourceRow">
 		SELECT FM.PRODUCT_CODE                               AS productCode
 		      ,FM.FTA_CODE                                    AS ftaCode
 		      ,FM.SALES_NO                                    AS salesNo

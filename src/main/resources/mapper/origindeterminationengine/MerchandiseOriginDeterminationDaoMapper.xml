@@ -1,6 +1,6 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.CommodityOriginDeterminationDao">
+<mapper namespace="com.kpmg.kdb.web.origindeterminationengine.MerchandiseOriginDeterminationDao">
 
 	<!-- CREATE_FCR "3-5. FCR MST UPDATE(상품 원산지 판정)" 이관. -->
 	<update id="mergeFcrMstOriginDetermination">
@@ -70,7 +70,7 @@
 	</update>
 
 	<!-- CREATE_FCR "3-6. FCR RESULT UPDATE(상품 원산지 판정)" 이관. -->
-	<insert id="insertFcrResultForCommodities">
+	<insert id="insertFcrResultForMerchandise">
 		INSERT INTO FCR_RESULT
 			(SEQ, SALES_NO, SALES_SEQ, FTA_CODE, DIVISION_CODE, COMPANY_CODE, HS_CODE, PRODUCT_CODE,
 			 STANDARD, RULE_SEQ, RULE_CODE, FTA_COO_YN, COMPANY_COO_YN, BUFFER_OPTION, DE_MINIMIS_RATE,

@@ -13,7 +13,7 @@ import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrDtlInsertRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstInsertRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FtaMasterActive;
-import com.kpmg.kdb.web.origindeterminationengine.dto.ProductFcrDtlSourceRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.MerchandiseFcrDtlSourceRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomStatusUpdateRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesDtlBomTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesInvoiceHeader;
@@ -91,7 +91,7 @@ public interface CreateFcrDao {
 			@Param("productCodes") List<String> productCodes);
 
 	/** "3-4. 상품/부산물 FCR_DTL" 원시 목록(원산지비율 계산 전) */
-	List<ProductFcrDtlSourceRow> selectProductFcrDtlSourceRows(@Param("salesNo") String salesNo,
+	List<MerchandiseFcrDtlSourceRow> selectMerchandiseFcrDtlSourceRows(@Param("salesNo") String salesNo,
 			@Param("divisionCode") String divisionCode, @Param("companyCode") String companyCode,
 			@Param("productCodes") List<String> productCodes);
 
