@@ -205,7 +205,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 				OriginDeterminationResult rec = new OriginDeterminationResult();
 				markAllNo(rec);
 				rec.setStatus("E");
-				FcrResultError.NO_MATERIAL_AMOUNT.applyTo(rec);
 				pendingFcrMstUpdates.add(buildFcrMstUpdateRow(fm, rec));
 			} else {
 				deferredTargets.add(fm);
