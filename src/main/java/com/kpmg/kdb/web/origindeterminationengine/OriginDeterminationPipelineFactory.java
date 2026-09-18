@@ -28,23 +28,23 @@ public class OriginDeterminationPipelineFactory extends GeneralService {
 	private CompanyOriginDeterminationFlagsService companyOriginDeterminationFlagsService;
 
 	/** 월 판정 파이프라인. {@link OriginDeterminationPipeline#generateVirtualSales} 를 첫 단계로 호출해야 대상이 채워진다. */
-	public OriginDeterminationPipeline forDomestic(String companyCode, List<String> productCodes) {
+	public OriginDeterminationPipeline forDomestic(String companyCode, List<String> productCodes, String createBy) {
 		OriginDeterminationMode mode = resolveMode(companyCode);
-		return new OriginDeterminationPipeline(Collections.emptyList(), mode, productCodes, aggregatedVirtualSalesGenerator,
-				fcrCreator, originDecider, statusUpdater);
+		return new OriginDeterminationPipeline(Collections.emptyList(), mode, productCodes, createBy,
+				aggregatedVirtualSalesGenerator, fcrCreator, originDecider, statusUpdater);
 	}
 
 	// 수출 판정 파이프라인. 이미 존재하는 실제 SALES_NO 1건을 대상으로 확정해 돌려주므로
 	// 가상매출 생성 단계 없이 바로 createFcr()부터 체인을 시작하면 된다.
 	public OriginDeterminationPipeline forExport(String companyCode, String divisionCode, String salesNo,
-			List<String> productCodes) {
+			List<String> productCodes, String createBy) {
 		OriginDeterminationMode mode = resolveMode(companyCode);
 		SalesTarget target = new SalesTarget();
 		target.setCompanyCode(companyCode);
 		target.setDivisionCode(divisionCode);
 		target.setSalesNo(salesNo);
-		return new OriginDeterminationPipeline(List.of(target), mode, productCodes, aggregatedVirtualSalesGenerator,
-				fcrCreator, originDecider, statusUpdater);
+		return new OriginDeterminationPipeline(List.of(target), mode, productCodes, createBy,
+				aggregatedVirtualSalesGenerator, fcrCreator, originDecider, statusUpdater);
 	}
 
 	private OriginDeterminationMode resolveMode(String companyCode) {

@@ -21,7 +21,7 @@ public class ExportOriginDeterminationTargetService extends GeneralService {
 		List<ExportOriginDeterminationTarget> result = new ArrayList<>(targets.size());
 		for (SalesTarget target : targets) {
 			result.add(new ExportOriginDeterminationTarget(target.getCompanyCode(), target.getDivisionCode(),
-					target.getSalesNo(), filter.getProductCodes()));
+					target.getSalesNo(), filter.getProductCodes(), filter.getCreateBy()));
 		}
 		return result;
 	}

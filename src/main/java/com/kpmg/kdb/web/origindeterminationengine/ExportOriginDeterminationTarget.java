@@ -11,12 +11,16 @@ public class ExportOriginDeterminationTarget {
 	private final String salesNo;
 	/** null 이면 salesNo 전체 제품 대상(OriginDeterminationPipelineFactory#forExport 와 동일). */
 	private final List<String> productCodes;
+	/** GenericController#extendsMap이 세션에서 채워준 사용자 ID. FCR_MST/FCR_DTL/FCR_RESULT/SALES_MST 등의 CREATE_BY/UPDATE_BY에 그대로 쓰인다. */
+	private final String createBy;
 
-	public ExportOriginDeterminationTarget(String companyCode, String divisionCode, String salesNo, List<String> productCodes) {
+	public ExportOriginDeterminationTarget(String companyCode, String divisionCode, String salesNo, List<String> productCodes,
+			String createBy) {
 		this.companyCode = companyCode;
 		this.divisionCode = divisionCode;
 		this.salesNo = salesNo;
 		this.productCodes = productCodes;
+		this.createBy = createBy;
 	}
 
 	public String getCompanyCode() {
@@ -33,5 +37,9 @@ public class ExportOriginDeterminationTarget {
 
 	public List<String> getProductCodes() {
 		return productCodes;
+	}
+
+	public String getCreateBy() {
+		return createBy;
 	}
 }

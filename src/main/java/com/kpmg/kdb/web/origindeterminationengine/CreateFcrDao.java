@@ -79,11 +79,12 @@ public interface CreateFcrDao {
 			@Param("salesSeqs") List<Integer> salesSeqs);
 
 	/** HS코드/인코텀즈 환산이 끝난 FCR_MST 행을 청크 단위로 일괄 INSERT */
-	void insertFcrMstRows(@Param("rows") List<FcrMstInsertRow> rows);
+	void insertFcrMstRows(@Param("rows") List<FcrMstInsertRow> rows, @Param("createBy") String createBy);
 
 	/** BOM이 없는 FTA_CODE 후보들을 FCR_RESULT에 판정오류(STATUS='E')로 명시 INSERT */
 	void insertFcrResultsForBomNotFound(@Param("rows") List<BomNotFoundResultRow> rows,
-			@Param("errorCode") String errorCode, @Param("errorMsg") String errorMsg);
+			@Param("errorCode") String errorCode, @Param("errorMsg") String errorMsg,
+			@Param("createBy") String createBy);
 
 	/** "3-3. 제품 BOM 소요량" 원시 leaf 자재 목록(단가/원산지비율 계산 전) */
 	List<ProductBomLeafRow> selectProductBomLeafRows(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
@@ -96,7 +97,7 @@ public interface CreateFcrDao {
 			@Param("productCodes") List<String> productCodes);
 
 	/** 계산이 끝난 FCR_DTL 행을 청크 단위로 일괄 INSERT (3-3, 3-4 공용) */
-	void insertFcrDtlRows(@Param("rows") List<FcrDtlInsertRow> rows);
+	void insertFcrDtlRows(@Param("rows") List<FcrDtlInsertRow> rows, @Param("createBy") String createBy);
 
 	/** FCR_MST의 역내산/역외산 재료비금액을 FCR_DTL 집계로 갱신 */
 	void mergeFcrMstMaterialAmountTotals(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,

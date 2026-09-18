@@ -20,7 +20,7 @@ public class ExportOriginDeterminationService extends GeneralService implements 
 		BulkOriginDeterminationResult result = BulkPipelineRunner.run(targets,
 				target -> pipelineFactory
 						.forExport(target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(),
-								target.getProductCodes())
+								target.getProductCodes(), target.getCreateBy())
 						.createFcr()
 						.determineOrigin()
 						.updateStatus(),

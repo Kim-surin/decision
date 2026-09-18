@@ -23,6 +23,8 @@ public class OriginDeterminationPipeline {
 
 	private final OriginDeterminationMode mode;
 	private final List<String> productCodes;
+	/** GenericController#extendsMap이 세션에서 채워준 사용자 ID. 이 파이프라인이 만지는 모든 CREATE_BY/UPDATE_BY에 그대로 쓰인다. */
+	private final String createBy;
 	private final Set<SalesTarget> failedTargets = new HashSet<>();
 
 	private final AggregatedVirtualSalesGenerator virtualSalesGenerator;
@@ -33,12 +35,13 @@ public class OriginDeterminationPipeline {
 	private List<SalesTarget> targets;
 
 	public OriginDeterminationPipeline(List<SalesTarget> initialTargets, OriginDeterminationMode mode,
-			List<String> productCodes, AggregatedVirtualSalesGenerator virtualSalesGenerator,
+			List<String> productCodes, String createBy, AggregatedVirtualSalesGenerator virtualSalesGenerator,
 			CreateFcrService fcrCreator, OriginDeterminationExecutionService originDecider,
 			SalesOriginDeterminationStatusUpdater statusUpdater) {
 		this.targets = initialTargets;
 		this.mode = mode;
 		this.productCodes = productCodes;
+		this.createBy = createBy;
 		this.virtualSalesGenerator = virtualSalesGenerator;
 		this.fcrCreator = fcrCreator;
 		this.originDecider = originDecider;
@@ -58,19 +61,20 @@ public class OriginDeterminationPipeline {
 	public OriginDeterminationPipeline createFcr() {
 		return forEachTarget("CREATE_FCR",
 				t -> fcrCreator.createFcr(t.getCompanyCode(), t.getDivisionCode(), t.getSalesNo(), BOM_TYPE,
-						productCodes));
+						productCodes, createBy));
 	}
 
 	/** "4. PKG99_COO_DECISION.COO_DECISION". 현재 판정 대상 각각에 대해 원산지를 판정한다(제품+상품). */
 	public OriginDeterminationPipeline determineOrigin() {
 		return forEachTarget("COO_DECISION", t -> originDecider.determineOrigin(t.getCompanyCode(),
-				t.getDivisionCode(), t.getSalesNo(), mode, productCodes));
+				t.getDivisionCode(), t.getSalesNo(), mode, productCodes, createBy));
 	}
 
 	/** "5. SALES_DTL STATUS 업데이트". 현재 판정 대상 각각의 상태값을 판정완료로 갱신한다. */
 	public OriginDeterminationPipeline updateStatus() {
 		return forEachTarget("STATUS 업데이트",
-				t -> statusUpdater.updateStatus(t.getCompanyCode(), t.getDivisionCode(), t.getSalesNo(), productCodes));
+				t -> statusUpdater.updateStatus(t.getCompanyCode(), t.getDivisionCode(), t.getSalesNo(), productCodes,
+						createBy));
 	}
 
 	/** 이번 파이프라인이 다루는 판정 대상 목록(가장 최근 단계 기준). */
@@ -96,7 +100,7 @@ public class OriginDeterminationPipeline {
 						target.getSalesNo(), e);
 				try {
 					statusUpdater.markDecisionFailed(target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(),
-							productCodes);
+							productCodes, createBy);
 				} catch (Exception markFailedException) {
 					logger.error("판정실패 표시 실패. companyCode={}, salesNo={}", target.getCompanyCode(),
 							target.getSalesNo(), markFailedException);

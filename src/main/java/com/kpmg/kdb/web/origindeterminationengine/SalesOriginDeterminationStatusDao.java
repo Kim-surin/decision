@@ -16,7 +16,8 @@ public interface SalesOriginDeterminationStatusDao {
 	// 판정완료 SALES_DTL 상태값 갱신(FCR_MST/FCR_RESULT 오류 존재 여부에 따라 '4' 또는 '5'). productCodes가
 	// null/빈 리스트면 salesNo 전체(월 판정) 대상. DIVISION_CODE 조건이 필요한 이유는 updateSalesMstDecisionComplete 참고.
 	void updateSalesDtlDecisionComplete(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo,
-			@Param("divisionCode") String divisionCode, @Param("productCodes") List<String> productCodes);
+			@Param("divisionCode") String divisionCode, @Param("productCodes") List<String> productCodes,
+			@Param("updateBy") String updateBy);
 
 	/** 판정완료 FCR_MST 상태값 갱신(COO_DATE=NOW). DIVISION_CODE 조건이 필요한 이유는 {@link #updateSalesMstDecisionComplete} 참고. */
 	void updateFcrMstDecisionComplete(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo,
@@ -29,5 +30,6 @@ public interface SalesOriginDeterminationStatusDao {
 
 	/** {@link #markSalesMstDecisionFailed} 의 SALES_DTL 버전. */
 	void markSalesDtlDecisionFailed(@Param("companyCode") String companyCode, @Param("salesNo") String salesNo,
-			@Param("divisionCode") String divisionCode, @Param("productCodes") List<String> productCodes);
+			@Param("divisionCode") String divisionCode, @Param("productCodes") List<String> productCodes,
+			@Param("updateBy") String updateBy);
 }

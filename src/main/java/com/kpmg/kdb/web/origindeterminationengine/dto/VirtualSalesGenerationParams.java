@@ -15,6 +15,8 @@ public class VirtualSalesGenerationParams {
 	/** null/빈 리스트면 제품 필터 없음, 값이 있으면 그 제품들만 대상으로 한다. */
 	private List<String> productCodes;
 	private String exportFlag;
+	/** GenericController#extendsMap이 세션에서 채워준 사용자 ID. SALES_MST/SALES_DTL 등 CREATE_BY/UPDATE_BY에 그대로 쓰인다. */
+	private String createBy;
 
 	public String getYyyymmdd() {
 		return yyyymmdd;
@@ -70,6 +72,14 @@ public class VirtualSalesGenerationParams {
 
 	public void setExportFlag(String exportFlag) {
 		this.exportFlag = exportFlag;
+	}
+
+	public String getCreateBy() {
+		return createBy;
+	}
+
+	public void setCreateBy(String createBy) {
+		this.createBy = createBy;
 	}
 
 	/** V_YYYYMM = SUBSTR(P_YYYYMMDD, 1, 6) */
