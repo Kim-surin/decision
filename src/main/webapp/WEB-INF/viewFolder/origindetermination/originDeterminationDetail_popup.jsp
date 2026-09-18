@@ -136,6 +136,9 @@
 		// 현재 선택된 판정 품목의 원재료(FCR_DTL) 전체 목록 - HS코드 누락/금액 0 사유일 때 fta_code로
 		// 필터링해서 판정 실패 상세내용 자리에 대신 보여준다
 		this.currentFailMaterialList = [];
+		// 방금 executeOriginDetermination으로 실행 요청한 대상들 - 재조회 후 이 중 판정실패가 있으면
+		// 이전 선택을 무시하고 그 라인을 우선 보여주기 위해 기억해둔다(resolvePostRefreshSelectionKey 참고)
+		this.pendingExecutedRows = null;
 		// 판정 실패 상세내용 대신 원재료 목록을 보여줘야 하는 실패 사유(ERROR_CODE)
 		this.MATERIAL_DETAIL_ERROR_CODES = ["TXT_HSCODE_INCLUDE_MISSING", "MSG_FAILED_DECISION_QTY_AMOUNT"];
 		// 팝업을 연 화면(내수/수출, 값 없으면 내수 취급). 내수는 개별/일괄 판정 버튼이 둘 다 있고,
@@ -535,14 +538,35 @@
 			this.buildGroupedItems();
 			this.renderSidebar();
 
-			var keyToSelect = (previousGroupKey && this.findGroupByKey(previousGroupKey)) ? previousGroupKey : null;
-			if (!keyToSelect && this.groupedItems.length > 0) {
-				keyToSelect = this.groupedItems[0].key;
-			}
+			var keyToSelect = this.resolvePostRefreshSelectionKey(previousGroupKey);
 
 			if (keyToSelect) {
 				this.selectItem(keyToSelect);
 			}
+		};
+
+		// 재조회 후 보여줄 그룹을 정한다. 방금 판정을 실행한 대상(pendingExecutedRows) 중 판정실패가
+		// 있으면 이전에 보던 그룹이 무엇이었든 그 실패 라인을 우선 보여주고, 없으면 기존처럼 이전 선택
+		// 또는 첫 그룹을 유지한다. 그대로 두면 일괄 판정 중 방금 실패한 항목이 화면에 전혀 안 뜰 수 있다.
+		this.resolvePostRefreshSelectionKey = function(previousGroupKey) {
+			var self = this;
+			var executedRows = this.pendingExecutedRows;
+			this.pendingExecutedRows = null;
+
+			var failedRow = executedRows && executedRows.filter(function(row) {
+				return self.isFailed(row.status);
+			})[0];
+
+			if (failedRow) {
+				this.selectedLineKey = this.buildKey(failedRow.sales_no, failedRow.sales_seq);
+				return this.buildGroupKey(failedRow.sales_no, failedRow.product_code);
+			}
+
+			if (previousGroupKey && this.findGroupByKey(previousGroupKey)) {
+				return previousGroupKey;
+			}
+
+			return this.groupedItems.length > 0 ? this.groupedItems[0].key : null;
 		};
 
 		// detailMap: buildKey(sales_no, sales_seq) -> 상세 1건. lineItems: 좌측 목록 기준 라인.
@@ -825,6 +849,8 @@
 					})
 				};
 			}
+
+			this.pendingExecutedRows = rows;
 
 			KpackageOBJ.ajax.doSubmit(
 				url,
