@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.core.procedurelog.ProcedureLogService;
+import com.kpmg.kdb.core.procedurelog.ProcedureLogTemplate;
 import com.kpmg.kdb.web.origindeterminationengine.CreateFcrService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstOriginDeterminationUpdateRow;
@@ -44,6 +45,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	private ItemNationService itemNationService;
 	@Autowired
 	private ProcedureLogService procedureLogService;
+	@Autowired
+	private ProcedureLogTemplate procedureLogTemplate;
 
 	// 원산지 판정 1건 실행. 예외를 흡수하지 않고 그대로 던진다 — 배치 전체 중단 없이 넘기면서도 그 대상을 판정실패로
 	// 표시하는 책임은 호출자(OriginDeterminationPipeline)에 있다. productCodes: null/빈 리스트면 salesNo 전체(월 판정) 대상.
@@ -51,10 +54,9 @@ public class OriginDeterminationExecutionService extends GeneralService {
 			List<String> productCodes) {
 		// AS-IS PKG99_COO_DECISION/PKG99_COO_CTC_DECISION 대응 로그. mode.getProcedureName()이 그 프로시저명과 그대로 일치한다.
 		String procedureId = mode.getProcedureName();
-		Long logId = procedureLogService.batchLog(procedureId, companyCode, "INPUT DATA : " + companyCode + ":" + salesNo);
-		procedureLogService.batchLogDtl(logId, "START " + procedureId + " *****");
+		procedureLogTemplate.runLogged(procedureId, companyCode, "INPUT DATA : " + companyCode + ":" + salesNo, logId -> {
+			procedureLogService.batchLogDtl(logId, "START " + procedureId + " *****");
 
-		try {
 			OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
 
 			List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
@@ -72,13 +74,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 				decideProductOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode, logId);
 			}
 
-			procedureLogService.batchLogDtl(logId, "***** END " + procedureId);
-			procedureLogService.batchLogLast(logId, "N", null, null);
-		} catch (Exception e) {
-			procedureLogService.batchLogDtl(logId, "DBMS 에러가 발생 했습니다 " + e);
-			procedureLogService.batchLogLast(logId, "E", "DBMS ERROR", null);
-			throw e;
-		}
+			return null;
+		});
 	}
 
 	private static boolean containsAny(List<String> assetTypes, String... candidates) {

@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Param;
 // AS-IS PKG00_PROCEDURE_LOG(PROCEDURE_LOG_MST/DTL) 대응. ProcedureLogService가 사용한다.
 public interface ProcedureLogDao {
 
-	/** BATCH_LOG 대응. logId는 시퀀스로 채번해 파라미터 맵에 채워 넣는다(selectKey). */
+	/** BATCH_LOG 대응. logId는 호출측이 nextLogId()로 미리 채번해 그대로 넘긴다. */
 	void insertMst(@Param("logId") Long logId, @Param("procedureId") String procedureId,
 			@Param("jobType") String jobType, @Param("companyCode") String companyCode,
 			@Param("inputParameter") String inputParameter);
