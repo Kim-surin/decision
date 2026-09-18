@@ -1,5 +1,7 @@
 package com.kpmg.kdb.core.procedurelog;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 
 // AS-IS PKG00_PROCEDURE_LOG(PROCEDURE_LOG_MST/DTL) 대응. ProcedureLogService가 사용한다.
@@ -14,8 +16,8 @@ public interface ProcedureLogDao {
 	void updateMstEnd(@Param("logId") Long logId, @Param("status") String status,
 			@Param("resultCode") String resultCode, @Param("resultMessage") String resultMessage);
 
-	/** BATCH_LOG_DTL 대응. seq는 log_id별로 순차 채번한다. */
-	void insertDtl(@Param("logId") Long logId, @Param("logContents") String logContents);
+	/** BATCH_LOG_DTL 대응(배치). contents 리스트 순서 그대로 log_id의 현재 MAX(SEQ) 다음부터 이어서 채번한다. */
+	void insertDtlBatch(@Param("logId") Long logId, @Param("contents") List<String> contents);
 
 	Long nextLogId();
 }

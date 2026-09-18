@@ -27,14 +27,18 @@
 		WHERE  LOG_ID = #{logId}
 	</update>
 
-	<!-- AS-IS PKG00_PROCEDURE_LOG.BATCH_LOG_DTL 대응. SEQ는 log_id별로 순차 채번한다. -->
-	<insert id="insertDtl">
+	<!-- AS-IS PKG00_PROCEDURE_LOG.BATCH_LOG_DTL 대응(배치). contents 리스트 순서(V.ORD)를 그대로
+	     log_id의 현재 MAX(SEQ) 다음부터 이어서 채번한다(ProcedureLogService의 버퍼 flush가 사용). -->
+	<insert id="insertDtlBatch">
 		INSERT INTO PROCEDURE_LOG_DTL
 			(LOG_ID, SEQ, LOG_DATETIME, LOG_CONTENTS)
-		VALUES
-			(#{logId},
-			 (SELECT COALESCE(MAX(SEQ), 0) + 1 FROM PROCEDURE_LOG_DTL WHERE LOG_ID = #{logId}),
-			 CURRENT_TIMESTAMP, #{logContents})
+		SELECT #{logId}, NS.BASE_SEQ + V.ORD, CURRENT_TIMESTAMP, V.LOG_CONTENTS
+		FROM   (
+		<foreach collection="contents" item="content" index="i" separator="UNION ALL">
+		SELECT #{i} + 1 AS ORD, #{content} AS LOG_CONTENTS
+		</foreach>
+		       ) V
+		CROSS  JOIN (SELECT COALESCE(MAX(SEQ), 0) AS BASE_SEQ FROM PROCEDURE_LOG_DTL WHERE LOG_ID = #{logId}) NS
 	</insert>
 
 </mapper>
