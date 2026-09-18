@@ -223,7 +223,6 @@ public class OriginDeterminationService extends GeneralService {
 				lineParams.setYyyymmdd(line.getInvoice_month());
 				lineParams.setCustomerCode(line.getCustomer_code());
 				lineParams.setDivisionCode(line.getDivision_code());
-				lineParams.setCreateBy(param.getCreate_by());
 
 				// 가상매출 그룹 정의가 바뀌어도 문제 없도록 그룹핑 키를 여기서 별도로 조합하지 않고 실제 채번 로직을 그대로 재사용한다.
 				String key = virtualSalesNoGenerator.generate(lineParams);
@@ -277,7 +276,7 @@ public class OriginDeterminationService extends GeneralService {
 
 			for (ExportOriginDeterminationExecuteRequestDto.Line line : param.getDatas()) {
 				targets.add(new ExportOriginDeterminationTarget(param.getCompany_code(), line.getDivision_code(),
-						line.getSales_no(), null, param.getCreate_by()));
+						line.getSales_no(), null));
 			}
 
 			BulkOriginDeterminationResult bulkResult = exportOriginDeterminationService.run(targets);
@@ -309,7 +308,6 @@ public class OriginDeterminationService extends GeneralService {
 				VirtualSalesGenerationParams filter = new VirtualSalesGenerationParams();
 				filter.setCompanyCode(param.getCompany_code());
 				filter.setYyyymmdd(yyyymm);
-				filter.setCreateBy(param.getCreate_by());
 
 				BulkOriginDeterminationResult monthResult = monthlyOriginDeterminationService.run(filter);
 

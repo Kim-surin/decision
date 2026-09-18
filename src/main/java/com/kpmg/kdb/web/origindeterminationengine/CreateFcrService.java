@@ -65,7 +65,7 @@ public class CreateFcrService extends GeneralService {
 	// productCodes: null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상.
 	// 반환값 "semisuccess"는 BOM 없는 제품이 있어 나머지만 진행하고 해당 제품은 FCR_RESULT에 BOM_NOT_FOUND로 명시 기록했다는 뜻.
 	public String createFcr(String companyCode, String divisionCode, String salesNo, String bomTypeParam,
-			List<String> productCodes, String createBy) {
+			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);
 
 		// 1. 파라미터 셋업 작업
@@ -82,16 +82,16 @@ public class CreateFcrService extends GeneralService {
 		Map<String, String> hsCodeCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> incotermsCache = new LinkedHashMap<>();
 		createFcrMst(dao, companyCode, divisionCode, salesNo, params.bomType, params.exportFlag, params.invoiceDate,
-				productCodes, hsCodeCache, incotermsCache, createBy);
+				productCodes, hsCodeCache, incotermsCache);
 
 		// 4-1. BOM 없는 대상 FCR_RESULT(BOM_NOT_FOUND) 기록
 		if (!missingBomTargets.isEmpty()) {
 			insertBomNotFoundResults(dao, companyCode, divisionCode, salesNo, params.exportFlag, params.bomType,
-					missingBomTargets, hsCodeCache, createBy);
+					missingBomTargets, hsCodeCache);
 		}
 
 		// 5. FCR_DTL 생성(자재/제품 원가·원산지비율 사전조회 포함)
-		createFcrDtl(dao, salesNo, divisionCode, companyCode, params.bomType, params.invoiceDate, productCodes, createBy);
+		createFcrDtl(dao, salesNo, divisionCode, companyCode, params.bomType, params.invoiceDate, productCodes);
 
 		// 6. FCR_MST 역내/역외 산재료비금액 합계 UPDATE
 		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
@@ -128,20 +128,20 @@ public class CreateFcrService extends GeneralService {
 	// 정상적으로 생성된다. BOM이 없는 제품은 호출부가 insertBomNotFoundResults로 별도 처리한다.
 	private void createFcrMst(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
 			String bomType, String exportFlag, String invoiceDate, List<String> productCodes,
-			Map<String, String> hsCodeCache, Map<String, BigDecimal> incotermsCache, String createBy) {
+			Map<String, String> hsCodeCache, Map<String, BigDecimal> incotermsCache) {
 		if ("D".equals(exportFlag)) {
 			createDomesticFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
-					hsCodeCache, incotermsCache, createBy);
+					hsCodeCache, incotermsCache);
 		} else {
 			createExportFcrMst(dao, companyCode, divisionCode, salesNo, bomType, invoiceDate, productCodes,
-					hsCodeCache, incotermsCache, createBy);
+					hsCodeCache, incotermsCache);
 		}
 	}
 
 	// "5. FCR_DTL 생성". BOM 최말단 자재(leafRows)/상품·부산물(merchandiseRows)의 원가·원산지비율을 배치로
 	// 미리 캐시해둔 뒤 FCR_DTL을 생성한다.
 	private void createFcrDtl(CreateFcrDao dao, String salesNo, String divisionCode, String companyCode,
-			String bomType, String invoiceDate, List<String> productCodes, String createBy) {
+			String bomType, String invoiceDate, List<String> productCodes) {
 		List<ProductBomLeafRow> leafRows = dao.selectProductBomLeafRows(salesNo, divisionCode, companyCode, bomType,
 				productCodes);
 		List<MerchandiseFcrDtlSourceRow> merchandiseRows = dao.selectMerchandiseFcrDtlSourceRows(salesNo, divisionCode,
@@ -174,9 +174,8 @@ public class CreateFcrService extends GeneralService {
 				.prefetchDivisionBalanceForPrice(priceLookups);
 
 		createBomLeafFcrDtl(dao, leafRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache,
-				divisionBalanceCache, purchasePriceCache, standardCostCache, createBy);
-		createMerchandiseFcrDtl(dao, merchandiseRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache,
-				createBy);
+				divisionBalanceCache, purchasePriceCache, standardCostCache);
+		createMerchandiseFcrDtl(dao, merchandiseRows, invoiceDate, originRatePrecheckCache, nonCertifiedSummaryCache);
 	}
 
 	/** setupParameters() 반환값. SalesInvoiceHeader 조회 결과 + 파생값(yyyymm 등) + 판별된 bomType을 묶는다. */
@@ -259,7 +258,7 @@ public class CreateFcrService extends GeneralService {
 	/** 내수(EXPORT_FLAG='D'): SALES × 활성 FTA_MASTER 교차곱으로 FCR_MST 생성 */
 	private void createDomesticFcrMst(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
 			String bomType, String invoiceDate, List<String> productCodes, Map<String, String> hsCodeCache,
-			Map<String, BigDecimal> incotermsCache, String createBy) {
+			Map<String, BigDecimal> incotermsCache) {
 		List<DomesticSalesLine> salesLines = dao.selectDomesticSalesLines(companyCode, divisionCode, salesNo,
 				productCodes);
 		List<FtaMasterActive> ftaMasters = referenceDataService.selectActiveFtaMasters(companyCode);
@@ -306,18 +305,18 @@ public class CreateFcrService extends GeneralService {
 				row.setImApplyYn(resolveImApplyYn(bomType, fta.getIntermediateYn()));
 
 				chunk.add(row);
-				chunk = flushIfFull(chunk, rows -> dao.insertFcrMstRows(rows, createBy));
+				chunk = flushIfFull(chunk, dao::insertFcrMstRows);
 			}
 		}
 		if (!chunk.isEmpty()) {
-			dao.insertFcrMstRows(chunk, createBy);
+			dao.insertFcrMstRows(chunk);
 		}
 	}
 
 	/** 수출: SALES × FTA_APPLY_NATION × FTA_MASTER(FTA_STATUS='4') 매칭 결과로 FCR_MST 생성. */
 	private void createExportFcrMst(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
 			String bomType, String invoiceDate, List<String> productCodes, Map<String, String> hsCodeCache,
-			Map<String, BigDecimal> incotermsCache, String createBy) {
+			Map<String, BigDecimal> incotermsCache) {
 		List<ExportSalesLine> salesLines = dao.selectExportSalesLines(companyCode, divisionCode, salesNo,
 				productCodes);
 		String stdYyyy = invoiceDate.substring(0, 4);
@@ -362,10 +361,10 @@ public class CreateFcrService extends GeneralService {
 			row.setImApplyYn(resolveImApplyYn(bomType, sales.getIntermediateYn()));
 
 			chunk.add(row);
-			chunk = flushIfFull(chunk, rows -> dao.insertFcrMstRows(rows, createBy));
+			chunk = flushIfFull(chunk, dao::insertFcrMstRows);
 		}
 		if (!chunk.isEmpty()) {
-			dao.insertFcrMstRows(chunk, createBy);
+			dao.insertFcrMstRows(chunk);
 		}
 	}
 
@@ -373,7 +372,7 @@ public class CreateFcrService extends GeneralService {
 	// 생성한다. RULE_CONTENTS가 비면 판정실패로 잡히고 BOM_STATUS='1'은 이후 조회에서 제외돼 재처리로 덮어쓰는 일도 없다.
 	private void insertBomNotFoundResults(CreateFcrDao dao, String companyCode, String divisionCode, String salesNo,
 			String exportFlag, String bomType, List<SalesDtlBomTarget> missingBomTargets,
-			Map<String, String> hsCodeCache, String createBy) {
+			Map<String, String> hsCodeCache) {
 		List<Integer> salesSeqs = new ArrayList<>(missingBomTargets.size());
 		for (SalesDtlBomTarget target : missingBomTargets) {
 			salesSeqs.add(target.getSalesSeq());
@@ -420,11 +419,11 @@ public class CreateFcrService extends GeneralService {
 		}
 
 		if (!mstRows.isEmpty()) {
-			dao.insertFcrMstRows(mstRows, createBy);
+			dao.insertFcrMstRows(mstRows);
 		}
 		if (!resultRows.isEmpty()) {
 			dao.insertFcrResultsForBomNotFound(resultRows, FcrResultError.BOM_NOT_FOUND.code(),
-					FcrResultError.BOM_NOT_FOUND.message(), createBy);
+					FcrResultError.BOM_NOT_FOUND.message());
 		}
 	}
 
@@ -474,7 +473,7 @@ public class CreateFcrService extends GeneralService {
 			Map<String, OriginRatePrecheck> originRatePrecheckCache,
 			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache,
 			Map<String, MaterialBalanceTierRow> divisionBalanceCache, Map<String, PoLedgerPriceRow> purchasePriceCache,
-			Map<String, StandardCostRow> standardCostCache, String createBy) {
+			Map<String, StandardCostRow> standardCostCache) {
 		Map<String, ItemPriceWithNote> priceWithNoteCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
 
@@ -500,10 +499,10 @@ public class CreateFcrService extends GeneralService {
 		List<FcrDtlInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
 		for (List<ResolvedLeaf> group : grouped.values()) {
 			chunk.add(aggregateLeafGroup(group));
-			chunk = flushIfFull(chunk, rows -> dao.insertFcrDtlRows(rows, createBy));
+			chunk = flushIfFull(chunk, dao::insertFcrDtlRows);
 		}
 		if (!chunk.isEmpty()) {
-			dao.insertFcrDtlRows(chunk, createBy);
+			dao.insertFcrDtlRows(chunk);
 		}
 	}
 
@@ -585,7 +584,7 @@ public class CreateFcrService extends GeneralService {
 	/** 상품/부산물을 자재 1건처럼 취급해 FCR_DTL 생성. 부산물(B)은 원산지비율을 항상 100%로 본다. */
 	private void createMerchandiseFcrDtl(CreateFcrDao dao, List<MerchandiseFcrDtlSourceRow> rows, String invoiceDate,
 			Map<String, OriginRatePrecheck> originRatePrecheckCache,
-			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache, String createBy) {
+			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache) {
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
 
 		List<FcrDtlInsertRow> chunk = new ArrayList<>(INSERT_CHUNK_SIZE);
@@ -616,10 +615,10 @@ public class CreateFcrService extends GeneralService {
 			row.setPriceNote(null);
 
 			chunk.add(row);
-			chunk = flushIfFull(chunk, chunkRows -> dao.insertFcrDtlRows(chunkRows, createBy));
+			chunk = flushIfFull(chunk, dao::insertFcrDtlRows);
 		}
 		if (!chunk.isEmpty()) {
-			dao.insertFcrDtlRows(chunk, createBy);
+			dao.insertFcrDtlRows(chunk);
 		}
 	}
 
