@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityRequest;
-import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ProductBomLeafRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomNotFoundResultRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
@@ -86,7 +86,7 @@ public interface CreateFcrDao {
 			@Param("errorCode") String errorCode, @Param("errorMsg") String errorMsg);
 
 	/** "3-3. 제품 BOM 소요량" 원시 leaf 자재 목록(단가/원산지비율 계산 전) */
-	List<BomLeafRow> selectBomLeafRows(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
+	List<ProductBomLeafRow> selectProductBomLeafRows(@Param("salesNo") String salesNo, @Param("divisionCode") String divisionCode,
 			@Param("companyCode") String companyCode, @Param("bomType") String bomType,
 			@Param("productCodes") List<String> productCodes);
 

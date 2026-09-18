@@ -195,23 +195,16 @@ public class OriginDeterminationSupportService extends GeneralService {
 		}
 	}
 
-	// "룰 없음"/"재료비 0원" 오류를 검사해 즉시 확정하거나, 그 외에는 판정결과 재조회가 필요한 행으로 deferredTargets에
-	// 등록한다(실제 재조회는 resolveDeferredUpdateFrm이 배치 처리). mode가 RVC_CTC일 때만 "재료비 0원" 오류를 검사한다.
+	// "재료비 0원" 오류를 검사해 즉시 확정하거나, 그 외에는 판정결과 재조회가 필요한 행으로 deferredTargets에
+	// 등록한다(실제 재조회는 resolveDeferredUpdateFrm이 배치 처리). mode가 RVC_CTC일 때만 이 오류를 검사한다.
 	public void prepareUpdateFrm(OriginDeterminationContext ctx, OriginDeterminationMode mode,
 			List<FcrMstOriginDeterminationUpdateRow> pendingFcrMstUpdates, List<OriginDeterminationTarget> deferredTargets) {
 		OriginDeterminationTarget fm = ctx.getFmData();
 		try {
-			if (ctx.getRuleCount() < 1) {
+			if (mode == OriginDeterminationMode.RVC_CTC && fm.hasNoMaterialAmount()) {
 				OriginDeterminationResult rec = new OriginDeterminationResult();
 				markAllNo(rec);
 				rec.setStatus("E");
-				rec.setErrorMsg(FcrResultError.NO_HS_RULE.message());
-				pendingFcrMstUpdates.add(buildFcrMstUpdateRow(fm, rec));
-			} else if (mode == OriginDeterminationMode.RVC_CTC && fm.hasNoMaterialAmount()) {
-				OriginDeterminationResult rec = new OriginDeterminationResult();
-				markAllNo(rec);
-				rec.setStatus("E");
-				rec.setErrorMsg(FcrResultError.NO_MATERIAL_AMOUNT.message());
 				pendingFcrMstUpdates.add(buildFcrMstUpdateRow(fm, rec));
 			} else {
 				deferredTargets.add(fm);
@@ -257,7 +250,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 						rec = new OriginDeterminationResult();
 						markAllNo(rec);
 						rec.setStatus("E");
-						rec.setErrorCode(FcrResultError.ALL_ERROR.code());
 					} else {
 						rec = r;
 					}
@@ -286,7 +278,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 		OriginDeterminationResult rec = new OriginDeterminationResult();
 		markAllNo(rec);
 		rec.setStatus("E");
-		rec.setErrorCode(FcrResultError.ALL_ERROR.code());
 		return rec;
 	}
 

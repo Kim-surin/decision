@@ -413,7 +413,7 @@
 
 	<!-- ===================== 3-3. 제품 BOM 소요량(FCR_DTL leaf 자재) ===================== -->
 
-	<select id="selectBomLeafRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow">
+	<select id="selectProductBomLeafRows" resultType="com.kpmg.kdb.web.origindeterminationengine.dto.ProductBomLeafRow">
 		SELECT FBD.ITEM_CODE                                 AS itemCode
 		      ,FM.FTA_CODE                                   AS ftaCode
 		      ,FM.SALES_NO                                   AS salesNo

@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import com.kpmg.kdb.core.generic.GeneralService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityRequest;
-import com.kpmg.kdb.web.origindeterminationengine.dto.BomLeafRow;
+import com.kpmg.kdb.web.origindeterminationengine.dto.ProductBomLeafRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomNotFoundResultRow;
 import com.kpmg.kdb.web.origindeterminationengine.dto.DomesticSalesLine;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ExportSalesLine;
@@ -142,12 +142,13 @@ public class CreateFcrService extends GeneralService {
 	// 미리 캐시해둔 뒤 FCR_DTL을 생성한다.
 	private void createFcrDtl(CreateFcrDao dao, String salesNo, String divisionCode, String companyCode,
 			String bomType, String invoiceDate, List<String> productCodes) {
-		List<BomLeafRow> leafRows = dao.selectBomLeafRows(salesNo, divisionCode, companyCode, bomType, productCodes);
+		List<ProductBomLeafRow> leafRows = dao.selectProductBomLeafRows(salesNo, divisionCode, companyCode, bomType,
+				productCodes);
 		List<MerchandiseFcrDtlSourceRow> merchandiseRows = dao.selectMerchandiseFcrDtlSourceRows(salesNo, divisionCode,
 				companyCode, productCodes);
 
 		List<ItemOriginRateCriteria> combinedOriginRateLookups = new ArrayList<>(leafRows.size() + merchandiseRows.size());
-		for (BomLeafRow leaf : leafRows) {
+		for (ProductBomLeafRow leaf : leafRows) {
 			combinedOriginRateLookups.add(new ItemOriginRateCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(),
 					leaf.getItemCode(), leaf.getFtaCode(), invoiceDate));
 		}
@@ -163,7 +164,7 @@ public class CreateFcrService extends GeneralService {
 				.prefetchNonCertifiedOriginSummaries(combinedOriginRateLookups, originRatePrecheckCache);
 
 		List<ItemPriceCriteria> priceLookups = new ArrayList<>(leafRows.size());
-		for (BomLeafRow leaf : leafRows) {
+		for (ProductBomLeafRow leaf : leafRows) {
 			priceLookups.add(new ItemPriceCriteria(leaf.getCompanyCode(), leaf.getFromDivisionCode(), leaf.getItemCode(),
 					leaf.getFtaCode(), invoiceDate));
 		}
@@ -468,7 +469,7 @@ public class CreateFcrService extends GeneralService {
 	}
 
 	/** BOM 최말단 자재를 (자재,FTA,매출라인) 단위로 집계해 FCR_DTL 생성 */
-	private void createBomLeafFcrDtl(CreateFcrDao dao, List<BomLeafRow> leafRows, String invoiceDate,
+	private void createBomLeafFcrDtl(CreateFcrDao dao, List<ProductBomLeafRow> leafRows, String invoiceDate,
 			Map<String, OriginRatePrecheck> originRatePrecheckCache,
 			Map<String, PurchaseLedgerSummary> nonCertifiedSummaryCache,
 			Map<String, MaterialBalanceTierRow> divisionBalanceCache, Map<String, PoLedgerPriceRow> purchasePriceCache,
@@ -477,7 +478,7 @@ public class CreateFcrService extends GeneralService {
 		Map<String, BigDecimal> originRateCache = new LinkedHashMap<>();
 
 		Map<String, List<ResolvedLeaf>> grouped = new LinkedHashMap<>();
-		for (BomLeafRow leaf : leafRows) {
+		for (ProductBomLeafRow leaf : leafRows) {
 			ItemPriceWithNote priceWithNote = resolveItemPriceWithNoteCached(priceWithNoteCache, divisionBalanceCache,
 					purchasePriceCache, standardCostCache, leaf.getCompanyCode(), leaf.getFromDivisionCode(),
 					leaf.getItemCode(), leaf.getFtaCode(), invoiceDate);
@@ -506,13 +507,13 @@ public class CreateFcrService extends GeneralService {
 	}
 
 	private static final class ResolvedLeaf {
-		final BomLeafRow leaf;
+		final ProductBomLeafRow leaf;
 		final BigDecimal unitPrice;
 		final BigDecimal originRate;
 		final String priceNote;
 		final String hsCodeYn;
 
-		ResolvedLeaf(BomLeafRow leaf, BigDecimal unitPrice, BigDecimal originRate, String priceNote,
+		ResolvedLeaf(ProductBomLeafRow leaf, BigDecimal unitPrice, BigDecimal originRate, String priceNote,
 				String hsCodeYn) {
 			this.leaf = leaf;
 			this.unitPrice = unitPrice;
@@ -524,7 +525,7 @@ public class CreateFcrService extends GeneralService {
 
 	/** 자재 그룹의 소요량 가중평균 단가/원산지비율(최저값 기준 전량 인정/불인정)을 계산해 FCR_DTL 1행으로 집계 */
 	private FcrDtlInsertRow aggregateLeafGroup(List<ResolvedLeaf> group) {
-		BomLeafRow first = group.get(0).leaf;
+		ProductBomLeafRow first = group.get(0).leaf;
 
 		BigDecimal sumReqQtyFiltered = BigDecimal.ZERO;
 		BigDecimal weightedSum = BigDecimal.ZERO;
