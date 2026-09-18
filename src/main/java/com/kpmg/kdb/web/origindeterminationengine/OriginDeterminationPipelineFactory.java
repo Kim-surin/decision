@@ -31,8 +31,7 @@ public class OriginDeterminationPipelineFactory extends GeneralService {
 	private ProcedureLogService procedureLogService;
 
 	/** 월 판정 파이프라인. {@link OriginDeterminationPipeline#generateVirtualSales} 를 첫 단계로 호출해야 대상이 채워진다.
-	 * logId는 호출측(DomesticOriginDeterminationService)이 만든 AS-IS MONTHLY_DECISION_PROC 대응 로그로,
-	 * 대상별 진행상황을 이 로그에 이어 붙이기 위해 파이프라인까지 전달한다. */
+	 * logId는 호출측이 만든 AS-IS MONTHLY_DECISION_PROC 대응 로그로, 대상별 진행상황을 이어 붙이기 위해 전달한다. */
 	public OriginDeterminationPipeline forDomestic(String companyCode, List<String> productCodes, Long logId) {
 		OriginDeterminationMode mode = resolveMode(companyCode);
 		return new OriginDeterminationPipeline(Collections.emptyList(), mode, productCodes, aggregatedVirtualSalesGenerator,

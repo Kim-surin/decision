@@ -13,13 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kpmg.kdb.core.generic.GeneralService;
 
-// AS-IS PKG00_PROCEDURE_LOG 대응. 각 메서드는 원본의 PRAGMA AUTONOMOUS_TRANSACTION과 동일하게
-// 호출자 트랜잭션과 별도로 커밋되어야 하므로 REQUIRES_NEW로 실행하고, 로그 저장 실패가 호출자(실제
-// 원산지 판정 로직)에 영향을 주지 않도록 예외를 흡수한다(원본의 EXCEPTION WHEN OTHERS THEN ROLLBACK 대응).
-// REQUIRES_NEW가 실제로 걸리려면 반드시 스프링 빈(프록시)을 통해 호출해야 하며, 이 클래스 내부에서
-// 메서드끼리 this로 직접 호출하면 안 된다(자기호출은 프록시를 우회해 새 트랜잭션이 시작되지 않는다).
-// batchLogDtl/flushDtl처럼 같은 클래스의 다른 @Transactional 메서드를 내부에서 호출해야 하는 경우엔
-// self(지연 주입된 자기 자신의 프록시)를 통해 부른다.
+// AS-IS PKG00_PROCEDURE_LOG 대응. REQUIRES_NEW로 호출자와 별도 커밋하고 로그 실패는 흡수한다(원본 AUTONOMOUS_TRANSACTION 대응).
+// 이 클래스 안에서 this로 서로 호출하면 프록시를 우회해 REQUIRES_NEW가 안 걸리니 self(지연 주입된 프록시)로 불러야 한다.
 @Service
 public class ProcedureLogService extends GeneralService {
 
