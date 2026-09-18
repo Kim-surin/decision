@@ -19,8 +19,6 @@ public enum FcrResultError {
 	PRODUCT_WEIGHT_NOT_FOUND("MSG_PRODUCT_WEIGHT_NOT_FOUND", "미소기준(중량기준) 판정에 필요한 품목의 중량 정보가 존재하지 않습니다"),
 	/** CREATE_FCR 단계에서 실적/표준 BOM을 모두 못 찾은 경우 */
 	BOM_NOT_FOUND("BOM_NOT_FOUND", "품목의 BOM을 찾을 수 없습니다"),
-	/** UPDATE_FRM 재조회 결과 역내/역외산 어느 쪽도 매칭되지 않은 경우 */
-	ALL_ERROR("ALL-ERROR", null),
 	/** loadBuffer 실패(버퍼율 조회 실패) */
 	FAILED_LOAD_BUFFER_RATE("MSG_FAILED_LOAD_BUFFER_RATE", null),
 	/** CtcCriteriaOriginDeterminationService.decide() 내부 예외(메시지는 e.getMessage()를 그대로 씀) */

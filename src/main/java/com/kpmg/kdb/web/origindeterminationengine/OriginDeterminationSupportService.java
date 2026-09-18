@@ -250,7 +250,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 						rec = new OriginDeterminationResult();
 						markAllNo(rec);
 						rec.setStatus("E");
-						rec.setErrorCode(FcrResultError.ALL_ERROR.code());
 					} else {
 						rec = r;
 					}
@@ -279,7 +278,6 @@ public class OriginDeterminationSupportService extends GeneralService {
 		OriginDeterminationResult rec = new OriginDeterminationResult();
 		markAllNo(rec);
 		rec.setStatus("E");
-		rec.setErrorCode(FcrResultError.ALL_ERROR.code());
 		return rec;
 	}
 
