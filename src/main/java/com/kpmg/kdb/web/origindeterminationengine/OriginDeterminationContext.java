@@ -38,8 +38,6 @@ public class OriginDeterminationContext {
 	private BigDecimal netCostAmount;
 	private BigDecimal netWeight;
 
-	/** 해당 HS코드에 적용 가능한 룰 존재 여부 카운트 (원본 VG_RULE_COUNT) */
-	private int ruleCount;
 	private String errorCode;
 	private String errorMsg;
 
@@ -130,14 +128,6 @@ public class OriginDeterminationContext {
 
 	public void setNetWeight(BigDecimal netWeight) {
 		this.netWeight = netWeight;
-	}
-
-	public int getRuleCount() {
-		return ruleCount;
-	}
-
-	public void setRuleCount(int ruleCount) {
-		this.ruleCount = ruleCount;
 	}
 
 	public String getErrorCode() {

@@ -21,9 +21,6 @@ public enum FcrResultError {
 	PRODUCT_WEIGHT_NOT_FOUND("MSG_PRODUCT_WEIGHT_NOT_FOUND", "미소기준(중량기준) 판정에 필요한 제품 중량 정보가 존재하지 않습니다."),
 	/** CREATE_FCR 단계에서 실적/표준 BOM을 모두 못 찾은 경우 */
 	BOM_NOT_FOUND("BOM_NOT_FOUND", "실적 BOM과 표준 BOM을 모두 찾을 수 없습니다."),
-	/** FM_LIST 1건에 적용 가능한 룰이 하나도 없는 경우(prepareUpdateFrm 사전 검사). 코드는 DB 'ODER' 코드그룹에
-	 * 아직 등록 안 돼 있어 임의로 부여함 — 등록 전까지는 항상 이 한글 원문으로만 노출된다. */
-	NO_HS_RULE("MSG_HS_RULE_NOT_EXIST", "해당 협정에 적용 가능한 HS RULE(PSR)이 존재하지 않습니다."),
 	/** RVC_CTC 모드에서 재료비가 없는 자재가 존재하는 경우(prepareUpdateFrm 사전 검사). 코드는 DB 'ODER'
 	 * 코드그룹에 아직 등록 안 돼 있어 임의로 부여함 — 등록 전까지는 항상 이 한글 원문으로만 노출된다. */
 	NO_MATERIAL_AMOUNT("MSG_MATERIAL_AMOUNT_ZERO", "재료비(역내+역외) 합계가 0인 품목이 존재합니다."),

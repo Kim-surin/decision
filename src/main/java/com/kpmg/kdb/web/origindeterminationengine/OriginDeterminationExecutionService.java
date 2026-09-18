@@ -153,7 +153,6 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		}
 
 		pending.results.addAll(ctx.getPendingResults());
-		ctx.setRuleCount(1);
 		supportService.prepareUpdateFrm(ctx, runContext.mode, pending.fcrMstUpdateBatch, pending.deferredUpdateFrmTargets);
 	}
 
