@@ -1,0 +1,40 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0 //EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kpmg.kdb.core.procedurelog.ProcedureLogDao">
+
+	<!-- AS-IS BATCH_LOG_ID_S 대응 시퀀스(DBA 사전 생성) -->
+	<select id="nextLogId" resultType="java.lang.Long">
+		SELECT NEXTVAL('procedure_log_id_s')
+	</select>
+
+	<!-- AS-IS PKG00_PROCEDURE_LOG.BATCH_LOG 대응 -->
+	<insert id="insertMst">
+		INSERT INTO PROCEDURE_LOG_MST
+			(LOG_ID, APPLY_DATE, PROCEDURE_ID, JOB_TYPE, COMPANY_CODE, INPUT_PARAMETER,
+			 START_DATE, END_DATE, STATUS, RESULT_CODE, RESULT_MESSAGE)
+		VALUES
+			(#{logId}, TO_CHAR(CURRENT_DATE, 'YYYYMMDD'), #{procedureId}, #{jobType}, #{companyCode},
+			 #{inputParameter}, CURRENT_TIMESTAMP, NULL, 'N', NULL, NULL)
+	</insert>
+
+	<!-- AS-IS PKG00_PROCEDURE_LOG.BATCH_LOG_LAST 대응 -->
+	<update id="updateMstEnd">
+		UPDATE PROCEDURE_LOG_MST
+		SET    END_DATE = CURRENT_TIMESTAMP
+		      ,STATUS = #{status}
+		      ,RESULT_CODE = #{resultCode}
+		      ,RESULT_MESSAGE = #{resultMessage}
+		WHERE  LOG_ID = #{logId}
+	</update>
+
+	<!-- AS-IS PKG00_PROCEDURE_LOG.BATCH_LOG_DTL 대응. SEQ는 log_id별로 순차 채번한다. -->
+	<insert id="insertDtl">
+		INSERT INTO PROCEDURE_LOG_DTL
+			(LOG_ID, SEQ, LOG_DATETIME, LOG_CONTENTS)
+		VALUES
+			(#{logId},
+			 (SELECT COALESCE(MAX(SEQ), 0) + 1 FROM PROCEDURE_LOG_DTL WHERE LOG_ID = #{logId}),
+			 CURRENT_TIMESTAMP, #{logContents})
+	</insert>
+
+</mapper>

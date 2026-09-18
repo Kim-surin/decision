@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.kpmg.kdb.core.procedurelog.ProcedureLogService;
 import com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationMode;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
 import com.kpmg.kdb.web.origindeterminationengine.dto.VirtualSalesGenerationParams;
@@ -29,13 +30,16 @@ public class OriginDeterminationPipeline {
 	private final CreateFcrService fcrCreator;
 	private final OriginDeterminationExecutionService originDecider;
 	private final SalesOriginDeterminationStatusUpdater statusUpdater;
+	private final ProcedureLogService procedureLogService;
+	/** AS-IS MONTHLY_DECISION_PROC 대응 로그(호출측이 만들어 넘겨준다). 대상별 진행상황/에러를 여기에 이어 붙인다. */
+	private final Long logId;
 
 	private List<SalesTarget> targets;
 
 	public OriginDeterminationPipeline(List<SalesTarget> initialTargets, OriginDeterminationMode mode,
 			List<String> productCodes, AggregatedVirtualSalesGenerator virtualSalesGenerator,
 			CreateFcrService fcrCreator, OriginDeterminationExecutionService originDecider,
-			SalesOriginDeterminationStatusUpdater statusUpdater) {
+			SalesOriginDeterminationStatusUpdater statusUpdater, ProcedureLogService procedureLogService, Long logId) {
 		this.targets = initialTargets;
 		this.mode = mode;
 		this.productCodes = productCodes;
@@ -43,6 +47,8 @@ public class OriginDeterminationPipeline {
 		this.fcrCreator = fcrCreator;
 		this.originDecider = originDecider;
 		this.statusUpdater = statusUpdater;
+		this.procedureLogService = procedureLogService;
+		this.logId = logId;
 	}
 
 	// ==================== 단계 ====================
@@ -88,12 +94,16 @@ public class OriginDeterminationPipeline {
 			if (failedTargets.contains(target)) {
 				continue;
 			}
+			// AS-IS MONTHLY_DECISION_PROC 루프의 "SALES_NO 건 FCR생성 중"/"판정 중" 대응
+			procedureLogService.batchLogDtl(logId, target.getSalesNo() + " 건 " + stepName + " 중");
 			try {
 				step.accept(target);
 			} catch (Exception e) {
 				failedTargets.add(target);
 				logger.error("{} 실패. companyCode={}, salesNo={}", stepName, target.getCompanyCode(),
 						target.getSalesNo(), e);
+				procedureLogService.batchLogDtl(logId, "DBMS 에러가 발생 했습니다 " + e
+						+ "[PARAM {COMPANY_CODE : " + target.getCompanyCode() + "}{SALES_NO : " + target.getSalesNo() + "}]");
 				try {
 					statusUpdater.markDecisionFailed(target.getCompanyCode(), target.getDivisionCode(), target.getSalesNo(),
 							productCodes);

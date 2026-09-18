@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.core.procedurelog.ProcedureLogService;
 import com.kpmg.kdb.web.origindeterminationengine.CreateFcrService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BufferRates;
 import com.kpmg.kdb.web.origindeterminationengine.dto.FcrMstOriginDeterminationUpdateRow;
@@ -41,26 +42,42 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	private RvcCriteriaOriginDeterminationService rvcService;
 	@Autowired
 	private ItemNationService itemNationService;
+	@Autowired
+	private ProcedureLogService procedureLogService;
 
 	// 원산지 판정 1건 실행. 예외를 흡수하지 않고 그대로 던진다 — 배치 전체 중단 없이 넘기면서도 그 대상을 판정실패로
 	// 표시하는 책임은 호출자(OriginDeterminationPipeline)에 있다. productCodes: null/빈 리스트면 salesNo 전체(월 판정) 대상.
 	public void determineOrigin(String companyCode, String divisionCode, String salesNo, OriginDeterminationMode mode,
 			List<String> productCodes) {
-		OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
+		// AS-IS PKG99_COO_DECISION/PKG99_COO_CTC_DECISION 대응 로그. mode.getProcedureName()이 그 프로시저명과 그대로 일치한다.
+		String procedureId = mode.getProcedureName();
+		Long logId = procedureLogService.batchLog(procedureId, companyCode, "INPUT DATA : " + companyCode + ":" + salesNo);
+		procedureLogService.batchLogDtl(logId, "START " + procedureId + " *****");
 
-		List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
-				productCodes);
-		boolean hasMerchandise = containsAny(assetTypes, "M", "R", "B");
-		boolean hasProduct = containsAny(assetTypes, "P", "H");
+		try {
+			OriginDeterminationScopeDao scopeDao = sqlSession.getMapper(OriginDeterminationScopeDao.class);
 
-		String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
+			List<String> assetTypes = scopeDao.selectDistinctProductAssetsTypes(companyCode, divisionCode, salesNo,
+					productCodes);
+			boolean hasMerchandise = containsAny(assetTypes, "M", "R", "B");
+			boolean hasProduct = containsAny(assetTypes, "P", "H");
 
-		if (hasMerchandise) {
-			decideMerchandiseOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
-		}
+			String invoiceDate = scopeDao.selectInvoiceDate(companyCode, salesNo);
 
-		if (hasProduct) {
-			decideProductOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+			if (hasMerchandise) {
+				decideMerchandiseOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode);
+			}
+
+			if (hasProduct) {
+				decideProductOrigin(companyCode, divisionCode, salesNo, invoiceDate, productCodes, mode, logId);
+			}
+
+			procedureLogService.batchLogDtl(logId, "***** END " + procedureId);
+			procedureLogService.batchLogLast(logId, "N", null, null);
+		} catch (Exception e) {
+			procedureLogService.batchLogDtl(logId, "DBMS 에러가 발생 했습니다 " + e);
+			procedureLogService.batchLogLast(logId, "E", "DBMS ERROR", null);
+			throw e;
 		}
 	}
 
@@ -83,7 +100,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 	
 	/** 제품(P,H) 원산지 판정 */
 	private void decideProductOrigin(String companyCode, String divisionCode, String salesNo, String invoiceDate,
-			List<String> productCodes, OriginDeterminationMode mode) {
+			List<String> productCodes, OriginDeterminationMode mode, Long logId) {
 		ProductOriginDeterminationDao dao = sqlSession.getMapper(ProductOriginDeterminationDao.class);
 
 		String newAptaPsrFlag = invoiceDate != null && invoiceDate.compareTo(APTA_STANDARD_DATE) < 0 ? "0" : "1";
@@ -106,7 +123,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 
 			DeterminationRunContext runContext = new DeterminationRunContext(invoiceDate, newAptaPsrFlag, mode,
 					exclusionRuleCache, originCriteriaCache, productLineBufferCache, materialOriginRowsCache,
-					rcepCache);
+					rcepCache, logId);
 			for (OriginDeterminationTarget fmData : chunk) {
 				decideOneFtaLine(dao, fmData, runContext, pending);
 			}
@@ -126,7 +143,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 				fmData.getProductCode(), runContext.productLineBufferCache)) {
 			// 버퍼율 조회 실패 - 회사 버퍼가 없는 셈 치고(0) 자사기준 판정을 계속 진행하지 않고,
 			// 이 FTA_CODE 후보 전체를 판정오류로 명시적으로 남긴다.
-			insertBufferFailureResult(ctx, fmData, runContext.mode);
+			insertBufferFailureResult(ctx, fmData, runContext.mode, runContext.logId);
 		} else {
 			String materialKey = materialOriginRowsKey(fmData.getFtaCode(), fmData.getDivisionCode(), fmData.getSalesSeq());
 			List<MaterialOriginRow> materialOriginRows = runContext.materialOriginRowsCache.containsKey(materialKey)
@@ -144,10 +161,10 @@ public class OriginDeterminationExecutionService extends GeneralService {
 
 			if (rules.isEmpty()) {
 				// 해당 HS코드에 적용 가능한 룰이 전혀 없는 경우
-				insertNoRuleFoundResult(ctx, fmData, runContext.mode);
+				insertNoRuleFoundResult(ctx, fmData, runContext.mode, runContext.logId);
 			} else {
 				for (OriginCriteria frData : rules) {
-					decideOneRule(ctx, fmData, frData, runContext.mode, runContext.exclusionRuleCache);
+					decideOneRule(ctx, fmData, frData, runContext.mode, runContext.exclusionRuleCache, runContext.logId);
 				}
 			}
 		}
@@ -156,7 +173,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		supportService.prepareUpdateFrm(ctx, runContext.mode, pending.fcrMstUpdateBatch, pending.deferredUpdateFrmTargets);
 	}
 
-	private void insertNoRuleFoundResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode) {
+	private void insertNoRuleFoundResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode,
+			Long logId) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		rec.setSalesNo(fmData.getSalesNo());
 		rec.setSalesSeq(fmData.getSalesSeq());
@@ -170,11 +188,13 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		rec.setCompanyCooYn("N");
 		rec.setFtaCooYn("N");
 		FcrResultError.STANDARD_NOT_EXIST.applyTo(rec);
+		procedureLogService.batchLogDtl(logId, fmData.getSalesSeq() + "/" + fmData.getFtaCode() + " : " + rec.getErrorMsg());
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
 	/** loadBuffer 실패 시 이 FTA_CODE 후보를 판정오류로 명시 처리. ctx.errorCode/errorMsg는 loadBuffer가 이미 채워뒀다(MSG_FAILED_LOAD_BUFFER_RATE). */
-	private void insertBufferFailureResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode) {
+	private void insertBufferFailureResult(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginDeterminationMode mode,
+			Long logId) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		rec.setSalesNo(fmData.getSalesNo());
 		rec.setSalesSeq(fmData.getSalesSeq());
@@ -189,11 +209,12 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		rec.setFtaCooYn("N");
 		rec.setErrorCode(ctx.getErrorCode());
 		rec.setErrorMsg(ctx.getErrorMsg());
+		procedureLogService.batchLogDtl(logId, fmData.getSalesSeq() + "/" + fmData.getFtaCode() + " 버퍼율 조회 실패 : " + rec.getErrorMsg());
 		supportService.insertFrdAndReset(ctx, mode);
 	}
 
 	private void decideOneRule(OriginDeterminationContext ctx, OriginDeterminationTarget fmData, OriginCriteria frData, OriginDeterminationMode mode,
-			ExclusionRuleCache exclusionRuleCache) {
+			ExclusionRuleCache exclusionRuleCache, Long logId) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 		rec.setSalesNo(fmData.getSalesNo());
 		rec.setSalesSeq(fmData.getSalesSeq());
@@ -213,6 +234,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 			rec.setFtaCooYn("N");
 			rec.setStatus("E");
 			FcrResultError.QTY_AMOUNT_ZERO.applyTo(rec);
+			procedureLogService.batchLogDtl(logId, fmData.getSalesSeq() + "/" + fmData.getFtaCode() + " : " + rec.getErrorMsg());
 			supportService.insertFrdAndReset(ctx, mode);
 			return;
 		}
@@ -236,6 +258,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		if ("Y".equals(frData.getExclusionRuleYn())) {
 			if (!exclusionRuleOriginDeterminationService.decide(ctx, frData, mode, exclusionRuleCache)) {
 				supportService.markError(ctx);
+				procedureLogService.batchLogDtl(logId,
+						fmData.getSalesSeq() + "/" + fmData.getFtaCode() + " 예외판정 오류 : " + rec.getErrorMsg());
 				supportService.insertFrdAndReset(ctx, mode);
 				stop = true;
 			}
@@ -244,6 +268,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		if (!stop && !"*".equals(frData.getCthRule())) {
 			if (!ctcService.decide(ctx, frData, mode)) {
 				supportService.markError(ctx);
+				procedureLogService.batchLogDtl(logId,
+						fmData.getSalesSeq() + "/" + fmData.getFtaCode() + " 세번변경기준 오류 : " + rec.getErrorMsg());
 				supportService.insertFrdAndReset(ctx, mode);
 				stop = true;
 			}
@@ -253,6 +279,8 @@ public class OriginDeterminationExecutionService extends GeneralService {
 				|| positive(frData.getMcRule()))) {
 			if (!rvcService.decide(ctx, frData, mode)) {
 				supportService.markError(ctx);
+				procedureLogService.batchLogDtl(logId,
+						fmData.getSalesSeq() + "/" + fmData.getFtaCode() + " 부가가치기준 오류 : " + rec.getErrorMsg());
 				supportService.insertFrdAndReset(ctx, mode);
 				stop = true;
 			}
@@ -471,11 +499,13 @@ public class OriginDeterminationExecutionService extends GeneralService {
 		final Map<String, BufferRates> productLineBufferCache;
 		final Map<String, List<MaterialOriginRow>> materialOriginRowsCache;
 		final RcepCooNationCache rcepCache;
+		final Long logId;
 
 		DeterminationRunContext(String invoiceDate, String newAptaPsrFlag, OriginDeterminationMode mode,
 				ExclusionRuleCache exclusionRuleCache, OriginCriteriaCache originCriteriaCache,
 				Map<String, BufferRates> productLineBufferCache,
-				Map<String, List<MaterialOriginRow>> materialOriginRowsCache, RcepCooNationCache rcepCache) {
+				Map<String, List<MaterialOriginRow>> materialOriginRowsCache, RcepCooNationCache rcepCache,
+				Long logId) {
 			this.invoiceDate = invoiceDate;
 			this.newAptaPsrFlag = newAptaPsrFlag;
 			this.mode = mode;
@@ -484,6 +514,7 @@ public class OriginDeterminationExecutionService extends GeneralService {
 			this.productLineBufferCache = productLineBufferCache;
 			this.materialOriginRowsCache = materialOriginRowsCache;
 			this.rcepCache = rcepCache;
+			this.logId = logId;
 		}
 	}
 

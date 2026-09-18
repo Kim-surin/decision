@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.core.procedurelog.ProcedureLogService;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityBatchResult;
 import com.kpmg.kdb.web.origindeterminationengine.dto.BomAvailabilityRequest;
 import com.kpmg.kdb.web.origindeterminationengine.dto.ProductBomLeafRow;
@@ -61,6 +62,8 @@ public class CreateFcrService extends GeneralService {
 	private ItemOriginRateService itemOriginRateService;
 	@Autowired
 	private CreateFcrReferenceDataService referenceDataService;
+	@Autowired
+	private ProcedureLogService procedureLogService;
 
 	// productCodes: null/빈 리스트면 salesNo 전체(월 판정), 값이 있으면 그 제품들만(개별 판정) 대상.
 	// 반환값 "semisuccess"는 BOM 없는 제품이 있어 나머지만 진행하고 해당 제품은 FCR_RESULT에 BOM_NOT_FOUND로 명시 기록했다는 뜻.
@@ -68,17 +71,27 @@ public class CreateFcrService extends GeneralService {
 			List<String> productCodes) {
 		CreateFcrDao dao = sqlSession.getMapper(CreateFcrDao.class);
 
+		// AS-IS CREATE_FCR 대응 로그. 원본 프로시저에 예외 핸들러가 없어(에러 나면 로그가 미종료 상태로
+		// 남는 게 AS-IS 동작) 여기서도 별도 try/catch로 감싸지 않고 그대로 둔다.
+		Long logId = procedureLogService.batchLog("CREATE_FCR", companyCode,
+				"COMPANY_CODE : " + companyCode + ", DIVISION_CODE : " + divisionCode + ", SALES_NO : " + salesNo);
+		procedureLogService.batchLogDtl(logId, "***** START CREATE_FCR");
+
 		// 1. 파라미터 셋업 작업
+		procedureLogService.batchLogDtl(logId, "1. 파라미터 셋업 작업");
 		FcrCreationParams params = setupParameters(dao, companyCode, divisionCode, salesNo, bomTypeParam);
 
 		// 2. 실적 BOM 및 표준 BOM 확인 작업
+		procedureLogService.batchLogDtl(logId, "2. 실적 BOM 및 표준 BOM 확인 작업");
 		List<SalesDtlBomTarget> missingBomTargets = checkBomAvailability(dao, companyCode, divisionCode, salesNo,
 				params.bomType, params.bomPreviousYyyymm, params.yyyymm, productCodes);
 
 		// 3. 전 처리 작업(기존 FCR_DTL/FCR_RESULT/FCR_MST 삭제)
-		deleteExistingFcrRows(dao, salesNo, divisionCode, companyCode, productCodes);
+		procedureLogService.batchLogDtl(logId, "3-1. 전 처리 작업");
+		deleteExistingFcrRows(dao, salesNo, divisionCode, companyCode, productCodes, logId);
 
 		// 4. FCR_MST 생성
+		procedureLogService.batchLogDtl(logId, "3-2. FCR_MST 데이터 생성");
 		Map<String, String> hsCodeCache = new LinkedHashMap<>();
 		Map<String, BigDecimal> incotermsCache = new LinkedHashMap<>();
 		createFcrMst(dao, companyCode, divisionCode, salesNo, params.bomType, params.exportFlag, params.invoiceDate,
@@ -86,15 +99,21 @@ public class CreateFcrService extends GeneralService {
 
 		// 4-1. BOM 없는 대상 FCR_RESULT(BOM_NOT_FOUND) 기록
 		if (!missingBomTargets.isEmpty()) {
+			procedureLogService.batchLogDtl(logId, "BOM 없는 대상 FCR_RESULT(BOM_NOT_FOUND) 기록 건수 : " + missingBomTargets.size());
 			insertBomNotFoundResults(dao, companyCode, divisionCode, salesNo, params.exportFlag, params.bomType,
 					missingBomTargets, hsCodeCache);
 		}
 
 		// 5. FCR_DTL 생성(자재/제품 원가·원산지비율 사전조회 포함)
+		procedureLogService.batchLogDtl(logId, "3-3/3-4. 제품/상품 FCR_DTL 데이터 생성");
 		createFcrDtl(dao, salesNo, divisionCode, companyCode, params.bomType, params.invoiceDate, productCodes);
 
 		// 6. FCR_MST 역내/역외 산재료비금액 합계 UPDATE
+		procedureLogService.batchLogDtl(logId, "3-7. FCR_MST의 역내산재료비금액/역외산재료비금액 UPDATE");
 		dao.mergeFcrMstMaterialAmountTotals(salesNo, divisionCode, companyCode, productCodes);
+
+		procedureLogService.batchLogDtl(logId, "***** END CREATE_FCR");
+		procedureLogService.batchLogLast(logId, "N", null, null);
 
 		return missingBomTargets.isEmpty() ? "successed" : "semisuccess";
 	}
@@ -118,10 +137,13 @@ public class CreateFcrService extends GeneralService {
 
 	/** "전 처리 작업": 재계산 전 기존 FCR_DTL/FCR_RESULT/FCR_MST를 지운다. */
 	private void deleteExistingFcrRows(CreateFcrDao dao, String salesNo, String divisionCode, String companyCode,
-			List<String> productCodes) {
-		dao.deleteFcrDtl(salesNo, divisionCode, companyCode, productCodes);
-		dao.deleteFcrResult(salesNo, divisionCode, companyCode, productCodes);
-		dao.deleteFcrMst(salesNo, divisionCode, companyCode, productCodes);
+			List<String> productCodes, Long logId) {
+		int dtlCnt = dao.deleteFcrDtl(salesNo, divisionCode, companyCode, productCodes);
+		procedureLogService.batchLogDtl(logId, "FCR_DTL 삭제 건수 : " + dtlCnt);
+		int resultCnt = dao.deleteFcrResult(salesNo, divisionCode, companyCode, productCodes);
+		procedureLogService.batchLogDtl(logId, "FCR_RESULT 삭제 건수 : " + resultCnt);
+		int mstCnt = dao.deleteFcrMst(salesNo, divisionCode, companyCode, productCodes);
+		procedureLogService.batchLogDtl(logId, "FCR_MST 삭제 건수 : " + mstCnt);
 	}
 
 	// "4. FCR_MST 생성". BOM이 있는 제품만 selectDomesticSalesLines/selectExportSalesLines(BOM_STATUS<>'1')를 통해

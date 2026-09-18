@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kpmg.kdb.core.generic.GeneralService;
+import com.kpmg.kdb.core.procedurelog.ProcedureLogService;
 import com.kpmg.kdb.web.origindeterminationengine.OriginDeterminationMode;
 import com.kpmg.kdb.web.origindeterminationengine.dto.CompanyOriginDeterminationFlags;
 import com.kpmg.kdb.web.origindeterminationengine.dto.SalesTarget;
@@ -26,25 +27,29 @@ public class OriginDeterminationPipelineFactory extends GeneralService {
 	private SalesOriginDeterminationStatusUpdater statusUpdater;
 	@Autowired
 	private CompanyOriginDeterminationFlagsService companyOriginDeterminationFlagsService;
+	@Autowired
+	private ProcedureLogService procedureLogService;
 
-	/** 월 판정 파이프라인. {@link OriginDeterminationPipeline#generateVirtualSales} 를 첫 단계로 호출해야 대상이 채워진다. */
-	public OriginDeterminationPipeline forDomestic(String companyCode, List<String> productCodes) {
+	/** 월 판정 파이프라인. {@link OriginDeterminationPipeline#generateVirtualSales} 를 첫 단계로 호출해야 대상이 채워진다.
+	 * logId는 호출측(DomesticOriginDeterminationService)이 만든 AS-IS MONTHLY_DECISION_PROC 대응 로그로,
+	 * 대상별 진행상황을 이 로그에 이어 붙이기 위해 파이프라인까지 전달한다. */
+	public OriginDeterminationPipeline forDomestic(String companyCode, List<String> productCodes, Long logId) {
 		OriginDeterminationMode mode = resolveMode(companyCode);
 		return new OriginDeterminationPipeline(Collections.emptyList(), mode, productCodes, aggregatedVirtualSalesGenerator,
-				fcrCreator, originDecider, statusUpdater);
+				fcrCreator, originDecider, statusUpdater, procedureLogService, logId);
 	}
 
 	// 수출 판정 파이프라인. 이미 존재하는 실제 SALES_NO 1건을 대상으로 확정해 돌려주므로
 	// 가상매출 생성 단계 없이 바로 createFcr()부터 체인을 시작하면 된다.
 	public OriginDeterminationPipeline forExport(String companyCode, String divisionCode, String salesNo,
-			List<String> productCodes) {
+			List<String> productCodes, Long logId) {
 		OriginDeterminationMode mode = resolveMode(companyCode);
 		SalesTarget target = new SalesTarget();
 		target.setCompanyCode(companyCode);
 		target.setDivisionCode(divisionCode);
 		target.setSalesNo(salesNo);
 		return new OriginDeterminationPipeline(List.of(target), mode, productCodes, aggregatedVirtualSalesGenerator,
-				fcrCreator, originDecider, statusUpdater);
+				fcrCreator, originDecider, statusUpdater, procedureLogService, logId);
 	}
 
 	private OriginDeterminationMode resolveMode(String companyCode) {
