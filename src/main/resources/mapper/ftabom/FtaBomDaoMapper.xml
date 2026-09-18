@@ -75,7 +75,7 @@
 			AND PL.ITEM_CODE = #{item_code}
 		</if>
 		<if test="yyyymm != null">
-			AND PL.WAREHOUSING_DATE BETWEEN to_char(TO_DATE(#{yyyymm}, 'YYYYMM') - INTERVAL '6 month', 'YYYYMM') AND #{yyyymm} 
+			AND PL.WAREHOUSING_DATE BETWEEN to_char(TO_DATE(#{yyyymm}, 'YYYYMM') - INTERVAL '12 month', 'YYYYMM') AND #{yyyymm} 
 		</if>
 	    GROUP BY PL.COMPANY_CODE, PL.VENDOR_CODE
     ) PL 
