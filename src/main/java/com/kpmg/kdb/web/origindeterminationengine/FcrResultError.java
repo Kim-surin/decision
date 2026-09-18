@@ -2,19 +2,18 @@ package com.kpmg.kdb.web.origindeterminationengine;
 
 import com.kpmg.kdb.web.origindeterminationengine.dto.OriginDeterminationResult;
 
-// FCR_RESULT.ERROR_CODE/ERROR_MSG로 저장되는 판정오류 사유 카탈로그. 코드와 메시지가 항상 짝으로 붙어다녀서
-// 문자열 리터럴을 여러 파일에 따로 적어두다 서로 어긋나는 일이 없게 한다. code/message는 상황에 따라 하나만
-// 쓰일 수도 있어(둘 다 null 허용), 동적 메시지(e.getMessage())와 같이 쓰는 경우는 code()만 꺼내 쓰면 된다.
+// FCR_RESULT.ERROR_CODE/ERROR_MSG로 저장되는 판정오류 사유 카탈로그.
+// 동적 메시지(e.getMessage())와 같이 쓰는 경우는 code()만 꺼내 쓰면 된다.
 public enum FcrResultError {
 
 	/** 해당 HS코드에 적용 가능한 룰이 전혀 없는 경우 */
 	STANDARD_NOT_EXIST("MSG_DECISION_STANDARD_NOT_EXIST", "해당 협정의 품목 HS코드에 해당하는 판정 기준(PSR)이 존재하지 않습니다"),
 	/** RVC_CTC 모드에서 재료비(역내+역외)가 0원인 경우 */
-	QTY_AMOUNT_ZERO("MSG_FAILED_DECISION_QTY_AMOUNT", "재료비가 0인 자재가 존재합니다"),
+	QTY_AMOUNT_ZERO("MSG_FAILED_DECISION_QTY_AMOUNT", "재료비가 0인 원재료가 존재합니다"),
 	/** RVC 판정 기준금액(FOB/EXW 또는 순원가)이 0 이하인 경우 */
 	RVC_BASE_AMOUNT_NOT_POSITIVE("MSG_RVC_BASE_AMOUNT_NOT_POSITIVE","RVC 판정 기준금액(FOB/EXW 또는 순원가)이 0 이하여서 비율을 계산할 수 없습니다"),
 	/** CTC 판정 대상 자재의 HS코드가 누락된 경우 */
-	HSCODE_INCLUDE_MISSING("TXT_HSCODE_INCLUDE_MISSING", "HS코드가 누락된 자재가 존재합니다"),
+	HSCODE_INCLUDE_MISSING("TXT_HSCODE_INCLUDE_MISSING", "HS코드가 누락된 원재료가 존재합니다"),
 	/** RVC 판정에 필요한 제품 중량 정보를 못 찾은 경우 */
 	PRODUCT_WEIGHT_NOT_FOUND("MSG_PRODUCT_WEIGHT_NOT_FOUND", "미소기준(중량기준) 판정에 필요한 품목의 중량 정보가 존재하지 않습니다"),
 	/** CREATE_FCR 단계에서 실적/표준 BOM을 모두 못 찾은 경우 */
