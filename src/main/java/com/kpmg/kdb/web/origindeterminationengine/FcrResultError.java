@@ -11,8 +11,9 @@ public enum FcrResultError {
 	STANDARD_NOT_EXIST("MSG_DECISION_STANDARD_NOT_EXIST", "해당 협정의 제품 HS코드에 해당하는 판정 기준(PSR)이 존재하지 않습니다."),
 	/** RVC_CTC 모드에서 재료비(역내+역외)가 0원인 경우 */
 	QTY_AMOUNT_ZERO("MSG_FAILED_DECISION_QTY_AMOUNT", "재료비(역내+역외) 합계가 0인 품목이 존재합니다."),
-	/** RVC 판정 기준금액(FOB/EXW 또는 순원가)이 0 이하인 경우 */
-	RVC_BASE_AMOUNT_NOT_POSITIVE("MSG_FAILED_DECISION_QTY_AMOUNT",
+	/** RVC 판정 기준금액(FOB/EXW 또는 순원가)이 0 이하인 경우. QTY_AMOUNT_ZERO와 원래 코드를 공유했으나,
+	 * GET_CODE_NAME('ODER') 다국어 조회가 등록돼 있으면 서로 다른 메시지가 묻혀버려 별도 코드로 분리함. */
+	RVC_BASE_AMOUNT_NOT_POSITIVE("MSG_RVC_BASE_AMOUNT_NOT_POSITIVE",
 			"RVC 판정 기준금액(FOB/EXW 또는 순원가)이 0 이하여서 비율을 계산할 수 없습니다."),
 	/** CTC 판정 대상 자재의 HS코드가 누락된 경우 */
 	HSCODE_INCLUDE_MISSING("TXT_HSCODE_INCLUDE_MISSING", "HS 코드가 누락된 자재가 존재합니다."),
