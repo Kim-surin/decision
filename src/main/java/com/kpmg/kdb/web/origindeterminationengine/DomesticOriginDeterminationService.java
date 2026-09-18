@@ -24,8 +24,7 @@ public class DomesticOriginDeterminationService extends GeneralService
 		List<VirtualSalesGenerationParams> groups = domesticOriginDeterminationTargetService.prepare(filter);
 
 		BulkOriginDeterminationResult result = BulkPipelineRunner.run(groups,
-				groupParams -> pipelineFactory
-						.forDomestic(groupParams.getCompanyCode(), groupParams.getProductCodes(), groupParams.getCreateBy())
+				groupParams -> pipelineFactory.forDomestic(groupParams.getCompanyCode(), groupParams.getProductCodes())
 						.generateVirtualSales(groupParams)
 						.createFcr()
 						.determineOrigin()

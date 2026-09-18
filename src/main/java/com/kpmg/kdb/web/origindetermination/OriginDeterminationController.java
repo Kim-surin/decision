@@ -242,9 +242,7 @@ public class OriginDeterminationController extends GenericController {
 	public Result executeDomesticOriginDetermination(
 			@RequestBody DomesticOriginDeterminationExecuteRequestDto param) {
 		try {
-			Map<String, Object> session = super.extendsMap(new HashMap<>());
-			param.setCompany_code((String) session.get("company_code"));
-			param.setCreate_by((String) session.get("create_by"));
+			param.setCompany_code((String) super.extendsMap(new HashMap<>()).get("company_code"));
 			return originDeterminationService.executeDomesticOriginDetermination(param);
 		} catch (Exception e) {
 			logger.error("내수 원산지 판정 실행 실패", e);
@@ -257,9 +255,7 @@ public class OriginDeterminationController extends GenericController {
 	public Result executeExportOriginDetermination(
 			@RequestBody ExportOriginDeterminationExecuteRequestDto param) {
 		try {
-			Map<String, Object> session = super.extendsMap(new HashMap<>());
-			param.setCompany_code((String) session.get("company_code"));
-			param.setCreate_by((String) session.get("create_by"));
+			param.setCompany_code((String) super.extendsMap(new HashMap<>()).get("company_code"));
 			return originDeterminationService.executeExportOriginDetermination(param);
 		} catch (Exception e) {
 			logger.error("수출 원산지 판정 실행 실패", e);
@@ -272,9 +268,7 @@ public class OriginDeterminationController extends GenericController {
 	public Result executeMonthlyOriginDetermination(
 			@RequestBody MonthlyOriginDeterminationExecuteRequestDto param) {
 		try {
-			Map<String, Object> session = super.extendsMap(new HashMap<>());
-			param.setCompany_code((String) session.get("company_code"));
-			param.setCreate_by((String) session.get("create_by"));
+			param.setCompany_code((String) super.extendsMap(new HashMap<>()).get("company_code"));
 			return originDeterminationService.executeMonthlyOriginDetermination(param);
 		} catch (Exception e) {
 			logger.error("월판정 실행 실패", e);

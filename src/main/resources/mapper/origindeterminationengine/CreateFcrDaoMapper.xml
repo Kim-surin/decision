@@ -407,7 +407,7 @@
 			 #{row.companyCode}, #{row.hsCode}, #{row.standard}, #{row.amount}, #{row.netCostAmount},
 			 #{row.exworkAmount}, #{row.fobAmount}, 0, 0, #{row.spCooYn}, #{row.woCooYn}, #{row.productUnit},
 			 #{row.productAssetsType}, #{row.prodDivisionCode}, #{row.imApplyYn}, CURRENT_TIMESTAMP,
-			 #{createBy}, CURRENT_TIMESTAMP, #{createBy})
+			 'CREATE_FCR', CURRENT_TIMESTAMP, 'CREATE_FCR')
 		</foreach>
 	</insert>
 
@@ -525,7 +525,7 @@
 			(#{row.itemCode}, #{row.ftaCode}, #{row.salesNo}, #{row.salesSeq}, #{row.productCode},
 			 #{row.divisionCode}, #{row.companyCode}, #{row.hsCode}, #{row.requirementQty}, #{row.inputAmount},
 			 #{row.originatingQty}, #{row.originatingAmount}, #{row.nonOriginatingQty}, #{row.nonOriginatingAmount}, #{row.hsCodeYn},
-			 #{row.priceNote}, CURRENT_TIMESTAMP, #{createBy}, CURRENT_TIMESTAMP, #{createBy})
+			 #{row.priceNote}, CURRENT_TIMESTAMP, 'CREATE_FCR', CURRENT_TIMESTAMP, 'CREATE_FCR')
 		</foreach>
 	</insert>
 
@@ -542,8 +542,8 @@
 		       #{row.divisionCode} AS DIVISION_CODE, #{row.companyCode} AS COMPANY_CODE, #{row.hsCode} AS HS_CODE,
 		       #{row.productCode} AS PRODUCT_CODE, #{row.standard} AS STANDARD, 'N' AS FTA_COO_YN,
 		       'N' AS COMPANY_COO_YN, 'E' AS STATUS, #{errorCode} AS ERROR_CODE, #{errorMsg} AS ERROR_MSG,
-		       'N' AS DELETE_YN, CURRENT_TIMESTAMP AS CREATE_DATE, #{createBy} AS CREATE_BY,
-		       CURRENT_TIMESTAMP AS UPDATE_DATE, #{createBy} AS UPDATE_BY
+		       'N' AS DELETE_YN, CURRENT_TIMESTAMP AS CREATE_DATE, 'CREATE_FCR' AS CREATE_BY,
+		       CURRENT_TIMESTAMP AS UPDATE_DATE, 'CREATE_FCR' AS UPDATE_BY
 		</foreach>
 		       ) V
 		CROSS  JOIN (SELECT COALESCE(MAX(SEQ), 0) AS BASE_SEQ FROM FCR_RESULT) NS

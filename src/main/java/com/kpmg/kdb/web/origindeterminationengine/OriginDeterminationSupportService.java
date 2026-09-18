@@ -163,15 +163,15 @@ public class OriginDeterminationSupportService extends GeneralService {
 
 	// 판정결과 1건을 저장 대기열에 담고 다음 룰 판정을 위해 레코드를 초기화한다(실제 INSERT는 flushPendingResultsBatch가
 	// 배치로 처리). 예외를 흡수하지 않고 그대로 던져 OriginDeterminationPipeline까지 전파시켜 이 대상 전체를 판정실패로 표시하게 한다.
-	public void insertFrdAndReset(OriginDeterminationContext ctx, String createBy) {
+	public void insertFrdAndReset(OriginDeterminationContext ctx, OriginDeterminationMode mode) {
 		OriginDeterminationResult rec = ctx.getFrdRec();
 
 		rec.setBufferOption(ctx.getOptionValue());
 		rec.setDeMinimisRate(ctx.getCompanyCtcRate());
 		rec.setRvcRate(ctx.getCompanyRvcRate());
 		rec.setDeleteYn("N");
-		rec.setCreateBy(createBy);
-		rec.setUpdateBy(createBy);
+		rec.setCreateBy(mode.getProcedureName());
+		rec.setUpdateBy(mode.getProcedureName());
 
 		ctx.addPendingResult(rec.copy());
 
